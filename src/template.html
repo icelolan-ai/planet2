@@ -506,13 +506,79 @@ html:has(body.is-exploring){overflow:hidden}
   .xp-pad button{height:54px;background:rgba(6,10,14,.55);border:1px solid rgba(255,255,255,.22);font:600 12px var(--f-cond);letter-spacing:.14em;color:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
   .xp-pad button:active{background:var(--xp,var(--val));color:#0b0d12}
 }
+/* floating tune button: an icon bottom right; hovering or tapping slides out a red tray with its label */
+.fab{position:fixed;right:calc(var(--pad) - 4px);bottom:calc(env(safe-area-inset-bottom,0px) + 56px);z-index:13;opacity:0;transition:opacity 1s var(--ease-out) 1.6s}
+.is-ready .fab{opacity:1}
+body.is-exploring .fab,body.tune-open .fab,body.wtune-open .fab,body.obuild-open .fab{opacity:0!important;pointer-events:none;transition-delay:0s}
+.fab-btn{display:flex;align-items:center;height:48px;padding:0;background:transparent;color:#0b0d12}
+.fab-lbl{display:block;max-width:0;overflow:hidden;white-space:nowrap;height:48px;line-height:48px;padding:0;background:var(--val);font:600 12px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;
+  clip-path:polygon(12px 0,100% 0,100% 100%,0 100%);transition:max-width .5s var(--ease-out),padding .5s var(--ease-out)}
+.fab-ico{position:relative;width:48px;height:48px;background:var(--val);display:grid;place-content:center;gap:4px;box-shadow:0 0 22px rgba(255,70,85,.45);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%)}
+.fab-ico i{display:block;width:20px;height:2px;background:#0b0d12;position:relative}
+.fab-ico i::after{content:"";position:absolute;top:-3px;width:6px;height:8px;background:#0b0d12;left:var(--k,4px)}
+.fab-ico i:nth-child(1){--k:12px}.fab-ico i:nth-child(2){--k:3px}.fab-ico i:nth-child(3){--k:9px}
+.fab:hover .fab-lbl,.fab.peek .fab-lbl,.fab-btn:focus-visible .fab-lbl{max-width:260px;padding:0 16px 0 22px}
+.fab:hover .fab-ico i::after{transition:left .5s var(--ease-out)}
+.fab:hover .fab-ico i:nth-child(1){--k:3px}.fab:hover .fab-ico i:nth-child(2){--k:12px}
+.tune-toggle{display:none!important}
+@media (max-width:760px){.fab{right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}}
+
+/* settings gear */
+.gear{position:relative}
+.gear-btn{width:32px;height:32px;display:grid;place-items:center;color:var(--ink-2);transition:color .3s,transform .6s var(--ease-out)}
+.gear-btn svg{width:20px;height:20px}
+.gear-btn:hover,.gear.open .gear-btn{color:var(--val);transform:rotate(60deg)}
+.gear-menu{position:absolute;right:0;top:calc(100% + 10px);width:230px;padding:12px;background:rgba(8,10,16,.92);backdrop-filter:blur(12px);border:1px solid var(--line);border-top:2px solid var(--val);
+  opacity:0;transform:translateY(-6px);pointer-events:none;transition:opacity .3s,transform .4s var(--ease-out)}
+.gear.open .gear-menu{opacity:1;transform:none;pointer-events:auto}
+.gear-h{margin:0 0 8px;font:600 11px var(--f-cond);letter-spacing:.24em;text-transform:uppercase;color:var(--ink)}
+.gear-menu button{display:block;width:100%;text-align:left;padding:10px;font:500 12px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);border-bottom:1px solid var(--line)}
+.gear-menu button:hover{color:var(--ink);background:rgba(255,255,255,.04)}
+.gear-menu button.danger,.gear-menu button[data-armed]{color:var(--val)}
+.gear-note{margin:10px 0 0;font:400 11.5px var(--f-sans);color:var(--ink-3)}
+
+/* orbit builder */
+.tune.obuild{z-index:9}
+body.obuild-open main,body.obuild-open .labels,body.obuild-open .worldword{opacity:0!important;pointer-events:none!important;transition:opacity .5s}
+.ob-pal{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:0 0 14px}
+.ob-pal button{display:grid;justify-items:center;gap:6px;padding:12px 2px 10px;border:1px solid var(--line-2);font:600 9.5px var(--f-cond);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.ob-pal button i{font-style:normal;font-size:18px;line-height:1;color:var(--val)}
+.ob-pal button:hover{border-color:var(--val);color:var(--ink)}
+.ob-list{list-style:none;margin:0 0 12px;padding:0;border-top:1px solid var(--line)}
+.ob-empty{padding:14px 0;font:400 12px var(--f-sans);text-transform:none;letter-spacing:0;color:var(--ink-3)}
+.ob-item{border-bottom:1px solid var(--line)}
+.ob-head{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:10px;width:100%;padding:11px 0;text-align:left;color:var(--ink);font:600 12px var(--f-cond);letter-spacing:.14em;text-transform:uppercase}
+.ob-head i{font-style:normal;color:var(--c,var(--val));font-size:15px;text-align:center}
+.ob-head em{font:400 11px var(--f-num);font-style:normal;color:var(--ink-3);letter-spacing:0}
+.ob-body{display:none;padding:4px 0 12px}
+.ob-item.open .ob-body{display:block}
+.ob-item.open .ob-head{color:var(--val)}
+.ob-cols{display:flex;gap:8px}
+.ob-cols input,.ob-name{height:28px;border:1px solid var(--line-2);background:transparent;color:var(--ink)}
+.ob-cols input{width:38px;padding:2px}
+.ob-name{width:100%;padding:0 8px;font:500 13px var(--f-cond);letter-spacing:.1em;text-transform:uppercase}
+.ob-ghost{position:fixed;left:0;top:0;z-index:60;pointer-events:none;display:none;align-items:center;gap:8px;margin:-18px 0 0 14px;padding:7px 12px;background:rgba(8,10,16,.85);border:1px solid var(--line-2);border-left:2px solid var(--ink-3);
+  font:600 11px var(--f-cond);letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
+.ob-ghost.on{display:flex}
+.ob-ghost i{font-style:normal;color:var(--val)}
+.ob-ghost.snap{border-left-color:var(--val);color:var(--val)}
+.ob-ghost.bad{opacity:.45}
+.picker-list li.custom .pi{color:var(--a)}
+
+/* phones: the world tune sheet lifts the scene so the world stays above it */
+@media (max-width:760px){
+  #gl,.labels{transition:transform .6s var(--ease-out)}
+  body.wtune-open #gl,body.wtune-open .labels{transform:translateY(-15vh)}
+  .tune.wtune{max-height:48vh}
+}
 /* per-world tuning: takes the detail panel's place so the world stays in view */
 .wt-open{display:inline-flex;align-items:center;gap:10px;margin:0 12px 22px 0;padding:10px 14px;border:1px solid var(--line-2);border-left:2px solid var(--a,var(--val));
   font:600 11.5px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;color:var(--ink)}
 .wt-open i{width:8px;height:8px;background:var(--a,var(--val));transform:rotate(45deg)}
 .wt-open:hover{border-color:var(--a,var(--val))}
 .d-explore{margin-right:0}
-.tune.wtune{z-index:14;--val:var(--a,#ff4655)}
+.tune.wtune{z-index:14}
 body.wtune-open .d-panel *{pointer-events:none!important}
 .wtune .tune-h b{color:var(--a);font-weight:600}
 body.wtune-open .d-panel,body.wtune-open .d-hint{opacity:0!important;pointer-events:none!important;transition:opacity .4s}
@@ -605,7 +671,7 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
 .rail button{transition:color .6s}
 .sound[aria-pressed="true"] .sound-bars i{background:var(--hl)}
 .picker{z-index:9;transition:opacity .4s}
-body.tune-open .picker{opacity:0!important;pointer-events:none}
+body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:0!important;pointer-events:none}
 /* letters light up red where the pointer or a finger touches them */
 .lt{display:inline-block;pointer-events:auto;transition:color 1.1s ease,text-shadow 1.1s ease}
 :root{--hl:#ff4655}
@@ -659,6 +725,20 @@ body.tune-open .picker{opacity:0!important;pointer-events:none}
 </nav>
 
 <button class="tune-toggle" type="button" aria-expanded="false" aria-controls="tune" data-tune-toggle><i></i><span>Tune the core</span></button>
+<aside class="tune obuild" id="obuild" aria-label="Build the orbit" data-open="false">
+  <header class="tune-h"><span>Build the orbit</span><button type="button" class="tune-x" data-ob-close aria-label="Close"></button></header>
+  <p class="tune-hint">Drag onto the orbit. Items snap to the nearest orbit line (it turns red). Tap to drop one at random.</p>
+  <div class="ob-pal">
+    <button type="button" data-ob-add="planet"><i>&#9679;</i>Planet</button>
+    <button type="button" data-ob-add="comet"><i>&#10022;</i>Comet</button>
+    <button type="button" data-ob-add="orbit"><i>&#9711;</i>Orbit</button>
+    <button type="button" data-ob-add="belt"><i>&#8942;</i>Particles</button>
+    <button type="button" data-ob-add="cloud"><i>&#9729;</i>Dust cloud</button>
+  </div>
+  <p class="tune-sub">In orbit</p>
+  <ul class="ob-list" data-ob-list></ul>
+  <button type="button" class="tune-reset" data-ob-clear>Clear all</button>
+</aside>
 <aside class="tune wtune" id="wtune" aria-label="Tune this world" data-open="false">
   <header class="tune-h"><span>Tune <b data-wt-name>World</b></span><button type="button" class="tune-x" data-wt-close aria-label="Close"></button></header>
   <p class="tune-sub">Colour</p>
@@ -934,6 +1014,232 @@ body.tune-open .picker{opacity:0!important;pointer-events:none}
 const THREE = window.KY;
 const WORLDS = /*__WORLDS__*/;
 
+/* Orbit builder drawer: drag an item from the palette onto the orbit. It snaps to the nearest orbit line. */
+const OrbitBuilder = (() => {
+  let app = null, C = null;
+  const panel = () => document.getElementById('obuild');
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const isOpen = () => panel() && panel().dataset.open === 'true';
+  const open = on => {
+    const P = panel(); if (!P) return;
+    P.dataset.open = String(on); document.body.classList.toggle('obuild-open', on);
+    if (on) list();
+  };
+  const pctOf = el => el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%');
+  const rowFor = it => {
+    const P = it.params, T = CREATION_TYPES[it.type];
+    const name = it.type === 'planet' ? P.name : T.label;
+    let body = '';
+    if (it.type === 'planet') body = `
+      <label class="tune-row"><span>Name</span><input class="ob-name" type="text" maxlength="18" value="${esc(P.name)}" data-k="name"></label>
+      <div class="tune-row"><span>Colours</span><div class="ob-cols"><input type="color" value="${P.c1}" data-k="c1"><input type="color" value="${P.c2}" data-k="c2"><input type="color" value="${P.glow}" data-k="glow"></div></div>
+      <div class="tune-row"><span>Surface</span><div class="tune-seg" data-seg="style">${['Rocky', 'Gas', 'Ice'].map((n, i) => `<button type="button" data-v="${i}" aria-pressed="${P.style === i}">${n}</button>`).join('')}</div></div>
+      <label class="tune-row"><span>Size</span><input type="range" min="0.3" max="1.6" step="0.01" value="${P.size}" data-k="size"><b data-out>${P.size.toFixed(2)}</b></label>
+      <div class="tune-row"><span>Ring</span><div class="tune-seg" data-seg="ring"><button type="button" data-v="0" aria-pressed="${!P.ring}">Off</button><button type="button" data-v="1" aria-pressed="${!!P.ring}">On</button></div></div>`;
+    else if (it.type === 'comet') body = `
+      <div class="tune-row"><span>Colour</span><div class="ob-cols"><input type="color" value="${P.color}" data-k="color"></div></div>
+      <label class="tune-row"><span>Tail</span><input type="range" min="0.4" max="2.2" step="0.05" value="${P.size}" data-k="size"><b data-out>${P.size.toFixed(2)}</b></label>
+      <label class="tune-row"><span>Stretch</span><input type="range" min="0.2" max="0.85" step="0.01" value="${P.ecc}" data-k="ecc"><b data-out>${P.ecc.toFixed(2)}</b></label>`;
+    else if (it.type === 'orbit') body = `<div class="tune-row"><span>Colour</span><div class="ob-cols"><input type="color" value="${P.color}" data-k="color"></div></div>`;
+    else body = `
+      <div class="tune-row"><span>Colour</span><div class="ob-cols"><input type="color" value="${P.color}" data-k="color"></div></div>
+      <label class="tune-row"><span>Amount</span><input type="range" min="0.2" max="3" step="0.05" value="${P.amount}" data-k="amount"><b data-out>${P.amount.toFixed(2)}</b></label>
+      <label class="tune-row"><span>${it.type === 'belt' ? 'Width' : 'Spread'}</span><input type="range" min="0.3" max="4" step="0.05" value="${it.type === 'belt' ? P.width : P.spread}" data-k="${it.type === 'belt' ? 'width' : 'spread'}"><b data-out>${(it.type === 'belt' ? P.width : P.spread).toFixed(2)}</b></label>`;
+    return `<li class="ob-item" data-id="${it.id}"><button type="button" class="ob-head"><i style="--c:${it.type === 'planet' ? P.c2 : P.color}">${T.icon}</i><span>${esc(name)}</span><em>${it.r.toFixed(1)} u</em></button>
+      <div class="ob-body">${body}<button type="button" class="tune-reset danger" data-remove>Remove</button></div></li>`;
+  };
+  const list = focusId => {
+    const ul = panel().querySelector('[data-ob-list]');
+    ul.innerHTML = C.items.length ? C.items.map(rowFor).join('') : '<li class="ob-empty">Nothing added yet. Drag something onto the orbit.</li>';
+    ul.querySelectorAll('input[type=range]').forEach(pctOf);
+    ul.querySelectorAll('.ob-item').forEach(li => {
+      const it = C.items.find(i => i.id === li.dataset.id); if (!it) return;
+      if (it.id === focusId) li.classList.add('open');
+      li.querySelector('.ob-head').addEventListener('click', () => li.classList.toggle('open'));
+      li.addEventListener('pointerenter', () => { it.hi = 1; }); li.addEventListener('pointerleave', () => { it.hi = 0; });
+      const commit = (k, v, rebuild) => {
+        it.params[k] = v;
+        if (rebuild) { C.rebuild(it); refreshPicker(); }
+        else { C.save(); if (k === 'name') { li.querySelector('.ob-head span').textContent = v; refreshPicker(); } }
+      };
+      li.querySelectorAll('input[data-k]').forEach(el => {
+        const k = el.dataset.k;
+        if (el.type === 'range') el.addEventListener('input', () => { pctOf(el); el.parentElement.querySelector('[data-out]').textContent = (+el.value).toFixed(2); });
+        el.addEventListener(el.type === 'text' ? 'input' : 'change', () => commit(k, el.type === 'range' ? +el.value : el.value, el.type !== 'text'));
+      });
+      li.querySelectorAll('[data-seg]').forEach(g => g.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+        g.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); commit(g.dataset.seg, +b.dataset.v, true);
+      })));
+      li.querySelector('[data-remove]').addEventListener('click', () => { C.remove(it); list(); refreshPicker(); });
+    });
+  };
+  /* New planets join the Choose a world menu. */
+  const refreshPicker = () => {
+    const ul = document.getElementById('picker-list'); if (!ul || !C) return;
+    ul.querySelectorAll('li.custom').forEach(li => li.remove());
+    C.planets().forEach((it, i) => {
+      const li = document.createElement('li'); li.className = 'custom'; li.style.setProperty('--a', it.params.glow);
+      li.innerHTML = `<button type="button" data-custom="${it.id}"><span class="pd"></span><span class="pi">+${String(i + 1).padStart(2, '0')}</span><span class="pn">${esc(it.params.name)}</span></button>`;
+      li.querySelector('button').addEventListener('click', () => focus(it.id));
+      ul.appendChild(li);
+    });
+  };
+  const focus = id => {
+    if (app.detail.open) app.closeWorld();
+    app.scroll.jumpTo(ORBIT_START);
+    setTimeout(() => { open(true); list(id); }, 500);
+  };
+
+  /* Drag and drop from the palette. */
+  const wireDrag = () => {
+    const P = panel(), ghost = document.createElement('div');
+    ghost.className = 'ob-ghost'; document.body.appendChild(ghost);
+    let drag = null;
+    const place = (x, y) => {
+      const cv = document.getElementById('gl'); if (!cv || !PlanetBody.camera) return null;
+      const p = C.planePoint(x, y, PlanetBody.camera, cv.getBoundingClientRect()); if (!p) return null;
+      const r = Math.hypot(p.x, p.z); if (r < 2.5 || r > 34) return null;
+      const s = drag.type === 'orbit' ? { r, snapped: false } : C.snap(r);
+      return { r: s.r, snapped: s.snapped, a: Math.atan2(p.z, p.x) };
+    };
+    P.querySelectorAll('[data-ob-add]').forEach(b => {
+      b.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        drag = { type: b.dataset.obAdd, x0: e.clientX, y0: e.clientY, moved: false, id: e.pointerId };
+        ghost.innerHTML = `<i>${CREATION_TYPES[drag.type].icon}</i><span>${CREATION_TYPES[drag.type].label}</span>`;
+        b.setPointerCapture(e.pointerId);
+      });
+      b.addEventListener('pointermove', e => {
+        if (!drag || e.pointerId !== drag.id) return;
+        if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 6) drag.moved = true;
+        if (!drag.moved) return;
+        ghost.classList.add('on'); ghost.style.transform = `translate(${e.clientX}px,${e.clientY}px)`;
+        const overPanel = P.contains(document.elementFromPoint(e.clientX, e.clientY));
+        const s = overPanel ? null : place(e.clientX, e.clientY);
+        ghost.classList.toggle('snap', !!(s && s.snapped)); ghost.classList.toggle('bad', !s);
+        C.showPreview(s ? s.r : null, s && s.snapped);
+      });
+      const end = e => {
+        if (!drag || e.pointerId !== drag.id) return;
+        const d = drag; drag = null; ghost.classList.remove('on', 'snap', 'bad'); C.showPreview(null);
+        let s = null;
+        if (d.moved) { if (!P.contains(document.elementFromPoint(e.clientX, e.clientY))) { drag = d; s = place(e.clientX, e.clientY); drag = null; } }
+        else {
+          // A tap drops it on a free orbit just outside the last one.
+          const used = C.snapRadii(); let r = Math.max(...used) + 1.6; if (d.type !== 'orbit') r = used[(Math.random() * used.length) | 0];
+          s = { r: Math.min(r, 32), a: Math.random() * 6.283 };
+        }
+        if (!s) return;
+        const it = C.add(d.type, s.r, s.a);
+        if (app.sound) app.sound.tone(880, 0.12, 0.05, 1.5);
+        list(it.id); refreshPicker();
+      };
+      b.addEventListener('pointerup', end); b.addEventListener('pointercancel', end);
+    });
+  };
+
+  const wire = a => {
+    app = a; C = a.orrery.creations;
+    const P = panel(); if (!P) return;
+    P.querySelector('[data-ob-close]').addEventListener('click', () => open(false));
+    P.querySelector('[data-ob-clear]').addEventListener('click', () => { C.clear(); list(); refreshPicker(); });
+    ['wheel', 'touchmove'].forEach(t => P.addEventListener(t, e => e.stopPropagation(), { passive: true }));
+    document.addEventListener('pointerdown', e => {
+      if (isOpen() && !P.contains(e.target) && !e.target.closest('.fab,.ob-ghost,.picker')) open(false);
+    }, true);
+    addEventListener('keydown', e => { if (e.key === 'Escape' && isOpen()) open(false); });
+    wireDrag(); refreshPicker();
+    // The builder belongs to the orbit overview; leaving it folds the drawer.
+    const sec = document.getElementById('projects');
+    if (sec) new MutationObserver(() => { if (!sec.classList.contains('is-active') && isOpen()) open(false); }).observe(sec, { attributes: true, attributeFilter: ['class'] });
+  };
+  return { wire, open, isOpen, refreshPicker };
+})();
+
+/* Floating tune button, bottom right on every page. It knows where you are and opens the matching tuner. */
+const Fab = (() => {
+  let app = null;
+  const ctx = () => {
+    if (!app || !app.scroll || !app.detail) return null;
+    if (app.detail.open) return { kind: 'world', k: app.detail.index, label: 'Tune ' + WORLDS[app.detail.index].name };
+    const i = app.scroll.index;
+    if (i > ORBIT_START && i <= app.orbitEnd) return { kind: 'world', k: i - ORBIT_START - 1, label: 'Tune ' + WORLDS[i - ORBIT_START - 1].name };
+    if (i === ORBIT_START) return { kind: 'orbit', label: 'Build the orbit' };
+    return { kind: 'core', label: 'Tune the core' };
+  };
+  const go = () => {
+    const c = ctx(); if (!c) return;
+    const el = document.querySelector('.fab'); el.classList.remove('peek');
+    if (c.kind === 'world') {
+      if (!app.detail.open || app.detail.index !== c.k) app.openWorld(c.k);
+      setTimeout(() => WorldTune.open(true), app.detail.busy ? 1400 : 60);
+    } else if (c.kind === 'orbit') OrbitBuilder.open(true);
+    else {
+      const on = ['identity', 'capabilities'].some(id => document.getElementById(id).classList.contains('is-active'));
+      if (!on) app.scroll.jumpTo(1);
+      setTimeout(() => dispatchEvent(new Event('cerebra:tune')), on ? 0 : 700);
+    }
+  };
+  const wire = a => {
+    app = a;
+    const el = document.createElement('div');
+    el.className = 'fab';
+    el.innerHTML = `<button type="button" class="fab-btn" aria-label="Tune" data-cursor="Tune"><span class="fab-lbl" data-fab-lbl>Tune the core</span><span class="fab-ico" aria-hidden="true"><i></i><i></i><i></i></span></button>`;
+    document.body.appendChild(el);
+    const btn = el.querySelector('button'), lbl = el.querySelector('[data-fab-lbl]');
+    document.addEventListener('pointerdown', e => { if (!el.contains(e.target)) el.classList.remove('peek'); }, true);
+    const sync = () => { const c = ctx(); if (c) { lbl.textContent = c.label; btn.setAttribute('aria-label', c.label); } };
+    setInterval(sync, 400); sync();
+    // Touch: the first tap opens the tray, the second one goes.
+    btn.addEventListener('click', e => {
+      if (matchMedia('(hover: none)').matches) {
+        const now = performance.now();
+        if (!el.classList.contains('peek')) { el.classList.add('peek'); el._peekAt = now; sync(); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('peek'), 9000); return; }
+        if (now - el._peekAt < 300) return; // the same tap delivered twice
+      }
+      go();
+    });
+  };
+  return { wire };
+})();
+
+/* Settings: gear in the header with resets. */
+const Settings = (() => {
+  const wire = app => {
+    const right = document.querySelector('.hud-right'); if (!right) return;
+    const w = document.createElement('div'); w.className = 'gear';
+    w.innerHTML = `<button type="button" class="gear-btn" aria-label="Settings" aria-expanded="false" data-cursor="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8Zm8.4 4.6-.1-2.4 2-1.6-2-3.4-2.4.9-2-1.2L15.5 3h-4l-.4 2.5-2 1.2-2.4-.9-2 3.4 2 1.6v2.4l-2 1.6 2 3.4 2.4-.9 2 1.2.4 2.5h4l.4-2.5 2-1.2 2.4.9 2-3.4-2-1.6Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></button>
+      <div class="gear-menu" role="menu">
+        <p class="gear-h">Settings</p>
+        <button type="button" role="menuitem" data-g="core">Reset the core</button>
+        <button type="button" role="menuitem" data-g="worlds">Reset all worlds</button>
+        <button type="button" role="menuitem" data-g="made">Clear what you built</button>
+        <button type="button" role="menuitem" class="danger" data-g="all">Reset everything</button>
+        <p class="gear-note" data-g-note>Resets only affect this browser.</p>
+      </div>`;
+    right.appendChild(w);
+    const btn = w.querySelector('.gear-btn'), note = w.querySelector('[data-g-note]');
+    const set = on => { w.classList.toggle('open', on); btn.setAttribute('aria-expanded', String(on)); if (!on) w.querySelectorAll('[data-armed]').forEach(b => { delete b.dataset.armed; b.textContent = b.dataset.txt; }); };
+    btn.addEventListener('click', () => set(!w.classList.contains('open')));
+    document.addEventListener('pointerdown', e => { if (!w.contains(e.target)) set(false); }, true);
+    addEventListener('keydown', e => { if (e.key === 'Escape') set(false); });
+    const clear = keys => keys.forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+    w.querySelectorAll('[data-g]').forEach(b => {
+      b.dataset.txt = b.textContent;
+      b.addEventListener('click', () => {
+        if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to confirm'; return; }
+        const g = b.dataset.g;
+        if (g === 'core' || g === 'all') clear(['kythera.tune.v1', 'kythera.tune.v2']);
+        if (g === 'worlds' || g === 'all') clear(['cerebra.worlds.v1']);
+        if (g === 'made' || g === 'all') clear(['cerebra.creations.v1']);
+        note.textContent = 'Done. Reloading…';
+        setTimeout(() => { location.hash = ''; location.reload(); }, 350);
+      });
+    });
+  };
+  return { wire };
+})();
+
 /* Per-world tuning drawer. Values are stored per world and restored on the next visit. */
 const WorldTune = (() => {
   const KEY = 'cerebra.worlds.v1';
@@ -963,6 +1269,8 @@ const WorldTune = (() => {
     const P = panel(); if (!P) return;
     if (on) { w = app && app.orrery && app.orrery.worlds[app.detail.index]; if (!w) return; fill(); syncAccent(); }
     P.dataset.open = String(on); document.body.classList.toggle('wtune-open', on);
+    // While tuning, other worlds step aside so none of them passes in front of this one.
+    if (app && app.orrery) app.orrery.worlds.forEach(x => { x.solo = on && x !== w; });
   };
   const wire = a => {
     app = a;
@@ -1021,6 +1329,7 @@ const WorldTune = (() => {
       else syncRings();
     };
     toggle.addEventListener('click', () => open(true));
+    addEventListener('cerebra:tune', () => open(true));
     q('[data-tune-close]').addEventListener('click', () => open(false));
     addEventListener('keydown', e => {
       if (e.key === 'Escape' && isOpen()) { const b = body(); if (b && b.selected) { b.selected = null; showSel(null); } else open(false); }
@@ -3294,6 +3603,7 @@ class World {
     const on = rv > 0.002;
     this.group.visible = on;
     this.orbitLine.visible = f.G > 0.002 && T.line > 0;
+    if (this.solo) this.group.visible = false;
 
     // Drag inertia: velocity decays on its own once released.
     if (!f.dragging || f.active !== this.index) { this.userRot += this.userVel * dt; this.userVel *= Math.exp(-2.4 * dt); }
@@ -3340,6 +3650,276 @@ class World {
   }
 }
 
+/* ================================================================
+   Orbit builder: comets, orbits, particle belts, dust clouds and new planets placed by the visitor.
+   Everything lives on the orbital plane and is saved in the browser.
+================================================================ */
+const CR_POINT_VERT = `
+attribute float aSize, aA;
+uniform float uPixelRatio, uScale;
+varying float vA;
+void main(){
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  gl_Position = projectionMatrix * mv;
+  vA = aA;
+  gl_PointSize = clamp(aSize * uScale * uPixelRatio * (30.0 / -mv.z), 1.0, 64.0 * uPixelRatio);
+}`;
+const CR_POINT_FRAG = `
+uniform vec3 uColor;
+uniform float uOpacity, uSoft;
+varying float vA;
+void main(){
+  float d = length(gl_PointCoord - 0.5);
+  if (d > 0.5) discard;
+  float s = smoothstep(0.5, 0.0, d);
+  float a = mix(s * s + pow(s, 8.0), pow(s, 2.2) * 0.12, uSoft);
+  gl_FragColor = vec4(uColor * (1.0 + pow(s, 10.0) * (1.0 - uSoft)), a * vA * uOpacity);
+}`;
+const CR_BELT_VERT = `
+attribute vec4 aOrb; // radius jitter, phase, height, size
+uniform float uTime, uPixelRatio, uR;
+varying float vA;
+void main(){
+  float r = uR + aOrb.x;
+  float ang = aOrb.y + uTime * 0.55 / pow(max(r, 0.5), 1.5);
+  vec4 mv = modelViewMatrix * vec4(cos(ang) * r, aOrb.z, sin(ang) * r, 1.0);
+  gl_Position = projectionMatrix * mv;
+  vA = 0.4 + 0.6 * fract(aOrb.w * 7.3);
+  gl_PointSize = clamp(aOrb.w * uPixelRatio * (30.0 / -mv.z), 1.0, 6.0 * uPixelRatio);
+}`;
+const CR_PLANET_VERT = `
+varying vec3 vN, vP, vW;
+void main(){
+  vP = normalize(position);
+  vN = normalize(mat3(modelMatrix) * normal);
+  vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz;
+  gl_Position = projectionMatrix * viewMatrix * w;
+}`;
+const CR_PLANET_FRAG = `
+uniform vec3 uC1, uC2, uGlow;
+uniform float uStyle, uSeed, uOpacity, uHi;
+varying vec3 vN, vP, vW;
+float h(vec3 p){ p = fract(p * 0.3183099 + uSeed); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float n3(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(h(i), h(i + vec3(1,0,0)), f.x), mix(h(i + vec3(0,1,0)), h(i + vec3(1,1,0)), f.x), f.y),
+             mix(mix(h(i + vec3(0,0,1)), h(i + vec3(1,0,1)), f.x), mix(h(i + vec3(0,1,1)), h(i + vec3(1,1,1)), f.x), f.y), f.z); }
+float fbm(vec3 p){ float a = 0.5, s = 0.0; for (int i = 0; i < 5; i++) { s += a * n3(p); p *= 2.03; a *= 0.5; } return s; }
+void main(){
+  float k;
+  if (uStyle < 0.5) k = smoothstep(0.42, 0.62, fbm(vP * 3.0));                           // rocky
+  else if (uStyle < 1.5) k = 0.5 + 0.5 * sin(vP.y * 14.0 + fbm(vP * 2.5) * 6.0);          // gas bands
+  else k = smoothstep(0.55, 0.75, fbm(vP * 5.0)) * 0.8 + step(0.78, abs(vP.y)) * 0.9;     // ice caps
+  vec3 col = mix(uC1, uC2, clamp(k, 0.0, 1.0));
+  vec3 N = normalize(vN), L = normalize(-vW), V = normalize(cameraPosition - vW);
+  float lit = 0.18 + 0.82 * smoothstep(-0.25, 0.7, dot(N, L));
+  float rim = pow(1.0 - max(dot(N, V), 0.0), 3.0);
+  col = col * lit + uGlow * rim * (0.6 + uHi * 1.2);
+  gl_FragColor = vec4(col, uOpacity);
+}`;
+
+const CREATION_TYPES = {
+  planet: { label: 'New planet', icon: '&#9679;', color: '#ff7fc8' },
+  comet: { label: 'Comet', icon: '&#10022;', color: '#bfefff' },
+  orbit: { label: 'Orbit line', icon: '&#9711;', color: '#dfe4ea' },
+  belt: { label: 'Particle belt', icon: '&#8942;', color: '#ffc94d' },
+  cloud: { label: 'Dust cloud', icon: '&#9729;', color: '#b48cff' }
+};
+const PLANET_NAMES = ['Vesper', 'Oriel', 'Nyx', 'Halcyon', 'Ember', 'Solace', 'Cinder', 'Lumen', 'Morrow', 'Quill', 'Rune', 'Thalia'];
+
+class Creations {
+  constructor(orrery) {
+    this.orrery = orrery;
+    this.group = new THREE.Group();
+    orrery.group.add(this.group);
+    this.items = [];
+    this.v = new THREE.Vector3();
+    this.KEY = 'cerebra.creations.v1';
+    // Snap preview ring.
+    this.preview = new THREE.Line(circleGeometry(1, 256), new THREE.LineBasicMaterial({ color: 0xff4655, transparent: true, opacity: 0, depthWrite: false }));
+    this.preview.rotation.x = Math.PI / 2; this.preview.visible = false;
+    this.group.add(this.preview);
+    this.onChange = () => {};
+    this.load();
+  }
+
+  /* Radii the builder snaps to: the worlds, the outer remnant and any orbit lines placed here. */
+  snapRadii() {
+    const r = this.orrery.worlds.map(w => w.def.orbit * w.tune.orbit);
+    r.push(this.orrery.remnant.orbit);
+    this.items.forEach(it => { if (it.type === 'orbit') r.push(it.r); });
+    return r;
+  }
+  snap(r) {
+    let best = r, bd = 1.1;
+    this.snapRadii().forEach(s => { const d = Math.abs(s - r); if (d < bd) { bd = d; best = s; } });
+    return { r: best, snapped: best !== r };
+  }
+  /* Where a screen point lands on the orbital plane. */
+  planePoint(x, y, camera, rect) {
+    const ndc = new THREE.Vector2(((x - rect.left) / rect.width) * 2 - 1, -((y - rect.top) / rect.height) * 2 + 1);
+    const rc = new THREE.Raycaster(); rc.setFromCamera(ndc, camera);
+    const p = new THREE.Vector3();
+    if (!rc.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), p)) return null;
+    return p;
+  }
+  showPreview(r, snapped) {
+    if (r == null) { this.preview.visible = false; return; }
+    this.preview.visible = true; this.preview.scale.setScalar(r);
+    this.preview.material.color.set(snapped ? '#ff4655' : '#dfe4ea');
+    this.preview.material.opacity = snapped ? 0.9 : 0.4;
+  }
+
+  add(type, r, a0, params, silent) {
+    const T = CREATION_TYPES[type]; if (!T) return null;
+    const it = Object.assign({ id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), type, r, a0, t: 0 },
+      { params: Object.assign(this.defaults(type), params || {}) });
+    this.build(it);
+    this.items.push(it);
+    if (!silent) { this.save(); this.onChange(); }
+    return it;
+  }
+  defaults(type) {
+    const n = this.items.filter(i => i.type === 'planet').length;
+    return {
+      planet: { name: PLANET_NAMES[n % PLANET_NAMES.length], c1: '#3b1d5e', c2: '#ff7fc8', glow: '#ff9ad8', size: 0.8, style: 0, ring: 0, seed: Math.random() },
+      comet: { color: '#bfefff', size: 1, ecc: 0.62 },
+      orbit: { color: '#dfe4ea' },
+      belt: { color: '#ffc94d', amount: 1, width: 1.2 },
+      cloud: { color: '#b48cff', amount: 1, spread: 2.2 }
+    }[type];
+  }
+  pointMat(color, soft) {
+    return new THREE.ShaderMaterial({
+      uniforms: { uColor: { value: new THREE.Color(color) }, uOpacity: { value: 0 }, uPixelRatio: { value: 1 }, uScale: { value: 1 }, uSoft: { value: soft } },
+      vertexShader: CR_POINT_VERT, fragmentShader: CR_POINT_FRAG, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+    });
+  }
+  build(it) {
+    const P = it.params, root = new THREE.Group(); it.root = root; it.mats = []; it.geoms = [];
+    const track = (g, m) => { it.geoms.push(g); it.mats.push(m); };
+    if (it.type === 'orbit') {
+      const g = circleGeometry(1, 360), m = new THREE.LineDashedMaterial({ color: P.color, dashSize: 0.01, gapSize: 0.008, transparent: true, opacity: 0, depthWrite: false });
+      const line = new THREE.Line(g, m); line.computeLineDistances(); line.rotation.x = Math.PI / 2; line.scale.setScalar(it.r);
+      root.add(line); track(g, m); it.line = line; it.baseOpacity = 0.45;
+    } else if (it.type === 'belt') {
+      const n = Math.round(900 * P.amount), orb = new Float32Array(n * 4);
+      for (let i = 0; i < n; i++) orb.set([(Math.random() - 0.5) * P.width, Math.random() * 6.283, (Math.random() - 0.5) * 0.25, 0.8 + Math.random() * 1.8], i * 4);
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); g.setAttribute('aOrb', new THREE.BufferAttribute(orb, 4));
+      const m = new THREE.ShaderMaterial({ uniforms: { uColor: { value: new THREE.Color(P.color) }, uOpacity: { value: 0 }, uPixelRatio: { value: 1 }, uTime: { value: 0 }, uR: { value: it.r }, uSoft: { value: 0 } },
+        vertexShader: CR_BELT_VERT, fragmentShader: CR_POINT_FRAG, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+      const pts = new THREE.Points(g, m); pts.frustumCulled = false; root.add(pts); track(g, m);
+    } else if (it.type === 'cloud') {
+      const puffs = Math.round(26 * P.amount), motes = Math.round(420 * P.amount), n = puffs + motes;
+      const pos = new Float32Array(n * 3), size = new Float32Array(n), al = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        const puff = i < puffs, rr = Math.pow(Math.random(), puff ? 0.6 : 1.2) * P.spread, th = Math.random() * 6.283, u = Math.random() * 2 - 1, w = Math.sqrt(1 - u * u);
+        pos.set([Math.cos(th) * w * rr, u * rr * 0.45, Math.sin(th) * w * rr], i * 3);
+        size[i] = puff ? 26 + Math.random() * 30 : 0.7 + Math.random() * 1.4; al[i] = puff ? 1 : 0.5 + Math.random() * 0.5;
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('aSize', new THREE.BufferAttribute(size, 1)); g.setAttribute('aA', new THREE.BufferAttribute(al, 1));
+      const m = this.pointMat(P.color, 0.0); m.uniforms.uSoft.value = 0.0;
+      // Puffs soft, motes sharp: one material, softness comes from size.
+      m.fragmentShader = CR_POINT_FRAG.replace('float a = mix(s * s + pow(s, 8.0), pow(s, 2.2) * 0.12, uSoft);', 'float a = vA > 0.99 ? pow(s, 2.2) * 0.1 : s * s;');
+      const pts = new THREE.Points(g, m); pts.frustumCulled = false; root.add(pts); track(g, m);
+      it.body = pts;
+    } else if (it.type === 'comet') {
+      const n = 90, pos = new Float32Array(n * 3), size = new Float32Array(n), al = new Float32Array(n);
+      for (let i = 0; i < n; i++) { size[i] = i === 0 ? 5 * P.size : (2.6 - i / n * 2) * P.size * (0.6 + Math.random() * 0.6); al[i] = i === 0 ? 1 : Math.pow(1 - i / n, 1.5); }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('aSize', new THREE.BufferAttribute(size, 1)); g.setAttribute('aA', new THREE.BufferAttribute(al, 1));
+      const m = this.pointMat(P.color, 0);
+      const pts = new THREE.Points(g, m); pts.frustumCulled = false; root.add(pts); track(g, m);
+      it.tail = { pos, g, n, seed: Array.from({ length: n }, () => [Math.random() - 0.5, Math.random() - 0.5]) };
+      // The path, faintly.
+      const e = P.ecc, a = it.r / (1 - e), b = a * Math.sqrt(1 - e * e), c = a * e;
+      const pg = new THREE.BufferGeometry(), pp = new Float32Array(241 * 3);
+      for (let i = 0; i <= 240; i++) { const t = i / 240 * 6.283; pp.set([Math.cos(t) * a - c, 0, Math.sin(t) * b], i * 3); }
+      pg.setAttribute('position', new THREE.BufferAttribute(pp, 3));
+      const pm = new THREE.LineBasicMaterial({ color: P.color, transparent: true, opacity: 0, depthWrite: false });
+      const path = new THREE.Line(pg, pm); path.rotation.y = -it.a0; root.add(path); track(pg, pm); it.path = path;
+      it.orb = { a, b, c, e, M: Math.PI };
+    } else if (it.type === 'planet') {
+      const g = new THREE.SphereGeometry(1, 48, 32);
+      const m = new THREE.ShaderMaterial({
+        uniforms: { uC1: { value: new THREE.Color(P.c1) }, uC2: { value: new THREE.Color(P.c2) }, uGlow: { value: new THREE.Color(P.glow) }, uStyle: { value: P.style }, uSeed: { value: P.seed }, uOpacity: { value: 1 }, uHi: { value: 0 } },
+        vertexShader: CR_PLANET_VERT, fragmentShader: CR_PLANET_FRAG
+      });
+      const body = new THREE.Mesh(g, m); body.scale.setScalar(P.size); root.add(body); track(g, m); it.body = body;
+      // Halo of particles.
+      const n = 160, pos = new Float32Array(n * 3), size = new Float32Array(n), al = new Float32Array(n);
+      for (let i = 0; i < n; i++) { const th = Math.random() * 6.283, rr = P.size * (1.5 + Math.random() * 0.9); pos.set([Math.cos(th) * rr, (Math.random() - 0.5) * 0.12, Math.sin(th) * rr], i * 3); size[i] = 0.6 + Math.random(); al[i] = 0.4 + Math.random() * 0.6; }
+      const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); hg.setAttribute('aSize', new THREE.BufferAttribute(size, 1)); hg.setAttribute('aA', new THREE.BufferAttribute(al, 1));
+      const hm = this.pointMat(P.glow, 0); const halo = new THREE.Points(hg, hm); halo.frustumCulled = false; halo.rotation.x = 0.25; root.add(halo); track(hg, hm); it.halo = halo;
+      // Optional ring.
+      const rg = new THREE.RingGeometry(P.size * 1.4, P.size * 2.1, 96), rm = new THREE.MeshBasicMaterial({ color: P.glow, side: THREE.DoubleSide, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+      const ring = new THREE.Mesh(rg, rm); ring.rotation.x = -Math.PI / 2 + 0.3; root.add(ring); track(rg, rm); it.ring = ring;
+      // Its own orbit line.
+      const og = circleGeometry(1, 256), om = new THREE.LineBasicMaterial({ color: P.glow, transparent: true, opacity: 0, depthWrite: false });
+      const oline = new THREE.Line(og, om); oline.rotation.x = Math.PI / 2; oline.scale.setScalar(it.r); this.group.add(oline); track(og, om); it.oline = oline;
+    }
+    this.group.add(root);
+  }
+  rebuild(it) { this.dispose1(it); this.build(it); this.save(); this.onChange(); }
+  remove(it) { this.dispose1(it); this.items.splice(this.items.indexOf(it), 1); this.save(); this.onChange(); }
+  clear() { this.items.slice().forEach(it => this.dispose1(it)); this.items = []; this.save(); this.onChange(); }
+  dispose1(it) {
+    this.group.remove(it.root); if (it.oline) this.group.remove(it.oline);
+    it.geoms.forEach(g => g.dispose()); it.mats.forEach(m => m.dispose());
+  }
+  save() {
+    try { localStorage.setItem(this.KEY, JSON.stringify(this.items.map(({ id, type, r, a0, params }) => ({ id, type, r, a0, params })))); } catch (e) {}
+  }
+  load() {
+    let data = []; try { data = JSON.parse(localStorage.getItem(this.KEY) || '[]') || []; } catch (e) {}
+    data.forEach(d => { const it = this.add(d.type, d.r, d.a0, d.params, true); if (it) it.id = d.id; });
+  }
+  planets() { return this.items.filter(i => i.type === 'planet'); }
+  worldPos(it, out) { return out.setFromMatrixPosition((it.body || it.root).matrixWorld); }
+
+  update(dt, t, f) {
+    const on = f.G, vis = on > 0.002;
+    this.group.visible = vis;
+    if (!vis) return;
+    this.items.forEach(it => {
+      it.t += dt * (0.3 + 0.7 * (f.reduced ? 0.25 : 1));
+      it.mats.forEach(m => { if (m.uniforms && m.uniforms.uPixelRatio) m.uniforms.uPixelRatio.value = f.pixelRatio; });
+      const k = Math.min(1, it.t * 1.5), fade = on * smootherstep(k);
+      if (it.type === 'orbit') { it.mats[0].opacity = fade * it.baseOpacity * f.orbitVis; }
+      else if (it.type === 'belt') { const u = it.mats[0].uniforms; u.uTime.value = t; u.uOpacity.value = fade * 0.9; }
+      else if (it.type === 'cloud' || it.type === 'planet') {
+        const a = it.a0 + t * KEPLER / Math.pow(it.r, 1.5);
+        it.root.position.set(Math.cos(a) * it.r, 0, Math.sin(a) * it.r);
+        if (it.type === 'cloud') { it.mats[0].uniforms.uOpacity.value = fade * 0.85; it.root.rotation.y += dt * 0.05; }
+        else {
+          it.body.rotation.y += dt * 0.25;
+          const pm = it.mats[0].uniforms; pm.uHi.value += ((it.hi ? 1 : 0) - pm.uHi.value) * (1 - Math.exp(-6 * dt));
+          it.body.scale.setScalar(it.params.size * (0.6 + 0.4 * smootherstep(k)));
+          it.mats[1].uniforms.uOpacity.value = fade * 0.8;
+          it.halo.rotation.y += dt * 0.4;
+          it.mats[2].opacity = fade * 0.5 * it.params.ring; it.ring.visible = it.params.ring > 0;
+          it.mats[3].opacity = fade * 0.35 * f.orbitVis;
+        }
+      } else if (it.type === 'comet') {
+        const O = it.orb, n = 0.55 / Math.pow(O.a, 1.5);
+        O.M += dt * n;
+        let E = O.M; for (let i = 0; i < 6; i++) E = O.M + O.e * Math.sin(E);
+        const lx = Math.cos(E) * O.a - O.c, lz = Math.sin(E) * O.b;
+        const ca = Math.cos(-it.a0), sa = Math.sin(-it.a0);
+        const x = lx * ca + lz * sa, z = -lx * sa + lz * ca;
+        const d = Math.hypot(x, z), ux = x / d, uz = z / d, len = Math.min(9, 26 / d) * it.params.size;
+        const T = it.tail;
+        for (let i = 0; i < T.n; i++) {
+          const q = i / T.n, s = T.seed[i], spread = q * 0.35 * len * 0.25;
+          T.pos[i * 3] = x + ux * q * len + s[0] * spread; T.pos[i * 3 + 1] = s[1] * spread * 0.5; T.pos[i * 3 + 2] = z + uz * q * len - s[0] * spread * 0.4;
+        }
+        T.g.attributes.position.needsUpdate = true;
+        it.mats[0].uniforms.uOpacity.value = fade;
+        it.mats[1].opacity = fade * 0.12 * f.orbitVis;
+      }
+    });
+    this.preview.material.opacity *= 1;
+  }
+}
+
 /** The system: owns the worlds, the dust, the stars and the camera poses that frame them. */
 class Orrery {
   constructor(shared, opts) {
@@ -3372,6 +3952,7 @@ class Orrery {
     const cu = this.cloud.material.uniforms;
     cu.uTime.value = t; cu.uPixelRatio.value = f.pixelRatio; cu.uOpacity.value = 0.35 + 0.65 * f.G;
     this.remnant.update(dt, t, f);
+    if (this.creations) this.creations.update(dt, t, f);
   }
 
   /* Camera poses. `out` is {pos, look}. */
@@ -4382,7 +4963,9 @@ class App {
     }
     // Once decoded, the decoder worker is not needed again.
     lib.dispose();
+    this.orrery.creations = new Creations(this.orrery);
     WorldTune.wire(this);
+    OrbitBuilder.wire(this); Fab.wire(this); Settings.wire(this);
   }
 
   /* Compile every program and upload every buffer and texture while the loader is still up,
