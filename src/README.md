@@ -9,7 +9,7 @@ Edit and rebuild:
 - `opt.mjs` — re-optimises the GLBs from `D:\work\blender\planet\<Planet>\` (textures to webp, Draco kept,
   Aqua Foam simplified). Output goes to `glb/`.
 
-    npm i three gsap esbuild @gltf-transform/cli @fontsource/cormorant-garamond @fontsource/geist-sans @fontsource/geist-mono
+    npm i three gsap esbuild @gltf-transform/cli @fontsource/bebas-neue @fontsource/barlow @fontsource/barlow-condensed @fontsource/geist-mono
     node opt.mjs
     npx esbuild vendor.js --bundle --format=iife --global-name=KY --minify --define:import.meta.url='"https://kythera.invalid/three/"' --outfile=build/vendor.min.js
     python build.py        # writes dist/index.html

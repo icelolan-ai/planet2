@@ -10,17 +10,18 @@ tpl = open(ROOT + '/template.html').read()
 
 # Fonts, inlined (latin subset) so the page never needs a network.
 faces = [
-    ('Cormorant Garamond', 300, 'normal', '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-300-normal.woff2'),
-    ('Cormorant Garamond', 300, 'italic', '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-300-italic.woff2'),
-    ('Cormorant Garamond', 400, 'normal', '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-400-normal.woff2'),
-    ('Cormorant Garamond', 400, 'italic', '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-400-italic.woff2'),
-    ('Geist', 300, 'normal', '@fontsource/geist-sans/files/geist-sans-latin-300-normal.woff2'),
-    ('Geist', 400, 'normal', '@fontsource/geist-sans/files/geist-sans-latin-400-normal.woff2'),
-    ('Geist', 500, 'normal', '@fontsource/geist-sans/files/geist-sans-latin-500-normal.woff2'),
+    ('Valorant', 400, 'normal', 'fonts/valorant.woff2'),
+    ('Bebas Neue', 400, 'normal', '@fontsource/bebas-neue/files/bebas-neue-latin-400-normal.woff2'),
+    ('Barlow', 300, 'normal', '@fontsource/barlow/files/barlow-latin-300-normal.woff2'),
+    ('Barlow', 400, 'normal', '@fontsource/barlow/files/barlow-latin-400-normal.woff2'),
+    ('Barlow', 500, 'normal', '@fontsource/barlow/files/barlow-latin-500-normal.woff2'),
+    ('Barlow Condensed', 400, 'normal', '@fontsource/barlow-condensed/files/barlow-condensed-latin-400-normal.woff2'),
+    ('Barlow Condensed', 500, 'normal', '@fontsource/barlow-condensed/files/barlow-condensed-latin-500-normal.woff2'),
+    ('Barlow Condensed', 600, 'normal', '@fontsource/barlow-condensed/files/barlow-condensed-latin-600-normal.woff2'),
     ('Geist Mono', 400, 'normal', '@fontsource/geist-mono/files/geist-mono-latin-400-normal.woff2'),
 ]
 fonts = '\n'.join(
-    f'@font-face{{font-family:"{f}";font-style:{st};font-weight:{w};font-display:swap;src:url(data:font/woff2;base64,{b64(NM + "/" + p)}) format("woff2")}}'
+    f'@font-face{{font-family:"{f}";font-style:{st};font-weight:{w};font-display:swap;src:url(data:font/woff2;base64,{b64((ROOT if p.startswith("fonts/") else NM) + "/" + p)}) format("woff2")}}'
     for f, w, st, p in faces)
 
 n = len(worlds)
