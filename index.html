@@ -8147,7 +8147,7 @@ class Explorer {
 
   /* Called at the top of the app frame. Returns true when the explorer owns the frame. */
   own(dt) {
-    if (this.phase === 'explore' || (this.phase === 'exit' && this.exitFromSurface) || (this.phase === 'load' && this.world)) { this.surfaceFrame(dt); return true; }
+    if (this.phase === 'explore' || (this.phase === 'exit' && this.exitFromSurface)) { this.surfaceFrame(dt); return true; }
     return false;
   }
   /* Called just before the orbit renders, to steer its camera during the dive and the way back. */
