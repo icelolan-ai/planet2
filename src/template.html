@@ -588,7 +588,7 @@ body.obuild-open main,body.obuild-open .labels,body.obuild-open .worldword{opaci
 /* phones: the world tune sheet lifts the scene so the world stays above it */
 @media (max-width:760px){
   #gl,.labels{transition:transform .6s var(--ease-out)}
-  body.wtune-open #gl,body.wtune-open .labels{transform:translateY(-15vh)}
+  body.wtune-open #gl,body.wtune-open .labels{transform:translateY(var(--wt-y,-15vh))}
   .tune.wtune{max-height:48vh}
 }
 /* per-world tuning: takes the detail panel's place so the world stays in view */
@@ -1301,6 +1301,12 @@ const WorldTune = (() => {
     const P = panel(); if (!P) return;
     if (on) { w = app && app.orrery && app.orrery.worlds[app.detail.index]; if (!w) return; fill(); syncAccent(); }
     P.dataset.open = String(on); document.body.classList.toggle('wtune-open', on);
+    // Phone: the sheet covers the lower half, so lift the scene until the planet sits centred in the space above it.
+    if (on && w && app && app.rig && matchMedia('(max-width: 760px)').matches) {
+      const v = w.group.getWorldPosition(new THREE.Vector3()).project(app.rig.camera);
+      const y = (-v.y * 0.5 + 0.5) * innerHeight, top = innerHeight - Math.min(P.scrollHeight, innerHeight * 0.48);
+      document.documentElement.style.setProperty('--wt-y', Math.round((56 + top) / 2 - y) + 'px');
+    }
     // While tuning, other worlds step aside so none of them passes in front of this one.
     if (app && app.orrery) app.orrery.worlds.forEach(x => { x.solo = on && x !== w; });
   };
