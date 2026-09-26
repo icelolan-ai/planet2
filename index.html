@@ -5452,7 +5452,7 @@ function circleGeometry(radius, segments) {
 
 /** Five nested particle shells. Even layers quantise into latitude bands, odd layers into meridians. */
 class ParticleField {
-  constructor(shared, count) {
+  constructor(shared, count, banded = false) {
     const weights = [0.07, 0.13, 0.2, 0.26, 0.34];
     const pos = new Float32Array(count * 3);
     const lat = new Float32Array(count * 3);
@@ -5477,8 +5477,10 @@ class ParticleField {
 
         let theta = Math.acos(clamp(y, -1, 1));
         let lon = Math.atan2(z, x);
-        if (L % 2 === 0) theta = (Math.round((theta / Math.PI) * bands) / bands) * Math.PI;
-        else lon = (Math.round((lon / (Math.PI * 2)) * meridians) / meridians) * Math.PI * 2;
+        if (banded) {
+          if (L % 2 === 0) theta = (Math.round((theta / Math.PI) * bands) / bands) * Math.PI;
+          else lon = (Math.round((lon / (Math.PI * 2)) * meridians) / meridians) * Math.PI * 2;
+        }
         lat[k * 3] = Math.sin(theta) * Math.cos(lon);
         lat[k * 3 + 1] = Math.cos(theta);
         lat[k * 3 + 2] = Math.sin(theta) * Math.sin(lon);
@@ -5543,6 +5545,137 @@ class Shells {
     inner.mat.uniforms.uOpacity.value = inner.base + f.expand * 0.2 + f.focusOn(0) * 0.12;
   }
   dispose() { this.items.forEach(i => { i.mesh.geometry.dispose(); i.mat.dispose(); }); }
+}
+
+/* Planet body: a glass shell with a fresnel rim, lit segmented ring blocks and drifting debris. */
+const GLASS_VERT = `
+varying vec3 vN, vV;
+void main(){
+  vec4 wp = modelMatrix * vec4(position, 1.0);
+  vN = normalize(mat3(modelMatrix) * normal);
+  vV = normalize(cameraPosition - wp.xyz);
+  gl_Position = projectionMatrix * viewMatrix * wp;
+}`;
+
+const GLASS_FRAG = `
+uniform vec3 uInk;
+uniform float uOpacity, uRim;
+varying vec3 vN, vV;
+void main(){
+  float f = 1.0 - abs(dot(normalize(vN), normalize(vV)));
+  float rim = pow(f, 3.0) * uRim + pow(f, 12.0) * 0.6;
+  vec3 L = normalize(vec3(-0.5, 0.7, 0.6));
+  float spec = pow(max(dot(reflect(-L, normalize(vN)), normalize(vV)), 0.0), 40.0) * 0.35;
+  gl_FragColor = vec4(uInk, (0.025 + rim + spec) * uOpacity);
+}`;
+
+const BLOCK_VERT = `
+varying vec3 vN, vV;
+void main(){
+  vec4 wp = modelMatrix * instanceMatrix * vec4(position, 1.0);
+  vN = normalize(mat3(modelMatrix) * mat3(instanceMatrix) * normal);
+  vV = normalize(cameraPosition - wp.xyz);
+  gl_Position = projectionMatrix * viewMatrix * wp;
+}`;
+
+const BLOCK_FRAG = `
+uniform vec3 uInk;
+uniform float uOpacity;
+varying vec3 vN, vV;
+void main(){
+  vec3 N = normalize(vN), V = normalize(vV);
+  vec3 L = normalize(vec3(-0.5, 0.7, 0.6));
+  float dif = max(dot(N, L), 0.0);
+  float spec = pow(max(dot(reflect(-L, N), V), 0.0), 24.0);
+  float rim = pow(1.0 - max(dot(N, V), 0.0), 3.0);
+  vec3 col = uInk * (0.08 + 0.55 * dif) + vec3(spec * 0.7) + uInk * rim * 0.25;
+  gl_FragColor = vec4(col, uOpacity);
+}`;
+
+class PlanetBody {
+  constructor(shared) {
+    this.shared = shared;
+    this.group = new THREE.Group();
+    const glass = (radius, rim) => {
+      const g = new THREE.SphereGeometry(radius, 64, 48);
+      const m = additive({ uniforms: { uInk: shared.uInk, uOpacity: { value: 0 }, uRim: { value: rim } }, vertexShader: GLASS_VERT, fragmentShader: GLASS_FRAG });
+      const mesh = new THREE.Mesh(g, m);
+      this.group.add(mesh);
+      return mesh;
+    };
+    this.outer = glass(1.3, 0.55);
+    this.inner = glass(0.64, 0.4);
+
+    this.blockMat = new THREE.ShaderMaterial({
+      uniforms: { uInk: shared.uInk, uOpacity: { value: 0 } },
+      vertexShader: BLOCK_VERT, fragmentShader: BLOCK_FRAG, transparent: true
+    });
+    const box = new THREE.BoxGeometry(1, 1, 1);
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+
+    // Segmented ring: runs of plated blocks with gaps, some stacked, tilted across the sphere.
+    const list = [];
+    let a = 0;
+    while (a < Math.PI * 2) {
+      const run = 3 + (Math.random() * 9 | 0);
+      for (let k = 0; k < run && a < Math.PI * 2; k++) {
+        const len = 0.035 + Math.random() * 0.05;
+        const layers = Math.random() < 0.3 ? 2 : 1;
+        for (let l = 0; l < layers; l++) {
+          const rad = 1.45 + (Math.random() - 0.5) * 0.03 + l * 0.035;
+          p.set(Math.cos(a) * rad, (Math.random() - 0.5) * 0.05 + (l ? 0.03 : 0), Math.sin(a) * rad);
+          q.setFromAxisAngle(up, -a + (Math.random() - 0.5) * 0.15);
+          s.set(0.03 + Math.random() * 0.035, 0.03 + Math.random() * 0.05, len * 0.9);
+          list.push(m4.compose(p, q, s).clone());
+        }
+        a += len / 1.45;
+      }
+      a += (0.04 + Math.random() * 0.25) / 1.45;
+    }
+    this.band = new THREE.InstancedMesh(box, this.blockMat, list.length);
+    list.forEach((m, i) => this.band.setMatrixAt(i, m));
+    this.bandPivot = new THREE.Group();
+    this.bandPivot.rotation.set(1.38, 0.2, -0.62);
+    this.bandPivot.add(this.band);
+    this.group.add(this.bandPivot);
+
+    // Loose debris drifting around the shell.
+    const nD = 70;
+    this.debris = new THREE.InstancedMesh(box, this.blockMat, nD);
+    for (let i = 0; i < nD; i++) {
+      const u = Math.random() * 2 - 1, th = Math.random() * Math.PI * 2, rr = 1.35 + Math.random() * 0.75, w = Math.sqrt(1 - u * u);
+      p.set(Math.cos(th) * w * rr, u * rr * 0.8, Math.sin(th) * w * rr);
+      q.setFromEuler(new THREE.Euler(Math.random() * 6, Math.random() * 6, Math.random() * 6));
+      const sz = 0.01 + Math.random() * 0.022;
+      s.set(sz, sz * (0.6 + Math.random()), sz);
+      this.debris.setMatrixAt(i, m4.compose(p, q, s));
+    }
+    this.group.add(this.debris);
+    this.box = box;
+
+    // Vertical axis line through the planet.
+    const lg = new THREE.BufferGeometry();
+    lg.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0, -2.2, 0, 0, 2.2, 0]), 3));
+    lg.setAttribute('aT', new THREE.BufferAttribute(new Float32Array([0, 1]), 1));
+    this.axisMat = lineMaterial(shared, { opacity: 0.14 });
+    this.axis = new THREE.Line(lg, this.axisMat);
+  }
+  update(dt, f) {
+    const on = this.shared.uIntro.value * (1 - f.expand * 0.6);
+    this.outer.material.uniforms.uOpacity.value = on;
+    this.inner.material.uniforms.uOpacity.value = on * 0.7;
+    this.blockMat.uniforms.uOpacity.value = Math.min(1, on * 1.2);
+    this.bandPivot.visible = this.debris.visible = on > 0.01;
+    this.band.rotation.y += dt * 0.05 * f.motion;
+    this.debris.rotation.y -= dt * 0.03 * f.motion;
+    this.debris.rotation.x += dt * 0.01 * f.motion;
+    const sc = 1 + f.expand * 0.15;
+    this.group.scale.setScalar(sc);
+  }
+  dispose() {
+    [this.outer, this.inner].forEach(m => { m.geometry.dispose(); m.material.dispose(); });
+    this.box.dispose(); this.blockMat.dispose(); this.axis.geometry.dispose(); this.axisMat.dispose();
+  }
 }
 
 /** Orbital rings that precess, fan apart on expansion, and flatten into an orrery on the flow layer. */
@@ -5811,7 +5944,8 @@ class AICore {
     this.shells = new Shells(this.shared); this.spin.add(this.shells.group);
     this.rings = new Rings(this.shared); this.orient.add(this.rings.group);
     this.glow = new Glow(); this.group.add(this.glow.sprite);
-    this.parts.push(this.shells, this.rings, this.glow);
+    this.planet = new PlanetBody(this.shared); this.orient.add(this.planet.group); this.group.add(this.planet.axis);
+    this.parts.push(this.shells, this.rings, this.glow, this.planet);
   }
   buildEnergy(count) { this.energy = new EnergyNetwork(this.shared, count); this.spin.add(this.energy.group); this.parts.push(this.energy); }
   buildTelemetry() { this.orbit = new DataOrbit(this.shared); this.group.add(this.orbit.group); this.parts.push(this.orbit); }
@@ -5841,6 +5975,7 @@ class AICore {
     this.energy.update(dt, f);
     this.orbit.update(dt, t, f);
     this.glow.update(dt, f);
+    this.planet.update(dt, f);
   }
   dispose() { this.parts.forEach(p => p.dispose()); this.parts = []; }
 }
@@ -5936,6 +6071,37 @@ class InterstellarCloud {
     this.points.renderOrder = -1;
   }
   dispose() { this.geometry.dispose(); this.material.dispose(); }
+}
+
+/** The original particle core, now the outermost body: it orbits past the last world and keeps re-forming its lattice. */
+class RemnantCore {
+  constructor(count) {
+    this.shared = createSharedUniforms();
+    this.group = new THREE.Group();
+    this.field = new ParticleField(this.shared, count, true);
+    this.shells = new Shells(this.shared);
+    this.group.add(this.field.points, this.shells.group);
+    this.orbit = 19.4; this.incl = 0.03; this.phase = 2.8;
+    this.lineGeom = circleGeometry(this.orbit, 360);
+    this.lineMat = lineMaterial(this.shared, { opacity: 0, dash: 360 });
+    this.line = new THREE.Line(this.lineGeom, this.lineMat);
+    this.line.rotation.x = Math.PI / 2 - this.incl;
+    this.line.frustumCulled = false;
+  }
+  update(dt, t, f) {
+    const S = this.shared, on = f.G;
+    S.uTime.value = t; S.uIntro.value = on; S.uMotion.value = f.reduced ? 0 : 1;
+    S.uMorph.value = 0.5 + 0.5 * Math.sin(t * 0.25);
+    const u = this.field.material.uniforms;
+    u.uPixelRatio.value = f.pixelRatio; u.uSize.value = 2.6;
+    const a = this.phase + t * KEPLER / Math.pow(this.orbit, 1.5);
+    this.group.position.set(Math.cos(a) * this.orbit, Math.sin(a) * this.orbit * Math.sin(this.incl), Math.sin(a) * this.orbit * Math.cos(this.incl));
+    this.group.rotation.y += dt * 0.15;
+    this.shells.update(dt, { expand: 0, motion: 1, focusOn: () => 0 });
+    this.lineMat.uniforms.uOpacity.value = 0.18 * on * f.orbitVis;
+    this.group.visible = this.line.visible = on > 0.002;
+  }
+  dispose() { this.field.dispose(); this.shells.dispose(); this.lineGeom.dispose(); this.lineMat.dispose(); }
 }
 
 /** A graduated dial laid flat around the whole system: the orrery's scale. */
@@ -6146,7 +6312,8 @@ class Orrery {
     this.dust = new DustDisc(shared, opts.dust);
     this.dial = new OrbitDial(shared, 20.4);
     this.cloud = new InterstellarCloud(shared, opts.motes, opts.puffs);
-    this.group.add(this.stars.points, this.cloud.points, this.dust.points, this.dial.lines);
+    this.remnant = new RemnantCore(opts.remnant);
+    this.group.add(this.stars.points, this.cloud.points, this.dust.points, this.dial.lines, this.remnant.group, this.remnant.line);
     this.v = { a: new THREE.Vector3(), b: new THREE.Vector3(), c: new THREE.Vector3(), up: new THREE.Vector3(0, 1, 0) };
     this.aspect = 1.6;
     this.poseA = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
@@ -6166,6 +6333,7 @@ class Orrery {
     this.dial.lines.visible = f.G > 0.002;
     const cu = this.cloud.material.uniforms;
     cu.uTime.value = t; cu.uPixelRatio.value = f.pixelRatio; cu.uOpacity.value = 0.35 + 0.65 * f.G;
+    this.remnant.update(dt, t, f);
   }
 
   /* Camera poses. `out` is {pos, look}. */
@@ -6663,7 +6831,7 @@ class App {
     this.core.buildTelemetry();
 
     this.loader.set(0.26, 'Charting the orbit'); await nextFrame();
-    this.orrery = new Orrery(this.shared, { stars: m ? 1800 : 4200, dust: m ? 1400 : 3600, motes: m ? 900 : 2400, puffs: m ? 70 : 160 });
+    this.orrery = new Orrery(this.shared, { stars: m ? 1800 : 4200, dust: m ? 1400 : 3600, motes: m ? 900 : 2400, puffs: m ? 70 : 160, remnant: m ? 3000 : 7000 });
     this.stage.scene.add(this.orrery.group);
     await this.loadWorlds(0.28, 0.9);
 
