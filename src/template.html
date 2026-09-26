@@ -131,6 +131,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   opacity:0;transition:opacity 1.2s var(--ease-out) 1.4s}
 .is-ready .rail{opacity:1}
 .is-detail .rail{opacity:0;pointer-events:none;transition-delay:0s}
+body.legend-on .rail button[aria-current="true"] span{opacity:0}
 /* scroll ruler: one tick per section, a short tick per world; the active one is longer, brighter and named */
 .rail button{display:flex;align-items:center;justify-content:flex-end;gap:12px;height:12px;padding:0 6px;color:var(--ink-4);border-radius:2px}
 .rail button i{display:block;width:12px;height:1px;background:currentColor;transition:width .6s var(--ease-out),background-color .4s,box-shadow .4s}
@@ -5705,15 +5706,18 @@ class App {
       }, (it, x, y) => {
         const W = this.stage.width, side = this.side < 0 ? -1 : 1, cs = this.coreScreen;
         let col = cs.x + side * (cs.r + 26);
-        col = side > 0 ? Math.min(col, W - 210) : Math.max(col, 210);
+        // Keep the legend clear of the section ruler on the right edge (its labels reach ~140px left of it).
+        col = side > 0 ? Math.min(col, Math.min(W, this.railX || W) - 210) : Math.max(col, 210);
         const gap = clamp(cs.r * 0.34, 36, 72);
         const dy = cs.y + (2 - L) * gap - y;
-        const lead = Math.max(16, side > 0 ? col - x : x - col);
-        const ang = Math.atan2(dy, lead) * 180 / Math.PI * side;
+        // When the core is so big its anchors sit past the column, the text still snaps back to the column
+        // (a negative lead) and the leader line is dropped, so labels never run under the ruler.
+        const raw = side > 0 ? col - x : x - col, lead = raw;
+        const ang = raw < 16 ? 0 : Math.atan2(dy, lead) * 180 / Math.PI * side;
         const st = it.el.style;
         st.setProperty('--lead', lead.toFixed(0) + 'px');
         st.setProperty('--dy', dy.toFixed(0) + 'px');
-        st.setProperty('--len', Math.hypot(lead, dy).toFixed(0) + 'px');
+        st.setProperty('--len', (raw < 16 ? 0 : Math.hypot(lead, dy)).toFixed(0) + 'px');
         st.setProperty('--ang', ang.toFixed(2) + 'deg');
       });
       item.L = L;
@@ -6288,6 +6292,8 @@ class App {
     const flip = this.side < 0;
     const dataVis = ready * (1 - this.legendVis) * 0.85 * (1 - smoothstep(0.1, 0.5, G)) * (1 - smoothstep(this.orbitEnd + 1.3, this.orbitEnd + 1.9, s));
     this.lblSat.target = dataVis; this.lblPeak.target = dataVis; this.lblCoh.target = dataVis * (portrait ? 0 : 1);
+    if (this.legendVis > 0.01) { const rl = $('.rail'); const rr = rl && rl.getBoundingClientRect(); this.railX = rr && rr.width > 0 ? rr.left : 0; }
+    document.body.classList.toggle('legend-on', this.legendVis > 0.3);
     this.legend.forEach(it => {
       it.target = ready * clamp(this.legendVis * 1.7 - (4 - it.L) * 0.14, 0, 1);
       this.labels.setFlip(it, flip);
