@@ -83,25 +83,28 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
 
 /* ------------------------------------------------------------------ Loader */
-#loader{position:fixed;inset:0;z-index:40;background:var(--bg);display:grid;grid-template-rows:auto 1fr auto;
+#loader{position:fixed;inset:0;z-index:40;background:var(--bg);display:grid;grid-template-rows:1fr auto;
   padding:calc(env(safe-area-inset-top,0px) + 24px) var(--pad) calc(env(safe-area-inset-bottom,0px) + 24px);
   transition:opacity 1s var(--ease-out) .35s}
-.ld-row{display:flex;justify-content:space-between;gap:20px;color:var(--ink-3);font-size:12px}
+/* only the count sits in the middle; everything else is a quiet block on the bottom edge */
+.ld-foot{justify-self:center;display:grid;justify-items:center;gap:14px;text-align:center;transition:opacity .7s var(--ease-out)}
+.ld-row{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 22px;color:var(--ink-3);font-size:11px}
 .ld-row b{font-weight:400;color:var(--ink-2)}
 .ld-center{align-self:center;justify-self:center;display:grid;justify-items:center;gap:22px;transition:transform .9s var(--ease-out),opacity .7s var(--ease-out)}
 .ld-num{font-family:var(--f-display);font-weight:300;font-size:clamp(72px,10vw,132px);line-height:.9;font-variant-numeric:lining-nums tabular-nums;letter-spacing:-.02em}
 .ld-track{width:min(220px,50vw);height:1px;background:var(--line);overflow:hidden}
 .ld-track i{display:block;height:100%;background:var(--ink);transform:scaleX(0);transform-origin:left}
 .ld-status{font-size:12.5px;color:var(--ink-3);min-height:1.4em;text-align:center}
-.ld-worlds{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:8px 20px;max-width:760px;font-size:12px;color:var(--ink-4)}
+.ld-worlds{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:8px 20px;max-width:760px;font-size:12px;color:var(--ink-4)}
 .ld-worlds li{display:flex;align-items:center;gap:8px;transition:color .8s var(--ease-out)}
 .ld-worlds li i{width:5px;height:5px;border-radius:50%;background:currentColor;transition:background-color .8s,box-shadow .8s}
 .ld-worlds li.is-on{color:var(--ink-2)}
 .ld-worlds li.is-on i{background:var(--a);box-shadow:0 0 10px var(--a)}
 #loader.is-done{opacity:0;pointer-events:none}
 #loader.is-outro{background:transparent;transition:opacity 1s,background-color .35s ease}
-#loader.is-outro .ld-worlds,#loader.is-outro .ld-status,#loader.is-outro .ld-track,#loader.is-outro .ld-row{opacity:0;transition:opacity .3s ease}
+#loader.is-outro .ld-foot{opacity:0;transition:opacity .3s ease}
 #loader.is-done .ld-center{transform:translateY(-18px) scale(.98);opacity:0}
+#loader.is-done .ld-foot{opacity:0}
 
 /* ------------------------------------------------------------------ HUD */
 .hud{position:fixed;left:0;right:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:20px;
@@ -724,14 +727,15 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
 <div class="grain" aria-hidden="true"></div>
 
 <div id="loader">
-  <div class="ld-row"><b>Cerebra</b><span>Living planet, waking</span></div>
   <div class="ld-center">
     <div class="ld-num" data-num>000</div>
-    <div class="ld-track"><i data-bar></i></div>
-    <div class="ld-status" data-status aria-live="polite">Starting</div>
-    <ol class="ld-worlds" aria-hidden="true"><li style="--a:#86d9cf"><i></i>Aqua Foam</li><li style="--a:#e38b5f"><i></i>Arcanum</li><li style="--a:#7fdcae"><i></i>Emerald Tide</li><li style="--a:#ff7a3d"><i></i>Inferno</li><li style="--a:#a98bff"><i></i>Nebula</li><li style="--a:#8ec3ff"><i></i>Terra Nova</li><li style="--a:#8fe6ff"><i></i>Tempest</li></ol>
   </div>
-  <div class="ld-row"><span>One core, seven worlds</span><span>Assembled in your browser</span></div>
+  <div class="ld-foot">
+    <div class="ld-track"><i data-bar></i></div>
+    <ol class="ld-worlds" aria-hidden="true"><li style="--a:#86d9cf"><i></i>Aqua Foam</li><li style="--a:#e38b5f"><i></i>Arcanum</li><li style="--a:#7fdcae"><i></i>Emerald Tide</li><li style="--a:#ff7a3d"><i></i>Inferno</li><li style="--a:#a98bff"><i></i>Nebula</li><li style="--a:#8ec3ff"><i></i>Terra Nova</li><li style="--a:#8fe6ff"><i></i>Tempest</li></ol>
+    <div class="ld-row"><b>Cerebra</b><span>Living planet, waking</span><span>One core, seven worlds</span><span>Assembled in your browser</span></div>
+  </div>
+  <div class="ld-status sr-only" data-status aria-live="polite">Starting</div>
 </div>
 
 <header class="hud hud-top">
