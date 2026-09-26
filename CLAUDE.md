@@ -1,6 +1,7 @@
 # Working rules for this repo
 
 - Edit `src/template.html` (and `src/worlds.json`), then run `python3 src/build_web.py`. It writes `index.html` and the hashed files in `assets/`. Never edit those outputs by hand.
+- Effects (formation, hologram, ...) live in `src/effects/`; `core.js` is the shared registry and the build splices them into the app script.
 - Binaries that rarely change (vendor bundle, fonts, Draco decoder, world GLBs) live in `src/assets-src/`.
 - The split site needs http(s) (GitHub Pages or `python3 -m http.server`); it does not run from `file://`.
 - For every task: commit, push, open a PR, and merge it into `main` without waiting to be asked again.

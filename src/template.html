@@ -791,6 +791,7 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
   <div class="tune-row tall"><span>Presets</span><div class="tune-grid" data-wt-rpresets></div></div>
   <div data-wt-rsliders></div>
   <p class="tune-hint">Tap or drag across the world to send ripples.</p>
+  <div data-wt-effects></div>
   <p class="tune-hint" data-wt-note>Colour changes follow you down to the surface when you explore.</p>
   <button type="button" class="tune-btn" data-wt-random>&#9861; Randomize this world</button>
   <button type="button" class="tune-reset" data-wt-reset>Reset this world</button>
@@ -1309,13 +1310,22 @@ const WorldTune = (() => {
     // While tuning, other worlds step aside so none of them passes in front of this one.
     if (app && app.orrery) app.orrery.worlds.forEach(x => { x.solo = on && x !== w; });
   };
-  const rippleDefaults = () => { const o = { r_enabled: 1, r_trail: 1 }; RIPPLE_CONTROLS.forEach(c => { o['r_' + c.key] = RIPPLE_DEFAULTS[c.key]; }); return o; };
+  const rippleDefaults = () => { const o = Object.assign({ r_enabled: 1, r_trail: 1 }, Effects.defaults()); RIPPLE_CONTROLS.forEach(c => { o['r_' + c.key] = RIPPLE_DEFAULTS[c.key]; }); return o; };
   const wire = a => {
     app = a;
     const Pn = panel();
     RIPPLE_CONTROLS.forEach(c => { fmt['r_' + c.key] = v => (+v).toFixed(c.step < 0.01 ? 3 : c.step < 1 ? 2 : 0); });
     Pn.querySelector('[data-wt-rsliders]').innerHTML = RIPPLE_CONTROLS.map(c =>
       `<label class="tune-row"><span>${c.label}</span><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" data-wt="r_${c.key}"><b data-out></b></label>`).join('');
+    // One section per registered effect: on/off, its sliders and a replay button.
+    Pn.querySelector('[data-wt-effects]').innerHTML = Effects.list.map(fx => {
+      fx.controls.forEach(c => { fmt[fx.prefix + c.key] = v => (+v).toFixed(c.step < 0.01 ? 3 : 2); });
+      return `<p class="tune-sub">${fx.title}</p>` +
+        `<div class="tune-row"><span>${fx.title}</span><div class="tune-seg" data-wt-seg="${fx.prefix}enabled"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>` +
+        fx.controls.map(c => `<label class="tune-row"><span>${c.label}</span><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" data-wt="${fx.prefix}${c.key}"><b data-out></b></label>`).join('') +
+        (fx.play ? `<button type="button" class="tune-btn" data-fx-replay="${fx.id}">&#8635; Replay ${fx.title.toLowerCase()}</button>` : '');
+    }).join('');
+    Pn.querySelectorAll('[data-fx-replay]').forEach(b => b.addEventListener('click', () => { const fx = Effects.list.find(x => x.id === b.dataset.fxReplay); if (w && fx) fx.play(w); }));
     Pn.querySelector('[data-wt-rpresets]').innerHTML = Object.keys(RIPPLE_PRESETS).map(n => `<button type="button" data-rp="${n}">${n}</button>`).join('');
     // Every world starts from the ripple defaults, then its saved tuning.
     app.orrery.worlds.forEach(x => Object.entries(rippleDefaults()).forEach(([k, v]) => { if (x.tune[k] == null) x.tune[k] = v; }));
@@ -3892,6 +3902,8 @@ function shiftColor(hex, hueDeg, sat, bright) {
 
 
 /** One imported world: the Blender model, its atmosphere, its particle halo and its orbit line. */
+/*__EFFECTS__*/
+
 class World {
   constructor(def, index, gltf, shared, opts) {
     this.def = def; this.index = index;
@@ -3910,7 +3922,8 @@ class World {
       uKyReveal: { value: 0 }, uKyHover: { value: 0 }, uKyAmbient: { value: 0.2 }, uKyHSB: { value: new THREE.Vector3(0, 1, 1) }
     };
     if (def.accent0 == null) def.accent0 = def.accent;
-    this.tune = Object.assign({}, World.TUNE_DEFAULT, { tilt: def.tilt });
+    this.tune = Object.assign({}, World.TUNE_DEFAULT, { tilt: def.tilt }, Effects.defaults());
+    Effects.attach(this);
     this.spinPhase = 0; this.orbPhase = 0; this.haloT = 0; this.haloN = opts.halo;
 
     // Normalise the model to the art-directed radius.
@@ -4040,8 +4053,8 @@ class World {
         .replace('#include <common>', '#include <common>\n' + WORLD_PARS_VERT)
         .replace('#include <project_vertex>', '#include <project_vertex>\n' + WORLD_MAIN_VERT);
       sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', '#include <common>\n' + WORLD_PARS_FRAG)
-        .replace('#include <opaque_fragment>', '#include <opaque_fragment>\n' + WORLD_MAIN_FRAG);
+        .replace('#include <common>', '#include <common>\n' + WORLD_PARS_FRAG + FORMATION.PARS)
+        .replace('#include <opaque_fragment>', '#include <opaque_fragment>\n' + WORLD_MAIN_FRAG.replace('{\n', '{\n' + FORMATION.MAIN + '\n').replace(/}\s*$/, FORMATION.TAIL + '\n}'));
     };
     m.customProgramCacheKey = () => 'ky-world-ripple-' + m.type;
     m.needsUpdate = true;
@@ -4069,6 +4082,7 @@ class World {
   }
   setTune(k, v) {
     if (k.startsWith('r_')) return this.setRipple(k.slice(2), v);
+    if (Effects.set(this, k, v)) return;
     this.tune[k] = v;
     if (k === 'hue' || k === 'sat' || k === 'bright') this.applyColor();
     if (k === 'halo') this.haloGeom.setDrawRange(0, Math.round(this.haloN * clamp(v, 0, 3) / 3));
@@ -4085,6 +4099,7 @@ class World {
     this.spinPhase += dt * d.spin * T.spin * T.dir;
     this.haloT += dt * T.haloSpeed * (0.3 + 0.7 * (f.reduced ? 0.25 : 1));
     this.ripple.update(t);
+    Effects.update(this, dt, t);
     this.haloMat.uniforms.uSpinA.value = this.spinG.rotation.y;
     this.haloMat.uniforms.uHaloT.value = this.haloT;
     this.group.position.set(Math.cos(a) * R, Math.sin(a) * R * Math.sin(d.incl), Math.sin(a) * R * Math.cos(d.incl));
@@ -5266,7 +5281,12 @@ function dracoPaths() {
 
 /* Fetch with byte progress. */
 async function fetchBytes(url, onBytes) {
-  const res = await fetch(url);
+  // A CDN hiccup (5xx or a dropped connection) gets two quiet retries before the world is given up.
+  let res;
+  for (let tries = 0; ; tries++) {
+    try { res = await fetch(url); if (res.ok || res.status < 500 || tries >= 2) break; } catch (e) { if (tries >= 2) throw e; }
+    await new Promise(r => setTimeout(r, 600 * (tries + 1)));
+  }
   if (!res.ok) throw new Error('HTTP ' + res.status + ' for ' + url);
   if (!res.body || !res.body.getReader) { const b = new Uint8Array(await res.arrayBuffer()); onBytes && onBytes(b.length); return b; }
   const reader = res.body.getReader(), parts = []; let got = 0;
@@ -5360,6 +5380,7 @@ class App {
     this.ac = new AbortController();
     this.sections = $$('main .sec');
     this.orbitEnd = ORBIT_START + WORLDS.length; // last world section
+    this.formed = new Set(); // worlds that already played their formation
     this.loader = new Loader($('#loader'));
     this.sound = new SoundDesk();
     this.cursor = new Cursor($('#cursor'), this.ac.signal);
@@ -5457,6 +5478,8 @@ class App {
     this.last = performance.now();
     this.raf = requestAnimationFrame(this.frame);
     await this.loader.finish(900, (rect, text, cs) => this.startOutro(rect, text, cs));
+    // The worlds assemble as the loader hands over.
+    if (this.orrery) this.orrery.worlds.forEach(w => FORMATION.play(w));
     this.reveal();
     this.introOn = true;
     this.loadWorldsInBackground();
@@ -6012,6 +6035,7 @@ class App {
     // Freeze the current camera as the start of the flight, then move the page under the overlay.
     this.fly.snap.pos.copy(this.rig.camera.position); this.fly.snap.look.copy(this.poses.out.look);
     this.fly.mix = 0; this.fly.to = k; this.fly.swap = 1; this.detail.busy = true;
+    FORMATION.play(this.orrery.worlds[k]); this.formed.add(k);
     this.scroll.jumpTo(ORBIT_START + 1 + k);
 
     this.fillDetail(k);
@@ -6028,6 +6052,7 @@ class App {
   }
 
   swapWorld(k) {
+    if (this.orrery && this.orrery.worlds[k]) { FORMATION.play(this.orrery.worlds[k]); this.formed.add(k); }
     if (this.detail.busy) return;
     const reduced = this.reduced;
     this.detail.busy = true;
@@ -6384,6 +6409,8 @@ class App {
     n.classList.remove('swap'); void n.offsetWidth; n.classList.add('swap');
     $$('.rail button').forEach(b => b.setAttribute('aria-current', String(+b.dataset.target === i)));
     const inWorlds = i > ORBIT_START && i <= this.orbitEnd;
+    // First arrival at a world by scrolling: it forms in front of you.
+    if (inWorlds && this.orrery && !this.formed.has(i - ORBIT_START - 1)) { this.formed.add(i - ORBIT_START - 1); FORMATION.play(this.orrery.worlds[i - ORBIT_START - 1]); }
     if (!inWorlds && !this.detail.open) this.root.style.setProperty('--accent', '#a8cfff');
     // Highlight colour follows the planet you are at: a world's accent, otherwise the core's red.
     if (!this.detail.open) this.root.style.setProperty('--hl', inWorlds ? WORLDS[i - ORBIT_START - 1].accent : '#ff4655');
