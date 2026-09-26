@@ -66,7 +66,7 @@ def minify_js(code):
 # ---------------------------------------------------------------- markup shared by both modes
 n = len(worlds)
 words = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
-sections, index, loader = [], [], []
+sections, index, loader, rail = [], [], [], []
 for i, w in enumerate(worlds):
     side = 'left' if i % 2 == 0 else 'right'
     num = f'{i + 1:02d}'
@@ -82,6 +82,7 @@ for i, w in enumerate(worlds):
     </div>
   </section>''')
     index.append(f'<li style="--a:{w["accent"]}"><button type="button" data-open-world="{i}" data-cursor="Land"><span class="wi">{num}</span><span class="wn">{esc(w["name"])}</span><span class="wd"></span></button></li>')
+    rail.append(f'<button type="button" class="w" data-target="{i + 4}" style="--a:{w["accent"]}" aria-label="Go to world {num}, {esc(w["name"])}"><span>{esc(w["name"])}</span><i></i></button>')
     loader.append(f'<li style="--a:{w["accent"]}"><i></i>{esc(w["name"])}</li>')
 
 js_worlds = json.dumps([{k: w[k] for k in ('id', 'name', 'kicker', 'accent', 'radius', 'orbit', 'incl', 'phase', 'tilt', 'spin', 'lede', 'body', 'exports')} for w in worlds], ensure_ascii=False)
@@ -94,7 +95,7 @@ a = tpl.rindex('<script>', 0, i)
 b = tpl.index('</script>', i) + len('</script>')
 app_src = tpl[a + len('<script>'):b - len('</script>')].replace('/*__WORLDS__*/', js_worlds)
 
-page = (tpl.replace('<!--__LOADER_WORLDS__-->', ''.join(loader))
+page = (tpl.replace('<!--__LOADER_WORLDS__-->', ''.join(loader)).replace('<!--__RAIL_WORLDS__-->', ''.join(rail))
            .replace('<!--__WORLD_INDEX__-->', ''.join(index))
            .replace('<!--__WORLD_SECTIONS__-->', '\n\n'.join(sections)))
 
@@ -140,7 +141,7 @@ out = out.replace('<!--__DATA__-->', '<script>window.__ASSETS = ' + json.dumps(m
 vs = out.index('<script>/*__VENDOR__*/</script>')
 ae = out.index('</script>', out.index('/*__WORLDS__*/')) + len('</script>')
 out = out[:vs] + boot + out[ae:]
-for m in ['__FONTS__', '__LOADER_WORLDS__', '__WORLD_INDEX__', '__WORLD_SECTIONS__', '__DATA__', '__VENDOR__', '__WORLDS__']:
+for m in ['__FONTS__', '__LOADER_WORLDS__', '__WORLD_INDEX__', '__WORLD_SECTIONS__', '__RAIL_WORLDS__', '__DATA__', '__VENDOR__', '__WORLDS__']:
     assert m not in out, m
 open(os.path.join(ROOT, 'index.html'), 'w', encoding='utf-8').write(out)
 written.append(('index.html', len(out.encode())))

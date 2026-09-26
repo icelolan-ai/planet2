@@ -124,20 +124,22 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .tel span{white-space:nowrap}
 .tel b{font-weight:400;color:var(--ink-2)}
 
-.rail{position:fixed;right:calc(var(--pad) - 6px);top:50%;z-index:5;display:grid;gap:14px;transform:translateY(-50%);
+.rail{position:fixed;right:calc(var(--pad) - 6px);top:50%;z-index:5;display:grid;gap:6px;transform:translateY(-50%);
   opacity:0;transition:opacity 1.2s var(--ease-out) 1.4s}
 .is-ready .rail{opacity:1}
 .is-detail .rail{opacity:0;pointer-events:none;transition-delay:0s}
-.rail button{display:flex;align-items:center;justify-content:flex-end;gap:12px;height:14px;padding:0 6px;color:var(--ink-3)}
-.rail button i{display:block;width:12px;height:1px;background:currentColor;transition:width .6s var(--ease-out),background-color .4s}
-.rail button span{font-size:12px;opacity:0;transform:translateX(6px);transition:opacity .35s,transform .5s var(--ease-out)}
-.rail button:hover span,.rail button:focus-visible span{opacity:1;transform:none}
+/* scroll ruler: one tick per section, a short tick per world; the active one is longer, brighter and named */
+.rail button{display:flex;align-items:center;justify-content:flex-end;gap:12px;height:12px;padding:0 6px;color:var(--ink-4);border-radius:2px}
+.rail button i{display:block;width:12px;height:1px;background:currentColor;transition:width .6s var(--ease-out),background-color .4s,box-shadow .4s}
+.rail button.w{height:8px}
+.rail button.w i{width:6px;background:var(--a);opacity:.55}
+.rail button span{font-size:11px;opacity:0;transform:translateX(6px);transition:opacity .35s,transform .5s var(--ease-out);white-space:nowrap}
+.rail button:hover span,.rail button:focus-visible span,.rail button[aria-current="true"] span{opacity:1;transform:none}
+.rail button:hover{color:var(--ink-2)}
+.rail button:focus-visible{outline:1px solid var(--hl,#ff4655);outline-offset:2px}
 .rail button[aria-current="true"]{color:var(--ink)}
-.rail button[aria-current="true"] i{width:30px}
-.rail .rail-worlds{display:flex;justify-content:flex-end;gap:5px;padding:0 6px;height:8px;align-items:center;opacity:.0;transition:opacity .6s}
-.rail.in-orbit .rail-worlds{opacity:1}
-.rail-worlds i{width:3px;height:3px;border-radius:50%;background:var(--ink-4);transition:background-color .5s,transform .5s var(--ease-out)}
-.rail-worlds i.on{background:var(--accent);transform:scale(1.6)}
+.rail button[aria-current="true"] i{width:30px;opacity:1;height:2px}
+.rail button.w[aria-current="true"] i{width:22px}
 
 /* planet picker */
 .picker{position:fixed;left:var(--pad);bottom:calc(env(safe-area-inset-bottom,0px) + 56px);z-index:6;opacity:0;transition:opacity 1.2s var(--ease-out) 1.6s}
@@ -362,7 +364,12 @@ body.no-gl .windex button{pointer-events:none}
   .windex .wd{display:none}
   #projects .lede{margin-bottom:18px}
   [data-depth-num],[data-sound-label]{display:none}
-  .rail,.tel .opt,.hint{display:none}
+  .tel .opt,.hint{display:none}
+  .rail{right:2px;gap:3px}
+  .rail button{height:9px;padding:0 4px}.rail button.w{height:6px}
+  .rail button span{display:none}
+  .rail button i{width:8px}.rail button.w i{width:4px}
+  .rail button[aria-current="true"] i{width:16px}.rail button.w[aria-current="true"] i{width:12px}
   .depth{min-width:0}
   .brand-sub{display:none}
   .glabel:not(.keep){display:none}
@@ -727,13 +734,14 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
   </div>
 </header>
 
-<nav class="rail" aria-label="Layers">
-  <button type="button" data-target="1"><span>Perimeter</span><i></i></button>
-  <button type="button" data-target="2"><span>Lattice</span><i></i></button>
-  <button type="button" data-target="3"><span>Orbit</span><i></i></button>
-  <div class="rail-worlds" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-  <button type="button" data-target="11"><span>Memory</span><i></i></button>
-  <button type="button" data-target="12"><span>Nucleus</span><i></i></button>
+<nav class="rail" aria-label="Sections">
+  <button type="button" data-target="0" aria-label="Go to The core"><span>The core</span><i></i></button>
+  <button type="button" data-target="1" aria-label="Go to Perimeter"><span>Perimeter</span><i></i></button>
+  <button type="button" data-target="2" aria-label="Go to Lattice"><span>Lattice</span><i></i></button>
+  <button type="button" data-target="3" aria-label="Go to Orbit"><span>Orbit</span><i></i></button>
+  <!--__RAIL_WORLDS__-->
+  <button type="button" data-target="11" aria-label="Go to Memory"><span>Memory</span><i></i></button>
+  <button type="button" data-target="12" aria-label="Go to Nucleus"><span>Nucleus</span><i></i></button>
 </nav>
 
 <button class="tune-toggle" type="button" aria-expanded="false" aria-controls="tune" data-tune-toggle><i></i><span>Tune the core</span></button>
@@ -6367,11 +6375,8 @@ class App {
     const n = $('[data-depth-name]');
     Scramble.run(n, sec ? sec.dataset.name : '', 500);
     n.classList.remove('swap'); void n.offsetWidth; n.classList.add('swap');
-    const railTarget = i >= ORBIT_START && i <= this.orbitEnd ? ORBIT_START : i;
-    $$('.rail button').forEach(b => b.setAttribute('aria-current', String(+b.dataset.target === railTarget)));
+    $$('.rail button').forEach(b => b.setAttribute('aria-current', String(+b.dataset.target === i)));
     const inWorlds = i > ORBIT_START && i <= this.orbitEnd;
-    $('.rail').classList.toggle('in-orbit', i >= ORBIT_START && i <= this.orbitEnd);
-    $$('.rail-worlds i').forEach((d, k) => d.classList.toggle('on', inWorlds && k === i - ORBIT_START - 1));
     if (!inWorlds && !this.detail.open) this.root.style.setProperty('--accent', '#a8cfff');
     // Highlight colour follows the planet you are at: a world's accent, otherwise the core's red.
     if (!this.detail.open) this.root.style.setProperty('--hl', inWorlds ? WORLDS[i - ORBIT_START - 1].accent : '#ff4655');
