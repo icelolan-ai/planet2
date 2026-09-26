@@ -247,7 +247,7 @@ main a,main button,main [data-interactive]{pointer-events:auto}
 
 /* capabilities */
 .caps{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
-.caps li{display:grid;grid-template-columns:62px 1fr;gap:0 10px;padding:16px 0 17px;border-bottom:1px solid var(--line);position:relative;outline-offset:-1px}
+.caps li{display:grid;grid-template-columns:minmax(96px,max-content) 1fr;gap:0 10px;padding:16px 0 17px;border-bottom:1px solid var(--line);position:relative;outline-offset:-1px}
 .caps li::before{content:"";position:absolute;left:0;top:-1px;height:1px;width:100%;background:var(--ion-dim);transform:scaleX(0);transform-origin:left;transition:transform .8s var(--ease-out)}
 .caps li:hover::before,.caps li:focus-visible::before{transform:scaleX(1)}
 .caps .cl{font-family:var(--f-display);font-style:italic;font-size:17px;color:var(--ink-3);transition:color .3s;padding-top:1px}
@@ -514,6 +514,16 @@ html:has(body.is-exploring){overflow:hidden}
   .xp-pad button{height:54px;background:rgba(6,10,14,.55);border:1px solid rgba(255,255,255,.22);font:600 12px var(--f-cond);letter-spacing:.14em;color:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
   .xp-pad button:active{background:var(--xp,var(--val));color:#0b0d12}
 }
+/* per-world tuning: takes the detail panel's place so the world stays in view */
+.wt-open{display:inline-flex;align-items:center;gap:10px;margin:0 12px 22px 0;padding:10px 14px;border:1px solid var(--line-2);border-left:2px solid var(--a,var(--val));
+  font:600 11.5px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;color:var(--ink)}
+.wt-open i{width:8px;height:8px;background:var(--a,var(--val));transform:rotate(45deg)}
+.wt-open:hover{border-color:var(--a,var(--val))}
+.d-explore{margin-right:0}
+.tune.wtune{z-index:14;--val:var(--a,#ff4655)}
+body.wtune-open .d-panel *{pointer-events:none!important}
+.wtune .tune-h b{color:var(--a);font-weight:600}
+body.wtune-open .d-panel,body.wtune-open .d-hint{opacity:0!important;pointer-events:none!important;transition:opacity .4s}
 /* core tuning drawer: docks on the side the text is on, never over the planet */
 html.tune-lock,html.tune-lock body{overflow:hidden;overscroll-behavior:none}
 .tune-toggle{position:fixed;left:var(--pad);bottom:calc(env(safe-area-inset-bottom,0px) + 104px);z-index:7;display:flex;align-items:center;gap:10px;padding:9px 14px;
@@ -657,6 +667,35 @@ body.tune-open .picker{opacity:0!important;pointer-events:none}
 </nav>
 
 <button class="tune-toggle" type="button" aria-expanded="false" aria-controls="tune" data-tune-toggle><i></i><span>Tune the core</span></button>
+<aside class="tune wtune" id="wtune" aria-label="Tune this world" data-open="false">
+  <header class="tune-h"><span>Tune <b data-wt-name>World</b></span><button type="button" class="tune-x" data-wt-close aria-label="Close"></button></header>
+  <p class="tune-sub">Colour</p>
+  <label class="tune-row"><span>Hue</span><input type="range" min="-180" max="180" step="1" data-wt="hue"><b data-out></b></label>
+  <label class="tune-row"><span>Saturation</span><input type="range" min="0" max="2" step="0.02" data-wt="sat"><b data-out></b></label>
+  <label class="tune-row"><span>Brightness</span><input type="range" min="0.3" max="1.8" step="0.02" data-wt="bright"><b data-out></b></label>
+  <div class="tune-row"><span>Presets</span><div class="tune-sw" data-wt-presets>
+    <button type="button" style="--c:#86d9cf" data-hue="0" aria-label="Original"></button>
+    <button type="button" style="--c:#ff7fc8" data-hue="-150" aria-label="Pink"></button>
+    <button type="button" style="--c:#b48cff" data-hue="-95" aria-label="Violet"></button>
+    <button type="button" style="--c:#ffb35a" data-hue="150" aria-label="Amber"></button>
+    <button type="button" style="--c:#9dff6a" data-hue="60" aria-label="Lime"></button>
+  </div></div>
+  <label class="tune-row"><span>Atmosphere</span><input type="range" min="0" max="3" step="0.05" data-wt="atmo"><b data-out></b></label>
+  <p class="tune-sub">Motion</p>
+  <label class="tune-row"><span>Spin</span><input type="range" min="0" max="6" step="0.05" data-wt="spin"><b data-out></b></label>
+  <div class="tune-row"><span>Direction</span><div class="tune-seg" data-wt-seg="dir"><button type="button" data-v="1">&#8635; Forward</button><button type="button" data-v="-1">&#8634; Reverse</button></div></div>
+  <label class="tune-row"><span>Axis tilt</span><input type="range" min="-1.57" max="1.57" step="0.01" data-wt="tilt"><b data-out></b></label>
+  <label class="tune-row"><span>Orbit speed</span><input type="range" min="0" max="5" step="0.05" data-wt="orbitSpeed"><b data-out></b></label>
+  <p class="tune-sub">Body</p>
+  <label class="tune-row"><span>Size</span><input type="range" min="0.5" max="1.6" step="0.01" data-wt="size"><b data-out></b></label>
+  <label class="tune-row"><span>Orbit radius</span><input type="range" min="0.85" max="1.2" step="0.01" data-wt="orbit"><b data-out></b></label>
+  <label class="tune-row"><span>Particles</span><input type="range" min="0" max="3" step="0.05" data-wt="halo"><b data-out></b></label>
+  <label class="tune-row"><span>Particle speed</span><input type="range" min="0" max="5" step="0.05" data-wt="haloSpeed"><b data-out></b></label>
+  <div class="tune-row"><span>Ring</span><div class="tune-seg" data-wt-seg="ring"><button type="button" data-v="0">Off</button><button type="button" data-v="1">On</button></div></div>
+  <div class="tune-row"><span>Orbit line</span><div class="tune-seg" data-wt-seg="line"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>
+  <p class="tune-hint" data-wt-note>Colour changes follow you down to the surface when you explore.</p>
+  <button type="button" class="tune-reset" data-wt-reset>Reset this world</button>
+</aside>
 <aside class="tune" id="tune" aria-label="Tune the core" data-open="false">
   <header class="tune-h"><span>Tune the core <kbd>T</kbd></span><button type="button" class="tune-x" data-tune-close aria-label="Close"></button></header>
 
@@ -954,6 +993,7 @@ body.tune-open .picker{opacity:0!important;pointer-events:none}
       <div><dt>Orbit radius</dt><dd data-d-orbit>—</dd></div>
       <div><dt>Exported at</dt><dd data-d-exports>—</dd></div>
     </dl>
+    <button type="button" class="wt-open d-item" data-wt-open><i></i><span>Tune this world</span></button>
     <button type="button" class="explore d-explore d-item" data-d-explore hidden><i></i><span>Explore the surface</span></button>
     <div class="d-nav d-item">
       <button type="button" data-d-prev data-cursor="Previous"><i></i><span class="nm" data-d-prev-name></span></button>
@@ -5206,6 +5246,66 @@ void main() {
 const THREE = window.KY;
 const WORLDS = [{"id": "Aqua_Foam", "name": "Aqua Foam", "kicker": "Ocean world, foam study", "accent": "#86d9cf", "radius": 0.78, "orbit": 5.6, "incl": 0.035, "phase": 0.4, "tilt": 0.32, "spin": 0.05, "lede": "A water world where the whole surface is foam: teal troughs, white crests, and nothing calm anywhere.", "body": "Built in Blender as a cube-sphere of 24 tiles, each with its own baked texture, so the surface keeps its detail even up close. Exported in lo and hi versions; this page uses a lighter web cut of the lo file.", "exports": "lo, hi"}, {"id": "Arcanum", "name": "Arcanum", "kicker": "Sigil world", "accent": "#e38b5f", "radius": 0.6, "orbit": 7.4, "incl": -0.05, "phase": 2.3, "tilt": 0.18, "spin": 0.04, "lede": "Grey cloud cover scored with rings of orange sigils, like survey marks left behind on a moon.", "body": "One baked colour map on a single sphere. The sigil rings sit in the texture itself, so the world reads as a drawing as much as a planet. Exported at 2K, 4K and 8K.", "exports": "2K, 4K, 8K"}, {"id": "Emerald_Tide", "name": "Emerald Tide", "kicker": "Tidal world", "accent": "#7fdcae", "radius": 0.82, "orbit": 9.3, "incl": 0.02, "phase": 4.1, "tilt": 0.41, "spin": 0.045, "lede": "Shallow green seas braided with bright tidal channels, under a thin drift of cloud.", "body": "A single baked colour map, tuned so the channels stay legible from orbit and still hold up when you land. Exported at 2K, 4K and 8K.", "exports": "2K, 4K, 8K"}, {"id": "Inferno", "name": "Inferno", "kicker": "Molten world", "accent": "#ff7a3d", "radius": 0.7, "orbit": 11.2, "incl": 0.06, "phase": 1.2, "tilt": 0.1, "spin": 0.03, "lede": "A crust of cooling lava split by glowing seams, wrapped in its own layer of heat haze.", "body": "24 surface tiles plus a separate six-tile haze shell that glows on its own. The shell is what makes the planet feel hot rather than just orange. Exported at lo, hi and ultra.", "exports": "lo, hi, ultra"}, {"id": "Nebula_Planet", "name": "Nebula", "kicker": "Gas giant", "accent": "#a98bff", "radius": 1.18, "orbit": 13.4, "incl": -0.03, "phase": 3.3, "tilt": 0.47, "spin": 0.06, "lede": "Violet and cobalt bands folding into each other, cut by one bright jet stream across the face.", "body": "The largest world in the system. One baked colour map on a sphere, lit here by the core so its bands turn with the light. Exported at 2K, 4K and 8K.", "exports": "2K, 4K, 8K"}, {"id": "Terra_Nova", "name": "Terra Nova", "kicker": "Earthlike world", "accent": "#8ec3ff", "radius": 0.92, "orbit": 15.4, "incl": 0.04, "phase": 5.4, "tilt": 0.41, "spin": 0.04, "lede": "Continents, shallow seas and a separate cloud layer. The most ordinary world here, and the hardest to get right.", "body": "24 surface tiles and a six-tile cloud shell floating just above them, so weather and ground move as two layers. Exported at lo, hi and ultra.", "exports": "lo, hi, ultra"}, {"id": "Tempest", "name": "Tempest", "kicker": "Storm world", "accent": "#8fe6ff", "radius": 0.86, "orbit": 17.3, "incl": -0.045, "phase": 0.1, "tilt": 0.22, "spin": 0.055, "lede": "A deep blue ocean ringed by cyclone cells, with a second storm layer riding above the surface.", "body": "Two meshes: the ocean surface and a storm layer that sits just above it. The cyclones are baked into the colour map. Exported at 2K, 4K and 8K.", "exports": "2K, 4K, 8K"}];
 
+/* Per-world tuning drawer. Values are stored per world and restored on the next visit. */
+const WorldTune = (() => {
+  const KEY = 'cerebra.worlds.v1';
+  let store = {}; try { store = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} };
+  const fmt = { hue: v => Math.round(v) + '°', tilt: v => Math.round(v * 57.3) + '°', orbit: v => v.toFixed(2) + 'x', size: v => v.toFixed(2) + 'x' };
+  let app = null, w = null;
+  const panel = () => document.getElementById('wtune');
+  const out = el => { el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%'); const o = el.parentElement.querySelector('[data-out]'); if (o) o.textContent = (fmt[el.dataset.wt] || (v => v.toFixed(2) + 'x'))(+el.value); };
+  const syncAccent = () => {
+    if (!w) return;
+    const a = w.def.accent, i = w.index;
+    const sec = document.getElementById('world-' + w.def.id.toLowerCase().replace(/_/g, '-')); if (sec) sec.style.setProperty('--a', a);
+    document.querySelectorAll(`[data-open-world="${i}"]`).forEach(b => { const li = b.closest('li'); if (li) li.style.setProperty('--a', a); });
+    const d = document.getElementById('detail'); if (d) d.style.setProperty('--a', a);
+    panel().style.setProperty('--a', a);
+    document.documentElement.style.setProperty('--accent', a); document.documentElement.style.setProperty('--hl', a);
+  };
+  const fill = () => {
+    const P = panel(); if (!w) return;
+    P.querySelector('[data-wt-name]').textContent = w.def.name;
+    P.querySelectorAll('input[data-wt]').forEach(el => { el.value = w.tune[el.dataset.wt]; out(el); });
+    P.querySelectorAll('[data-wt-seg]').forEach(g => g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === w.tune[g.dataset.wtSeg]))));
+  };
+  const set = (k, v) => { if (!w) return; w.setTune(k, v); (store[w.def.id] = store[w.def.id] || {})[k] = v; save(); if (k === 'hue' || k === 'sat' || k === 'bright') syncAccent(); };
+  const open = on => {
+    const P = panel(); if (!P) return;
+    if (on) { w = app && app.orrery && app.orrery.worlds[app.detail.index]; if (!w) return; fill(); syncAccent(); }
+    P.dataset.open = String(on); document.body.classList.toggle('wtune-open', on);
+  };
+  const wire = a => {
+    app = a;
+    // Restore every world's saved tuning.
+    app.orrery.worlds.forEach(x => { const s = store[x.def.id]; if (s) Object.keys(s).forEach(k => x.setTune(k, s[k])); });
+    app.orrery.worlds.forEach(x => { w = x; syncAccent(); }); w = null;
+    document.documentElement.style.setProperty('--hl', '#ff4655'); document.documentElement.style.setProperty('--accent', '#a8cfff');
+    const P = panel();
+    document.querySelector('[data-wt-open]').addEventListener('click', () => open(true));
+    P.querySelector('[data-wt-close]').addEventListener('click', () => open(false));
+    P.querySelectorAll('input[data-wt]').forEach(el => el.addEventListener('input', () => { set(el.dataset.wt, +el.value); out(el); }));
+    P.querySelectorAll('[data-wt-seg]').forEach(g => g.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      g.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); set(g.dataset.wtSeg, +b.dataset.v);
+    })));
+    P.querySelectorAll('[data-wt-presets] button').forEach(b => b.addEventListener('click', () => {
+      set('hue', +b.dataset.hue); if (+b.dataset.hue === 0) { set('sat', 1); set('bright', 1); } fill();
+    }));
+    P.querySelector('[data-wt-reset]').addEventListener('click', () => {
+      if (!w) return;
+      const def = Object.assign({}, World.TUNE_DEFAULT, { tilt: w.def.tilt });
+      Object.keys(def).forEach(k => w.setTune(k, def[k])); delete store[w.def.id]; save(); syncAccent(); fill();
+    });
+    // Keep drawer gestures away from world dragging and the wheel-to-close gesture.
+    ['pointerdown', 'wheel', 'touchmove'].forEach(t => P.addEventListener(t, e => e.stopPropagation(), { passive: true }));
+    document.addEventListener('pointerdown', e => { if (P.dataset.open === 'true' && !P.contains(e.target) && !e.target.closest('[data-wt-open]')) open(false); }, true);
+    Signals.on('world:exit', () => open(false));
+    Signals.on('world:swap', () => { if (P.dataset.open === 'true') setTimeout(() => open(true), 0); });
+  };
+  return { wire, open };
+})();
+
 /* Core tuning drawer. Talks to the planet through PlanetBody.active once the scene exists.
    While it is open the planet becomes editable: hover or drag across a part to highlight it, tap to select it,
    drag to turn the planet, scroll or pinch to zoom. */
@@ -5993,14 +6093,14 @@ void main(){
 
 const HALO_VERT = `
 attribute vec4 aOrbit; // radius factor, phase, inclination, seed
-uniform float uTime, uRadius, uHover, uReveal, uPixelRatio, uMotion;
+uniform float uTime, uRadius, uHover, uReveal, uPixelRatio, uMotion, uHaloT;
 uniform vec3 uInk, uAccent;
 varying float vA;
 varying vec3 vCol;
 void main(){
   float rf = aOrbit.x;
   float r = uRadius * mix(rf, 1.07 + aOrbit.w * 0.22, uHover * 0.6);
-  float ang = aOrbit.y + uTime * (0.45 / pow(rf, 1.5)) * (0.3 + 0.7 * uMotion) * (1.0 + uHover * 1.4);
+  float ang = aOrbit.y + uHaloT * (0.45 / pow(rf, 1.5)) * (1.0 + uHover * 1.4);
   vec3 p = vec3(cos(ang) * r, 0.0, sin(ang) * r);
   float ci = cos(aOrbit.z), si = sin(aOrbit.z);
   p = vec3(p.x, -p.z * si, p.z * ci);
@@ -6061,6 +6161,16 @@ varying vec3 vKyN;
 varying vec3 vKyWP;
 uniform vec3 uKySun, uKyCenter, uKyAccent, uKySpark;
 uniform float uKyReveal, uKyHover, uKyAmbient;
+uniform vec3 uKyHSB;
+vec3 kyHSB(vec3 c, vec3 hsb){
+  // Hue rotation in YIQ space, then saturation and brightness.
+  const mat3 toYIQ = mat3(0.299, 0.596, 0.211, 0.587, -0.274, -0.523, 0.114, -0.322, 0.312);
+  const mat3 toRGB = mat3(1.0, 1.0, 1.0, 0.956, -0.272, -1.106, 0.621, -0.647, 1.703);
+  vec3 y = toYIQ * c;
+  float cs = cos(hsb.x), sn = sin(hsb.x);
+  y.yz = mat2(cs, sn, -sn, cs) * y.yz * hsb.y;
+  return max(toRGB * y * hsb.z, 0.0);
+}
 float kyHash(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
 float kyNoise(vec3 x){
   vec3 i = floor(x); vec3 f = fract(x); f = f * f * (3.0 - 2.0 * f);
@@ -6076,6 +6186,7 @@ const WORLD_MAIN_FRAG = `
   vec3 L = normalize(uKySun - uKyCenter);
   vec3 V = normalize(cameraPosition - vKyWP);
   float ndl = dot(N, L);
+  gl_FragColor.rgb = kyHSB(gl_FragColor.rgb, uKyHSB);
   float shade = mix(uKyAmbient, 1.0, smoothstep(-0.3, 0.55, ndl));
   float rim = pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 3.0);
   gl_FragColor.rgb *= shade;
@@ -7310,6 +7421,14 @@ class OrbitDial {
   dispose() { this.geometry.dispose(); this.material.dispose(); }
 }
 
+/* Same hue/saturation/brightness shift as kyHSB in the shaders, for colours set from script. */
+function shiftColor(hex, hueDeg, sat, bright) {
+  const c = new THREE.Color(hex), h = hueDeg * Math.PI / 180, cs = Math.cos(h), sn = Math.sin(h);
+  const y = 0.299 * c.r + 0.587 * c.g + 0.114 * c.b, i0 = 0.596 * c.r - 0.274 * c.g - 0.322 * c.b, q0 = 0.211 * c.r - 0.523 * c.g + 0.312 * c.b;
+  const i = (cs * i0 - sn * q0) * sat, q = (sn * i0 + cs * q0) * sat;
+  return c.setRGB(Math.max(0, (y + 0.956 * i + 0.621 * q) * bright), Math.max(0, (y - 0.272 * i - 0.647 * q) * bright), Math.max(0, (y - 1.106 * i + 1.703 * q) * bright));
+}
+
 /** One imported world: the Blender model, its atmosphere, its particle halo and its orbit line. */
 class World {
   constructor(def, index, gltf, shared, opts) {
@@ -7326,8 +7445,11 @@ class World {
     this.U = {
       uKySun: { value: new THREE.Vector3() }, uKyCenter: { value: new THREE.Vector3() },
       uKyAccent: { value: new THREE.Color(def.accent).multiplyScalar(0.9) }, uKySpark: { value: new THREE.Color('#a8cfff') },
-      uKyReveal: { value: 0 }, uKyHover: { value: 0 }, uKyAmbient: { value: 0.2 }
+      uKyReveal: { value: 0 }, uKyHover: { value: 0 }, uKyAmbient: { value: 0.2 }, uKyHSB: { value: new THREE.Vector3(0, 1, 1) }
     };
+    if (def.accent0 == null) def.accent0 = def.accent;
+    this.tune = Object.assign({}, World.TUNE_DEFAULT, { tilt: def.tilt });
+    this.spinPhase = 0; this.orbPhase = 0; this.haloT = 0; this.haloN = opts.halo;
 
     // Normalise the model to the art-directed radius.
     const model = gltf.scene;
@@ -7385,13 +7507,30 @@ class World {
     this.haloMat = additive({
       uniforms: {
         uTime: shared.uTime, uMotion: shared.uMotion, uInk: shared.uInk, uAccent: { value: rawColor(def.accent) },
-        uRadius: { value: def.radius }, uHover: { value: 0 }, uReveal: { value: 0 }, uPixelRatio: { value: 1 }
+        uRadius: { value: def.radius }, uHover: { value: 0 }, uReveal: { value: 0 }, uPixelRatio: { value: 1 }, uHaloT: { value: 0 }
       },
       vertexShader: HALO_VERT, fragmentShader: HALO_FRAG
     });
     this.halo = new THREE.Points(this.haloGeom, this.haloMat);
     this.halo.frustumCulled = false;
     this.axis.add(this.halo);
+    this.haloGeom.setDrawRange(0, Math.round(n / 3));
+
+    // Optional ring, off until tuned on.
+    this.ringGeom = new THREE.RingGeometry(def.radius * 1.45, def.radius * 2.15, 128, 1);
+    this.ringMat = new THREE.ShaderMaterial({
+      uniforms: { uColor: { value: rawColor(def.accent) }, uAlpha: { value: 0 }, uIn: { value: def.radius * 1.45 }, uOut: { value: def.radius * 2.15 } },
+      vertexShader: `varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      fragmentShader: `uniform vec3 uColor; uniform float uAlpha, uIn, uOut; varying vec2 vP;
+        void main(){ float t = (length(vP) - uIn) / (uOut - uIn);
+          float bands = 0.55 + 0.45 * sin(t * 60.0) * sin(t * 13.0 + 1.3);
+          float a = smoothstep(0.0, 0.08, t) * smoothstep(1.0, 0.8, t) * bands;
+          gl_FragColor = vec4(uColor, a * uAlpha * 0.55); }`,
+      side: THREE.DoubleSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+    });
+    this.ring = new THREE.Mesh(this.ringGeom, this.ringMat);
+    this.ring.rotation.x = -Math.PI / 2 + 0.12;
+    this.axis.add(this.ring);
 
     // Orbit line, parameterised exactly like the world's position so the trail head sits under it.
     const seg = 512, R = def.orbit, si = Math.sin(def.incl), ci = Math.cos(def.incl);
@@ -7414,6 +7553,7 @@ class World {
     });
     this.orbitLine = new THREE.Line(this.orbitGeom, this.orbitMat);
     this.orbitLine.frustumCulled = false;
+    this.applyColor();
   }
 
   patch(m) {
@@ -7433,24 +7573,47 @@ class World {
 
   get radius() { return this.def.radius * this.group.scale.x; }
 
+  static TUNE_DEFAULT = { hue: 0, sat: 1, bright: 1, atmo: 1, halo: 1, haloSpeed: 1, spin: 1, dir: 1, size: 1, orbit: 1, orbitSpeed: 1, ring: 0, line: 1 };
+  /* Colour tuning shifts the surface in the shader and every accent-derived colour here, so the page matches. */
+  applyColor() {
+    const t = this.tune, d = this.def;
+    this.U.uKyHSB.value.set(t.hue * Math.PI / 180, t.sat, t.bright);
+    const acc = shiftColor(d.accent0, t.hue, t.sat, t.bright);
+    d.accent = '#' + acc.getHexString();
+    this.U.uKyAccent.value.copy(acc).multiplyScalar(0.9);
+    [this.atmoMat.uniforms.uColor, this.haloMat.uniforms.uAccent, this.orbitMat.uniforms.uAccent, this.ringMat.uniforms.uColor].forEach(u => u.value.copy(acc));
+  }
+  setTune(k, v) {
+    this.tune[k] = v;
+    if (k === 'hue' || k === 'sat' || k === 'bright') this.applyColor();
+    if (k === 'halo') this.haloGeom.setDrawRange(0, Math.round(this.haloN * clamp(v, 0, 3) / 3));
+  }
+
   update(dt, t, f) {
     const d = this.def;
-    this.angle = d.phase + t * KEPLER / Math.pow(d.orbit, 1.5);
-    const a = this.angle, R = d.orbit;
+    const T = this.tune;
+    this.orbPhase += dt * KEPLER / Math.pow(d.orbit, 1.5) * (T.orbitSpeed - 1);
+    this.angle = d.phase + t * KEPLER / Math.pow(d.orbit, 1.5) + this.orbPhase;
+    const a = this.angle, R = d.orbit * T.orbit;
+    this.orbitLine.scale.setScalar(T.orbit);
+    this.axis.rotation.z = T.tilt;
+    this.spinPhase += dt * d.spin * T.spin * T.dir;
+    this.haloT += dt * T.haloSpeed * (0.3 + 0.7 * (f.reduced ? 0.25 : 1));
+    this.haloMat.uniforms.uHaloT.value = this.haloT;
     this.group.position.set(Math.cos(a) * R, Math.sin(a) * R * Math.sin(d.incl), Math.sin(a) * R * Math.cos(d.incl));
 
     const rv = this.reveal;
     const on = rv > 0.002;
     this.group.visible = on;
-    this.orbitLine.visible = f.G > 0.002;
+    this.orbitLine.visible = f.G > 0.002 && T.line > 0;
 
     // Drag inertia: velocity decays on its own once released.
     if (!f.dragging || f.active !== this.index) { this.userRot += this.userVel * dt; this.userVel *= Math.exp(-2.4 * dt); }
     this.grab.target = f.dragging && f.active === this.index ? 0.975 : 1;
     const grab = this.grab.update(dt);
-    this.spinG.rotation.y = t * d.spin + this.userRot;
+    this.spinG.rotation.y = this.spinPhase + this.userRot;
 
-    const s = (0.72 + 0.28 * smootherstep(clamp(rv, 0, 1))) * f.boost * grab;
+    const s = (0.72 + 0.28 * smootherstep(clamp(rv, 0, 1))) * f.boost * grab * T.size;
     this.group.scale.setScalar(s);
 
     this.U.uKyCenter.value.copy(this.group.position);
@@ -7459,7 +7622,9 @@ class World {
     this.U.uKyHover.value = this.hover;
 
     const L = this.atmoMat.uniforms.uLight.value.copy(f.sun).sub(this.group.position).normalize();
-    this.atmoMat.uniforms.uAlpha.value = smoothstep(0.35, 1, rv) * (0.85 + this.hover * 0.5 + this.focus * 0.2);
+    this.atmoMat.uniforms.uAlpha.value = smoothstep(0.35, 1, rv) * (0.85 + this.hover * 0.5 + this.focus * 0.2) * T.atmo;
+    this.ringMat.uniforms.uAlpha.value += ((smoothstep(0.35, 1, rv) * T.ring) - this.ringMat.uniforms.uAlpha.value) * (1 - Math.exp(-5 * dt));
+    this.ring.visible = this.ringMat.uniforms.uAlpha.value > 0.003;
     this.haloMat.uniforms.uReveal.value = smoothstep(0.4, 1, rv);
     this.haloMat.uniforms.uHover.value = this.hover;
     this.haloMat.uniforms.uPixelRatio.value = f.pixelRatio;
@@ -7482,8 +7647,8 @@ class World {
         m.dispose();
       });
     });
-    [this.atmoGeom, this.haloGeom, this.orbitGeom].forEach(g => g.dispose());
-    [this.atmoMat, this.haloMat, this.orbitMat].forEach(m => m.dispose());
+    [this.atmoGeom, this.haloGeom, this.orbitGeom, this.ringGeom].forEach(g => g.dispose());
+    [this.atmoMat, this.haloMat, this.orbitMat, this.ringMat].forEach(m => m.dispose());
   }
 }
 
@@ -7871,6 +8036,16 @@ class Loader {
    Surface exploration. A world with a surface map gets an Explore button: the camera dives at the planet,
    the atmosphere swallows the view, and a separately loaded 3D map takes over the renderer.
 ================================================================ */
+const HUE_FN = `
+vec3 kyHSB(vec3 c, vec3 hsb){
+  // Hue rotation in YIQ space, then saturation and brightness.
+  const mat3 toYIQ = mat3(0.299, 0.596, 0.211, 0.587, -0.274, -0.523, 0.114, -0.322, 0.312);
+  const mat3 toRGB = mat3(1.0, 1.0, 1.0, 0.956, -0.272, -1.106, 0.621, -0.647, 1.703);
+  vec3 y = toYIQ * c;
+  float cs = cos(hsb.x), sn = sin(hsb.x);
+  y.yz = mat2(cs, sn, -sn, cs) * y.yz * hsb.y;
+  return max(toRGB * y * hsb.z, 0.0);
+}`;
 const SURFACES = {
   Aqua_Foam: {
     url: 'src/glb/Aqua_Foam_Surface_4km.glb', size: 4000, grid: 513, label: 'Aqua Foam, surface survey',
@@ -8052,6 +8227,7 @@ class Explorer {
     // Phones get their textures scaled down before upload: 16 full-size maps are about 360 MB of GPU memory,
     // which is enough for iOS Safari to kill the tab.
     const cap = this.lowMem ? 1024 : 0;
+    const uHSB = { value: new THREE.Vector3(0, 1, 1) };
     map.traverse(o => {
       if (!o.isMesh) return;
       const m = o.material, t = m.map;
@@ -8067,6 +8243,13 @@ class Explorer {
         t.anisotropy = this.lowMem ? Math.min(2, aniso) : aniso; t.colorSpace = THREE.SRGBColorSpace;
       }
       m.fog = true;
+      m.onBeforeCompile = sh => {
+        sh.uniforms.uKyHSB = uHSB;
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uKyHSB;' + HUE_FN)
+          .replace('#include <opaque_fragment>', '#include <opaque_fragment>\ngl_FragColor.rgb = kyHSB(gl_FragColor.rgb, uKyHSB);');
+      };
+      m.customProgramCacheKey = () => 'xp-hsb';
+      m.needsUpdate = true;
     });
     scene.add(map);
     map.updateMatrixWorld(true);
@@ -8118,7 +8301,7 @@ class Explorer {
       const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(scam.getWorldQuaternion(new THREE.Quaternion()));
       spawnYaw = Math.atan2(-dir.x, -dir.z); spawnPitch = Math.asin(clamp(dir.y, -1, 1));
     }
-    return { def, S, scene, sky, motes, height, spawnPos, spawnYaw, spawnPitch, half };
+    return { def, S, scene, sky, sea, motes, height, spawnPos, spawnYaw, spawnPitch, half, uHSB };
   }
 
   /* ---------- enter / exit ---------- */
@@ -8129,7 +8312,7 @@ class Explorer {
     const S = SURFACES[w.def.id];
     this.ui.$x('[data-xp-label]').textContent = S.label;
     this.ui.el.style.setProperty('--xp', w.def.accent);
-    this.ui.el.style.setProperty('--xp-fog', S.fog);
+    const tt = w.tune; this.ui.el.style.setProperty('--xp-fog', '#' + shiftColor(S.fog, tt.hue, tt.sat, tt.bright).getHexString());
     this.ui.el.setAttribute('aria-hidden', 'false');
     document.body.classList.add('is-exploring');
     if (app.sound) app.sound.tone(110, 2.2, 0.22, 2.2);
@@ -8197,8 +8380,18 @@ class Explorer {
       if (k >= 1) this.finishExit();
     }
   }
+  /* Match the surface, sky, fog and sea to the world's tuned colour. */
+  tintSurface(W) {
+    const t = this.app.orrery.worlds[this.k].tune, S = W.S, f = hex => shiftColor(hex, t.hue, t.sat, t.bright);
+    W.uHSB.value.set(t.hue * Math.PI / 180, t.sat, t.bright);
+    W.scene.fog.color.copy(f(S.fog));
+    W.sea.material.color.copy(f(S.sea));
+    const su = W.sky.material.uniforms; su.uZenith.value.copy(f(S.zenith)); su.uHorizon.value.copy(f(S.horizon));
+    this.fogNow = '#' + f(S.fog).getHexString();
+  }
   startSurface() {
     const W = this.world;
+    this.tintSurface(W);
     this.phase = 'explore'; this.t = 0; this.exitFromSurface = true;
     this.ui.el.classList.remove('is-load', 'is-fail'); this.ui.el.classList.add('is-explore');
     this.setMode('fly'); this.speedMul = 1; this.vel.set(0, 0, 0);
@@ -8206,7 +8399,7 @@ class Explorer {
     this.descent = { from: W.spawnPos.clone().add(new THREE.Vector3(-900, 1500, 1100)), to: W.spawnPos.clone(), t: 0, dur: 6 };
     this.pos.copy(this.descent.from);
     this.look.yaw = W.spawnYaw; this.look.pitch = -0.9;
-    this.app.stage.renderer.setClearColor(new THREE.Color(W.S.fog), 1);
+    this.app.stage.renderer.setClearColor(new THREE.Color(this.fogNow), 1);
     // Fewer pixels on phones while on the surface; restored on the way out.
     if (this.lowMem) { const st = this.app.stage; st.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25)); st.renderer.setSize(st.width, st.height, false); }
   }
@@ -8501,6 +8694,7 @@ class App {
     }
     // Once decoded, the decoder worker is not needed again.
     lib.dispose();
+    WorldTune.wire(this);
   }
 
   /* Compile every program and upload every buffer and texture while the loader is still up,
