@@ -5665,6 +5665,70 @@ void main(){
   gl_FragColor = vec4(col, uOpacity);
 }`;
 
+/* Particles running along the planet's rings: each has its own speed, some glow neon purple. */
+const RUNNER_VERT = `
+attribute vec4 aRun; // phase, speed, radius jitter, size
+attribute float aHue;
+uniform float uTime, uPixelRatio, uMotion, uRadius;
+varying float vHue, vA;
+void main(){
+  float a = aRun.x + uTime * aRun.y * (0.3 + 0.7 * uMotion);
+  float r = uRadius + aRun.z;
+  vec4 mv = modelViewMatrix * vec4(cos(a) * r, sin(a) * r, aRun.z * 0.6, 1.0);
+  gl_Position = projectionMatrix * mv;
+  vHue = aHue;
+  float facing = smoothstep(-1.2, 0.8, normalize(mv.xyz).z * -1.0 + 0.2);
+  vA = 0.55 + 0.45 * sin(uTime * (1.5 + abs(aRun.y) * 3.0) + aRun.x * 11.0);
+  gl_PointSize = clamp(aRun.w * uPixelRatio * (15.0 / -mv.z) * (1.0 + aHue * 1.2), 1.5, 26.0 * uPixelRatio);
+}`;
+
+const RUNNER_FRAG = `
+uniform vec3 uInk, uNeon;
+uniform float uOpacity;
+varying float vHue, vA;
+void main(){
+  float d = length(gl_PointCoord - 0.5);
+  if (d > 0.5) discard;
+  float core = smoothstep(0.5, 0.0, d);
+  float glow = pow(core, 1.6) + pow(core, 6.0) * 1.5;
+  vec3 col = mix(uInk, uNeon, vHue) * (1.2 + vHue * 1.4);
+  gl_FragColor = vec4(col, glow * vA * uOpacity * 1.4);
+}`;
+
+/* Cosmic dust and interstellar haze hugging the planet: drifting motes and soft violet/blue puffs. */
+const HAZE_VERT = `
+attribute vec4 aSeed; // phase x, phase y, speed, kind (0 mote / 1 puff)
+attribute float aHue;
+uniform float uTime, uPixelRatio, uMotion;
+varying float vHue, vKind, vA;
+void main(){
+  float t = uTime * aSeed.z * (0.3 + 0.7 * uMotion);
+  vec3 p = position;
+  p += vec3(sin(t + aSeed.x), sin(t * 0.8 + aSeed.y) * 0.6, cos(t * 0.9 + aSeed.x * 1.7)) * mix(0.18, 0.35, aSeed.w);
+  float sw = uTime * 0.03, cs = cos(sw), sn = sin(sw);
+  p.xz = mat2(cs, -sn, sn, cs) * p.xz;
+  vec4 mv = modelViewMatrix * vec4(p, 1.0);
+  gl_Position = projectionMatrix * mv;
+  vHue = aHue; vKind = aSeed.w;
+  vA = mix(0.55 + 0.45 * sin(uTime * (0.8 + aSeed.z * 4.0) + aSeed.x * 30.0), 1.0, aSeed.w);
+  float base = mix(1.3 + aSeed.y * 0.4, 70.0 + aSeed.x * 8.0, aSeed.w);
+  gl_PointSize = clamp(base * uPixelRatio * (mix(11.0, 8.0, aSeed.w) / -mv.z) * (1.0 + vHue * 0.6), 1.0, mix(9.0, 420.0, aSeed.w) * uPixelRatio);
+}`;
+
+const HAZE_FRAG = `
+uniform vec3 uInk, uNeon, uBlue;
+uniform float uOpacity;
+varying float vHue, vKind, vA;
+void main(){
+  float d = length(gl_PointCoord - 0.5);
+  if (d > 0.5) discard;
+  float s = smoothstep(0.5, 0.0, d);
+  vec3 tint = mix(uBlue, uNeon, vHue);
+  vec3 col = mix(mix(uInk, tint, vHue * 0.9 + 0.1), tint, vKind);
+  float a = mix(s * s, pow(s, 2.0) * 0.13, vKind);
+  gl_FragColor = vec4(col, a * vA * uOpacity);
+}`;
+
 class PlanetBody {
   constructor(shared) {
     this.shared = shared;
@@ -5732,6 +5796,77 @@ class PlanetBody {
     lg.setAttribute('aT', new THREE.BufferAttribute(new Float32Array([0, 1]), 1));
     this.axisMat = lineMaterial(shared, { opacity: 0.14 });
     this.axis = new THREE.Line(lg, this.axisMat);
+
+    // Thin rings with particles running along them.
+    const neon = new THREE.Color('#b44cff'), blue = new THREE.Color('#5aa8ff');
+    this.runMat = additive({
+      uniforms: { uTime: shared.uTime, uMotion: shared.uMotion, uPixelRatio: { value: 1 }, uRadius: { value: 1 }, uOpacity: { value: 0 }, uInk: shared.uInk, uNeon: { value: neon } },
+      vertexShader: RUNNER_VERT, fragmentShader: RUNNER_FRAG
+    });
+    const RINGS = [
+      { r: 1.62, rx: 1.42, rz: 0.35, n: 90, dir: 1 },
+      { r: 1.78, rx: 1.05, rz: -0.8, n: 70, dir: -1 },
+      { r: 1.95, rx: 1.62, rz: -0.25, n: 110, dir: 1 },
+      { r: 2.2, rx: 0.7, rz: 0.95, n: 60, dir: -1 },
+      // Inside the glass shell: tighter rings, mostly neon.
+      { r: 0.48, rx: 0.4, rz: 1.1, n: 40, dir: 1, inner: true },
+      { r: 0.75, rx: 1.3, rz: -0.5, n: 60, dir: -1, inner: true },
+      { r: 0.95, rx: 2.1, rz: 0.3, n: 70, dir: 1, inner: true },
+      { r: 1.15, rx: 0.9, rz: -1.3, n: 80, dir: -1, inner: true }
+    ];
+    this.runners = RINGS.map(c => {
+      const pivot = new THREE.Group();
+      pivot.rotation.set(c.rx, 0, c.rz);
+      const lineGeom = circleGeometry(c.r, 256);
+      const lineMat = lineMaterial(shared, { opacity: c.inner ? 0.12 : 0.3, dash: 220 });
+      pivot.add(new THREE.Line(lineGeom, lineMat));
+      const run = new Float32Array(c.n * 4), hue = new Float32Array(c.n);
+      for (let i = 0; i < c.n; i++) {
+        const fast = Math.random() < 0.3;
+        run[i * 4] = Math.random() * Math.PI * 2;
+        run[i * 4 + 1] = c.dir * (fast ? 0.6 + Math.random() * 0.9 : 0.05 + Math.random() * 0.2);
+        run[i * 4 + 2] = (Math.random() - 0.5) * 0.05;
+        run[i * 4 + 3] = fast ? 2.2 + Math.random() * 1.5 : 1.2 + Math.random() * 1.6;
+        hue[i] = Math.random() < (c.inner ? 0.6 : 0.28) ? 1 : 0;
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(c.n * 3), 3));
+      g.setAttribute('aRun', new THREE.BufferAttribute(run, 4));
+      g.setAttribute('aHue', new THREE.BufferAttribute(hue, 1));
+      const mat = this.runMat.clone();
+      mat.uniforms.uTime = shared.uTime; mat.uniforms.uMotion = shared.uMotion; mat.uniforms.uInk = shared.uInk;
+      mat.uniforms.uRadius.value = c.r;
+      const pts = new THREE.Points(g, mat);
+      pts.frustumCulled = false;
+      pivot.add(pts);
+      this.group.add(pivot);
+      return { pivot, lineGeom, lineMat, g, mat, spin: (c.inner ? 0.12 : 0.02) * c.dir, lo: c.inner ? 0.12 : 0.3 };
+    });
+
+    // Cosmic dust and haze around the planet.
+    const motes = 1400, puffs = 60, n = motes + puffs;
+    const hp = new Float32Array(n * 3), hs = new Float32Array(n * 4), hh = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const puff = i >= motes;
+      const u = Math.random() * 2 - 1, th = Math.random() * Math.PI * 2, w = Math.sqrt(1 - u * u);
+      const rr = puff ? 1.6 + Math.random() * 2.2 : 1.35 + Math.pow(Math.random(), 0.8) * 3.2;
+      hp[i * 3] = Math.cos(th) * w * rr; hp[i * 3 + 1] = u * rr * 0.7; hp[i * 3 + 2] = Math.sin(th) * w * rr;
+      hs[i * 4] = Math.random() * 6.283; hs[i * 4 + 1] = Math.random() * 6.283;
+      hs[i * 4 + 2] = puff ? 0.05 + Math.random() * 0.08 : 0.1 + Math.random() * 0.5;
+      hs[i * 4 + 3] = puff ? 1 : 0;
+      hh[i] = puff ? Math.random() : (Math.random() < 0.22 ? 1 : 0);
+    }
+    this.hazeGeom = new THREE.BufferGeometry();
+    this.hazeGeom.setAttribute('position', new THREE.BufferAttribute(hp, 3));
+    this.hazeGeom.setAttribute('aSeed', new THREE.BufferAttribute(hs, 4));
+    this.hazeGeom.setAttribute('aHue', new THREE.BufferAttribute(hh, 1));
+    this.hazeMat = additive({
+      uniforms: { uTime: shared.uTime, uMotion: shared.uMotion, uPixelRatio: { value: 1 }, uOpacity: { value: 0 }, uInk: shared.uInk, uNeon: { value: neon }, uBlue: { value: blue } },
+      vertexShader: HAZE_VERT, fragmentShader: HAZE_FRAG
+    });
+    this.haze = new THREE.Points(this.hazeGeom, this.hazeMat);
+    this.haze.frustumCulled = false;
+    this.group.add(this.haze);
   }
   update(dt, f) {
     const on = this.shared.uIntro.value * (1 - f.expand * 0.6);
@@ -5744,10 +5879,20 @@ class PlanetBody {
     this.debris.rotation.x += dt * 0.01 * f.motion;
     const sc = 1 + f.expand * 0.15;
     this.group.scale.setScalar(sc);
+    this.runners.forEach(rn => {
+      rn.pivot.rotation.y += dt * rn.spin * f.motion;
+      rn.mat.uniforms.uOpacity.value = on;
+      rn.mat.uniforms.uPixelRatio.value = f.pixelRatio;
+      rn.lineMat.uniforms.uOpacity.value = rn.lo * on;
+    });
+    this.hazeMat.uniforms.uOpacity.value = on * 0.9;
+    this.hazeMat.uniforms.uPixelRatio.value = f.pixelRatio;
   }
   dispose() {
     [this.outer, this.inner].forEach(m => { m.geometry.dispose(); m.material.dispose(); });
     this.box.dispose(); this.blockMat.dispose(); this.axis.geometry.dispose(); this.axisMat.dispose();
+    this.runners.forEach(rn => { rn.lineGeom.dispose(); rn.lineMat.dispose(); rn.g.dispose(); rn.mat.dispose(); });
+    this.runMat.dispose(); this.hazeGeom.dispose(); this.hazeMat.dispose();
   }
 }
 
