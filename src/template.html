@@ -93,8 +93,18 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .ld-worlds li.is-on{color:var(--ink-2)}
 .ld-worlds li.is-on i{background:var(--a);box-shadow:0 0 10px var(--a)}
 #loader.is-done{opacity:0;pointer-events:none}
-#loader.is-outro{background:transparent;transition:opacity 1s,background-color .35s ease}
+#loader.is-outro{transition:opacity .6s ease,background-color .7s ease}
 #loader.is-outro .ld-foot{opacity:0;transition:opacity .3s ease}
+/* 100 turns red: the fill flows in from the right and overshoots a touch before settling */
+.ld-num{background:linear-gradient(90deg,var(--ink) 0 50%,#ff4655 50% 100%);background-size:200% 100%;background-repeat:no-repeat;background-position:0 0;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.ld-num.is-red{background-color:#ff4655;background-position:100% 0;transition:background-position .9s cubic-bezier(.34,1.56,.64,1)}
+.ld-num span{display:inline-block}
+/* then the view dives through the middle 0 and the core shows through */
+#loader.is-zoom{background-color:transparent;transition:background-color .7s ease .45s}
+#loader.is-zoom .ld-num{transform:scale(70);opacity:0;transition:transform 1.25s cubic-bezier(.7,0,.84,0),opacity .35s ease .9s}
+#loader.is-fast .ld-num.is-red{transition-duration:.12s}
+#loader.is-fast.is-zoom .ld-num{transition-duration:.25s,.1s;transition-delay:0s,.15s}
+#loader.is-fast.is-zoom{transition-delay:0s;transition-duration:.2s}
 #loader.is-done .ld-center{transform:translateY(-18px) scale(.98);opacity:0}
 #loader.is-done .ld-foot{opacity:0}
 
@@ -4809,14 +4819,26 @@ class Loader {
     if (elapsed < minMs) await wait(minMs - elapsed);
     this.set(1, 'Core online');
     for (let i = 0; i < 40 && this.shown < 1; i++) await wait(40);
-    // Outro: the world names fade, then the number breaks into particles that stream into the core.
+    // Outro: 100 fills red from the right with a little overshoot, then the view dives into the middle 0
+    // and comes out on the core. Any tap, scroll or key hurries it along.
     const plain = !outro || matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.el.classList.add('is-outro');
-    await wait(plain ? 260 : 300);
     if (!plain) {
-      try { outro(this.num.getBoundingClientRect(), this.num.textContent, getComputedStyle(this.num)); this.num.style.visibility = 'hidden'; }
-      catch (e) { console.warn(e); }
-    }
+      const n = this.num;
+      this.running = false; // stop the counter so it cannot overwrite the split digits
+      n.innerHTML = '<span>1</span><span data-zero>0</span><span>0</span>';
+      let fast = false;
+      const hurry = () => { fast = true; this.el.classList.add('is-fast'); };
+      const evs = ['pointerdown', 'wheel', 'keydown', 'touchstart'];
+      evs.forEach(e => addEventListener(e, hurry, true));
+      n.classList.add('is-red');
+      await wait(fast ? 120 : 950);
+      const z = n.querySelector('[data-zero]').getBoundingClientRect(), r = n.getBoundingClientRect();
+      n.style.transformOrigin = `${(z.left + z.width / 2 - r.left).toFixed(1)}px ${(z.top + z.height / 2 - r.top).toFixed(1)}px`;
+      this.el.classList.add('is-zoom');
+      await wait(fast ? 250 : 1250);
+      evs.forEach(e => removeEventListener(e, hurry, true));
+    } else await wait(260);
     this.el.classList.add('is-done');
     await wait(1000);
     this.running = false;
@@ -5487,7 +5509,7 @@ class App {
 
     this.last = performance.now();
     this.raf = requestAnimationFrame(this.frame);
-    await this.loader.finish(900, (rect, text, cs) => this.startOutro(rect, text, cs));
+    await this.loader.finish(900, true);
     // The worlds assemble as the loader hands over.
     if (this.orrery) this.orrery.worlds.forEach(w => FORMATION.play(w));
     this.reveal();
@@ -5597,68 +5619,6 @@ class App {
     else if (this.G > 0.5) { const w = worlds[clamp(Math.round(this.stopF) - 1, 0, worlds.length - 1)]; if (w && this.stopF > 0.5) target = w.group.position; else target = this.poses.out.look; }
     const d = cam.position.distanceTo(target);
     LENS_U.uLensFocus.value = LENS_U.uLensFocus.value + (d - LENS_U.uLensFocus.value) * (1 - Math.exp(-4 * dt));
-  }
-
-  /* Loader outro: sample the digits drawn on a 2D canvas, lift them into the scene on a plane through the core,
-     and stream them onto the core's shells. Any tap, scroll or key finishes it at once. */
-  startOutro(rect, text, cs) {
-    const W = Math.max(1, Math.ceil(rect.width)), H = Math.max(1, Math.ceil(rect.height));
-    const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-    const g = cv.getContext('2d');
-    g.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-    if ('letterSpacing' in g) g.letterSpacing = cs.letterSpacing;
-    g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff';
-    g.fillText(text, W / 2, H / 2 + parseFloat(cs.fontSize) * 0.04);
-    const img = g.getImageData(0, 0, W, H).data, pts = [];
-    for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) if (img[(y * W + x) * 4 + 3] > 120) pts.push([rect.left + x, rect.top + y]);
-    const N = Math.min(pts.length, this.mobile ? 700 : 1600);
-    if (!N) return;
-    for (let i = pts.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [pts[i], pts[j]] = [pts[j], pts[i]]; }
-    const cam = this.rig.camera; cam.updateMatrixWorld();
-    const core = this.core.group; core.updateMatrixWorld(true);
-    const centre = new THREE.Vector3().setFromMatrixPosition(core.matrixWorld);
-    const depth = cam.position.distanceTo(centre), rc = new THREE.Raycaster(), ndc = new THREE.Vector2();
-    const from = new Float32Array(N * 3), to = new Float32Array(N * 3), delay = new Float32Array(N), swirl = new Float32Array(N);
-    const v = new THREE.Vector3();
-    for (let i = 0; i < N; i++) {
-      const [x, y] = pts[i];
-      ndc.set((x / this.stage.width) * 2 - 1, -(y / this.stage.height) * 2 + 1);
-      rc.setFromCamera(ndc, cam);
-      rc.ray.at(depth, v); from.set([v.x, v.y, v.z], i * 3);
-      v.randomDirection().multiplyScalar(0.32 + ((Math.random() * 5) | 0) * 0.235).applyMatrix4(core.matrixWorld);
-      to.set([v.x, v.y, v.z], i * 3);
-      delay[i] = ((x - rect.left) / W) * 0.25 + Math.random() * 0.08; swirl[i] = (Math.random() - 0.5) * 2;
-    }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(from.slice(), 3));
-    const mat = new THREE.PointsMaterial({ color: new THREE.Color('#dfe4ea'), size: 2.2 * this.stage.pixelRatio, sizeAttenuation: false, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
-    const points = new THREE.Points(geo, mat); points.frustumCulled = false; points.renderOrder = 10;
-    this.stage.scene.add(points);
-    const up = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 1);
-    const fx = { t: 0, dur: 1.5, points, geo, mat, from, to, delay, swirl, up };
-    const skip = () => { fx.t = fx.dur + 1; };
-    fx.off = () => ['pointerdown', 'wheel', 'keydown', 'touchstart'].forEach(e => removeEventListener(e, skip, true));
-    ['pointerdown', 'wheel', 'keydown', 'touchstart'].forEach(e => addEventListener(e, skip, true));
-    this.outroFx = fx;
-  }
-  updateOutro(dt) {
-    const fx = this.outroFx; if (!fx) return;
-    fx.t += dt;
-    const p = fx.geo.attributes.position.array, n = p.length / 3;
-    for (let i = 0; i < n; i++) {
-      const k = clamp((fx.t / fx.dur - fx.delay[i]) / (1 - 0.33), 0, 1);
-      const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
-      const s = Math.sin(e * Math.PI) * fx.swirl[i] * 0.6;
-      for (let c = 0; c < 3; c++) p[i * 3 + c] = fx.from[i * 3 + c] + (fx.to[i * 3 + c] - fx.from[i * 3 + c]) * e + fx.up.getComponent(c) * s;
-    }
-    fx.geo.attributes.position.needsUpdate = true;
-    const q = fx.t / fx.dur;
-    fx.mat.opacity = q < 0.75 ? 1 : Math.max(0, 1 - (q - 0.75) / 0.25);
-    fx.mat.size = (2.2 - 1.2 * clamp(q, 0, 1)) * this.stage.pixelRatio;
-    if (fx.t >= fx.dur) {
-      this.stage.scene.remove(fx.points); fx.geo.dispose(); fx.mat.dispose(); fx.off();
-      this.outroFx = null;
-    }
   }
 
   /* Low frame rates first drop the pixel ratio, then thin the particle field. */
@@ -6141,7 +6101,6 @@ class App {
     }
     this.adaptQuality(dt);
     this.updateLens(dt);
-    this.updateOutro(dt);
 
     // Scroll composition
     const st = this.scroll.update(dt, reduced ? 12 : 2.6);
