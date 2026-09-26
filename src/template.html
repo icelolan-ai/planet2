@@ -840,6 +840,11 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
         <button type="button" style="--c:#ffc94d" data-c="#ffc94d" aria-label="Gold"></button>
         <label class="tune-pick" aria-label="Custom colour"><input type="color" value="#b44cff" data-t-color></label>
       </div></div>
+    <p class="tune-sub">Lens</p>
+    <div class="tune-row"><span>Lens</span><div class="tune-seg" data-t-lens><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
+    <label class="tune-row"><span>Aberration</span><input type="range" min="0" max="0.12" step="0.002" value="0.035" data-t-aberr><b data-out>0.035</b></label>
+    <label class="tune-row"><span>Focus blur</span><input type="range" min="0" max="1.5" step="0.02" value="0.55" data-t-blur><b data-out>0.55</b></label>
+    <label class="tune-row"><span>Bloom</span><input type="range" min="0" max="1.5" step="0.02" value="0.45" data-t-bloom><b data-out>0.45</b></label>
     <p class="tune-hint">Pick a ring, the glass or the metal band on the planet to edit just that part.</p>
     <div class="tune-btns"><button type="button" class="tune-btn" data-t-random>&#9861; Randomize</button><button type="button" class="tune-reset" data-t-reset>Reset</button></div>
   </div>
@@ -1424,6 +1429,13 @@ const WorldTune = (() => {
     const ptrs = range('[data-t-ptrs]', v => call('setPointer', null, v), times);
     const gain = range('[data-t-gain]', v => { const b = body(); if (b) b.audioGain = v; }, times);
     const zoom = range('[data-t-zoom]', v => call('setView', v), v => v.toFixed(2) + 'x');
+    const f3 = v => v.toFixed(3), f2 = v => v.toFixed(2);
+    const aberr = range('[data-t-aberr]', v => { LENS_U.uLensAberr.value = v; LENS_U.user = true; }, f3);
+    const blur = range('[data-t-blur]', v => { LENS_U.uLensBlur.value = v; LENS_U.user = true; }, f2);
+    const bloom = range('[data-t-bloom]', v => { LENS_U.uLensBloom.value = v; LENS_U.user = true; }, f2);
+    const lens = seg('[data-t-lens]', v => { LENS_U.uLensOn.value = v; LENS_U.user = true; });
+    // Phones start lighter; the tuner shows whatever is live.
+    setRange(aberr, LENS_U.uLensAberr.value, f3); setRange(blur, LENS_U.uLensBlur.value, f2); setRange(bloom, LENS_U.uLensBloom.value, f2);
     const dir = seg('[data-t-dir]', v => call('setDirection', v));
     const band = seg('[data-t-band]', v => call('setBand', !!v, null));
     const inner = seg('[data-t-inner]', v => call('setInner', !!v));
@@ -1454,6 +1466,9 @@ const WorldTune = (() => {
     q('[data-t-random]').addEventListener('click', () => {
       const b = body(); if (!b) return; b.randomize();
       setTheme(b.theme); setRange(spd, b.speed, times); setRange(dens, b.density, pct); dir.set(b.dir); shape.set(-1);
+      const R = (a, c) => a + Math.random() * (c - a);
+      LENS_U.uLensAberr.value = +R(0, 0.07).toFixed(3); LENS_U.uLensBlur.value = +R(0.2, 1).toFixed(2); LENS_U.uLensBloom.value = +R(0.2, 1).toFixed(2);
+      setRange(aberr, LENS_U.uLensAberr.value, f3); setRange(blur, LENS_U.uLensBlur.value, f2); setRange(bloom, LENS_U.uLensBloom.value, f2);
       syncRings(); save();
     });
     q('[data-t-view]').addEventListener('click', () => { call('resetView'); setRange(zoom, 1, v => v.toFixed(2) + 'x'); });
@@ -1461,6 +1476,8 @@ const WorldTune = (() => {
       [[dens, 1, pct], [spd, 1, times], [thick, 1, times], [clar, 1, times], [rim, 0.55, v => v.toFixed(2)], [haze, 1, pct],
        [frate, 1, times], [famt, 1, times], [ptrs, 1, times], [gain, 1, times], [zoom, 1, v => v.toFixed(2) + 'x']].forEach(([el, v, f]) => setRange(el, v, f));
       dir.set(1); band.set(1); inner.set(1); ptr.set(0); shape.set(0); setTheme('nebula'); neon.set('#b44cff');
+      const L = LENS_DEFAULTS(); Object.keys(L).forEach(k => { LENS_U[k].value = L[k]; });
+      setRange(aberr, L.uLensAberr, f3); setRange(blur, L.uLensBlur, f2); setRange(bloom, L.uLensBloom, f2); lens.set(1);
     };
     q('[data-t-reset]').addEventListener('click', () => {
       try { localStorage.removeItem(KEY); } catch (e) {}
@@ -1568,7 +1585,8 @@ const WorldTune = (() => {
       const s = { density: b.density, speed: b.speed, dir: b.dir, shape: b.shape, neon: hex(b.uNeon.value), theme: b.theme || 'nebula',
         rings: b.ringCount, band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
         clarity: +clar.value, rim: +rim.value, inner: b.inner.show, haze: b.hazeDensity, frate: b.uFlareRate.value, famt: b.uFlareAmt.value,
-        ptr: b.ptrMode, ptrs: b.ptrStrength };
+        ptr: b.ptrMode, ptrs: b.ptrStrength,
+        lens: LENS_U.uLensOn.value, aberr: LENS_U.uLensAberr.value, blur: LENS_U.uLensBlur.value, bloom: LENS_U.uLensBloom.value };
       try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
     }
     let saved = null; try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
@@ -1588,6 +1606,10 @@ const WorldTune = (() => {
       b.setHaze(s.haze); setRange(haze, s.haze, pct);
       b.setFlare(s.frate, s.famt); setRange(frate, s.frate, times); setRange(famt, s.famt, times);
       b.setPointer(s.ptr, s.ptrs); ptr.set(s.ptr); setRange(ptrs, s.ptrs, times);
+      if (s.aberr != null) {
+        LENS_U.uLensOn.value = s.lens; LENS_U.uLensAberr.value = s.aberr; LENS_U.uLensBlur.value = s.blur; LENS_U.uLensBloom.value = s.bloom; LENS_U.user = true;
+        lens.set(s.lens); setRange(aberr, s.aberr, f3); setRange(blur, s.blur, f2); setRange(bloom, s.bloom, f2);
+      }
     };
     restore();
 
@@ -1821,7 +1843,43 @@ float snoise(vec3 v){
   return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
 }`;
 
+/* Lens for particles, done per point instead of a full-screen pass: depth of field (points away from the focus
+   distance grow into soft discs and dim to keep their energy), chromatic aberration that grows toward the screen
+   edge, and a light bloom on bright cores. All particle shaders share these uniforms (LENS_U). */
+const LENS_U = { uLensFocus: { value: 10 }, uLensBlur: { value: 0.55 }, uLensAberr: { value: 0.035 }, uLensBloom: { value: 0.45 }, uLensOn: { value: 1 } };
+const LENS_DEFAULTS = () => (matchMedia('(max-width: 760px), (pointer: coarse)').matches
+  ? { uLensOn: 1, uLensAberr: 0.02, uLensBlur: 0.35, uLensBloom: 0.35 }
+  : { uLensOn: 1, uLensAberr: 0.035, uLensBlur: 0.55, uLensBloom: 0.45 });
+Object.entries(LENS_DEFAULTS()).forEach(([k, v]) => { LENS_U[k].value = v; });
+const LENS_PARS_V = `
+uniform float uLensFocus, uLensBlur, uLensOn;
+varying float vLensCoc;
+varying vec2 vLensScr;`;
+const LENS_MAIN_V = `
+{
+  float coc = uLensOn * uLensBlur * clamp(abs(-mv.z - uLensFocus) / max(uLensFocus, 0.5) - 0.2, 0.0, 2.0);
+  vLensCoc = coc;
+  gl_PointSize = min(gl_PointSize * (1.0 + coc * 2.2), 96.0);
+  vLensScr = gl_Position.xy / max(gl_Position.w, 1e-4);
+}`;
+const LENS_PARS_F = `
+uniform float uLensAberr, uLensBloom, uLensOn;
+varying float vLensCoc;
+varying vec2 vLensScr;
+// Coverage per colour channel for a point with the given inner softness (0 soft .. 0.5 hard).
+vec3 lensCover(vec2 q, float inner) {
+  float c = clamp(vLensCoc, 0.0, 1.0);
+  float r2 = dot(vLensScr, vLensScr);
+  vec2 dir = r2 > 1e-6 ? vLensScr * inversesqrt(r2) : vec2(0.0);
+  vec2 off = dir * uLensAberr * uLensOn * (0.15 + r2) * (0.6 + c * 1.4);
+  float e = mix(inner, 0.32, c);
+  return vec3(smoothstep(0.5, e, length(q + off)), smoothstep(0.5, e, length(q)), smoothstep(0.5, e, length(q - off)));
+}
+float lensEnergy() { float c = clamp(vLensCoc, 0.0, 1.5); float k = 1.0 / (1.0 + c * 2.2); return mix(1.0, k * k * 2.2, min(c, 1.0)); }
+vec3 lensBloom(vec3 col, float core) { return col * (1.0 + uLensBloom * uLensOn * pow(core, 4.0) * 1.6); }`;
+
 const PARTICLE_VERT = `
+${LENS_PARS_V}
 uniform float uTime, uExpand, uSeparation, uStack, uMorph, uIntro, uMotion, uFocus, uFocusLayer, uRippleT;
 uniform float uPixelRatio, uSize, uPointerStrength;
 uniform vec3 uPointer;
@@ -1890,6 +1948,7 @@ void main(){
 
   float size = uSize * (0.55 + aSeed.y * 0.9) * (1.0 + vHeat * 1.3) * (1.0 + sweep * 0.3);
   gl_PointSize = min(size * uPixelRatio * (6.0 / -mv.z), 24.0 * uPixelRatio);
+${LENS_MAIN_V}
 }`;
 
 const PARTICLE_FRAG = `
@@ -1898,12 +1957,15 @@ uniform vec3 uSpark;
 varying float vAlpha;
 varying float vHeat;
 varying float vCore;
+${LENS_PARS_F}
 void main(){
-  float d = length(gl_PointCoord - 0.5);
+  vec2 q = gl_PointCoord - 0.5;
+  float d = length(q);
   if (d > 0.5) discard;
-  float a = smoothstep(0.5, 0.05, d);
-  vec3 col = mix(uInk, uSpark, clamp(vHeat + vCore * 0.4, 0.0, 1.0));
-  gl_FragColor = vec4(col, a * vAlpha * 0.85);
+  vec3 cov = lensCover(q, 0.05);
+  vec3 col = lensBloom(mix(uInk, uSpark, clamp(vHeat + vCore * 0.4, 0.0, 1.0)), cov.g);
+  float a = max(cov.r, max(cov.g, cov.b));
+  gl_FragColor = vec4(col * cov / max(a, 1e-3), a * vAlpha * 0.85 * lensEnergy());
 }`;
 
 const LINE_VERT = `
@@ -2038,6 +2100,7 @@ void main(){
 }`;
 
 const DUST_VERT = `
+${LENS_PARS_V}
 attribute vec4 aOrbit; // radius, phase, height, seed
 uniform float uTime, uPixelRatio, uMotion, uSize;
 varying float vA;
@@ -2049,16 +2112,19 @@ void main(){
   gl_Position = projectionMatrix * mv;
   vA = smoothstep(2.6, 5.0, r) * (1.0 - smoothstep(19.0, 24.0, r)) * (0.3 + 0.7 * aOrbit.w);
   gl_PointSize = clamp(uSize * uPixelRatio * (0.5 + aOrbit.w) * (16.0 / -mv.z), 0.6, 3.2 * uPixelRatio);
+${LENS_MAIN_V}
 }`;
 
 const DUST_FRAG = `
 uniform vec3 uInk, uSpark;
 uniform float uOpacity;
 varying float vA;
+${LENS_PARS_F}
 void main(){
-  float d = length(gl_PointCoord - 0.5);
-  if (d > 0.5) discard;
-  gl_FragColor = vec4(mix(uInk, uSpark, 0.25), smoothstep(0.5, 0.1, d) * vA * uOpacity);
+  vec2 q = gl_PointCoord - 0.5;
+  if (length(q) > 0.5) discard;
+  vec3 cov = lensCover(q, 0.1); float a = max(cov.r, max(cov.g, cov.b));
+  gl_FragColor = vec4(mix(uInk, uSpark, 0.25) * cov / max(a, 1e-3), a * vA * uOpacity * lensEnergy());
 }`;
 
 /* Interstellar cloud: large soft puffs plus fine motes, drifting on slow curl-like paths. */
@@ -2446,6 +2512,7 @@ const HALO_VERT = `
 attribute vec4 aOrbit; // radius factor, phase, inclination, seed
 uniform float uTime, uRadius, uHover, uReveal, uPixelRatio, uMotion, uHaloT;
 uniform float uSpinA, uRippleKick, uRippleRadius, uRipplePointGlow;
+${LENS_PARS_V}
 ${GLSL_COMMON}${GLSL_VERTEX_FN}
 uniform vec3 uInk, uAccent;
 varying float vA;
@@ -2468,15 +2535,18 @@ void main(){
   vA = uReveal * (0.25 + 0.75 * aOrbit.w) * (0.5 + uHover * 0.9) * (1.0 + rE * uRipplePointGlow);
   vCol = mix(uInk, uAccent, 0.35 + uHover * 0.55);
   gl_PointSize = clamp((1.1 + aOrbit.w * 1.6) * uPixelRatio * (4.2 / -mv.z) * (1.0 + uHover * 0.7) * (1.0 + rE * uRipplePointGlow * 0.6), 0.6, 7.0 * uPixelRatio);
+${LENS_MAIN_V}
 }`;
 
 const HALO_FRAG = `
 varying float vA;
 varying vec3 vCol;
+${LENS_PARS_F}
 void main(){
-  float d = length(gl_PointCoord - 0.5);
-  if (d > 0.5) discard;
-  gl_FragColor = vec4(vCol, smoothstep(0.5, 0.05, d) * vA);
+  vec2 q = gl_PointCoord - 0.5;
+  if (length(q) > 0.5) discard;
+  vec3 cov = lensCover(q, 0.05); float a = max(cov.r, max(cov.g, cov.b));
+  gl_FragColor = vec4(lensBloom(vCol, cov.g) * cov / max(a, 1e-3), a * vA * lensEnergy());
 }`;
 
 const ATMO_VERT = `
@@ -2771,6 +2841,7 @@ vec3 ringShape(float k, float a, float r, float seed, float jz){
 const RUNNER_VERT = `
 attribute vec4 aRun; // phase, speed, radius jitter, size
 attribute float aHue, aFlare;
+${LENS_PARS_V}
 uniform float uTime, uPixelRatio, uRadius, uRunT, uShapeA, uShapeB, uShapeT, uHi, uPtrAmt, uPulse, uFlareRate, uFlareAmt;
 uniform vec3 uPtr;
 varying float vHue, vA, vFlare;
@@ -2792,22 +2863,26 @@ void main(){
   float fl = pow(max(0.0, sin(uTime * uFlareRate * (0.6 + fract(aRun.x * 7.13) * 1.1) + aRun.x * 17.0)), 40.0) * aFlare * uFlareAmt;
   vFlare = fl;
   gl_PointSize = clamp(aRun.w * uPixelRatio * (15.0 / -mv.z) * (1.0 + aHue * 1.2) * (1.0 + fl * 2.6) * (1.0 + uHi * 0.7 + uPulse * 0.9), 1.5, 48.0 * uPixelRatio);
+${LENS_MAIN_V}
 }`;
 
 const RUNNER_FRAG = `
 uniform vec3 uInk, uNeon, uTint, uHiColor;
 uniform float uOpacity, uTintAmt, uHi;
 varying float vHue, vA, vFlare;
+${LENS_PARS_F}
 void main(){
   vec2 q = gl_PointCoord - 0.5;
   float d = length(q);
   if (d > 0.5) discard;
-  float core = smoothstep(0.5, 0.0, d);
+  vec3 cov = lensCover(q, 0.0);
+  float core = cov.g;
   float glow = pow(core, 1.6) + pow(core, 6.0) * 1.5;
   float glint = (smoothstep(0.06, 0.0, abs(q.x)) + smoothstep(0.06, 0.0, abs(q.y))) * core * vFlare;
   vec3 base = mix(mix(uInk, uTint, uTintAmt), uHiColor, uHi * 0.55);
   vec3 col = mix(base, uNeon, vHue) * (1.2 + vHue * 1.4) * (1.0 + uHi * 0.5) + vec3(1.0) * (pow(core, 5.0) * 2.0 + glint) * vFlare;
-  gl_FragColor = vec4(col, (glow * vA + glint + vFlare * core) * uOpacity * 1.4);
+  float ca = max(cov.r, max(cov.g, cov.b));
+  gl_FragColor = vec4(lensBloom(col, core) * cov / max(ca, 1e-3), (glow * vA + glint + vFlare * core) * uOpacity * 1.4 * lensEnergy());
 }`;
 
 /* The ring's own dashed line, drawn along the same path as its runners. */
@@ -2839,6 +2914,7 @@ const HAZE_VERT = `
 attribute vec4 aSeed; // phase x, phase y, speed, kind (0 mote / 1 puff)
 attribute float aHue;
 uniform float uTime, uPixelRatio, uMotion, uPulse;
+${LENS_PARS_V}
 varying float vHue, vKind, vA;
 void main(){
   float t = uTime * aSeed.z * (0.3 + 0.7 * uMotion);
@@ -2852,20 +2928,27 @@ void main(){
   vA = mix(0.55 + 0.45 * sin(uTime * (0.8 + aSeed.z * 4.0) + aSeed.x * 30.0), 1.0, aSeed.w);
   float base = mix(1.3 + aSeed.y * 0.4, 70.0 + aSeed.x * 8.0, aSeed.w);
   gl_PointSize = clamp(base * uPixelRatio * (mix(11.0, 8.0, aSeed.w) / -mv.z) * (1.0 + vHue * 0.6), 1.0, mix(9.0, 420.0, aSeed.w) * uPixelRatio);
+  if (aSeed.w < 0.5) {
+${LENS_MAIN_V}
+  } else { vLensCoc = 0.0; vLensScr = vec2(0.0); }
 }`;
 
 const HAZE_FRAG = `
 uniform vec3 uInk, uNeon, uBlue;
 uniform float uOpacity;
 varying float vHue, vKind, vA;
+${LENS_PARS_F}
 void main(){
-  float d = length(gl_PointCoord - 0.5);
+  vec2 q = gl_PointCoord - 0.5;
+  float d = length(q);
   if (d > 0.5) discard;
   float s = smoothstep(0.5, 0.0, d);
   vec3 tint = mix(uBlue, uNeon, vHue);
   vec3 col = mix(mix(uInk, tint, vHue * 0.9 + 0.1), tint, vKind);
-  float a = mix(s * s, pow(s, 2.0) * 0.13, vKind);
-  gl_FragColor = vec4(col, a * vA * uOpacity);
+  if (vKind < 0.5) {
+    vec3 cov = lensCover(q, 0.0); float ca = max(cov.r, max(cov.g, cov.b));
+    gl_FragColor = vec4(lensBloom(col, cov.g) * cov / max(ca, 1e-3), ca * ca * vA * uOpacity * lensEnergy());
+  } else gl_FragColor = vec4(col, pow(s, 2.0) * 0.13 * vA * uOpacity);
 }`;
 
 /* Colour themes for the planet. */
@@ -5437,6 +5520,25 @@ class App {
     if (this.sections[0]) this.sections[0].classList.add('is-active');
   }
 
+  /* Give every particle material the shared lens uniforms (new ones appear as rings and worlds are added),
+     and keep the focus on what the camera is looking at: the open world, the world in frame, or the core. */
+  updateLens(dt) {
+    this.lensT = (this.lensT || 0) - dt;
+    if (this.lensT <= 0) {
+      this.lensT = 1;
+      this.stage.scene.traverse(o => {
+        const m = o.material; if (!m || !m.isShaderMaterial || m._lens) return;
+        if (m.vertexShader.includes('uLensFocus')) { Object.assign(m.uniforms, LENS_U); m._lens = true; }
+      });
+    }
+    const cam = this.rig.camera, worlds = this.orrery ? this.orrery.worlds : [];
+    let target = this.core.group.position;
+    if (this.detail.open && worlds[this.detail.index]) target = worlds[this.detail.index].group.position;
+    else if (this.G > 0.5) { const w = worlds[clamp(Math.round(this.stopF) - 1, 0, worlds.length - 1)]; if (w && this.stopF > 0.5) target = w.group.position; else target = this.poses.out.look; }
+    const d = cam.position.distanceTo(target);
+    LENS_U.uLensFocus.value = LENS_U.uLensFocus.value + (d - LENS_U.uLensFocus.value) * (1 - Math.exp(-4 * dt));
+  }
+
   /* Low frame rates first drop the pixel ratio, then thin the particle field. */
   adaptQuality(dt) {
     const Q = this.quality || (this.quality = { low: 0, step: 0, maxDPR: this.stage.maxDPR });
@@ -5446,6 +5548,7 @@ class App {
     if (Q.step <= 2 && this.stage.maxDPR > 1) {
       this.stage.maxDPR = Math.max(1, this.stage.maxDPR - 0.35); this.resize();
     } else {
+      if (!LENS_U.user) { LENS_U.uLensBlur.value *= 0.5; LENS_U.uLensAberr.value *= 0.5; }
       const g = this.core.field.geometry; g.setDrawRange(0, Math.round(this.core.field.count * 0.6));
       [this.orrery.dust.points, this.orrery.cloud.points].forEach(p => { const n = p.geometry.attributes.position.count; p.geometry.setDrawRange(0, Math.round(n * 0.6)); });
     }
@@ -5910,6 +6013,7 @@ class App {
       if (this.orbitWait) { this.orbitWait.classList.add('is-on'); clearTimeout(this.owT); this.owT = setTimeout(() => this.orbitWait && this.orbitWait.classList.remove('is-on'), 2600); }
     }
     this.adaptQuality(dt);
+    this.updateLens(dt);
 
     // Scroll composition
     const st = this.scroll.update(dt, reduced ? 12 : 2.6);
