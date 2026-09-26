@@ -418,59 +418,102 @@ body *{font-style:normal!important}
   30%{text-shadow:-2px 0 var(--val),2px 0 #4ff0ff;transform:translateX(-3px)}60%{text-shadow:1px 0 var(--val);transform:translateX(1px) skewX(3deg)}
   100%{text-shadow:none;transform:none}}
 html,body{overflow-x:clip}
-/* core tuning drawer: docked on the left over the text column, never over the planet */
+/* core tuning drawer: docks on the side the text is on, never over the planet */
+html.tune-lock,html.tune-lock body{overflow:hidden;overscroll-behavior:none}
 .tune-toggle{position:fixed;left:var(--pad);bottom:calc(env(safe-area-inset-bottom,0px) + 104px);z-index:7;display:flex;align-items:center;gap:10px;padding:9px 14px;
-  font:600 11.5px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;color:var(--ink);background:rgba(8,10,16,.6);border:1px solid var(--line);border-left:2px solid var(--val);
-  clip-path:polygon(0 0,100% 0,100% 70%,calc(100% - 10px) 100%,0 100%);opacity:0;pointer-events:none;transform:translateY(8px);transition:opacity .5s,transform .6s var(--ease-out)}
-.tune-toggle i{width:8px;height:8px;background:var(--val);transform:rotate(45deg)}
+  font:600 11.5px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;color:var(--ink);background:rgba(8,10,16,.6);border:1px solid var(--line);border-left:2px solid var(--hl);
+  clip-path:polygon(0 0,100% 0,100% 70%,calc(100% - 10px) 100%,0 100%);opacity:0;pointer-events:none;transform:translateY(8px);transition:opacity .5s,transform .6s var(--ease-out),border-color .6s}
+.tune-toggle i{width:8px;height:8px;background:var(--hl);transform:rotate(45deg);transition:background-color .6s}
 body.tune-on .tune-toggle{opacity:1;pointer-events:auto;transform:none}
-body.tune-open .tune-toggle{opacity:0;pointer-events:none}
-.tune{position:fixed;left:0;top:0;bottom:0;z-index:8;width:min(360px,34vw);padding:calc(env(safe-area-inset-top,0px) + 86px) 26px 26px calc(var(--pad));overflow:auto;
-  background:linear-gradient(90deg,rgba(6,8,12,.94) 70%,rgba(6,8,12,.78));backdrop-filter:blur(10px);border-right:1px solid var(--line);
-  font:500 11.5px var(--f-cond);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);transform:translateX(-102%);transition:transform .6s var(--ease-out);pointer-events:auto}
+body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opacity:0;pointer-events:none}
+.tune{position:fixed;left:0;top:0;bottom:0;z-index:8;width:min(380px,34vw);padding:calc(env(safe-area-inset-top,0px) + 80px) 24px 28px var(--pad);overflow:auto;overscroll-behavior:contain;
+  background:linear-gradient(90deg,rgba(6,8,12,.95) 70%,rgba(6,8,12,.82));backdrop-filter:blur(10px);border-right:1px solid var(--line);
+  font:500 11.5px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);transform:translateX(-102%);transition:transform .6s var(--ease-out);pointer-events:auto}
+.tune[data-side="right"]{left:auto;right:0;padding:calc(env(safe-area-inset-top,0px) + 80px) var(--pad) 28px 24px;border-right:0;border-left:1px solid var(--line);
+  background:linear-gradient(270deg,rgba(6,8,12,.95) 70%,rgba(6,8,12,.82));transform:translateX(102%)}
 .tune[data-open="true"]{transform:none}
 .tune *{pointer-events:auto}
-.tune-h{display:flex;justify-content:space-between;align-items:center;margin:0 0 22px;color:var(--ink);font-weight:600;letter-spacing:.26em;padding-left:12px;border-left:2px solid var(--val)}
-.tune-x{width:26px;height:26px;position:relative}
+.tune [hidden]{display:none!important}
+.tune-h{display:flex;justify-content:space-between;align-items:center;margin:0 0 18px;color:var(--ink);font-weight:600;letter-spacing:.26em;padding-left:12px;border-left:2px solid var(--val)}
 .tune-h kbd{font:400 10px var(--f-num);letter-spacing:0;color:var(--ink-3);border:1px solid var(--line-2);padding:1px 5px;margin-left:8px}
+.tune-x{width:26px;height:26px;position:relative}
 .tune-x::before,.tune-x::after{content:"";position:absolute;left:5px;right:5px;top:50%;height:1px;background:var(--ink-2);transform:rotate(45deg)}
 .tune-x::after{transform:rotate(-45deg)}
 .tune-x:hover::before,.tune-x:hover::after{background:var(--val)}
-.tune-row{display:grid;grid-template-columns:78px 1fr auto;align-items:center;gap:10px;margin:0 0 16px;min-height:30px}
+.tune-tabs{display:flex;margin:0 0 18px;border-bottom:1px solid var(--line)}
+.tune-tabs button{flex:1;padding:10px 4px 9px;font:600 11px var(--f-cond);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tune-tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--val)}
+.tune-tabs button:hover{color:var(--ink)}
+.tune-sub{margin:18px 0 10px;color:var(--ink);font-weight:600;letter-spacing:.22em;font-size:10.5px}
+.tune-sub:first-child{margin-top:0}
+.tune-row{display:grid;grid-template-columns:78px 1fr auto;align-items:center;gap:10px;margin:0 0 13px;min-height:28px}
 .tune-row>div{grid-column:2/-1}
-.tune-row b{font:400 11px var(--f-num);letter-spacing:0;color:var(--val);min-width:40px;text-align:right}
+.tune-row.tall{align-items:start}
+.tune-row.tall>span{padding-top:7px}
+.tune-row b{font:400 11px var(--f-num);letter-spacing:0;color:var(--val);min-width:42px;text-align:right}
 .tune input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:24px;background:transparent;cursor:pointer;touch-action:none;margin:0}
 .tune input[type=range]::-webkit-slider-runnable-track{height:3px;background:linear-gradient(90deg,var(--val) var(--p,33%),rgba(255,255,255,.14) var(--p,33%))}
 .tune input[type=range]::-moz-range-track{height:3px;background:rgba(255,255,255,.14)}
 .tune input[type=range]::-moz-range-progress{height:3px;background:var(--val)}
-.tune input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;margin-top:-6.5px;background:var(--val);transform:rotate(45deg);border:0;box-shadow:0 0 12px rgba(255,70,85,.6)}
-.tune input[type=range]::-moz-range-thumb{width:14px;height:14px;background:var(--val);border:0;border-radius:0;transform:rotate(45deg)}
-.tune-step{display:flex;align-items:center;gap:0;border:1px solid var(--line-2);width:max-content}
+.tune input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;margin-top:-6px;background:var(--val);transform:rotate(45deg);border:0;box-shadow:0 0 12px rgba(255,70,85,.6)}
+.tune input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--val);border:0;border-radius:0;transform:rotate(45deg)}
+.tune-step{display:flex;align-items:center;border:1px solid var(--line-2);width:max-content}
 .tune-step button{width:34px;height:30px;font:500 18px var(--f-sans);color:var(--ink)}
 .tune-step button:hover{background:var(--val);color:#0b0d12}
 .tune-step b{min-width:42px;text-align:center;color:var(--ink);font-size:13px}
 .tune-seg{display:flex;border:1px solid var(--line-2);width:100%}
-.tune-seg button{flex:1;padding:7px 6px;font:600 10.5px var(--f-cond);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
+.tune-seg button{flex:1;padding:7px 4px;font:600 10.5px var(--f-cond);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
 .tune-seg button+button{border-left:1px solid var(--line-2)}
 .tune-seg button[aria-pressed=true]{background:var(--val);color:#0b0d12}
 .tune-seg button:hover:not([aria-pressed=true]){color:var(--ink)}
-.tune-sw{display:flex;gap:10px;align-items:center}
+.tune-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.tune-grid button{padding:7px 2px;border:1px solid var(--line-2);font:600 10px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
+.tune-grid button[aria-pressed=true]{background:var(--val);border-color:var(--val);color:#0b0d12}
+.tune-grid button:hover:not([aria-pressed=true]){color:var(--ink);border-color:var(--ink-3)}
+.tune-grid.themes button{position:relative;padding-left:16px}
+.tune-grid.themes button::before{content:"";position:absolute;left:6px;top:50%;width:6px;height:6px;margin-top:-3px;background:linear-gradient(135deg,var(--c1) 50%,var(--c2) 50%);transform:rotate(45deg)}
+.tune-sw{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .tune-sw button,.tune-pick{width:20px;height:20px;background:var(--c);border:1px solid rgba(255,255,255,.2);transform:rotate(45deg) scale(.82);transition:transform .3s var(--ease-out),box-shadow .3s;position:relative;overflow:hidden;cursor:pointer}
 .tune-sw button:hover,.tune-sw button[aria-pressed=true]{transform:rotate(45deg) scale(1);box-shadow:0 0 12px var(--c)}
 .tune-pick{background:conic-gradient(#ff4655,#ffc94d,#3ff2ff,#b44cff,#ff4655)}
 .tune-pick input{position:absolute;inset:-8px;opacity:0;cursor:pointer}
-.tune-reset{margin-top:6px;width:100%;padding:10px;border:1px solid var(--line-2);font:600 11.5px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2)}
+.tune-btns{display:flex;gap:8px;margin-top:6px}
+.tune-btn{flex:1;padding:10px;background:var(--val);color:#0b0d12;font:600 11.5px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%)}
+.tune-btn:hover{filter:brightness(1.15)}
+.tune-reset{flex:1;margin-top:6px;width:100%;padding:10px;border:1px solid var(--line-2);font:600 11.5px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2)}
+.tune-btns .tune-reset{margin-top:0}
 .tune-reset:hover{border-color:var(--val);color:var(--val)}
+.tune-reset.danger{margin-top:4px}
+.tune-hint,.tune-note{margin:12px 0;font:400 12px var(--f-sans);letter-spacing:.01em;text-transform:none;color:var(--ink-3);line-height:1.5}
+.tune-note{margin-top:-4px}
+.tune-sel{margin:0 0 18px;padding:12px 12px 10px;border:1px solid var(--val);background:rgba(255,70,85,.06)}
+.tune-sel-h{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.tune-sel-h span{color:var(--ink-3)}
+.tune-sel-h b{flex:1;color:var(--val);font-weight:600;letter-spacing:.18em}
+.tune-link{font:600 10.5px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);border-bottom:1px solid var(--line-2)}
+.tune-link:hover{color:var(--val);border-color:var(--val)}
 @media (max-width:760px){
   .tune-toggle{bottom:calc(env(safe-area-inset-bottom,0px) + 100px);left:16px}
-  .tune{top:auto;left:0;right:0;width:auto;max-height:52vh;padding:18px 16px calc(env(safe-area-inset-bottom,0px) + 18px);border-right:0;border-top:1px solid var(--line);
-    background:rgba(6,8,12,.94);transform:translateY(102%)}
-  .tune-row{grid-template-columns:70px 1fr auto;margin-bottom:12px}
+  .tune,.tune[data-side="right"]{top:auto;left:0;right:0;width:auto;max-height:54vh;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 18px);border:0;border-top:1px solid var(--line);
+    background:rgba(6,8,12,.95);transform:translateY(102%)}
+  .tune[data-open="true"]{transform:none}
+  .tune-row{grid-template-columns:70px 1fr auto;margin-bottom:11px}
 }
+/* the header's section name, the rail and the sound bars take the colour of where you are */
+.depth-name{color:var(--hl);transition:color .6s}
+.rail button[aria-current="true"]{color:var(--hl)}
+.rail button[aria-current="true"] i{background:var(--hl);box-shadow:0 0 8px var(--hl)}
+.rail button{transition:color .6s}
+.sound[aria-pressed="true"] .sound-bars i{background:var(--hl)}
+.picker{z-index:9;transition:opacity .4s}
+body.tune-open .picker{opacity:0!important;pointer-events:none}
 /* letters light up red where the pointer or a finger touches them */
 .lt{display:inline-block;pointer-events:auto;transition:color 1.1s ease,text-shadow 1.1s ease}
 :root{--hl:#ff4655}
 .ltw{display:inline-block;white-space:nowrap}
+/* hidden or decorative text never catches the pointer */
+.picker:not([data-open="true"]) .lt,.worldword .lt,.backword .lt,.detail:not(.is-open) .lt,.sec:not(.is-active) .lt{pointer-events:none}
 .lt.hot,.lt:hover{color:var(--a, var(--hl));text-shadow:0 0 18px currentColor;transition:color 0s,text-shadow 0s}
 .backword,.worldword{overflow:hidden}
 @media (max-width:640px){.brand-name{font-size:17px}.depth-name{font-size:13px}.depth{min-width:0}.brand-sub,[data-depth-num],[data-sound-label]{display:none}.hud-right{gap:14px}.backword{font-size:17vw}.mail{font-size:5.2vw;letter-spacing:0}}
@@ -518,23 +561,107 @@ body.tune-open .tune-toggle{opacity:0;pointer-events:none}
 <button class="tune-toggle" type="button" aria-expanded="false" aria-controls="tune" data-tune-toggle><i></i><span>Tune the core</span></button>
 <aside class="tune" id="tune" aria-label="Tune the core" data-open="false">
   <header class="tune-h"><span>Tune the core <kbd>T</kbd></span><button type="button" class="tune-x" data-tune-close aria-label="Close"></button></header>
-  <label class="tune-row"><span>Particles</span><input type="range" min="0.2" max="3" step="0.05" value="1" data-t-density><b data-t-density-out>100%</b></label>
-  <label class="tune-row"><span>Speed</span><input type="range" min="0" max="4" step="0.05" value="1" data-t-speed><b data-t-speed-out>1.0x</b></label>
-  <div class="tune-row"><span>Rings</span>
-    <div class="tune-step"><button type="button" data-t-ring="-1" aria-label="Fewer rings">&minus;</button><b data-t-rings>10</b><button type="button" data-t-ring="1" aria-label="More rings">+</button></div></div>
-  <div class="tune-row"><span>Direction</span>
-    <div class="tune-seg" role="group" aria-label="Direction"><button type="button" data-t-dir="1" aria-pressed="true">&#8635; Forward</button><button type="button" data-t-dir="-1" aria-pressed="false">&#8634; Reverse</button></div></div>
-  <div class="tune-row"><span>Shape</span>
-    <div class="tune-seg" role="group" aria-label="Shape"><button type="button" data-t-shape="0" aria-pressed="true">Circle</button><button type="button" data-t-shape="1" aria-pressed="false">Ball</button><button type="button" data-t-shape="2" aria-pressed="false">Square</button></div></div>
-  <div class="tune-row"><span>Colour</span>
-    <div class="tune-sw" role="group" aria-label="Neon colour">
-      <button type="button" style="--c:#b44cff" data-t-sw="#b44cff" aria-label="Neon purple" aria-pressed="true"></button>
-      <button type="button" style="--c:#ff4655" data-t-sw="#ff4655" aria-label="Red" aria-pressed="false"></button>
-      <button type="button" style="--c:#3ff2ff" data-t-sw="#3ff2ff" aria-label="Cyan" aria-pressed="false"></button>
-      <button type="button" style="--c:#ffc94d" data-t-sw="#ffc94d" aria-label="Gold" aria-pressed="false"></button>
-      <label class="tune-pick" aria-label="Custom colour"><input type="color" value="#b44cff" data-t-color></label>
-    </div></div>
-  <button type="button" class="tune-reset" data-t-reset>Reset</button>
+
+  <section class="tune-sel" data-sel hidden>
+    <div class="tune-sel-h"><span>Selected</span><b data-sel-name>Ring 1</b><button type="button" class="tune-link" data-sel-done>Done</button></div>
+    <div class="tune-row"><span>Colour</span>
+      <div class="tune-sw" role="group" aria-label="Selected colour" data-sel-sw>
+        <button type="button" style="--c:#ffffff" data-c="#ffffff" aria-label="White"></button>
+        <button type="button" style="--c:#ff4655" data-c="#ff4655" aria-label="Red"></button>
+        <button type="button" style="--c:#b44cff" data-c="#b44cff" aria-label="Purple"></button>
+        <button type="button" style="--c:#3ff2ff" data-c="#3ff2ff" aria-label="Cyan"></button>
+        <button type="button" style="--c:#ffc94d" data-c="#ffc94d" aria-label="Gold"></button>
+        <label class="tune-pick" aria-label="Custom colour"><input type="color" value="#ffffff" data-sel-color></label>
+      </div></div>
+    <div data-sel-ring>
+      <label class="tune-row"><span>Size</span><input type="range" min="0.35" max="3.4" step="0.01" data-sel-r><b data-out></b></label>
+      <label class="tune-row"><span>Tilt X</span><input type="range" min="-3.14" max="3.14" step="0.01" data-sel-rx><b data-out></b></label>
+      <label class="tune-row"><span>Tilt Z</span><input type="range" min="-3.14" max="3.14" step="0.01" data-sel-rz><b data-out></b></label>
+      <label class="tune-row"><span>Speed</span><input type="range" min="0" max="4" step="0.05" data-sel-speed><b data-out></b></label>
+      <div class="tune-row tall"><span>Shape</span><div class="tune-grid" data-sel-shape></div></div>
+    </div>
+    <div data-sel-glass>
+      <label class="tune-row"><span>Clarity</span><input type="range" min="0" max="4" step="0.05" data-sel-clarity><b data-out></b></label>
+      <label class="tune-row"><span>Rim glow</span><input type="range" min="0" max="2" step="0.05" data-sel-rim><b data-out></b></label>
+    </div>
+    <div data-sel-band>
+      <label class="tune-row"><span>Thickness</span><input type="range" min="0.3" max="3" step="0.05" data-sel-thick><b data-out></b></label>
+    </div>
+    <button type="button" class="tune-reset danger" data-sel-remove>Hide this part</button>
+  </section>
+
+  <nav class="tune-tabs" role="tablist">
+    <button type="button" role="tab" data-tab="style" aria-selected="true">Style</button>
+    <button type="button" role="tab" data-tab="motion" aria-selected="false">Motion</button>
+    <button type="button" role="tab" data-tab="planet" aria-selected="false">Planet</button>
+    <button type="button" role="tab" data-tab="play" aria-selected="false">Play</button>
+  </nav>
+
+  <div class="tune-pane" data-pane="style">
+    <div class="tune-row tall"><span>Theme</span>
+      <div class="tune-grid themes" data-t-theme>
+        <button type="button" data-v="nebula" style="--c1:#b44cff;--c2:#5aa8ff">Nebula</button>
+        <button type="button" data-v="valorant" style="--c1:#ff4655;--c2:#ff9aa1">Valorant</button>
+        <button type="button" data-v="solar" style="--c1:#ffb347;--c2:#ff6a3d">Solar</button>
+        <button type="button" data-v="ice" style="--c1:#7fe9ff;--c2:#4f8dff">Ice</button>
+        <button type="button" data-v="toxic" style="--c1:#9dff4c;--c2:#2fd08a">Toxic</button>
+      </div></div>
+    <div class="tune-row"><span>Neon</span>
+      <div class="tune-sw" role="group" aria-label="Neon colour" data-t-sw>
+        <button type="button" style="--c:#b44cff" data-c="#b44cff" aria-label="Neon purple"></button>
+        <button type="button" style="--c:#ff4655" data-c="#ff4655" aria-label="Red"></button>
+        <button type="button" style="--c:#3ff2ff" data-c="#3ff2ff" aria-label="Cyan"></button>
+        <button type="button" style="--c:#ffc94d" data-c="#ffc94d" aria-label="Gold"></button>
+        <label class="tune-pick" aria-label="Custom colour"><input type="color" value="#b44cff" data-t-color></label>
+      </div></div>
+    <p class="tune-hint">Pick a ring, the glass or the metal band on the planet to edit just that part.</p>
+    <div class="tune-btns"><button type="button" class="tune-btn" data-t-random>&#9861; Randomize</button><button type="button" class="tune-reset" data-t-reset>Reset</button></div>
+  </div>
+
+  <div class="tune-pane" data-pane="motion" hidden>
+    <label class="tune-row"><span>Particles</span><input type="range" min="0.2" max="3" step="0.05" value="1" data-t-density><b data-out>100%</b></label>
+    <label class="tune-row"><span>Speed</span><input type="range" min="0" max="4" step="0.05" value="1" data-t-speed><b data-out>1.0x</b></label>
+    <div class="tune-row"><span>Rings</span>
+      <div class="tune-step"><button type="button" data-t-ring="-1" aria-label="Fewer rings">&minus;</button><b data-t-rings>10</b><button type="button" data-t-ring="1" aria-label="More rings">+</button></div></div>
+    <div class="tune-row"><span>Direction</span>
+      <div class="tune-seg" role="group" aria-label="Direction" data-t-dir><button type="button" data-v="1" aria-pressed="true">&#8635; Forward</button><button type="button" data-v="-1" aria-pressed="false">&#8634; Reverse</button></div></div>
+    <div class="tune-row tall"><span>Shape</span><div class="tune-grid" data-t-shape></div></div>
+  </div>
+
+  <div class="tune-pane" data-pane="planet" hidden>
+    <p class="tune-sub">Metal band</p>
+    <div class="tune-row"><span>Show</span><div class="tune-seg" data-t-band><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
+    <label class="tune-row"><span>Thickness</span><input type="range" min="0.3" max="3" step="0.05" value="1" data-t-thick><b data-out>1.0x</b></label>
+    <div class="tune-row"><span>Metal</span>
+      <div class="tune-sw" data-t-metal>
+        <button type="button" style="--c:#c9ccd6" data-c="#c9ccd6" aria-label="Silver"></button>
+        <button type="button" style="--c:#d9b36c" data-c="#d9b36c" aria-label="Gold"></button>
+        <button type="button" style="--c:#3a3d45" data-c="#3a3d45" aria-label="Black"></button>
+        <button type="button" style="--c:#c77b4a" data-c="#c77b4a" aria-label="Copper"></button>
+      </div></div>
+    <p class="tune-sub">Glass</p>
+    <label class="tune-row"><span>Clarity</span><input type="range" min="0" max="4" step="0.05" value="1" data-t-clarity><b data-out>1.0x</b></label>
+    <label class="tune-row"><span>Rim glow</span><input type="range" min="0" max="2" step="0.05" value="0.55" data-t-rim><b data-out>0.55</b></label>
+    <div class="tune-row"><span>Inner orb</span><div class="tune-seg" data-t-inner><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
+    <p class="tune-sub">Dust &amp; flares</p>
+    <label class="tune-row"><span>Dust</span><input type="range" min="0" max="3" step="0.05" value="1" data-t-haze><b data-out>100%</b></label>
+    <label class="tune-row"><span>Flare rate</span><input type="range" min="0" max="3" step="0.05" value="1" data-t-frate><b data-out>1.0x</b></label>
+    <label class="tune-row"><span>Flare glow</span><input type="range" min="0" max="3" step="0.05" value="1" data-t-famt><b data-out>1.0x</b></label>
+  </div>
+
+  <div class="tune-pane" data-pane="play" hidden>
+    <p class="tune-sub">Pointer</p>
+    <div class="tune-row"><span>Mode</span><div class="tune-seg" data-t-ptr><button type="button" data-v="0" aria-pressed="true">Off</button><button type="button" data-v="-1" aria-pressed="false">Attract</button><button type="button" data-v="1" aria-pressed="false">Repel</button></div></div>
+    <label class="tune-row"><span>Strength</span><input type="range" min="0.2" max="3" step="0.05" value="1" data-t-ptrs><b data-out>1.0x</b></label>
+    <p class="tune-sub">Sound reactive</p>
+    <div class="tune-row"><span>Mic</span><div class="tune-seg" data-t-mic><button type="button" data-v="0" aria-pressed="true">Off</button><button type="button" data-v="1" aria-pressed="false">On</button></div></div>
+    <label class="tune-row"><span>Sensitivity</span><input type="range" min="0.2" max="4" step="0.05" value="1" data-t-gain><b data-out>1.0x</b></label>
+    <p class="tune-note" data-t-mic-note>Uses your microphone only while this is on. Nothing is recorded.</p>
+    <p class="tune-sub">View</p>
+    <label class="tune-row"><span>Zoom</span><input type="range" min="0.45" max="2.4" step="0.01" value="1" data-t-zoom><b data-out>1.00x</b></label>
+    <p class="tune-hint">Drag the planet to turn it, scroll or pinch to zoom.</p>
+    <button type="button" class="tune-reset" data-t-view>Reset view</button>
+  </div>
 </aside>
 
 <footer class="hud hud-bottom" aria-hidden="true">
@@ -676,7 +803,9 @@ body.tune-open .tune-toggle{opacity:0;pointer-events:none}
 const THREE = window.KY;
 const WORLDS = /*__WORLDS__*/;
 
-/* Core tuning drawer. Talks to the planet through PlanetBody.active once the scene exists. */
+/* Core tuning drawer. Talks to the planet through PlanetBody.active once the scene exists.
+   While it is open the planet becomes editable: hover or drag across a part to highlight it, tap to select it,
+   drag to turn the planet, scroll or pinch to zoom. */
 (() => {
   const wire = () => {
     const panel = document.getElementById('tune'), toggle = document.querySelector('[data-tune-toggle]');
@@ -684,80 +813,254 @@ const WORLDS = /*__WORLDS__*/;
     const q = s => panel.querySelector(s), qa = s => Array.from(panel.querySelectorAll(s));
     const body = () => (typeof PlanetBody !== 'undefined' && PlanetBody.active) || null;
     const call = (fn, ...a) => { const b = body(); return b ? b[fn](...a) : undefined; };
+    const isOpen = () => panel.dataset.open === 'true';
+    const KEY = 'kythera.tune.v2';
+
+    /* ---- open / close ---- */
+    const TUNE_SECTIONS = ['identity', 'capabilities'];
+    const activeSec = () => TUNE_SECTIONS.map(id => document.getElementById(id)).find(el => el && el.classList.contains('is-active'));
     const open = on => {
+      // Dock on the same side as the section's text, away from the planet.
+      if (on) { const sec = activeSec(); panel.dataset.side = sec && sec.dataset.side === 'right' ? 'right' : 'left'; }
       panel.dataset.open = String(on); toggle.setAttribute('aria-expanded', String(on));
       document.body.classList.toggle('tune-open', on);
-      if (on) syncRings();
+      document.documentElement.classList.toggle('tune-lock', on);
+      // Closing the drawer puts the planet back where the page expects it.
+      if (!on) { const b = body(); if (b) { b.hover = null; b.selected = null; b.resetView(); } showSel(null); setRange(zoom, 1, v => v.toFixed(2) + 'x'); }
+      else syncRings();
     };
     toggle.addEventListener('click', () => open(true));
-    // Any press outside the drawer folds it away.
-    document.addEventListener('pointerdown', e => {
-      if (panel.dataset.open === 'true' && !panel.contains(e.target) && !toggle.contains(e.target)) open(false);
-    }, true);
-    // T toggles the drawer from anywhere (not while typing).
-    addEventListener('keydown', e => {
-      if ((e.key === 't' || e.key === 'T') && !e.metaKey && !e.ctrlKey && !e.altKey && !/input|textarea/i.test(e.target.tagName)) open(panel.dataset.open !== 'true');
-    });
     q('[data-tune-close]').addEventListener('click', () => open(false));
-    addEventListener('keydown', e => { if (e.key === 'Escape' && panel.dataset.open === 'true') open(false); });
-    const fill = el => el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%');
-    const dens = q('[data-t-density]'), spd = q('[data-t-speed]');
-    dens.addEventListener('input', () => { call('setDensity', +dens.value); q('[data-t-density-out]').textContent = Math.round(dens.value * 100) + '%'; fill(dens); });
-    spd.addEventListener('input', () => { call('setSpeed', +spd.value); q('[data-t-speed-out]').textContent = (+spd.value).toFixed(1) + 'x'; fill(spd); });
-    const syncRings = () => { const b = body(); q('[data-t-rings]').textContent = b ? b.ringCount : '10'; };
-    qa('[data-t-ring]').forEach(btn => btn.addEventListener('click', () => { const b = body(); if (b) b.setRingCount(b.ringCount + +btn.dataset.tRing); syncRings(); }));
-    const seg = (sel, key, fn) => qa(sel).forEach(btn => btn.addEventListener('click', () => {
-      qa(sel).forEach(x => x.setAttribute('aria-pressed', String(x === btn))); call(fn, +btn.dataset[key]);
-    }));
-    seg('[data-t-dir]', 'tDir', 'setDirection');
-    seg('[data-t-shape]', 'tShape', 'setShape');
-    const picker = q('[data-t-color]'), sws = qa('[data-t-sw]');
-    const setColor = hex => { call('setNeon', hex); picker.value = hex; sws.forEach(s => s.setAttribute('aria-pressed', String(s.dataset.tSw === hex))); };
-    sws.forEach(s => s.addEventListener('click', () => setColor(s.dataset.tSw)));
-    picker.addEventListener('input', () => setColor(picker.value));
-    q('[data-t-reset]').addEventListener('click', () => {
-      try { localStorage.removeItem('kythera.tune.v1'); } catch (e) {}
-      call('resetAll');
-      dens.value = 1; spd.value = 1; dens.dispatchEvent(new Event('input')); spd.dispatchEvent(new Event('input'));
-      qa('[data-t-dir]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.tDir === '1')));
-      qa('[data-t-shape]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.tShape === '0')));
-      setColor('#b44cff'); syncRings();
+    addEventListener('keydown', e => {
+      if (e.key === 'Escape' && isOpen()) { const b = body(); if (b && b.selected) { b.selected = null; showSel(null); } else open(false); }
+      if ((e.key === 't' || e.key === 'T') && !e.metaKey && !e.ctrlKey && !e.altKey && !/input|textarea/i.test(e.target.tagName)) open(!isOpen());
     });
-    [dens, spd].forEach(fill);
-    // Remember the tuning in this browser and bring it back on the next visit.
-    const KEY = 'kythera.tune.v1';
-    const snapshot = () => ({ density: +dens.value, speed: +spd.value,
-      dir: +(panel.querySelector('[data-t-dir][aria-pressed=true]') || {}).dataset?.tDir || 1,
-      shape: +(panel.querySelector('[data-t-shape][aria-pressed=true]') || {}).dataset?.tShape || 0,
-      color: picker.value, rings: body() ? body().ringCount : 10 });
-    const save = () => { try { localStorage.setItem(KEY, JSON.stringify(snapshot())); } catch (e) {} };
-    panel.addEventListener('input', () => setTimeout(save));
-    panel.addEventListener('click', () => setTimeout(save));
-    let saved = null; try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
-    if (saved) {
-      const apply = () => {
-        const b = body(); if (!b) { setTimeout(apply, 300); return; }
-        dens.value = saved.density; spd.value = saved.speed;
-        dens.dispatchEvent(new Event('input')); spd.dispatchEvent(new Event('input'));
-        qa('[data-t-dir]').find(x => +x.dataset.tDir === saved.dir)?.click();
-        qa('[data-t-shape]').find(x => +x.dataset.tShape === saved.shape)?.click();
-        if (saved.color) setColor(saved.color);
-        if (saved.rings != null) { b.setRingCount(saved.rings); syncRings(); }
-      };
-      apply();
+
+    /* ---- tabs ---- */
+    qa('[data-tab]').forEach(t => t.addEventListener('click', () => {
+      qa('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x === t)));
+      qa('[data-pane]').forEach(p => { p.hidden = p.dataset.pane !== t.dataset.tab; });
+    }));
+
+    /* ---- helpers ---- */
+    const fill = el => el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%');
+    const out = (el, txt) => { const o = el.parentElement.querySelector('[data-out]'); if (o) o.textContent = txt; fill(el); };
+    const range = (sel, fn, fmt) => {
+      const el = q(sel);
+      el.addEventListener('input', () => { fn(+el.value); out(el, fmt(+el.value)); save(); });
+      out(el, fmt(+el.value));
+      return el;
+    };
+    const setRange = (el, v, fmt) => { el.value = v; out(el, fmt(+v)); };
+    const seg = (sel, fn) => {
+      const root = q(sel), bs = Array.from(root.querySelectorAll('button'));
+      const set = v => bs.forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === String(v))));
+      bs.forEach(x => x.addEventListener('click', () => { set(x.dataset.v); fn(+x.dataset.v); save(); }));
+      return { set, get: () => +(bs.find(x => x.getAttribute('aria-pressed') === 'true') || bs[0]).dataset.v };
+    };
+    const swatch = (sel, fn, picker) => {
+      const root = q(sel), bs = Array.from(root.querySelectorAll('button[data-c]'));
+      const set = hex => { bs.forEach(x => x.setAttribute('aria-pressed', String(x.dataset.c === hex))); if (picker) picker.value = hex; };
+      bs.forEach(x => x.addEventListener('click', () => { set(x.dataset.c); fn(x.dataset.c); save(); }));
+      if (picker) picker.addEventListener('input', () => { set(picker.value); fn(picker.value); save(); });
+      return { set };
+    };
+    const pct = v => Math.round(v * 100) + '%', times = v => v.toFixed(1) + 'x';
+    const shapeGrid = (root, fn) => {
+      root.innerHTML = PlanetBody.SHAPES.map((n, i) => `<button type="button" data-v="${i}" aria-pressed="${i === 0}">${n}</button>`).join('');
+      const bs = Array.from(root.querySelectorAll('button'));
+      const set = v => bs.forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.v === v)));
+      bs.forEach(x => x.addEventListener('click', () => { set(+x.dataset.v); fn(+x.dataset.v); save(); }));
+      return { set };
+    };
+
+    /* ---- global controls ---- */
+    const dens = range('[data-t-density]', v => call('setDensity', v), pct);
+    const spd = range('[data-t-speed]', v => call('setSpeed', v), times);
+    const thick = range('[data-t-thick]', v => call('setBand', null, v), times);
+    const clar = range('[data-t-clarity]', v => call('setGlass', v, null), times);
+    const rim = range('[data-t-rim]', v => call('setGlass', null, v), v => v.toFixed(2));
+    const haze = range('[data-t-haze]', v => call('setHaze', v), pct);
+    const frate = range('[data-t-frate]', v => call('setFlare', v, null), times);
+    const famt = range('[data-t-famt]', v => call('setFlare', null, v), times);
+    const ptrs = range('[data-t-ptrs]', v => call('setPointer', null, v), times);
+    const gain = range('[data-t-gain]', v => { const b = body(); if (b) b.audioGain = v; }, times);
+    const zoom = range('[data-t-zoom]', v => call('setView', v), v => v.toFixed(2) + 'x');
+    const dir = seg('[data-t-dir]', v => call('setDirection', v));
+    const band = seg('[data-t-band]', v => call('setBand', !!v, null));
+    const inner = seg('[data-t-inner]', v => call('setInner', !!v));
+    const ptr = seg('[data-t-ptr]', v => call('setPointer', v, null));
+    const micNote = q('[data-t-mic-note]');
+    const mic = seg('[data-t-mic]', async v => {
+      const b = body(); if (!b) return;
+      if (v) {
+        const ok = await b.startAudio();
+        micNote.textContent = ok ? 'Listening. The planet pulses with the sound around you.' : 'Microphone blocked. Allow it in the browser to use this.';
+        if (!ok) mic.set(0);
+      } else { b.stopAudio(); micNote.textContent = 'Uses your microphone only while this is on. Nothing is recorded.'; }
+    });
+    const shape = shapeGrid(q('[data-t-shape]'), v => call('setShape', v));
+    const picker = q('[data-t-color]');
+    const neon = swatch('[data-t-sw]', hex => call('setNeon', hex), picker);
+    const metal = swatch('[data-t-metal]', hex => call('setMetal', hex));
+    neon.set('#b44cff'); metal.set('#c9ccd6');
+    const themes = qa('[data-t-theme] button');
+    const setTheme = name => {
+      themes.forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === name)));
+      call('setTheme', name);
+      const t = PLANET_THEMES[name]; if (t) { neon.set(t.neon); metal.set(t.metal); }
+    };
+    themes.forEach(x => x.addEventListener('click', () => { setTheme(x.dataset.v); save(); }));
+    const syncRings = () => { const b = body(); q('[data-t-rings]').textContent = b ? b.ringCount : '10'; };
+    qa('[data-t-ring]').forEach(btn => btn.addEventListener('click', () => { const b = body(); if (b) b.setRingCount(b.ringCount + +btn.dataset.tRing); syncRings(); save(); }));
+    q('[data-t-random]').addEventListener('click', () => {
+      const b = body(); if (!b) return; b.randomize();
+      setTheme(b.theme); setRange(spd, b.speed, times); setRange(dens, b.density, pct); dir.set(b.dir); shape.set(-1);
+      syncRings(); save();
+    });
+    q('[data-t-view]').addEventListener('click', () => { call('resetView'); setRange(zoom, 1, v => v.toFixed(2) + 'x'); });
+    const resetUI = () => {
+      [[dens, 1, pct], [spd, 1, times], [thick, 1, times], [clar, 1, times], [rim, 0.55, v => v.toFixed(2)], [haze, 1, pct],
+       [frate, 1, times], [famt, 1, times], [ptrs, 1, times], [gain, 1, times], [zoom, 1, v => v.toFixed(2) + 'x']].forEach(([el, v, f]) => setRange(el, v, f));
+      dir.set(1); band.set(1); inner.set(1); ptr.set(0); shape.set(0); setTheme('nebula'); neon.set('#b44cff');
+    };
+    q('[data-t-reset]').addEventListener('click', () => {
+      try { localStorage.removeItem(KEY); } catch (e) {}
+      mic.set(0); call('stopAudio'); call('resetAll'); resetUI(); showSel(null); syncRings();
+    });
+
+    /* ---- selected part ---- */
+    const selBox = q('[data-sel]');
+    const selPicker = q('[data-sel-color]');
+    const selSw = swatch('[data-sel-sw]', hex => { const b = body(); if (b && b.selected) b.setItemColor(b.selected, hex); }, selPicker);
+    const selRange = (sel, fn, fmt) => {
+      const el = q(sel);
+      el.addEventListener('input', () => { const b = body(); if (b && b.selected) fn(b, b.selected, +el.value); out(el, fmt(+el.value)); });
+      return el;
+    };
+    const deg = v => Math.round(v * 57.3) + '°';
+    const sR = selRange('[data-sel-r]', (b, it, v) => b.setRingRadius(it, v), v => v.toFixed(2));
+    const sRX = selRange('[data-sel-rx]', (b, it, v) => b.setRingTilt(it, v, null), deg);
+    const sRZ = selRange('[data-sel-rz]', (b, it, v) => b.setRingTilt(it, null, v), deg);
+    const sSp = selRange('[data-sel-speed]', (b, it, v) => b.setRingSpeed(it, v), times);
+    const sCl = selRange('[data-sel-clarity]', (b, it, v) => { it.mat.uniforms.uClarity.value = v; }, times);
+    const sRim = selRange('[data-sel-rim]', (b, it, v) => { it.mat.uniforms.uRim.value = v; }, v => v.toFixed(2));
+    const sTh = selRange('[data-sel-thick]', (b, it, v) => b.setBand(null, v), times);
+    const selShape = shapeGrid(q('[data-sel-shape]'), v => { const b = body(); if (b && b.selected) b.setRingShape(b.selected, v); });
+    const hex = c => '#' + c.getHexString();
+    const showSel = it => {
+      const b = body();
+      selBox.hidden = !it;
+      if (!it || !b) return;
+      q('[data-sel-name]').textContent = b.itemName(it);
+      q('[data-sel-ring]').hidden = it.kind !== 'ring';
+      q('[data-sel-glass]').hidden = it.kind !== 'glass';
+      q('[data-sel-band]').hidden = it.kind !== 'band';
+      if (it.kind === 'ring') {
+        setRange(sR, it.c.r, v => v.toFixed(2)); setRange(sRX, it.c.rx, deg); setRange(sRZ, it.c.rz, deg);
+        setRange(sSp, it.speedMul, times); selShape.set(it.shape);
+        selSw.set(it.tinted ? hex(it.common.uTint.value) : '#ffffff');
+      } else if (it.kind === 'glass') {
+        setRange(sCl, it.mat.uniforms.uClarity.value, times); setRange(sRim, it.mat.uniforms.uRim.value, v => v.toFixed(2));
+        selSw.set(hex(it.mat.uniforms.uColor.value));
+      } else {
+        setRange(sTh, b.bandItem.thick, times); selSw.set(hex(b.blockMat.uniforms.uColor.value));
+      }
+      selBox.scrollIntoView({ block: 'nearest' });
+    };
+    q('[data-sel-done]').addEventListener('click', () => { const b = body(); if (b) b.selected = null; showSel(null); });
+    q('[data-sel-remove]').addEventListener('click', () => {
+      const b = body(); if (!b || !b.selected) return;
+      b.removeItem(b.selected); b.selected = null; showSel(null); syncRings();
+      if (!b.bandItem.show) band.set(0); if (!b.inner.show) inner.set(0);
+    });
+
+    /* ---- picking, turning and zooming the planet while the drawer is open ---- */
+    const canvas = () => document.getElementById('gl');
+    const pickAt = (x, y) => { const b = body(); const cv = canvas(); return b && cv && PlanetBody.camera ? b.pick(x, y, PlanetBody.camera, cv.getBoundingClientRect()) : null; };
+    const inUI = t => panel.contains(t) || toggle.contains(t) || (t.closest && t.closest('.hud a,.hud button,.picker,.rail'));
+    let down = null, pinch = null;
+    addEventListener('pointerdown', e => {
+      if (!isOpen() || inUI(e.target)) return;
+      down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false, id: e.pointerId };
+    }, true);
+    addEventListener('pointermove', e => {
+      if (!isOpen()) return;
+      const b = body(); if (!b) return;
+      if (down && e.pointerId === down.id && !pinch) {
+        const dx = e.clientX - down.lx, dy = e.clientY - down.ly;
+        if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) down.moved = true;
+        if (down.moved) b.turn(dx * 0.006, dy * 0.006);
+        down.lx = e.clientX; down.ly = e.clientY;
+      }
+      if (!inUI(e.target)) b.hover = pickAt(e.clientX, e.clientY);
+    }, true);
+    addEventListener('pointerup', e => {
+      if (!isOpen() || !down || e.pointerId !== down.id) { down = null; return; }
+      const d = down; down = null;
+      if (d.moved || pinch) return;
+      const b = body(); const it = pickAt(e.clientX, e.clientY);
+      if (it) { b.selected = it; showSel(it); }
+      else if (b && b.selected) { b.selected = null; showSel(null); }
+      else open(false);
+    }, true);
+    addEventListener('wheel', e => {
+      if (!isOpen() || inUI(e.target)) return;
+      e.preventDefault();
+      const b = body(); if (!b) return;
+      b.setView(b.zoomT * Math.exp(-e.deltaY * 0.0012)); setRange(zoom, b.zoomT, v => v.toFixed(2) + 'x');
+    }, { passive: false });
+    addEventListener('touchstart', e => {
+      if (!isOpen() || e.touches.length !== 2) return;
+      const [a, c] = e.touches; pinch = { d: Math.hypot(a.clientX - c.clientX, a.clientY - c.clientY), z: (body() || {}).zoomT || 1 };
+    }, { passive: true });
+    addEventListener('touchmove', e => {
+      if (!isOpen() || inUI(e.target)) return;
+      e.preventDefault();
+      if (pinch && e.touches.length === 2) {
+        const [a, c] = e.touches, b = body(); if (!b) return;
+        b.setView(pinch.z * Math.hypot(a.clientX - c.clientX, a.clientY - c.clientY) / pinch.d); setRange(zoom, b.zoomT, v => v.toFixed(2) + 'x');
+      }
+    }, { passive: false });
+    addEventListener('touchend', e => { if (e.touches.length < 2) pinch = null; }, { passive: true });
+
+    /* ---- remember settings ---- */
+    function save() {
+      const b = body(); if (!b) return;
+      const s = { density: b.density, speed: b.speed, dir: b.dir, shape: b.shape, neon: hex(b.uNeon.value), theme: b.theme || 'nebula',
+        rings: b.ringCount, band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
+        clarity: +clar.value, rim: +rim.value, inner: b.inner.show, haze: b.hazeDensity, frate: b.uFlareRate.value, famt: b.uFlareAmt.value,
+        ptr: b.ptrMode, ptrs: b.ptrStrength };
+      try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
     }
-    // Keep the drawer's gestures away from the page's scroll and core interactions.
-    ['wheel', 'touchmove', 'pointerdown', 'pointerup'].forEach(t => panel.addEventListener(t, e => e.stopPropagation(), { passive: true }));
-    // The toggle belongs to the perimeter section.
-    const sec = document.getElementById('identity');
-    if (sec) new MutationObserver(() => {
-      const on = sec.classList.contains('is-active');
-      document.body.classList.toggle('tune-on', on);
-    }).observe(sec, { attributes: true, attributeFilter: ['class'] });
+    let saved = null; try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+    const restore = () => {
+      const b = body(); if (!b) { setTimeout(restore, 300); return; }
+      if (!saved) return;
+      const s = saved;
+      setTheme(s.theme); b.setNeon(s.neon); neon.set(s.neon); b.setMetal(s.metal); metal.set(s.metal);
+      b.setDensity(s.density); setRange(dens, s.density, pct);
+      b.setSpeed(s.speed); setRange(spd, s.speed, times);
+      b.setDirection(s.dir); dir.set(s.dir);
+      b.setShape(s.shape); shape.set(s.shape);
+      b.setRingCount(s.rings); syncRings();
+      b.setBand(s.band, s.thick); band.set(s.band ? 1 : 0); setRange(thick, s.thick, times);
+      b.setGlass(s.clarity, s.rim); setRange(clar, s.clarity, times); setRange(rim, s.rim, v => v.toFixed(2));
+      b.setInner(s.inner); inner.set(s.inner ? 1 : 0);
+      b.setHaze(s.haze); setRange(haze, s.haze, pct);
+      b.setFlare(s.frate, s.famt); setRange(frate, s.frate, times); setRange(famt, s.famt, times);
+      b.setPointer(s.ptr, s.ptrs); ptr.set(s.ptr); setRange(ptrs, s.ptrs, times);
+    };
+    restore();
+
+    // Keep the drawer's own gestures away from the page's scroll and core interactions.
+    ['wheel', 'touchmove'].forEach(t => panel.addEventListener(t, e => e.stopPropagation(), { passive: true }));
+    // The toggle belongs to the perimeter and lattice sections.
+    const syncOn = () => { const on = !!activeSec(); document.body.classList.toggle('tune-on', on); if (!on && isOpen()) open(false); };
+    TUNE_SECTIONS.forEach(id => { const el = document.getElementById(id); if (el) new MutationObserver(syncOn).observe(el, { attributes: true, attributeFilter: ['class'] }); });
   };
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', wire) : wire();
 })();
-
 /* Letters light up red under the pointer or a finger, then fade back. */
 const Letters = (() => {
   const wrap = el => {
@@ -1520,15 +1823,16 @@ void main(){
 }`;
 
 const GLASS_FRAG = `
-uniform vec3 uInk;
-uniform float uOpacity, uRim;
+uniform vec3 uColor, uHiColor;
+uniform float uOpacity, uRim, uClarity, uHi, uPulse;
 varying vec3 vN, vV;
 void main(){
   float f = 1.0 - abs(dot(normalize(vN), normalize(vV)));
-  float rim = pow(f, 3.0) * uRim + pow(f, 12.0) * 0.6;
+  float rim = pow(f, 3.0) * uRim * (1.0 + uPulse * 1.5) + pow(f, 12.0) * 0.6;
   vec3 L = normalize(vec3(-0.5, 0.7, 0.6));
   float spec = pow(max(dot(reflect(-L, normalize(vN)), normalize(vV)), 0.0), 40.0) * 0.35;
-  gl_FragColor = vec4(uInk, (0.025 + rim + spec) * uOpacity);
+  vec3 col = mix(uColor, uHiColor, uHi * 0.7);
+  gl_FragColor = vec4(col, (0.025 * uClarity + rim + spec + uHi * pow(f, 2.0) * 0.5) * uOpacity);
 }`;
 
 const BLOCK_VERT = `
@@ -1541,8 +1845,8 @@ void main(){
 }`;
 
 const BLOCK_FRAG = `
-uniform vec3 uInk;
-uniform float uOpacity;
+uniform vec3 uColor, uHiColor;
+uniform float uOpacity, uHi;
 varying vec3 vN, vV;
 void main(){
   vec3 N = normalize(vN), V = normalize(vV);
@@ -1550,42 +1854,63 @@ void main(){
   float dif = max(dot(N, L), 0.0);
   float spec = pow(max(dot(reflect(-L, N), V), 0.0), 24.0);
   float rim = pow(1.0 - max(dot(N, V), 0.0), 3.0);
-  vec3 col = uInk * (0.08 + 0.55 * dif) + vec3(spec * 0.7) + uInk * rim * 0.25;
+  vec3 col = uColor * (0.08 + 0.55 * dif) + vec3(spec * 0.7) + uColor * rim * 0.25;
+  col = mix(col, uHiColor, uHi * (0.35 + rim * 0.5));
   gl_FragColor = vec4(col, uOpacity);
 }`;
 
-/* Particles running along the planet's rings: each has its own speed, some glow neon purple. */
+/* Ring paths shared by the runners and the ring lines. 0 circle, 1 ball, 2 square, 3 triangle, 4 star, 5 helix, 6 figure eight. */
+const RING_SHAPE = `
+float polyR(float a, float n, float rot){
+  float s = 6.2831853 / n;
+  return cos(3.14159265 / n) / cos(mod(a + rot, s) - s * 0.5);
+}
+vec3 ringShape(float k, float a, float r, float seed, float jz){
+  vec2 ci = vec2(cos(a), sin(a));
+  if (k < 0.5) return vec3(ci * r, jz);
+  if (k < 1.5) { float b = fract(seed * 3.713) * 3.14159; return vec3(ci.x * r, ci.y * r * cos(b), ci.y * r * sin(b)); }
+  if (k < 2.5) return vec3(ci * r * polyR(a, 4.0, 0.785398), jz);
+  if (k < 3.5) return vec3(ci * r * polyR(a, 3.0, 1.570796), jz);
+  if (k < 4.5) { float t = 0.5 + 0.5 * cos(5.0 * a); return vec3(ci * r * (0.5 + 0.5 * t * t), jz); }
+  if (k < 5.5) {
+    float strand = step(0.5, fract(seed * 5.31)) * 3.14159;
+    float w = a * 9.0 + strand;
+    return vec3(ci * r * (1.0 + cos(w) * 0.09), sin(w) * r * 0.09 + jz);
+  }
+  float d = 1.0 + sin(a) * sin(a);
+  return vec3(r * 1.3 * cos(a) / d, r * 1.3 * sin(a) * cos(a) / d, jz);
+}`;
+
+/* Particles running along the planet's rings. */
 const RUNNER_VERT = `
 attribute vec4 aRun; // phase, speed, radius jitter, size
 attribute float aHue, aFlare;
-uniform float uTime, uPixelRatio, uMotion, uRadius, uRunT;
-uniform vec3 uShape; // weights: circle, ball, square
+uniform float uTime, uPixelRatio, uRadius, uRunT, uShapeA, uShapeB, uShapeT, uHi, uPtrAmt, uPulse, uFlareRate, uFlareAmt;
+uniform vec3 uPtr;
 varying float vHue, vA, vFlare;
+${RING_SHAPE}
 void main(){
   float a = aRun.x + uRunT * aRun.y;
-  float r = uRadius + aRun.z;
-  vec2 ci = vec2(cos(a), sin(a));
-  vec3 pCircle = vec3(ci * r, aRun.z * 0.6);
-  // Ball: every runner gets its own great circle, so together they wrap a sphere.
-  float b = fract(aRun.x * 3.713) * 3.14159;
-  vec3 pBall = vec3(ci.x * r, ci.y * r * cos(b), ci.y * r * sin(b));
-  // Square: the same angle pushed out to a square perimeter.
-  vec3 pSquare = vec3(ci / max(abs(ci.x), abs(ci.y)) * r * 0.86, aRun.z * 0.6);
-  vec3 pos = pCircle * uShape.x + pBall * uShape.y + pSquare * uShape.z;
-  vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+  float r = (uRadius + aRun.z) * (1.0 + uPulse * 0.06);
+  vec3 pos = mix(ringShape(uShapeA, a, r, aRun.x, aRun.z * 0.6), ringShape(uShapeB, a, r, aRun.x, aRun.z * 0.6), uShapeT);
+  vec4 wp = modelMatrix * vec4(pos, 1.0);
+  // Pointer field: positive pushes runners away, negative pulls them in.
+  vec3 d = wp.xyz - uPtr;
+  float fall = exp(-dot(d, d) * 2.2);
+  wp.xyz += normalize(d + 1e-4) * fall * uPtrAmt * 0.5;
+  vec4 mv = viewMatrix * wp;
   gl_Position = projectionMatrix * mv;
   vHue = aHue;
-  float facing = smoothstep(-1.2, 0.8, normalize(mv.xyz).z * -1.0 + 0.2);
   vA = 0.55 + 0.45 * sin(uTime * (1.5 + abs(aRun.y) * 3.0) + aRun.x * 11.0);
   // A few neon runners catch the light: a brief, sharp flare every few seconds.
-  float fl = pow(max(0.0, sin(uTime * (0.6 + fract(aRun.x * 7.13) * 1.1) + aRun.x * 17.0)), 40.0) * aFlare;
+  float fl = pow(max(0.0, sin(uTime * uFlareRate * (0.6 + fract(aRun.x * 7.13) * 1.1) + aRun.x * 17.0)), 40.0) * aFlare * uFlareAmt;
   vFlare = fl;
-  gl_PointSize = clamp(aRun.w * uPixelRatio * (15.0 / -mv.z) * (1.0 + aHue * 1.2) * (1.0 + fl * 2.6), 1.5, 44.0 * uPixelRatio);
+  gl_PointSize = clamp(aRun.w * uPixelRatio * (15.0 / -mv.z) * (1.0 + aHue * 1.2) * (1.0 + fl * 2.6) * (1.0 + uHi * 0.7 + uPulse * 0.9), 1.5, 48.0 * uPixelRatio);
 }`;
 
 const RUNNER_FRAG = `
-uniform vec3 uInk, uNeon;
-uniform float uOpacity;
+uniform vec3 uInk, uNeon, uTint, uHiColor;
+uniform float uOpacity, uTintAmt, uHi;
 varying float vHue, vA, vFlare;
 void main(){
   vec2 q = gl_PointCoord - 0.5;
@@ -1593,21 +1918,45 @@ void main(){
   if (d > 0.5) discard;
   float core = smoothstep(0.5, 0.0, d);
   float glow = pow(core, 1.6) + pow(core, 6.0) * 1.5;
-  // Flaring runners get a hot white centre and a four-point glint.
   float glint = (smoothstep(0.06, 0.0, abs(q.x)) + smoothstep(0.06, 0.0, abs(q.y))) * core * vFlare;
-  vec3 col = mix(uInk, uNeon, vHue) * (1.2 + vHue * 1.4) + vec3(1.0) * (pow(core, 5.0) * 2.0 + glint) * vFlare;
+  vec3 base = mix(mix(uInk, uTint, uTintAmt), uHiColor, uHi * 0.55);
+  vec3 col = mix(base, uNeon, vHue) * (1.2 + vHue * 1.4) * (1.0 + uHi * 0.5) + vec3(1.0) * (pow(core, 5.0) * 2.0 + glint) * vFlare;
   gl_FragColor = vec4(col, (glow * vA + glint + vFlare * core) * uOpacity * 1.4);
 }`;
 
-/* Cosmic dust and interstellar haze hugging the planet: drifting motes and soft violet/blue puffs. */
+/* The ring's own dashed line, drawn along the same path as its runners. */
+const RINGLINE_VERT = `
+attribute float aA;
+uniform float uRadius, uShapeA, uShapeB, uShapeT, uPulse;
+varying float vAA;
+${RING_SHAPE}
+void main(){
+  vAA = aA;
+  float a = aA * 6.2831853, r = uRadius * (1.0 + uPulse * 0.06);
+  float ka = uShapeA == 1.0 ? 0.0 : uShapeA, kb = uShapeB == 1.0 ? 0.0 : uShapeB;
+  vec3 pos = mix(ringShape(ka, a, r, 0.0, 0.0), ringShape(kb, a, r, 0.0, 0.0), uShapeT);
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+}`;
+
+const RINGLINE_FRAG = `
+uniform vec3 uInk, uTint, uHiColor;
+uniform float uOpacity, uTintAmt, uHi;
+varying float vAA;
+void main(){
+  float dash = step(0.45, fract(vAA * 220.0));
+  vec3 col = mix(mix(uInk, uTint, uTintAmt), uHiColor, uHi);
+  gl_FragColor = vec4(col, uOpacity * (0.25 + 0.75 * dash) * (1.0 + uHi * 2.6));
+}`;
+
+/* Cosmic dust and interstellar haze hugging the planet: drifting motes and soft puffs. */
 const HAZE_VERT = `
 attribute vec4 aSeed; // phase x, phase y, speed, kind (0 mote / 1 puff)
 attribute float aHue;
-uniform float uTime, uPixelRatio, uMotion;
+uniform float uTime, uPixelRatio, uMotion, uPulse;
 varying float vHue, vKind, vA;
 void main(){
   float t = uTime * aSeed.z * (0.3 + 0.7 * uMotion);
-  vec3 p = position;
+  vec3 p = position * (1.0 + uPulse * 0.08);
   p += vec3(sin(t + aSeed.x), sin(t * 0.8 + aSeed.y) * 0.6, cos(t * 0.9 + aSeed.x * 1.7)) * mix(0.18, 0.35, aSeed.w);
   float sw = uTime * 0.03, cs = cos(sw), sn = sin(sw);
   p.xz = mat2(cs, -sn, sn, cs) * p.xz;
@@ -1633,23 +1982,47 @@ void main(){
   gl_FragColor = vec4(col, a * vA * uOpacity);
 }`;
 
+/* Colour themes for the planet. */
+const PLANET_THEMES = {
+  nebula:   { neon: '#b44cff', haze: '#5aa8ff', metal: '#c9ccd6', glass: '#dfe4ea', tint: '#ffffff', tintAmt: 0 },
+  valorant: { neon: '#ff4655', haze: '#ff6b74', metal: '#b8bcc6', glass: '#ffe3e5', tint: '#ffb3b8', tintAmt: 0.25 },
+  solar:    { neon: '#ffb347', haze: '#ff6a3d', metal: '#d9b36c', glass: '#ffe7c2', tint: '#ffd08a', tintAmt: 0.5 },
+  ice:      { neon: '#7fe9ff', haze: '#4f8dff', metal: '#e8f4ff', glass: '#dff4ff', tint: '#bfefff', tintAmt: 0.45 },
+  toxic:    { neon: '#9dff4c', haze: '#2fd08a', metal: '#7d8a7d', glass: '#d9ffe0', tint: '#b9ff9a', tintAmt: 0.35 }
+};
+
 class PlanetBody {
   static MAX_RINGS = 24;
+  static SHAPES = ['Circle', 'Ball', 'Square', 'Triangle', 'Star', 'Helix', 'Figure 8'];
   constructor(shared) {
     this.shared = shared;
     this.group = new THREE.Group();
-    const glass = (radius, rim) => {
+    this.uHiColor = { value: new THREE.Color('#ff4655') };
+    this.uPulse = { value: 0 };
+    this.uPtr = { value: new THREE.Vector3(99, 99, 99) };
+    this.uPtrAmt = { value: 0 };
+    this.uFlareRate = { value: 1 };
+    this.uFlareAmt = { value: 1 };
+    this.ptrMode = 0; this.ptrStrength = 1;
+    this.zoom = 1; this.userRotX = 0; this.userRotY = 0; this.zoomT = 1; this.rotXT = 0; this.rotYT = 0;
+    this.hover = null; this.selected = null;
+    this.audio = null; this.audioGain = 1;
+
+    const glass = (radius, rim, name) => {
       const g = new THREE.SphereGeometry(radius, 64, 48);
-      const m = additive({ uniforms: { uInk: shared.uInk, uOpacity: { value: 0 }, uRim: { value: rim } }, vertexShader: GLASS_VERT, fragmentShader: GLASS_FRAG });
+      const m = additive({
+        uniforms: { uColor: { value: new THREE.Color('#dfe4ea') }, uHiColor: this.uHiColor, uOpacity: { value: 0 }, uRim: { value: rim }, uClarity: { value: 1 }, uHi: { value: 0 }, uPulse: this.uPulse },
+        vertexShader: GLASS_VERT, fragmentShader: GLASS_FRAG
+      });
       const mesh = new THREE.Mesh(g, m);
       this.group.add(mesh);
-      return mesh;
+      return { kind: 'glass', name, mesh, mat: m, radius, hi: 0, alpha: name === 'Inner sphere' ? 0.7 : 1, show: true };
     };
-    this.outer = glass(1.3, 0.55);
-    this.inner = glass(0.64, 0.4);
+    this.outer = glass(1.3, 0.55, 'Glass shell');
+    this.inner = glass(0.64, 0.4, 'Inner sphere');
 
     this.blockMat = new THREE.ShaderMaterial({
-      uniforms: { uInk: shared.uInk, uOpacity: { value: 0 } },
+      uniforms: { uColor: { value: new THREE.Color('#c9ccd6') }, uHiColor: this.uHiColor, uOpacity: { value: 0 }, uHi: { value: 0 } },
       vertexShader: BLOCK_VERT, fragmentShader: BLOCK_FRAG, transparent: true
     });
     const box = new THREE.BoxGeometry(1, 1, 1);
@@ -1680,6 +2053,7 @@ class PlanetBody {
     this.bandPivot.rotation.set(1.38, 0.2, -0.62);
     this.bandPivot.add(this.band);
     this.group.add(this.bandPivot);
+    this.bandItem = { kind: 'band', name: 'Metal band', hi: 0, show: true, thick: 1 };
 
     // Loose debris drifting around the shell.
     const nD = 70;
@@ -1703,15 +2077,18 @@ class PlanetBody {
     this.axis = new THREE.Line(lg, this.axisMat);
 
     // Thin rings with particles running along them.
-    const neon = new THREE.Color('#b44cff'), blue = new THREE.Color('#5aa8ff');
-    this.uNeon = { value: neon };
-    this.uRunT = { value: 0 };
-    this.uShape = { value: new THREE.Vector3(1, 0, 0) };
+    this.uNeon = { value: new THREE.Color('#b44cff') };
+    this.uTint = { value: new THREE.Color('#ffffff') };
+    this.uTintAmt = { value: 0 };
     this.density = 1; this.speed = 1; this.dir = 1; this.shape = 0;
-    this.runMat = additive({
-      uniforms: { uTime: shared.uTime, uMotion: shared.uMotion, uPixelRatio: { value: 1 }, uRadius: { value: 1 }, uOpacity: { value: 0 }, uInk: shared.uInk, uNeon: this.uNeon, uRunT: this.uRunT, uShape: this.uShape },
-      vertexShader: RUNNER_VERT, fragmentShader: RUNNER_FRAG
-    });
+    this.lineGeomBase = (() => {
+      const n = 360, pos = new Float32Array((n + 1) * 3), aA = new Float32Array(n + 1);
+      for (let i = 0; i <= n; i++) aA[i] = i / n;
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      g.setAttribute('aA', new THREE.BufferAttribute(aA, 1));
+      return g;
+    })();
     this.runners = [];
     [
       { r: 1.55, rx: 1.42, rz: 0.35, n: 90, dir: 1 },
@@ -1730,7 +2107,7 @@ class PlanetBody {
 
     // Cosmic dust and haze around the planet. Puffs come first so the density control only thins the motes.
     const motes = 1400, puffs = 60, cap = puffs + motes * 3;
-    this.hazeBase = { puffs, motes };
+    this.hazeBase = { puffs, motes }; this.hazeDensity = 1;
     const hp = new Float32Array(cap * 3), hs = new Float32Array(cap * 4), hh = new Float32Array(cap);
     for (let i = 0; i < cap; i++) {
       const puff = i < puffs;
@@ -1748,7 +2125,7 @@ class PlanetBody {
     this.hazeGeom.setAttribute('aHue', new THREE.BufferAttribute(hh, 1));
     this.hazeGeom.setDrawRange(0, puffs + motes);
     this.hazeMat = additive({
-      uniforms: { uTime: shared.uTime, uMotion: shared.uMotion, uPixelRatio: { value: 1 }, uOpacity: { value: 0 }, uInk: shared.uInk, uNeon: this.uNeon, uBlue: { value: blue } },
+      uniforms: { uTime: shared.uTime, uMotion: shared.uMotion, uPixelRatio: { value: 1 }, uOpacity: { value: 0 }, uInk: shared.uInk, uNeon: this.uNeon, uBlue: { value: new THREE.Color('#5aa8ff') }, uPulse: this.uPulse },
       vertexShader: HAZE_VERT, fragmentShader: HAZE_FRAG
     });
     this.haze = new THREE.Points(this.hazeGeom, this.hazeMat);
@@ -1756,15 +2133,24 @@ class PlanetBody {
     this.group.add(this.haze);
   }
 
-  /* One ring and its runners. Buffers hold three times the base count so density can rise without rebuilding. */
+  /* One ring, its line and its runners. Buffers hold three times the base count so density can rise without rebuilding. */
   addRing(c, added = false) {
     const shared = this.shared;
     const pivot = new THREE.Group();
     pivot.rotation.set(c.rx, 0, c.rz);
-    const lineGeom = circleGeometry(c.r, 256);
     const lo = c.inner ? 0.12 : 0.28;
-    const lineMat = lineMaterial(shared, { opacity: lo, dash: 220 });
-    pivot.add(new THREE.Line(lineGeom, lineMat));
+    const shapeU = { uShapeA: { value: this.shape }, uShapeB: { value: this.shape }, uShapeT: { value: 0 } };
+    const common = {
+      uRadius: { value: c.r }, uPulse: this.uPulse, uHi: { value: 0 }, uHiColor: this.uHiColor,
+      uInk: shared.uInk, uTint: { value: this.uTint.value.clone() }, uTintAmt: { value: this.uTintAmt.value }
+    };
+    const lineMat = additive({
+      uniforms: Object.assign({ uOpacity: { value: 0 } }, shapeU, common),
+      vertexShader: RINGLINE_VERT, fragmentShader: RINGLINE_FRAG
+    });
+    const line = new THREE.Line(this.lineGeomBase, lineMat);
+    line.frustumCulled = false;
+    pivot.add(line);
     const cap = c.n * 3;
     const run = new Float32Array(cap * 4), hue = new Float32Array(cap), flare = new Float32Array(cap);
     for (let i = 0; i < cap; i++) {
@@ -1783,18 +2169,26 @@ class PlanetBody {
     g.setAttribute('aHue', new THREE.BufferAttribute(hue, 1));
     g.setAttribute('aFlare', new THREE.BufferAttribute(flare, 1));
     g.setDrawRange(0, Math.round(c.n * this.density));
-    const mat = this.runMat.clone();
-    Object.assign(mat.uniforms, { uTime: shared.uTime, uMotion: shared.uMotion, uInk: shared.uInk, uNeon: this.uNeon, uRunT: this.uRunT, uShape: this.uShape });
-    mat.uniforms.uRadius.value = c.r;
+    const mat = additive({
+      uniforms: Object.assign({
+        uTime: shared.uTime, uPixelRatio: { value: 1 }, uOpacity: { value: 0 }, uRunT: { value: 0 },
+        uNeon: this.uNeon, uPtr: this.uPtr, uPtrAmt: this.uPtrAmt, uFlareRate: this.uFlareRate, uFlareAmt: this.uFlareAmt
+      }, shapeU, common),
+      vertexShader: RUNNER_VERT, fragmentShader: RUNNER_FRAG
+    });
     const pts = new THREE.Points(g, mat);
     pts.frustumCulled = false;
     pivot.add(pts);
     this.group.add(pivot);
-    const rn = { c, pivot, lineGeom, lineMat, g, mat, lo, added, grow: added ? 0 : 1,
-      spin: c.spin != null ? c.spin : (c.inner ? 0.12 : 0.02) * c.dir, wob: c.wob || 0, wobT: Math.random() * 6 };
+    const rn = {
+      kind: 'ring', c, pivot, line, lineMat, g, mat, lo, added, grow: added ? 0 : 1, hi: 0,
+      spin: c.spin != null ? c.spin : (c.inner ? 0.12 : 0.02) * c.dir, wob: c.wob || 0, wobT: Math.random() * 6,
+      speedMul: 1, shape: this.shape, shapeU, common, tinted: false
+    };
     this.runners.push(rn);
     return rn;
   }
+  ringName(rn) { return 'Ring ' + (this.runners.indexOf(rn) + 1); }
   addRandomRing() {
     if (this.runners.length >= PlanetBody.MAX_RINGS) return false;
     const R = (a, b) => a + Math.random() * (b - a);
@@ -1802,27 +2196,19 @@ class PlanetBody {
     this.addRing({ r: R(1.5, 3), rx: R(0.3, 2.3), rz: R(-1.4, 1.4), n: Math.round(R(60, 110)), dir, spin: dir * R(0.04, 0.3), wob: Math.random() < 0.5 ? R(0.2, 0.6) : 0 }, true);
     return true;
   }
-  removeAddedRings() {
-    this.runners = this.runners.filter(rn => {
-      if (!rn.added) return true;
-      this.group.remove(rn.pivot); rn.lineGeom.dispose(); rn.lineMat.dispose(); rn.g.dispose(); rn.mat.dispose();
-      return false;
-    });
+  dropRing(rn) {
+    if (this.selected === rn) this.selected = null;
+    if (this.hover === rn) this.hover = null;
+    this.group.remove(rn.pivot); rn.lineMat.dispose(); rn.g.dispose(); rn.mat.dispose();
+    this.runners.splice(this.runners.indexOf(rn), 1);
   }
-  setDensity(d) {
-    this.density = clamp(d, 0.2, 3);
-    this.runners.forEach(rn => rn.g.setDrawRange(0, Math.round(rn.c.n * this.density)));
-    const h = this.hazeBase;
-    this.hazeGeom.setDrawRange(0, h.puffs + Math.round(h.motes * this.density));
-  }
-  setNeon(hex) { this.uNeon.value.set(hex); }
   get ringCount() { return this.runners.filter(rn => rn.pivot.visible).length; }
   /* Fewer rings hide from the end (added ones are dropped); more rings re-show hidden ones, then add new ones. */
   setRingCount(n) {
     n = clamp(Math.round(n), 0, PlanetBody.MAX_RINGS);
     while (this.ringCount > n) {
       const rn = [...this.runners].reverse().find(x => x.pivot.visible);
-      if (rn.added) this.dropRing(rn); else rn.pivot.visible = false;
+      if (rn.added) this.dropRing(rn); else { rn.pivot.visible = false; if (this.selected === rn) this.selected = null; }
     }
     while (this.ringCount < n) {
       const hidden = this.runners.find(x => !x.pivot.visible);
@@ -1830,53 +2216,231 @@ class PlanetBody {
     }
     return this.ringCount;
   }
-  dropRing(rn) {
-    this.group.remove(rn.pivot); rn.lineGeom.dispose(); rn.lineMat.dispose(); rn.g.dispose(); rn.mat.dispose();
-    this.runners.splice(this.runners.indexOf(rn), 1);
+
+  /* ---- global settings ---- */
+  setDensity(d) {
+    this.density = clamp(d, 0.2, 3);
+    this.runners.forEach(rn => rn.g.setDrawRange(0, Math.round(rn.c.n * this.density)));
   }
+  setHaze(d) {
+    this.hazeDensity = clamp(d, 0, 3);
+    const h = this.hazeBase;
+    this.hazeGeom.setDrawRange(0, Math.round(h.puffs * Math.min(1, this.hazeDensity)) + Math.round(h.motes * this.hazeDensity));
+  }
+  setNeon(hex) { this.uNeon.value.set(hex); }
   setSpeed(s) { this.speed = clamp(s, 0, 4); }
   setDirection(d) { this.dir = d < 0 ? -1 : 1; }
-  setShape(k) { this.shape = clamp(k | 0, 0, 2); }
+  setShape(k) { this.shape = clamp(k | 0, 0, 6); this.runners.forEach(rn => this.setRingShape(rn, this.shape)); }
+  setRingShape(rn, k) {
+    const U = rn.shapeU;
+    // Start the morph from wherever the ring is now.
+    U.uShapeA.value = U.uShapeT.value > 0.5 ? U.uShapeB.value : U.uShapeA.value;
+    U.uShapeB.value = k; U.uShapeT.value = U.uShapeA.value === k ? 1 : 0;
+    rn.shape = k;
+  }
+  setFlare(rate, amt) { if (rate != null) this.uFlareRate.value = rate; if (amt != null) this.uFlareAmt.value = amt; }
+  setPointer(mode, strength) { if (mode != null) this.ptrMode = mode; if (strength != null) this.ptrStrength = strength; }
+  setBand(show, thick) { if (show != null) this.bandItem.show = show; if (thick != null) this.bandItem.thick = thick; }
+  setInner(show) { this.inner.show = show; }
+  setGlass(clarity, rim) {
+    [this.outer, this.inner].forEach(it => {
+      if (clarity != null) it.mat.uniforms.uClarity.value = clarity;
+      if (rim != null) it.mat.uniforms.uRim.value = rim * (it === this.inner ? 0.73 : 1);
+    });
+  }
+  setMetal(hex) { this.blockMat.uniforms.uColor.value.set(hex); }
+  setTheme(name) {
+    const t = PLANET_THEMES[name]; if (!t) return;
+    this.setNeon(t.neon);
+    this.hazeMat.uniforms.uBlue.value.set(t.haze);
+    this.setMetal(t.metal);
+    [this.outer, this.inner].forEach(it => it.mat.uniforms.uColor.value.set(t.glass));
+    this.uTint.value.set(t.tint); this.uTintAmt.value = t.tintAmt;
+    this.runners.forEach(rn => { rn.common.uTint.value.set(t.tint); rn.common.uTintAmt.value = t.tintAmt; rn.tinted = false; });
+    this.theme = name;
+  }
+  setView(zoom) { if (zoom != null) this.zoomT = clamp(zoom, 0.45, 2.4); }
+  turn(dx, dy) { this.rotYT += dx; this.rotXT = clamp(this.rotXT + dy, -1.4, 1.4); }
+  resetView() { this.zoomT = 1; this.rotXT = 0; this.rotYT = 0; }
+  randomize() {
+    const R = (a, b) => a + Math.random() * (b - a), pick = arr => arr[(Math.random() * arr.length) | 0];
+    this.setTheme(pick(Object.keys(PLANET_THEMES)));
+    this.setRingCount(6 + ((Math.random() * 11) | 0));
+    this.runners.forEach(rn => {
+      rn.c.rx = R(0.2, 2.6); rn.c.rz = R(-1.5, 1.5); rn.pivot.rotation.set(rn.c.rx, rn.pivot.rotation.y, rn.c.rz);
+      rn.wob = Math.random() < 0.4 ? R(0.2, 0.6) : 0;
+      this.setRingShape(rn, Math.random() < 0.6 ? 0 : (Math.random() * 7) | 0);
+    });
+    this.setSpeed(R(0.4, 2.2)); this.setDirection(Math.random() < 0.5 ? -1 : 1); this.setDensity(R(0.6, 1.8));
+  }
   resetAll() {
     this.runners.filter(rn => rn.added).forEach(rn => this.dropRing(rn));
-    this.runners.forEach(rn => { rn.pivot.visible = true; });
-    this.setDensity(1); this.setSpeed(1); this.setDirection(1); this.setShape(0); this.setNeon('#b44cff');
+    this.runners.forEach(rn => { rn.pivot.visible = true; rn.speedMul = 1; rn.c.rx0 != null && (rn.c.rx = rn.c.rx0, rn.c.rz = rn.c.rz0); });
+    this.setTheme('nebula');
+    this.setDensity(1); this.setHaze(1); this.setSpeed(1); this.setDirection(1); this.setShape(0);
+    this.setFlare(1, 1); this.setPointer(0, 1); this.setBand(true, 1); this.setInner(true); this.setGlass(1, 0.55);
+    this.outer.show = true; this.resetView(); this.selected = null;
   }
+
+  /* ---- per-item editing ---- */
+  items() { return [...this.runners.filter(r => r.pivot.visible), this.outer, this.inner, this.bandItem]; }
+  itemName(it) { return it.kind === 'ring' ? this.ringName(it) : it.name; }
+  setItemColor(it, hex) {
+    if (it.kind === 'ring') { it.common.uTint.value.set(hex); it.common.uTintAmt.value = 0.85; it.tinted = true; }
+    else if (it.kind === 'glass') it.mat.uniforms.uColor.value.set(hex);
+    else if (it.kind === 'band') this.setMetal(hex);
+  }
+  setRingRadius(rn, r) { rn.c.r = clamp(r, 0.35, 3.4); rn.common.uRadius.value = rn.c.r; }
+  setRingTilt(rn, rx, rz) {
+    if (rn.c.rx0 == null) { rn.c.rx0 = rn.c.rx; rn.c.rz0 = rn.c.rz; }
+    if (rx != null) rn.c.rx = rx; if (rz != null) rn.c.rz = rz;
+    if (!rn.wob) rn.pivot.rotation.set(rn.c.rx, rn.pivot.rotation.y, rn.c.rz);
+  }
+  setRingSpeed(rn, s) { rn.speedMul = clamp(s, 0, 4); }
+  removeItem(it) {
+    if (it.kind === 'ring') { if (it.added) this.dropRing(it); else { it.pivot.visible = false; if (this.selected === it) this.selected = null; } }
+    else if (it.kind === 'glass') it.show = false;
+    else if (it.kind === 'band') it.show = false;
+  }
+
+  /* Screen-space picking. Rings are sampled along their current path; spheres by projected radius. */
+  pick(clientX, clientY, camera, rect) {
+    if (!camera) return null;
+    const v = PlanetBody._v || (PlanetBody._v = new THREE.Vector3());
+    const toScreen = w => { v.copy(w).project(camera); return [(v.x * 0.5 + 0.5) * rect.width + rect.left, (-v.y * 0.5 + 0.5) * rect.height + rect.top, v.z]; };
+    const tol = matchMedia('(pointer: coarse)').matches ? 22 : 12;
+    let best = null, bestD = tol;
+    const tmp = new THREE.Vector3();
+    this.runners.forEach(rn => {
+      if (!rn.pivot.visible) return;
+      const k = rn.shapeU.uShapeT.value > 0.5 ? rn.shapeU.uShapeB.value : rn.shapeU.uShapeA.value;
+      for (let i = 0; i < 120; i++) {
+        const a = (i / 120) * Math.PI * 2;
+        PlanetBody.shapeJS(k === 1 ? 0 : k, a, rn.c.r, tmp);
+        tmp.applyMatrix4(rn.pivot.matrixWorld);
+        const [x, y, z] = toScreen(tmp);
+        if (z > 1) continue;
+        const d = Math.hypot(x - clientX, y - clientY);
+        if (d < bestD) { bestD = d; best = rn; }
+      }
+    });
+    if (best) return best;
+    if (this.bandItem.show && this.bandPivot.visible) {
+      for (let i = 0; i < 120; i++) {
+        const a = (i / 120) * Math.PI * 2;
+        tmp.set(Math.cos(a) * 1.45, 0, Math.sin(a) * 1.45).applyMatrix4(this.band.matrixWorld);
+        const [x, y] = toScreen(tmp);
+        if (Math.hypot(x - clientX, y - clientY) < tol + 4) return this.bandItem;
+      }
+    }
+    const c = new THREE.Vector3().setFromMatrixPosition(this.group.matrixWorld);
+    const [cx, cy] = toScreen(c);
+    const edge = tmp.set(1, 0, 0).applyMatrix4(camera.matrixWorld).sub(camera.position).normalize();
+    const scale = this.group.matrixWorld.getMaxScaleOnAxis();
+    const rOf = r => { const e = c.clone().addScaledVector(edge, r * scale); const [ex, ey] = toScreen(e); return Math.hypot(ex - cx, ey - cy); };
+    const d = Math.hypot(clientX - cx, clientY - cy);
+    if (this.inner.show && d < rOf(this.inner.radius)) return this.inner;
+    if (this.outer.show && d < rOf(this.outer.radius)) return this.outer;
+    return null;
+  }
+  static shapeJS(k, a, r, out) {
+    const cx = Math.cos(a), cy = Math.sin(a);
+    const poly = (n, rot) => { const s = Math.PI * 2 / n; const m = ((a + rot) % s + s) % s; return Math.cos(Math.PI / n) / Math.cos(m - s * 0.5); };
+    if (k === 2) { const p = poly(4, 0.785398); return out.set(cx * r * p, cy * r * p, 0); }
+    if (k === 3) { const p = poly(3, 1.570796); return out.set(cx * r * p, cy * r * p, 0); }
+    if (k === 4) { const t = 0.5 + 0.5 * Math.cos(5 * a), s = 0.5 + 0.5 * t * t; return out.set(cx * r * s, cy * r * s, 0); }
+    if (k === 5) { const w = a * 9, s = 1 + Math.cos(w) * 0.09; return out.set(cx * r * s, cy * r * s, Math.sin(w) * r * 0.09); }
+    if (k === 6) { const d = 1 + cy * cy; return out.set(r * 1.3 * cx / d, r * 1.3 * cy * cx / d, 0); }
+    return out.set(cx * r, cy * r, 0);
+  }
+
+  /* Microphone-driven pulse. */
+  async startAudio() {
+    if (this.audio) return true;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const AC = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AC(), src = ctx.createMediaStreamSource(stream), an = ctx.createAnalyser();
+      an.fftSize = 256; an.smoothingTimeConstant = 0.6; src.connect(an);
+      this.audio = { ctx, stream, an, buf: new Uint8Array(an.frequencyBinCount), level: 0 };
+      return true;
+    } catch (e) { return false; }
+  }
+  stopAudio() {
+    if (!this.audio) return;
+    this.audio.stream.getTracks().forEach(t => t.stop()); this.audio.ctx.close(); this.audio = null;
+  }
+
   update(dt, f) {
     const on = this.shared.uIntro.value * (1 - f.expand * 0.6);
-    this.outer.material.uniforms.uOpacity.value = on;
-    this.inner.material.uniforms.uOpacity.value = on * 0.7;
+    const damp1 = (cur, tgt, k) => cur + (tgt - cur) * (1 - Math.exp(-k * dt));
+
+    // Audio pulse.
+    let pulse = 0;
+    if (this.audio) {
+      const A = this.audio; A.an.getByteFrequencyData(A.buf);
+      let s = 0; for (let i = 2; i < 40; i++) s += A.buf[i]; s /= 38 * 255;
+      A.level = Math.max(s, A.level * Math.exp(-6 * dt));
+      pulse = clamp(A.level * 2.2 * this.audioGain, 0, 1.5);
+    }
+    this.uPulse.value = damp1(this.uPulse.value, pulse, 14);
+    // View eases toward its target (drag, zoom, or back home when the drawer closes).
+    this.zoom = damp1(this.zoom, this.zoomT, 8); this.userRotX = damp1(this.userRotX, this.rotXT, 10); this.userRotY = damp1(this.userRotY, this.rotYT, 10);
+
+    // Pointer field.
+    this.uPtr.value.copy(f.pointer);
+    this.uPtrAmt.value = damp1(this.uPtrAmt.value, this.ptrMode * this.ptrStrength, 6);
+
+    // Highlights ease in and out.
+    const hiOf = it => (it === this.selected ? 1 : it === this.hover ? 0.6 : 0);
+    [this.outer, this.inner].forEach(it => {
+      it.hi = damp1(it.hi, hiOf(it), 10);
+      it.mat.uniforms.uHi.value = it.hi;
+      it.mesh.visible = it.show;
+      it.mat.uniforms.uOpacity.value = on * it.alpha;
+    });
+    const B = this.bandItem; B.hi = damp1(B.hi, hiOf(B), 10);
+    this.blockMat.uniforms.uHi.value = B.hi;
     this.blockMat.uniforms.uOpacity.value = Math.min(1, on * 1.2);
-    this.bandPivot.visible = this.debris.visible = on > 0.01;
+    this.bandPivot.visible = B.show && on > 0.01;
+    this.debris.visible = on > 0.01;
+    this.band.scale.set(1, B.thick, 1 + (B.thick - 1) * 0.4);
     this.band.rotation.y += dt * 0.05 * f.motion;
     this.debris.rotation.y -= dt * 0.03 * f.motion;
     this.debris.rotation.x += dt * 0.01 * f.motion;
     const sc = 1 + f.expand * 0.15;
     this.group.scale.setScalar(sc);
+
     const rate = this.speed * this.dir * (0.3 + 0.7 * f.motion);
-    this.uRunT.value += dt * rate;
-    const S = this.uShape.value, tgt = [0, 1, 2].map(k => (k === this.shape ? 1 : 0)), kS = 1 - Math.exp(-5 * dt);
-    S.set(S.x + (tgt[0] - S.x) * kS, S.y + (tgt[1] - S.y) * kS, S.z + (tgt[2] - S.z) * kS);
+    const kS = 1 - Math.exp(-4 * dt);
     this.runners.forEach(rn => {
-      rn.pivot.rotation.y += dt * rn.spin * rate;
+      const r2 = rate * rn.speedMul;
+      rn.mat.uniforms.uRunT.value += dt * r2;
+      rn.pivot.rotation.y += dt * rn.spin * r2;
       if (rn.wob) {
-        rn.wobT += dt * Math.abs(rate);
+        rn.wobT += dt * Math.abs(r2);
         rn.pivot.rotation.x = rn.c.rx + Math.sin(rn.wobT * 0.35) * rn.wob;
         rn.pivot.rotation.z = rn.c.rz + Math.cos(rn.wobT * 0.27) * rn.wob * 0.6;
-      }
+      } else { rn.pivot.rotation.x = rn.c.rx; rn.pivot.rotation.z = rn.c.rz; }
+      const U = rn.shapeU; if (U.uShapeT.value < 1) U.uShapeT.value = Math.min(1, U.uShapeT.value + kS * 1.2 + dt * 0.2);
       if (rn.grow < 1) { rn.grow = Math.min(1, rn.grow + dt * 0.8); rn.pivot.scale.setScalar(0.6 + 0.4 * smootherstep(rn.grow)); }
-      rn.mat.uniforms.uOpacity.value = on * (rn.grow < 1 ? smootherstep(rn.grow) : 1);
+      rn.hi = damp1(rn.hi, hiOf(rn), 10);
+      rn.common.uHi.value = rn.hi;
+      const g = rn.grow < 1 ? smootherstep(rn.grow) : 1;
+      rn.mat.uniforms.uOpacity.value = on * g;
       rn.mat.uniforms.uPixelRatio.value = f.pixelRatio;
-      rn.lineMat.uniforms.uOpacity.value = rn.lo * on * S.x;
+      const ballK = (U.uShapeA.value === 1 ? 1 - U.uShapeT.value : 0) + (U.uShapeB.value === 1 ? U.uShapeT.value : 0);
+      rn.lineMat.uniforms.uOpacity.value = rn.lo * on * g * (1 - ballK * 0.75);
     });
     this.hazeMat.uniforms.uOpacity.value = on * 0.9;
     this.hazeMat.uniforms.uPixelRatio.value = f.pixelRatio;
   }
   dispose() {
-    [this.outer, this.inner].forEach(m => { m.geometry.dispose(); m.material.dispose(); });
+    this.stopAudio();
+    [this.outer, this.inner].forEach(it => { it.mesh.geometry.dispose(); it.mat.dispose(); });
     this.box.dispose(); this.blockMat.dispose(); this.axis.geometry.dispose(); this.axisMat.dispose();
-    this.runners.forEach(rn => { rn.lineGeom.dispose(); rn.lineMat.dispose(); rn.g.dispose(); rn.mat.dispose(); });
-    this.runMat.dispose(); this.hazeGeom.dispose(); this.hazeMat.dispose();
+    this.runners.forEach(rn => { rn.lineMat.dispose(); rn.g.dispose(); rn.mat.dispose(); });
+    this.lineGeomBase.dispose(); this.hazeGeom.dispose(); this.hazeMat.dispose();
   }
 }
 
@@ -2164,9 +2728,11 @@ class AICore {
     u.uPixelRatio.value = f.pixelRatio;
     u.uSize.value = 2.3 * f.sizeScale;
 
+    // The tuning drawer can zoom and turn the planet.
+    const P = this.planet;
     this.group.position.set(f.x, f.y, 0);
-    this.group.scale.setScalar(f.scale);
-    this.orient.rotation.set(f.rotX, f.rotY, 0);
+    this.group.scale.setScalar(f.scale * (P ? P.zoom : 1));
+    this.orient.rotation.set(f.rotX + (P ? P.userRotX : 0), f.rotY + (P ? P.userRotY : 0), 0);
     this.spin.rotation.y += f.spinVel * dt;
     this.spin.rotation.x = Math.sin(t * 0.07) * 0.14 * f.motion;
 
@@ -3027,6 +3593,7 @@ class App {
     const count = m ? 6000 : 14000;
     this.stage = new Stage($('#gl'), m ? 1.5 : 1.75);
     this.rig = new CameraRig(32);
+    PlanetBody.camera = this.rig.camera;
     this.shared = createSharedUniforms();
     this.core = new AICore(this.shared);
     this.stage.scene.add(this.core.group);
@@ -3312,6 +3879,7 @@ class App {
       if (!d || !this.core || !this.introOn || dragged) return;
       if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8 || performance.now() - d.t > 450) return;
       if (e.target.closest && e.target.closest('a,button,input,[data-interactive],.hud,.rail,.d-panel')) return;
+      if (document.body.classList.contains('tune-open')) return;
       if (this.detail.open) {
         const h = this.hitWorld(e.clientX, e.clientY);
         if (h >= 0 && h !== this.detail.index) this.openWorld(h);
