@@ -1918,6 +1918,7 @@ ${LENS_PARS_V}
 uniform float uTime, uExpand, uSeparation, uStack, uMorph, uIntro, uMotion, uFocus, uFocusLayer, uRippleT;
 uniform float uPixelRatio, uSize, uPointerStrength;
 uniform vec3 uPointer;
+uniform float uCrowd;
 attribute float aLayer;
 attribute vec4 aSeed;
 attribute vec3 aLattice;
@@ -1980,6 +1981,7 @@ void main(){
   vCore = 1.0 - step(0.5, aLayer);
   vAlpha = (0.2 + 0.8 * depth) * (0.5 + aSeed.y * 0.5) * it;
   vAlpha *= 1.0 - uFocus * (1.0 - isFocus) * 0.45;
+  vAlpha *= uCrowd;
 
   float size = uSize * (0.55 + aSeed.y * 0.9) * (1.0 + vHeat * 1.3) * (1.0 + sweep * 0.3);
   gl_PointSize = min(size * uPixelRatio * (6.0 / -mv.z), 24.0 * uPixelRatio);
@@ -2755,7 +2757,7 @@ class ParticleField {
     this.material = additive({
       uniforms: Object.assign({}, shared, {
         uPointer: { value: new THREE.Vector3(99, 99, 99) },
-        uPointerStrength: { value: 0 },
+        uPointerStrength: { value: 0 }, uCrowd: { value: 1 },
         uPixelRatio: { value: 1 },
         uSize: { value: 2.3 }
       }),
@@ -3731,6 +3733,9 @@ class AICore {
     u.uPointerStrength.value = f.pull;
     u.uPixelRatio.value = f.pixelRatio;
     u.uSize.value = 2.3 * f.sizeScale;
+    // Seen from orbit the core is a few dozen pixels wide: thousands of white points stack into a white blob and
+    // bury the tuned colours, so thin them out as the camera pulls back.
+    u.uCrowd.value = 1 - 0.7 * (f.G || 0);
 
     // The tuning drawer can zoom and turn the planet.
     const P = this.planet;
@@ -6270,7 +6275,7 @@ class App {
       intro: this.intro, motion: this.motion, reduced, focus: this.focus, focusLayer: this.focusLayer,
       rippleT: this.rippleT, pointer: this.pointerWorld, pull: this.pull,
       x: this.cx * (1 - coreK), y: this.cy * (1 - coreK), scale: lerp(this.cs, 0.62, coreK),
-      rotX: this.rotX.value, rotY: this.rotY.value, sun: coreK,
+      G, rotX: this.rotX.value, rotY: this.rotY.value, sun: coreK,
       spinVel: this.spinVel, pixelRatio: this.stage.pixelRatio, sizeScale: (this.rig.baseZ / 7.2) * (1 + coreK * 1.7)
     });
     this.stage.scene.updateMatrixWorld();
