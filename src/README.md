@@ -13,3 +13,11 @@ Edit and rebuild:
     node opt.mjs
     npx esbuild vendor.js --bundle --format=iife --global-name=KY --minify --define:import.meta.url='"https://kythera.invalid/three/"' --outfile=build/vendor.min.js
     python build.py        # writes dist/index.html
+
+
+## Web build (current)
+
+    python3 src/build_web.py           # index.html + assets/ (hashed, cacheable)
+    python3 src/build_web.py --inline  # old single-file page, for comparison
+
+`build.py` above is the original single-file build from the author's machine; `build_web.py` builds from `src/assets-src/` and needs nothing outside the repo (esbuild via npx is optional, for minifying).
