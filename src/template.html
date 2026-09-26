@@ -862,8 +862,7 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
   <div class="tune-pane" data-pane="motion" hidden>
     <label class="tune-row"><span>Particles</span><input type="range" min="0.2" max="3" step="0.05" value="1" data-t-density><b data-out>100%</b></label>
     <label class="tune-row"><span>Speed</span><input type="range" min="0" max="4" step="0.05" value="1" data-t-speed><b data-out>1.0x</b></label>
-    <div class="tune-row"><span>Rings</span>
-      <div class="tune-step"><button type="button" data-t-ring="-1" aria-label="Fewer rings">&minus;</button><b data-t-rings>10</b><button type="button" data-t-ring="1" aria-label="More rings">+</button></div></div>
+    <label class="tune-row"><span>Rings</span><input type="range" min="0" max="24" step="1" value="10" data-t-rings-r aria-label="Rings"><b data-t-rings>10</b></label>
     <div class="tune-row"><span>Direction</span>
       <div class="tune-seg" role="group" aria-label="Direction" data-t-dir><button type="button" data-v="1" aria-pressed="true">&#8635; Forward</button><button type="button" data-v="-1" aria-pressed="false">&#8634; Reverse</button></div></div>
     <div class="tune-row tall"><span>Shape</span><div class="tune-grid" data-t-shape></div></div>
@@ -1477,8 +1476,10 @@ const WorldTune = (() => {
       const t = PLANET_THEMES[name]; if (t) { neon.set(t.neon); metal.set(t.metal); }
     };
     themes.forEach(x => x.addEventListener('click', () => { setTheme(x.dataset.v); save(); }));
-    const syncRings = () => { const b = body(); q('[data-t-rings]').textContent = b ? b.ringCount : '10'; };
-    qa('[data-t-ring]').forEach(btn => btn.addEventListener('click', () => { const b = body(); if (b) b.setRingCount(b.ringCount + +btn.dataset.tRing); syncRings(); save(); }));
+    const ringR = q('[data-t-rings-r]');
+    const syncRings = () => { const b = body(), n = b ? b.ringCount : 10; q('[data-t-rings]').textContent = n; ringR.value = n; ringR.style.setProperty('--p', (n / PlanetBody.MAX_RINGS * 100) + '%'); };
+    ringR.max = PlanetBody.MAX_RINGS;
+    ringR.addEventListener('input', () => { const b = body(); if (b) b.setRingCount(+ringR.value); syncRings(); save(); });
     q('[data-t-random]').addEventListener('click', () => {
       const b = body(); if (!b) return; b.randomize();
       setTheme(b.theme); setRange(spd, b.speed, times); setRange(dens, b.density, pct); dir.set(b.dir); shape.set(-1);
