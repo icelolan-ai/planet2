@@ -110,6 +110,16 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .brand{display:flex;align-items:baseline;gap:12px}
 .brand-name{font-family:var(--f-display);font-style:italic;font-size:24px;font-weight:400;letter-spacing:.005em;color:var(--ink)}
 .brand-sub{font-size:12px;color:var(--ink-3)}
+.wmenu{position:relative}
+.wmenu-btn{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);letter-spacing:.04em;transition:color .3s}
+.wmenu-btn:hover,.wmenu-btn[aria-expanded="true"]{color:var(--ink)}
+.wmenu-list{position:absolute;right:0;top:calc(100% + 14px);margin:0;padding:8px;list-style:none;min-width:210px;pointer-events:auto;
+  background:rgba(8,11,15,.86);border:1px solid var(--ink-4);border-radius:10px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.wmenu-list button{display:flex;align-items:center;gap:12px;width:100%;padding:9px 10px;border-radius:6px;text-align:left;
+  font-family:var(--f-display);font-style:italic;font-size:18px;color:var(--ink-2);transition:color .25s,background .25s}
+.wmenu-list button:hover,.wmenu-list button:focus-visible{color:var(--ink);background:rgba(255,255,255,.05)}
+.wmenu-list i{width:8px;height:8px;border-radius:50%;background:var(--a);flex:none}
+.wmenu-list .wm-n{font-family:var(--f-mono,monospace);font-style:normal;font-size:11px;color:var(--ink-3)}
 .hud-right{display:flex;align-items:center;gap:26px}
 .depth{display:flex;align-items:baseline;gap:8px;font-size:12.5px;color:var(--ink-3);min-width:170px;justify-content:flex-end}
 .depth-name{color:var(--ink);font-family:var(--f-display);font-style:italic;font-size:18px;display:inline-block}
@@ -392,6 +402,10 @@ body.no-gl .windex button{pointer-events:none}
 <header class="hud hud-top">
   <a class="brand" href="#core" data-cursor="Surface"><span class="brand-name">Kythera</span><span class="brand-sub">Computational core</span></a>
   <div class="hud-right">
+    <div class="wmenu" data-wmenu>
+      <button class="wmenu-btn" type="button" aria-haspopup="true" aria-expanded="false" data-wmenu-btn data-cursor="Worlds">Worlds <span aria-hidden="true">&#9662;</span></button>
+      <ul class="wmenu-list" role="menu" hidden><li style="--a:#86d9cf"><button type="button" role="menuitem" data-open-world="0" data-cursor="Land"><i></i><span class="wm-n">01</span>Aqua Foam</button></li><li style="--a:#e38b5f"><button type="button" role="menuitem" data-open-world="1" data-cursor="Land"><i></i><span class="wm-n">02</span>Arcanum</button></li><li style="--a:#7fdcae"><button type="button" role="menuitem" data-open-world="2" data-cursor="Land"><i></i><span class="wm-n">03</span>Emerald Tide</button></li><li style="--a:#ff7a3d"><button type="button" role="menuitem" data-open-world="3" data-cursor="Land"><i></i><span class="wm-n">04</span>Inferno</button></li><li style="--a:#a98bff"><button type="button" role="menuitem" data-open-world="4" data-cursor="Land"><i></i><span class="wm-n">05</span>Nebula</button></li><li style="--a:#8ec3ff"><button type="button" role="menuitem" data-open-world="5" data-cursor="Land"><i></i><span class="wm-n">06</span>Terra Nova</button></li><li style="--a:#8fe6ff"><button type="button" role="menuitem" data-open-world="6" data-cursor="Land"><i></i><span class="wm-n">07</span>Tempest</button></li></ul>
+    </div>
     <div class="depth" aria-live="polite"><span data-depth-num>Surface</span><span class="depth-name" data-depth-name>The core</span></div>
     <button class="sound" type="button" data-sound aria-pressed="false" data-cursor="Toggle sound"><span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i></span><span data-sound-label>Sound off</span></button>
   </div>
@@ -7344,6 +7358,14 @@ app.init().catch(err => {
   textOnly();
 });
 })();
+</script>
+<script>
+(function(){var m=document.querySelector('[data-wmenu]');if(!m)return;var b=m.querySelector('[data-wmenu-btn]'),l=m.querySelector('ul');
+function set(o){l.hidden=!o;b.setAttribute('aria-expanded',o?'true':'false');}
+b.addEventListener('click',function(e){e.stopPropagation();set(l.hidden);});
+l.addEventListener('click',function(e){if(e.target.closest('button'))set(false);});
+document.addEventListener('click',function(e){if(!m.contains(e.target))set(false);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!l.hidden){set(false);b.focus();}},true);})();
 </script>
 </body>
 </html>
