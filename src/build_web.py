@@ -93,8 +93,13 @@ assert '</script' not in vendor
 i = tpl.index('/*__WORLDS__*/')
 a = tpl.rindex('<script>', 0, i)
 b = tpl.index('</script>', i) + len('</script>')
-app_src = tpl[a + len('<script>'):b - len('</script>')].replace('/*__WORLDS__*/', js_worlds)
+# Effects live in src/effects/ (core.js first) and are spliced into the app script.
+fx_dir = os.path.join(HERE, 'effects')
+fx_files = ['core.js'] + sorted(f for f in os.listdir(fx_dir) if f.endswith('.js') and f != 'core.js')
+effects_js = '\n'.join(open(os.path.join(fx_dir, f), encoding='utf-8').read() for f in fx_files)
+app_src = tpl[a + len('<script>'):b - len('</script>')].replace('/*__WORLDS__*/', js_worlds).replace('/*__EFFECTS__*/', effects_js)
 
+tpl = tpl.replace('/*__EFFECTS__*/', effects_js)
 page = (tpl.replace('<!--__LOADER_WORLDS__-->', ''.join(loader)).replace('<!--__RAIL_WORLDS__-->', ''.join(rail))
            .replace('<!--__WORLD_INDEX__-->', ''.join(index))
            .replace('<!--__WORLD_SECTIONS__-->', '\n\n'.join(sections)))
@@ -141,7 +146,7 @@ out = out.replace('<!--__DATA__-->', '<script>window.__ASSETS = ' + json.dumps(m
 vs = out.index('<script>/*__VENDOR__*/</script>')
 ae = out.index('</script>', out.index('/*__WORLDS__*/')) + len('</script>')
 out = out[:vs] + boot + out[ae:]
-for m in ['__FONTS__', '__LOADER_WORLDS__', '__WORLD_INDEX__', '__WORLD_SECTIONS__', '__RAIL_WORLDS__', '__DATA__', '__VENDOR__', '__WORLDS__']:
+for m in ['__FONTS__', '__LOADER_WORLDS__', '__WORLD_INDEX__', '__WORLD_SECTIONS__', '__RAIL_WORLDS__', '__EFFECTS__', '__DATA__', '__VENDOR__', '__WORLDS__']:
     assert m not in out, m
 open(os.path.join(ROOT, 'index.html'), 'w', encoding='utf-8').write(out)
 written.append(('index.html', len(out.encode())))
