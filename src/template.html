@@ -432,6 +432,7 @@ body.tune-open .tune-toggle{opacity:0;pointer-events:none}
 .tune *{pointer-events:auto}
 .tune-h{display:flex;justify-content:space-between;align-items:center;margin:0 0 22px;color:var(--ink);font-weight:600;letter-spacing:.26em;padding-left:12px;border-left:2px solid var(--val)}
 .tune-x{width:26px;height:26px;position:relative}
+.tune-h kbd{font:400 10px var(--f-num);letter-spacing:0;color:var(--ink-3);border:1px solid var(--line-2);padding:1px 5px;margin-left:8px}
 .tune-x::before,.tune-x::after{content:"";position:absolute;left:5px;right:5px;top:50%;height:1px;background:var(--ink-2);transform:rotate(45deg)}
 .tune-x::after{transform:rotate(-45deg)}
 .tune-x:hover::before,.tune-x:hover::after{background:var(--val)}
@@ -468,7 +469,9 @@ body.tune-open .tune-toggle{opacity:0;pointer-events:none}
 }
 /* letters light up red where the pointer or a finger touches them */
 .lt{display:inline-block;pointer-events:auto;transition:color 1.1s ease,text-shadow 1.1s ease}
-.lt.hot,.lt:hover{color:var(--val);text-shadow:0 0 18px rgba(255,70,85,.55);transition:color 0s,text-shadow 0s}
+:root{--hl:#ff4655}
+.ltw{display:inline-block;white-space:nowrap}
+.lt.hot,.lt:hover{color:var(--a, var(--hl));text-shadow:0 0 18px currentColor;transition:color 0s,text-shadow 0s}
 .backword,.worldword{overflow:hidden}
 @media (max-width:640px){.brand-name{font-size:17px}.depth-name{font-size:13px}.depth{min-width:0}.brand-sub,[data-depth-num],[data-sound-label]{display:none}.hud-right{gap:14px}.backword{font-size:17vw}.mail{font-size:5.2vw;letter-spacing:0}}
 @media (prefers-reduced-motion:reduce){.w::after{display:none}.is-active .w>span{transition-delay:0s}.is-active .title{animation:none}}
@@ -514,7 +517,7 @@ body.tune-open .tune-toggle{opacity:0;pointer-events:none}
 
 <button class="tune-toggle" type="button" aria-expanded="false" aria-controls="tune" data-tune-toggle><i></i><span>Tune the core</span></button>
 <aside class="tune" id="tune" aria-label="Tune the core" data-open="false">
-  <header class="tune-h"><span>Tune the core</span><button type="button" class="tune-x" data-tune-close aria-label="Close"></button></header>
+  <header class="tune-h"><span>Tune the core <kbd>T</kbd></span><button type="button" class="tune-x" data-tune-close aria-label="Close"></button></header>
   <label class="tune-row"><span>Particles</span><input type="range" min="0.2" max="3" step="0.05" value="1" data-t-density><b data-t-density-out>100%</b></label>
   <label class="tune-row"><span>Speed</span><input type="range" min="0" max="4" step="0.05" value="1" data-t-speed><b data-t-speed-out>1.0x</b></label>
   <div class="tune-row"><span>Rings</span>
@@ -623,7 +626,7 @@ body.tune-open .tune-toggle{opacity:0;pointer-events:none}
       <h2 class="title" data-split>Open a channel.</h2>
       <p class="lede reveal" style="--d:3">For collaborations, commissions, or borrowing the core and its worlds for an installation.</p>
       <div class="mail-wrap reveal" style="--d:4">
-        <button class="mail" type="button" data-copy="hello@kythera.systems" data-magnetic data-layer="0" data-cursor="Copy address"><span class="mag">hello@kythera.systems</span></button>
+        <button class="mail" type="button" data-copy="icelolan@gmail.com" data-magnetic data-layer="0" data-cursor="Copy address"><span class="mag">icelolan@gmail.com</span></button>
         <span class="mail-status" data-mail-status aria-live="polite">Click to copy the address</span>
       </div>
       <ul class="links reveal" style="--d:5">
@@ -687,6 +690,14 @@ const WORLDS = /*__WORLDS__*/;
       if (on) syncRings();
     };
     toggle.addEventListener('click', () => open(true));
+    // Any press outside the drawer folds it away.
+    document.addEventListener('pointerdown', e => {
+      if (panel.dataset.open === 'true' && !panel.contains(e.target) && !toggle.contains(e.target)) open(false);
+    }, true);
+    // T toggles the drawer from anywhere (not while typing).
+    addEventListener('keydown', e => {
+      if ((e.key === 't' || e.key === 'T') && !e.metaKey && !e.ctrlKey && !e.altKey && !/input|textarea/i.test(e.target.tagName)) open(panel.dataset.open !== 'true');
+    });
     q('[data-tune-close]').addEventListener('click', () => open(false));
     addEventListener('keydown', e => { if (e.key === 'Escape' && panel.dataset.open === 'true') open(false); });
     const fill = el => el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%');
@@ -705,6 +716,7 @@ const WORLDS = /*__WORLDS__*/;
     sws.forEach(s => s.addEventListener('click', () => setColor(s.dataset.tSw)));
     picker.addEventListener('input', () => setColor(picker.value));
     q('[data-t-reset]').addEventListener('click', () => {
+      try { localStorage.removeItem('kythera.tune.v1'); } catch (e) {}
       call('resetAll');
       dens.value = 1; spd.value = 1; dens.dispatchEvent(new Event('input')); spd.dispatchEvent(new Event('input'));
       qa('[data-t-dir]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.tDir === '1')));
@@ -712,6 +724,28 @@ const WORLDS = /*__WORLDS__*/;
       setColor('#b44cff'); syncRings();
     });
     [dens, spd].forEach(fill);
+    // Remember the tuning in this browser and bring it back on the next visit.
+    const KEY = 'kythera.tune.v1';
+    const snapshot = () => ({ density: +dens.value, speed: +spd.value,
+      dir: +(panel.querySelector('[data-t-dir][aria-pressed=true]') || {}).dataset?.tDir || 1,
+      shape: +(panel.querySelector('[data-t-shape][aria-pressed=true]') || {}).dataset?.tShape || 0,
+      color: picker.value, rings: body() ? body().ringCount : 10 });
+    const save = () => { try { localStorage.setItem(KEY, JSON.stringify(snapshot())); } catch (e) {} };
+    panel.addEventListener('input', () => setTimeout(save));
+    panel.addEventListener('click', () => setTimeout(save));
+    let saved = null; try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+    if (saved) {
+      const apply = () => {
+        const b = body(); if (!b) { setTimeout(apply, 300); return; }
+        dens.value = saved.density; spd.value = saved.speed;
+        dens.dispatchEvent(new Event('input')); spd.dispatchEvent(new Event('input'));
+        qa('[data-t-dir]').find(x => +x.dataset.tDir === saved.dir)?.click();
+        qa('[data-t-shape]').find(x => +x.dataset.tShape === saved.shape)?.click();
+        if (saved.color) setColor(saved.color);
+        if (saved.rings != null) { b.setRingCount(saved.rings); syncRings(); }
+      };
+      apply();
+    }
     // Keep the drawer's gestures away from the page's scroll and core interactions.
     ['wheel', 'touchmove', 'pointerdown', 'pointerup'].forEach(t => panel.addEventListener(t, e => e.stopPropagation(), { passive: true }));
     // The toggle belongs to the perimeter section.
@@ -730,13 +764,17 @@ const Letters = (() => {
     if (!el || el.dataset.lt) return; el.dataset.lt = '1';
     const walk = node => Array.from(node.childNodes).forEach(n => {
       if (n.nodeType === 3) {
+        // Letters are grouped per word so lines still only break between words.
         const frag = document.createDocumentFragment();
-        Array.from(n.textContent).forEach(ch => {
-          if (/\s/.test(ch)) { frag.appendChild(document.createTextNode(ch)); return; }
-          const s = document.createElement('span'); s.className = 'lt'; s.textContent = ch; frag.appendChild(s);
+        n.textContent.split(/(\s+)/).forEach(part => {
+          if (!part) return;
+          if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(part)); return; }
+          const w = document.createElement('span'); w.className = 'ltw';
+          Array.from(part).forEach(ch => { const s = document.createElement('span'); s.className = 'lt'; s.textContent = ch; w.appendChild(s); });
+          frag.appendChild(w);
         });
         n.replaceWith(frag);
-      } else if (n.nodeType === 1 && !n.classList.contains('lt')) walk(n);
+      } else if (n.nodeType === 1 && !n.classList.contains('lt') && !n.classList.contains('ltw')) walk(n);
     });
     walk(el);
   };
@@ -748,7 +786,16 @@ const Letters = (() => {
   addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') heat(e.clientX, e.clientY); }, { passive: true });
   addEventListener('touchmove', e => { const t = e.touches[0]; if (t) heat(t.clientX, t.clientY); }, { passive: true });
   addEventListener('touchstart', e => { const t = e.touches[0]; if (t) heat(t.clientX, t.clientY); }, { passive: true });
-  const all = () => document.querySelectorAll('.title, .brand-name, .windex .wn, .picker-list .pn, .specs dd, .exp h3').forEach(wrap);
+  // Text that scripts rewrite later (live numbers, world stats) is re-wrapped whenever it changes.
+  const SEL = '.title, .brand-name, .windex .wn, .windex .wi, .picker-list .pn, .picker-list .pi, .specs dt, .specs dd, .exp h3, .exp p, .exp .reading b, .caps h3, .caps p, .lede, .w-meta, .mail .mag, .enter span, .tel, [data-tel-time], .d-kicker, .d-lede, .d-body';
+  const watch = el => {
+    wrap(el);
+    new MutationObserver(() => {
+      if (el.querySelector('.lt') && !Array.from(el.childNodes).some(n => n.nodeType === 3 && n.textContent.trim())) return;
+      delete el.dataset.lt; wrap(el);
+    }).observe(el, { childList: true, subtree: true, characterData: true });
+  };
+  const all = () => document.querySelectorAll(SEL).forEach(el => { if (!el.dataset.ltWatch) { el.dataset.ltWatch = '1'; watch(el); } });
   return { wrap, all };
 })();
 
@@ -3367,7 +3414,7 @@ class App {
     const w = this.orrery.worlds[k], d = w.def, n = WORLDS.length;
     const panel = $('#detail');
     panel.style.setProperty('--a', d.accent);
-    this.root.style.setProperty('--accent', d.accent);
+    this.root.style.setProperty('--accent', d.accent); this.root.style.setProperty('--hl', d.accent);
     $('[data-d-num]').textContent = pad2(k + 1);
     splitChars($('[data-d-title]'), d.name);
     $('[data-d-kicker]').textContent = d.kicker;
@@ -3759,6 +3806,8 @@ class App {
     $('.rail').classList.toggle('in-orbit', i >= ORBIT_START && i <= this.orbitEnd);
     $$('.rail-worlds i').forEach((d, k) => d.classList.toggle('on', inWorlds && k === i - ORBIT_START - 1));
     if (!inWorlds && !this.detail.open) this.root.style.setProperty('--accent', '#a8cfff');
+    // Highlight colour follows the planet you are at: a world's accent, otherwise the core's red.
+    if (!this.detail.open) this.root.style.setProperty('--hl', inWorlds ? WORLDS[i - ORBIT_START - 1].accent : '#ff4655');
     if (this.introOn) Signals.emit('section:change', i);
   }
 
