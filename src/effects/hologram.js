@@ -9,7 +9,7 @@ const HOLOGRAM = Effects.register({
     { key: 'width',    label: 'Grid width', min: 0.002, max: 0.1, step: 0.001 },
     { key: 'scan',     label: 'Scan speed', min: 0,     max: 5,   step: 0.05 },
   ],
-  defaults: { enabled: 1, amount: 0.35, rim: 2.88, power: 8, grid: 4, width: 0.021, scan: 1.8 },
+  defaults: { enabled: 0, amount: 0.35, rim: 2.88, power: 8, grid: 4, width: 0.021, scan: 1.8 },
   reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
   attach(w) {
     w.U.uKyHolo = { value: new THREE.Vector4(0, 2.88, 8, 0) };   // amount, rim, power, scan phase
