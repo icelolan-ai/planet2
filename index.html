@@ -143,6 +143,22 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .rail-worlds i{width:3px;height:3px;border-radius:50%;background:var(--ink-4);transition:background-color .5s,transform .5s var(--ease-out)}
 .rail-worlds i.on{background:var(--accent);transform:scale(1.6)}
 
+/* planet picker */
+.picker{position:fixed;left:var(--pad);bottom:calc(env(safe-area-inset-bottom,0px) + 56px);z-index:6;opacity:0;transition:opacity 1.2s var(--ease-out) 1.6s}
+.is-ready .picker{opacity:1}
+.picker-toggle{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--ink-2);padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:rgba(8,10,16,.55);backdrop-filter:blur(8px)}
+.picker-toggle:hover,.picker[data-open="true"] .picker-toggle{color:var(--ink)}
+.picker-toggle i{width:7px;height:7px;border-radius:50%;background:var(--ion,#8fe6ff);box-shadow:0 0 10px var(--ion,#8fe6ff)}
+.picker-list{list-style:none;margin:0 0 10px;padding:6px;display:grid;gap:2px;min-width:210px;border:1px solid var(--line);border-radius:14px;background:rgba(8,10,16,.72);backdrop-filter:blur(12px);
+  position:absolute;left:0;bottom:100%;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .35s,transform .5s var(--ease-out)}
+.picker[data-open="true"] .picker-list{opacity:1;transform:none;pointer-events:auto}
+.picker-list button{width:100%;display:grid;grid-template-columns:12px 22px 1fr;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;color:var(--ink-2);text-align:left;transition:background-color .3s,color .3s}
+.picker-list button:hover,.picker-list button:focus-visible,.picker-list button[aria-current="true"]{background:rgba(255,255,255,.06);color:var(--ink)}
+.picker-list .pd{width:8px;height:8px;border-radius:50%;background:var(--a);box-shadow:0 0 10px var(--a)}
+.picker-list .pi{font-family:var(--f-num);font-size:11px;color:var(--ink-3)}
+.picker-list .pn{font-family:var(--f-display);font-size:19px;font-weight:300;line-height:1}
+@media (max-width:640px){.picker{left:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 48px)}}
+
 /* ------------------------------------------------------------------ Cursor */
 html.has-cursor,html.has-cursor *{cursor:none!important}
 .cursor{position:fixed;inset:0;z-index:50;pointer-events:none;opacity:0;transition:opacity .4s}
@@ -4848,6 +4864,24 @@ void main() {
 const THREE = window.KY;
 const WORLDS = [{"id": "Aqua_Foam", "name": "Aqua Foam", "kicker": "Ocean world, foam study", "accent": "#86d9cf", "radius": 0.78, "orbit": 5.6, "incl": 0.035, "phase": 0.4, "tilt": 0.32, "spin": 0.05, "lede": "A water world where the whole surface is foam: teal troughs, white crests, and nothing calm anywhere.", "body": "Built in Blender as a cube-sphere of 24 tiles, each with its own baked texture, so the surface keeps its detail even up close. Exported in lo and hi versions; this page uses a lighter web cut of the lo file.", "exports": "lo, hi"}, {"id": "Arcanum", "name": "Arcanum", "kicker": "Sigil world", "accent": "#e38b5f", "radius": 0.6, "orbit": 7.4, "incl": -0.05, "phase": 2.3, "tilt": 0.18, "spin": 0.04, "lede": "Grey cloud cover scored with rings of orange sigils, like survey marks left behind on a moon.", "body": "One baked colour map on a single sphere. The sigil rings sit in the texture itself, so the world reads as a drawing as much as a planet. Exported at 2K, 4K and 8K.", "exports": "2K, 4K, 8K"}, {"id": "Emerald_Tide", "name": "Emerald Tide", "kicker": "Tidal world", "accent": "#7fdcae", "radius": 0.82, "orbit": 9.3, "incl": 0.02, "phase": 4.1, "tilt": 0.41, "spin": 0.045, "lede": "Shallow green seas braided with bright tidal channels, under a thin drift of cloud.", "body": "A single baked colour map, tuned so the channels stay legible from orbit and still hold up when you land. Exported at 2K, 4K and 8K.", "exports": "2K, 4K, 8K"}, {"id": "Inferno", "name": "Inferno", "kicker": "Molten world", "accent": "#ff7a3d", "radius": 0.7, "orbit": 11.2, "incl": 0.06, "phase": 1.2, "tilt": 0.1, "spin": 0.03, "lede": "A crust of cooling lava split by glowing seams, wrapped in its own layer of heat haze.", "body": "24 surface tiles plus a separate six-tile haze shell that glows on its own. The shell is what makes the planet feel hot rather than just orange. Exported at lo, hi and ultra.", "exports": "lo, hi, ultra"}, {"id": "Nebula_Planet", "name": "Nebula", "kicker": "Gas giant", "accent": "#a98bff", "radius": 1.18, "orbit": 13.4, "incl": -0.03, "phase": 3.3, "tilt": 0.47, "spin": 0.06, "lede": "Violet and cobalt bands folding into each other, cut by one bright jet stream across the face.", "body": "The largest world in the system. One baked colour map on a sphere, lit here by the core so its bands turn with the light. Exported at 2K, 4K and 8K.", "exports": "2K, 4K, 8K"}, {"id": "Terra_Nova", "name": "Terra Nova", "kicker": "Earthlike world", "accent": "#8ec3ff", "radius": 0.92, "orbit": 15.4, "incl": 0.04, "phase": 5.4, "tilt": 0.41, "spin": 0.04, "lede": "Continents, shallow seas and a separate cloud layer. The most ordinary world here, and the hardest to get right.", "body": "24 surface tiles and a six-tile cloud shell floating just above them, so weather and ground move as two layers. Exported at lo, hi and ultra.", "exports": "lo, hi, ultra"}, {"id": "Tempest", "name": "Tempest", "kicker": "Storm world", "accent": "#8fe6ff", "radius": 0.86, "orbit": 17.3, "incl": -0.045, "phase": 0.1, "tilt": 0.22, "spin": 0.055, "lede": "A deep blue ocean ringed by cyclone cells, with a second storm layer riding above the surface.", "body": "Two meshes: the ocean surface and a storm layer that sits just above it. The cyclones are baked into the colour map. Exported at 2K, 4K and 8K.", "exports": "2K, 4K, 8K"}];
 
+/* Planet picker: a persistent menu to jump to any world. Built before listeners bind to [data-open-world]. */
+(() => {
+  const nav = document.createElement('nav');
+  nav.className = 'picker'; nav.setAttribute('aria-label', 'Choose a world'); nav.dataset.open = 'false';
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  nav.innerHTML = '<ul class="picker-list" id="picker-list">' + WORLDS.map((w, i) =>
+    `<li style="--a:${w.accent}"><button type="button" data-open-world="${i}" data-cursor="Land"><span class="pd"></span><span class="pi">${String(i + 1).padStart(2, '0')}</span><span class="pn">${esc(w.name)}</span></button></li>`).join('') +
+    '</ul><button type="button" class="picker-toggle" aria-expanded="false" aria-controls="picker-list" data-cursor="Worlds"><i></i><span>Choose a world</span></button>';
+  const toggle = nav.querySelector('.picker-toggle');
+  const set = o => { nav.dataset.open = String(o); toggle.setAttribute('aria-expanded', String(o)); };
+  toggle.addEventListener('click', () => set(nav.dataset.open !== 'true'));
+  nav.querySelectorAll('[data-open-world]').forEach(b => b.addEventListener('click', () => set(false)));
+  document.addEventListener('pointerdown', e => { if (!nav.contains(e.target)) set(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') set(false); });
+  const add = () => document.body.appendChild(nav);
+  document.body ? add() : document.addEventListener('DOMContentLoaded', add);
+})();
+
 function textOnly() {
   document.body.classList.remove('is-loading');
   document.body.classList.add('no-gl');
@@ -5210,6 +5244,45 @@ void main(){
   gl_FragColor = vec4(mix(uInk, uSpark, 0.25), smoothstep(0.5, 0.1, d) * vA * uOpacity);
 }`;
 
+/* Interstellar cloud: large soft puffs plus fine motes, drifting on slow curl-like paths. */
+const CLOUD_VERT = `
+attribute vec4 aSeed; // phase x, phase y, speed, kind (0 mote .. 1 cloud)
+attribute vec3 aColor;
+uniform float uTime, uPixelRatio, uMotion;
+varying vec3 vColor;
+varying float vA, vKind;
+void main(){
+  float t = uTime * aSeed.z * (0.35 + 0.65 * uMotion);
+  vec3 p = position;
+  p.x += sin(t + aSeed.x) * 1.6 + sin(t * 0.37 + aSeed.y * 2.0) * 0.9;
+  p.y += sin(t * 0.8 + aSeed.y) * 0.9;
+  p.z += cos(t * 0.9 + aSeed.x * 1.7) * 1.6;
+  // Slow swirl of the whole cloud around the core.
+  float sw = uTime * 0.004 * (1.0 - aSeed.w * 0.5);
+  float cs = cos(sw), sn = sin(sw);
+  p.xz = mat2(cs, -sn, sn, cs) * p.xz;
+  vec4 mv = modelViewMatrix * vec4(p, 1.0);
+  gl_Position = projectionMatrix * mv;
+  vColor = aColor; vKind = aSeed.w;
+  float tw = 0.65 + 0.35 * sin(uTime * (0.6 + aSeed.z * 3.0) + aSeed.x * 40.0);
+  float fade = smoothstep(1.0, 6.0, -mv.z);
+  vA = fade * mix(tw, 1.0, aSeed.w);
+  float base = mix(1.4 + aSeed.y * 0.3, 90.0 + aSeed.x * 12.0, aSeed.w);
+  gl_PointSize = clamp(base * uPixelRatio * (mix(10.0, 34.0, aSeed.w) / -mv.z), 0.8, mix(4.0, 420.0, aSeed.w) * uPixelRatio);
+}`;
+
+const CLOUD_FRAG = `
+uniform float uOpacity;
+varying vec3 vColor;
+varying float vA, vKind;
+void main(){
+  float d = length(gl_PointCoord - 0.5);
+  if (d > 0.5) discard;
+  float soft = smoothstep(0.5, 0.0, d);
+  float a = mix(soft * soft, pow(soft, 2.2) * 0.085, vKind);
+  gl_FragColor = vec4(vColor, a * vA * uOpacity);
+}`;
+
 const ORBIT_VERT = `
 attribute float aT;
 varying float vT;
@@ -5231,8 +5304,8 @@ void main(){
   float dots = step(0.55, fract(vT * 420.0));
   // The line parts around its world instead of running through it.
   float clear = smoothstep(uClear * 1.25, uClear * 3.2, distance(vWP, uPlanet));
-  float a = uOpacity * clear * (0.22 * dots + 0.06 + trail * (0.55 + uGlow * 0.9));
-  vec3 col = mix(uInk, mix(uSpark, uAccent, uGlow), clamp(trail * 1.3, 0.0, 1.0));
+  float a = uOpacity * clear * (0.18 * dots + 0.2 + uGlow * 0.12 + trail * (0.55 + uGlow * 0.9));
+  vec3 col = mix(mix(uInk, uAccent, 0.45), mix(uSpark, uAccent, uGlow), clamp(trail * 1.3, 0.0, 1.0));
   gl_FragColor = vec4(col, a);
 }`;
 
@@ -5832,6 +5905,39 @@ class DustDisc {
   dispose() { this.geometry.dispose(); this.material.dispose(); }
 }
 
+/** Cosmic dust and interstellar cloud: drifting motes and faint coloured nebula puffs that fill the system. */
+class InterstellarCloud {
+  constructor(shared, motes, puffs) {
+    const n = motes + puffs, pos = new Float32Array(n * 3), seed = new Float32Array(n * 4), col = new Float32Array(n * 3);
+    const tints = [[0.55, 0.42, 1.0], [0.3, 0.75, 0.9], [0.95, 0.5, 0.35], [0.4, 0.55, 1.0], [0.85, 0.4, 0.75]];
+    for (let i = 0; i < n; i++) {
+      const cloud = i >= motes;
+      const th = Math.random() * Math.PI * 2;
+      const r = cloud ? 8 + Math.random() * 30 : 2.5 + Math.pow(Math.random(), 0.7) * 34;
+      const h = (Math.random() - 0.5) * (cloud ? 10 : 14) * (0.4 + r / 34);
+      pos[i * 3] = Math.cos(th) * r; pos[i * 3 + 1] = h; pos[i * 3 + 2] = Math.sin(th) * r;
+      seed[i * 4] = Math.random() * 6.283; seed[i * 4 + 1] = Math.random() * 6.283;
+      seed[i * 4 + 2] = cloud ? 0.03 + Math.random() * 0.05 : 0.08 + Math.random() * 0.25;
+      seed[i * 4 + 3] = cloud ? 1 : 0;
+      const c = tints[(Math.random() * tints.length) | 0], b = cloud ? 1 : 0.6 + Math.random() * 0.4;
+      const w = cloud ? 1 : 0.35;
+      col[i * 3] = (c[0] * w + (1 - w)) * b; col[i * 3 + 1] = (c[1] * w + (1 - w)) * b; col[i * 3 + 2] = (c[2] * w + (1 - w)) * b;
+    }
+    this.geometry = new THREE.BufferGeometry();
+    this.geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    this.geometry.setAttribute('aSeed', new THREE.BufferAttribute(seed, 4));
+    this.geometry.setAttribute('aColor', new THREE.BufferAttribute(col, 3));
+    this.material = additive({
+      uniforms: { uTime: { value: 0 }, uPixelRatio: { value: 1 }, uMotion: shared.uMotion, uOpacity: { value: 0 } },
+      vertexShader: CLOUD_VERT, fragmentShader: CLOUD_FRAG
+    });
+    this.points = new THREE.Points(this.geometry, this.material);
+    this.points.frustumCulled = false;
+    this.points.renderOrder = -1;
+  }
+  dispose() { this.geometry.dispose(); this.material.dispose(); }
+}
+
 /** A graduated dial laid flat around the whole system: the orrery's scale. */
 class OrbitDial {
   constructor(shared, radius) {
@@ -6039,7 +6145,8 @@ class Orrery {
     this.stars = new StarField(opts.stars);
     this.dust = new DustDisc(shared, opts.dust);
     this.dial = new OrbitDial(shared, 20.4);
-    this.group.add(this.stars.points, this.dust.points, this.dial.lines);
+    this.cloud = new InterstellarCloud(shared, opts.motes, opts.puffs);
+    this.group.add(this.stars.points, this.cloud.points, this.dust.points, this.dial.lines);
     this.v = { a: new THREE.Vector3(), b: new THREE.Vector3(), c: new THREE.Vector3(), up: new THREE.Vector3(0, 1, 0) };
     this.aspect = 1.6;
     this.poseA = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
@@ -6057,6 +6164,8 @@ class Orrery {
     this.dial.material.uniforms.uOpacity.value = 0.09 * f.G * f.orbitVis;
     this.dust.points.visible = f.G > 0.002;
     this.dial.lines.visible = f.G > 0.002;
+    const cu = this.cloud.material.uniforms;
+    cu.uTime.value = t; cu.uPixelRatio.value = f.pixelRatio; cu.uOpacity.value = 0.35 + 0.65 * f.G;
   }
 
   /* Camera poses. `out` is {pos, look}. */
@@ -6554,7 +6663,7 @@ class App {
     this.core.buildTelemetry();
 
     this.loader.set(0.26, 'Charting the orbit'); await nextFrame();
-    this.orrery = new Orrery(this.shared, { stars: m ? 1800 : 4200, dust: m ? 1400 : 3600 });
+    this.orrery = new Orrery(this.shared, { stars: m ? 1800 : 4200, dust: m ? 1400 : 3600, motes: m ? 900 : 2400, puffs: m ? 70 : 160 });
     this.stage.scene.add(this.orrery.group);
     await this.loadWorlds(0.28, 0.9);
 
