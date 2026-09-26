@@ -1,4 +1,4 @@
-# Kythera — build sources
+# Cerebra — build sources
 
 `../index.html` is the finished site: one self-contained file (three.js, GSAP, fonts, Draco decoder
 and all seven planet GLBs embedded). Open it straight from disk; no server needed.
