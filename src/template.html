@@ -540,6 +540,8 @@ body.is-exploring .fab,body.tune-open .fab,body.wtune-open .fab,body.obuild-open
 .gear-menu{position:absolute;right:0;top:calc(100% + 10px);width:230px;padding:12px;background:rgba(8,10,16,.92);backdrop-filter:blur(12px);border:1px solid var(--line);border-top:2px solid var(--val);
   opacity:0;transform:translateY(-6px);pointer-events:none;transition:opacity .3s,transform .4s var(--ease-out)}
 .gear.open .gear-menu{opacity:1;transform:none;pointer-events:auto}
+.gear:not(.open) .gear-menu{visibility:hidden;transition:opacity .3s,transform .4s var(--ease-out),visibility 0s .4s}
+.gear:not(.open) .gear-menu *{pointer-events:none!important}
 .gear-h{margin:0 0 8px;font:600 11px var(--f-cond);letter-spacing:.24em;text-transform:uppercase;color:var(--ink)}
 .gear-menu button{display:block;width:100%;text-align:left;padding:10px;font:500 12px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);border-bottom:1px solid var(--line)}
 .gear-menu button:hover{color:var(--ink);background:rgba(255,255,255,.04)}
@@ -773,7 +775,14 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
   <label class="tune-row"><span>Particle speed</span><input type="range" min="0" max="5" step="0.05" data-wt="haloSpeed"><b data-out></b></label>
   <div class="tune-row"><span>Ring</span><div class="tune-seg" data-wt-seg="ring"><button type="button" data-v="0">Off</button><button type="button" data-v="1">On</button></div></div>
   <div class="tune-row"><span>Orbit line</span><div class="tune-seg" data-wt-seg="line"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>
+  <p class="tune-sub">Ripple</p>
+  <div class="tune-row"><span>Ripple</span><div class="tune-seg" data-wt-seg="r_enabled"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>
+  <div class="tune-row"><span>Trail</span><div class="tune-seg" data-wt-seg="r_trail"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>
+  <div class="tune-row tall"><span>Presets</span><div class="tune-grid" data-wt-rpresets></div></div>
+  <div data-wt-rsliders></div>
+  <p class="tune-hint">Tap or drag across the world to send ripples.</p>
   <p class="tune-hint" data-wt-note>Colour changes follow you down to the surface when you explore.</p>
+  <button type="button" class="tune-btn" data-wt-random>&#9861; Randomize this world</button>
   <button type="button" class="tune-reset" data-wt-reset>Reset this world</button>
 </aside>
 <aside class="tune" id="tune" aria-label="Tune the core" data-open="false">
@@ -1280,8 +1289,16 @@ const WorldTune = (() => {
     // While tuning, other worlds step aside so none of them passes in front of this one.
     if (app && app.orrery) app.orrery.worlds.forEach(x => { x.solo = on && x !== w; });
   };
+  const rippleDefaults = () => { const o = { r_enabled: 1, r_trail: 1 }; RIPPLE_CONTROLS.forEach(c => { o['r_' + c.key] = RIPPLE_DEFAULTS[c.key]; }); return o; };
   const wire = a => {
     app = a;
+    const Pn = panel();
+    RIPPLE_CONTROLS.forEach(c => { fmt['r_' + c.key] = v => (+v).toFixed(c.step < 0.01 ? 3 : c.step < 1 ? 2 : 0); });
+    Pn.querySelector('[data-wt-rsliders]').innerHTML = RIPPLE_CONTROLS.map(c =>
+      `<label class="tune-row"><span>${c.label}</span><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" data-wt="r_${c.key}"><b data-out></b></label>`).join('');
+    Pn.querySelector('[data-wt-rpresets]').innerHTML = Object.keys(RIPPLE_PRESETS).map(n => `<button type="button" data-rp="${n}">${n}</button>`).join('');
+    // Every world starts from the ripple defaults, then its saved tuning.
+    app.orrery.worlds.forEach(x => Object.entries(rippleDefaults()).forEach(([k, v]) => { if (x.tune[k] == null) x.tune[k] = v; }));
     // Restore every world's saved tuning.
     app.orrery.worlds.forEach(x => { const s = store[x.def.id]; if (s) Object.keys(s).forEach(k => x.setTune(k, s[k])); });
     app.orrery.worlds.forEach(x => { w = x; syncAccent(); }); w = null;
@@ -1296,9 +1313,22 @@ const WorldTune = (() => {
     P.querySelectorAll('[data-wt-presets] button').forEach(b => b.addEventListener('click', () => {
       set('hue', +b.dataset.hue); if (+b.dataset.hue === 0) { set('sat', 1); set('bright', 1); } fill();
     }));
+    P.querySelectorAll('[data-rp]').forEach(b => b.addEventListener('click', () => {
+      if (!w) return; Object.entries(RIPPLE_PRESETS[b.dataset.rp]).forEach(([k, v]) => set('r_' + k, v)); fill();
+      const c = w.hit.worldToLocal(w.group.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 0, w.def.radius).applyQuaternion(app.rig.camera.quaternion)));
+      w.ripple.trigger(c, 1);
+    }));
+    P.querySelector('[data-wt-random]').addEventListener('click', () => {
+      if (!w) return;
+      const R = (a, b) => a + Math.random() * (b - a);
+      set('hue', Math.round(R(-180, 180))); set('sat', +R(0.6, 1.6).toFixed(2)); set('bright', +R(0.8, 1.3).toFixed(2));
+      set('spin', +R(0.3, 3).toFixed(2)); set('atmo', +R(0.6, 2).toFixed(2)); set('halo', +R(0.5, 2.5).toFixed(2));
+      RIPPLE_CONTROLS.forEach(c => { if (c.key !== 'ambient') set('r_' + c.key, +(R(c.min + (c.max - c.min) * 0.1, c.min + (c.max - c.min) * 0.6)).toFixed(3)); });
+      fill();
+    });
     P.querySelector('[data-wt-reset]').addEventListener('click', () => {
       if (!w) return;
-      const def = Object.assign({}, World.TUNE_DEFAULT, { tilt: w.def.tilt });
+      const def = Object.assign({}, World.TUNE_DEFAULT, { tilt: w.def.tilt }, rippleDefaults());
       Object.keys(def).forEach(k => w.setTune(k, def[k])); delete store[w.def.id]; save(); syncAccent(); fill();
     });
     // Keep drawer gestures away from world dragging and the wheel-to-close gesture.
@@ -2096,9 +2126,327 @@ void main(){
   gl_FragColor = vec4(col, a);
 }`;
 
+/* ================================================================
+   Surface ripple (planet-ripple.js at the repo root, inlined without its exports).
+================================================================ */
+const RIPPLE_MAX = 8;
+
+const RIPPLE_DEFAULTS = {
+  enabled: true,
+  strength: 0.06,     // surface lift, in planet radii
+  speed: 0.9,         // how fast the ring travels (radians / second)
+  wavelength: 0.22,   // distance between crests (radians)
+  decay: 1.4,         // fade over time
+  spread: 2.4,        // fade with distance from the tap
+  lines: 14,          // contour line density
+  lineGlow: 1.4,      // brightness of the contour lines
+  lineWidth: 1.2,     // contour line thickness (px)
+  color: '#9dff3a',   // line + particle glow colour
+  particleKick: 2.5,  // how hard particles are thrown (× strength)
+  particleGlow: 1.8,  // point size boost while a wave passes
+  trail: true,        // drag across the surface to leave ripples
+  trailEvery: 0.07,   // seconds between trail ripples
+  ambient: 0,         // auto ripples per second (0 = off)
+};
+
+/** Slider descriptors — map these onto your existing TUNE panel builder. */
+const RIPPLE_CONTROLS = [
+  { key: 'strength',     label: 'Strength',       min: 0,    max: 0.2, step: 0.002 },
+  { key: 'speed',        label: 'Speed',          min: 0.1,  max: 3,   step: 0.01 },
+  { key: 'wavelength',   label: 'Wavelength',     min: 0.05, max: 0.8, step: 0.005 },
+  { key: 'decay',        label: 'Decay',          min: 0.2,  max: 5,   step: 0.05 },
+  { key: 'spread',       label: 'Spread',         min: 0,    max: 5,   step: 0.05 },
+  { key: 'lines',        label: 'Contour lines',  min: 0,    max: 40,  step: 1 },
+  { key: 'lineGlow',     label: 'Line glow',      min: 0,    max: 4,   step: 0.05 },
+  { key: 'particleKick', label: 'Particle kick',  min: 0,    max: 8,   step: 0.1 },
+  { key: 'particleGlow', label: 'Particle glow',  min: 0,    max: 5,   step: 0.1 },
+  { key: 'ambient',      label: 'Ambient pings',  min: 0,    max: 3,   step: 0.05 },
+];
+
+const RIPPLE_PRESETS = {
+  Liquid:  { strength: 0.06, speed: 0.9, wavelength: 0.22, decay: 1.4, spread: 2.4, lines: 14, lineGlow: 1.4, particleKick: 2.5 },
+  Seismic: { strength: 0.12, speed: 1.8, wavelength: 0.45, decay: 2.4, spread: 0.8, lines: 26, lineGlow: 2.2, particleKick: 5.0 },
+  Pulse:   { strength: 0.02, speed: 0.6, wavelength: 0.10, decay: 0.8, spread: 2.5, lines: 6,  lineGlow: 2.8, particleKick: 1.2 },
+  Calm:    { strength: 0.03, speed: 0.4, wavelength: 0.35, decay: 0.7, spread: 1.2, lines: 0,  lineGlow: 0,   particleKick: 1.0 },
+};
+
+/* ------------------------------------------------------------------ GLSL -- */
+
+const GLSL_COMMON = /* glsl */ `
+#define RIPPLE_MAX ${RIPPLE_MAX}
+uniform vec3  uRippleDir[RIPPLE_MAX];   // tap direction, object space, unit length
+uniform float uRippleT0[RIPPLE_MAX];    // start time
+uniform float uRippleAmp[RIPPLE_MAX];   // per-ripple strength 0..1
+uniform float uRippleTime;
+uniform float uRippleStrength;
+uniform float uRippleSpeed;
+uniform float uRippleWavelength;
+uniform float uRippleDecay;
+uniform float uRippleSpread;
+`;
+
+const GLSL_VERTEX_FN = /* glsl */ `
+varying float vRippleH;   // signed height (normalised)
+varying float vRippleE;   // energy 0..1 (where a wave is passing)
+
+// Returns height in radii; writes energy and a sideways push direction.
+float planetRipple(vec3 dir, out float energy, out vec3 push) {
+  float h = 0.0; energy = 0.0; push = vec3(0.0);
+  float k = 6.2831853 / max(uRippleWavelength, 1e-3);
+  for (int i = 0; i < RIPPLE_MAX; i++) {
+    float amp = uRippleAmp[i];
+    float age = uRippleTime - uRippleT0[i];
+    if (amp <= 0.0 || age < 0.0) continue;
+    vec3  o   = uRippleDir[i];
+    float ang = acos(clamp(dot(dir, o), -1.0, 1.0));
+    float front = age * uRippleSpeed;
+    // only the area the wave has already reached moves; soft leading edge
+    float reach = smoothstep(front + uRippleWavelength, front, ang);
+    float env = amp * exp(-age * uRippleDecay) * exp(-ang * uRippleSpread) * reach;
+    float w = cos((ang - front) * k);
+    h += w * env;
+    energy += env;
+    vec3 t = dir - o * dot(dir, o);
+    float tl = length(t);
+    if (tl > 1e-4) push += (t / tl) * max(w, 0.0) * env;
+  }
+  energy = clamp(energy, 0.0, 1.0);
+  return h;
+}
+`;
+
+const GLSL_FRAG_HEAD = /* glsl */ `
+varying float vRippleH;
+varying float vRippleE;
+uniform vec3  uRippleColor;
+uniform float uRippleLines;
+uniform float uRippleLineGlow;
+uniform float uRippleLineWidth;
+uniform float uRipplePointGlow;
+
+float rippleContour() {
+  if (uRippleLines <= 0.0) return 0.0;
+  float v = vRippleH * uRippleLines;
+  float d = 0.5 - abs(fract(v) - 0.5);          // distance to nearest integer level
+  float w = fwidth(v) * uRippleLineWidth + 1e-4;
+  return 1.0 - smoothstep(0.0, w, d);
+}
+`;
+
+/** Pieces for hand-written ShaderMaterials (see notes at bottom). */
+const rippleGLSL = {
+  vertexHead: GLSL_COMMON + GLSL_VERTEX_FN,
+  fragmentHead: GLSL_FRAG_HEAD,
+};
+
+/* ---------------------------------------------------------------- factory -- */
+
+function createPlanetRipple(THREE, opts) {
+  const {
+    camera,
+    domElement,
+    target,
+    extras = [],
+    radius = null,          // planet radius in local units (auto from bounding sphere)
+    params: initial = {},
+    listen = true,          // attach pointer listeners
+    onPing = null,          // callback(dirLocal, strength) — hook sound here
+  } = opts;
+
+  const params = { ...RIPPLE_DEFAULTS, ...initial };
+
+  target.geometry.computeBoundingSphere?.();
+  const R = radius ?? target.geometry.boundingSphere?.radius ?? 1;
+
+  const dirs = Array.from({ length: RIPPLE_MAX }, () => new THREE.Vector3(0, 1, 0));
+  const t0s = new Float32Array(RIPPLE_MAX).fill(-1e4);
+  const amps = new Float32Array(RIPPLE_MAX);
+  let slot = 0;
+  let now = 0;
+
+  const uniforms = {
+    uRippleDir: { value: dirs },
+    uRippleT0: { value: t0s },
+    uRippleAmp: { value: amps },
+    uRippleTime: { value: 0 },
+    uRippleStrength: { value: params.strength },
+    uRippleSpeed: { value: params.speed },
+    uRippleWavelength: { value: params.wavelength },
+    uRippleDecay: { value: params.decay },
+    uRippleSpread: { value: params.spread },
+    uRippleColor: { value: new THREE.Color(params.color) },
+    uRippleLines: { value: params.lines },
+    uRippleLineGlow: { value: params.lineGlow },
+    uRippleLineWidth: { value: params.lineWidth },
+    uRipplePointGlow: { value: params.particleGlow },
+    uRippleKick: { value: params.particleKick },
+    uRippleRadius: { value: R },
+  };
+
+  /* ---- material patching ---- */
+  const patched = new WeakSet();
+
+  function patchMaterial(mat, isPoints) {
+    if (!mat || patched.has(mat)) return;
+    if (mat.isShaderMaterial) {
+      // Custom shaders: merge uniforms so the snippets in the notes just work.
+      Object.assign(mat.uniforms, uniforms);
+      patched.add(mat);
+      return;
+    }
+    patched.add(mat);
+    const prev = mat.onBeforeCompile;
+    mat.onBeforeCompile = (shader, renderer) => {
+      prev?.call(mat, shader, renderer);
+      Object.assign(shader.uniforms, uniforms);
+
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', `#include <common>\n${GLSL_COMMON}\n${GLSL_VERTEX_FN}\nuniform float uRippleKick;\nuniform float uRippleRadius;\nuniform float uRipplePointGlow;`)
+        .replace('#include <begin_vertex>', `#include <begin_vertex>
+        {
+          float rLen = length(position);
+          vec3 rDir = position / max(rLen, 1e-5);
+          float rE; vec3 rPush;
+          float rH = planetRipple(rDir, rE, rPush);
+          vRippleH = rH; vRippleE = rE;
+          float lift = rH * uRippleStrength * uRippleRadius;
+          ${isPoints
+            ? `transformed += rDir * abs(lift) * uRippleKick + rPush * uRippleStrength * uRippleRadius * uRippleKick;`
+            : `transformed += rDir * lift;`}
+        }`);
+
+      if (isPoints) {
+        shader.vertexShader = shader.vertexShader.replace(
+          '#include <fog_vertex>',
+          '#include <fog_vertex>\n  gl_PointSize *= 1.0 + vRippleE * uRipplePointGlow;'
+        );
+      }
+
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', `#include <common>\n${GLSL_FRAG_HEAD}`)
+        .replace('#include <opaque_fragment>', `#include <opaque_fragment>
+        ${isPoints
+          ? `gl_FragColor.rgb += uRippleColor * vRippleE * uRipplePointGlow * 0.6;`
+          : `gl_FragColor.rgb += uRippleColor * rippleContour() * vRippleE * uRippleLineGlow
+                               + uRippleColor * max(vRippleH, 0.0) * vRippleE * 0.25 * uRippleLineGlow;`}`);
+    };
+    mat.needsUpdate = true;
+  }
+
+  function attach(obj) {
+    obj.traverse?.((o) => {
+      if (!o.material) return;
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      mats.forEach((m) => patchMaterial(m, !!o.isPoints));
+    });
+  }
+  attach(target);
+  extras.forEach(attach);
+
+  /* ---- params ---- */
+  function set(next) {
+    Object.assign(params, next);
+    uniforms.uRippleStrength.value = params.enabled ? params.strength : 0;
+    uniforms.uRippleSpeed.value = params.speed;
+    uniforms.uRippleWavelength.value = params.wavelength;
+    uniforms.uRippleDecay.value = params.decay;
+    uniforms.uRippleSpread.value = params.spread;
+    uniforms.uRippleLines.value = params.lines;
+    uniforms.uRippleLineGlow.value = params.enabled ? params.lineGlow : 0;
+    uniforms.uRippleLineWidth.value = params.lineWidth;
+    uniforms.uRipplePointGlow.value = params.particleGlow;
+    uniforms.uRippleKick.value = params.particleKick;
+    uniforms.uRippleColor.value.set(params.color);
+  }
+  set({});
+
+  /* ---- triggering ---- */
+  function trigger(dirLocal, strength = 1) {
+    if (!params.enabled) return;
+    dirs[slot].copy(dirLocal).normalize();
+    t0s[slot] = now;
+    amps[slot] = strength;
+    slot = (slot + 1) % RIPPLE_MAX;
+    onPing?.(dirs[(slot + RIPPLE_MAX - 1) % RIPPLE_MAX], strength);
+  }
+
+  const raycaster = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
+  const tmp = new THREE.Vector3();
+
+  /** Ray-cast screen coords (client px) → trigger. Returns true if the planet was hit. */
+  function pingAtClient(clientX, clientY, strength = 1) {
+    const rect = domElement.getBoundingClientRect();
+    ndc.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+    raycaster.setFromCamera(ndc, camera);
+    const hit = raycaster.intersectObject(target, false)[0];
+    if (!hit) return false;
+    tmp.copy(hit.point);
+    target.worldToLocal(tmp);
+    trigger(tmp, strength);
+    return true;
+  }
+
+  let down = false, lastTrail = 0;
+  const onDown = (e) => {
+    if (!params.enabled) return;
+    down = pingAtClient(e.clientX, e.clientY, 1);
+    lastTrail = now;
+  };
+  const onMove = (e) => {
+    if (!down || !params.trail) return;
+    if (now - lastTrail < params.trailEvery) return;
+    lastTrail = now;
+    pingAtClient(e.clientX, e.clientY, 0.45);
+  };
+  const onUp = () => { down = false; };
+
+  if (listen && domElement) {
+    domElement.addEventListener('pointerdown', onDown, { capture: true });
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+  }
+
+  /* ---- per-frame ---- */
+  let ambientAcc = 0;
+  function update(elapsed) {
+    const dt = Math.min(0.1, Math.max(0, elapsed - now));
+    now = elapsed;
+    uniforms.uRippleTime.value = now;
+    // retire faded ripples so the shader loop can skip them
+    const life = 6 / Math.max(params.decay, 0.05);
+    for (let i = 0; i < RIPPLE_MAX; i++) if (amps[i] > 0 && now - t0s[i] > life) amps[i] = 0;
+    if (params.ambient > 0 && params.enabled) {
+      ambientAcc += dt * params.ambient;
+      while (ambientAcc >= 1) {
+        ambientAcc -= 1;
+        tmp.randomDirection();
+        trigger(tmp, 0.35 + Math.random() * 0.4);
+      }
+    }
+  }
+
+  function dispose() {
+    domElement?.removeEventListener('pointerdown', onDown, { capture: true });
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('pointercancel', onUp);
+  }
+
+  return {
+    params, uniforms, set, trigger, pingAtClient, update, attach, dispose,
+    /** true while the pointer is dragging on the planet — use it to pause your own drag-rotate if you like */
+    get isDragging() { return down; },
+  };
+}
+
+
 const HALO_VERT = `
 attribute vec4 aOrbit; // radius factor, phase, inclination, seed
 uniform float uTime, uRadius, uHover, uReveal, uPixelRatio, uMotion, uHaloT;
+uniform float uSpinA, uRippleKick, uRippleRadius, uRipplePointGlow;
+${GLSL_COMMON}${GLSL_VERTEX_FN}
 uniform vec3 uInk, uAccent;
 varying float vA;
 varying vec3 vCol;
@@ -2110,11 +2458,16 @@ void main(){
   float ci = cos(aOrbit.z), si = sin(aOrbit.z);
   p = vec3(p.x, -p.z * si, p.z * ci);
   p *= 1.0 + sin(uTime * 1.3 + aOrbit.w * 30.0) * 0.015;
+  // Ripples live in the spinning frame; rotate into it, push outward where a wave passes.
+  float cS = cos(uSpinA), sS = sin(uSpinA);
+  vec3 rd = normalize(p); vec3 rdS = vec3(cS * rd.x - sS * rd.z, rd.y, sS * rd.x + cS * rd.z);
+  float rE; vec3 rPush; float rH = planetRipple(rdS, rE, rPush);
+  p += rd * abs(rH) * uRippleStrength * uRippleRadius * uRippleKick * 1.4;
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
   gl_Position = projectionMatrix * mv;
-  vA = uReveal * (0.25 + 0.75 * aOrbit.w) * (0.5 + uHover * 0.9);
+  vA = uReveal * (0.25 + 0.75 * aOrbit.w) * (0.5 + uHover * 0.9) * (1.0 + rE * uRipplePointGlow);
   vCol = mix(uInk, uAccent, 0.35 + uHover * 0.55);
-  gl_PointSize = clamp((1.1 + aOrbit.w * 1.6) * uPixelRatio * (4.2 / -mv.z) * (1.0 + uHover * 0.7), 0.6, 4.5 * uPixelRatio);
+  gl_PointSize = clamp((1.1 + aOrbit.w * 1.6) * uPixelRatio * (4.2 / -mv.z) * (1.0 + uHover * 0.7) * (1.0 + rE * uRipplePointGlow * 0.6), 0.6, 7.0 * uPixelRatio);
 }`;
 
 const HALO_FRAG = `
@@ -3434,6 +3787,7 @@ function shiftColor(hex, hueDeg, sat, bright) {
   return c.setRGB(Math.max(0, (y + 0.956 * i + 0.621 * q) * bright), Math.max(0, (y - 0.272 * i - 0.647 * q) * bright), Math.max(0, (y - 1.106 * i + 1.703 * q) * bright));
 }
 
+
 /** One imported world: the Blender model, its atmosphere, its particle halo and its orbit line. */
 class World {
   constructor(def, index, gltf, shared, opts) {
@@ -3486,6 +3840,18 @@ class World {
     });
     this.stats = { verts, meshes, surfaceTiles: meshes - layers, layers, tex };
 
+    // Ripples: an invisible sphere in the spinning frame takes the hits, so waves stay put as the world turns.
+    this.hit = new THREE.Mesh(new THREE.SphereGeometry(def.radius, 32, 16), new THREE.MeshBasicMaterial({ visible: false }));
+    this.spinG.add(this.hit);
+    const reducedRM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.ripple = createPlanetRipple(THREE, {
+      camera: null, domElement: null, target: this.hit, radius: def.radius, listen: false,
+      params: Object.assign({ color: def.accent, trailEvery: opts.mobile ? 0.14 : 0.07 }, reducedRM ? { strength: 0.024, trail: false, particleKick: 1 } : {}),
+      onPing: (d, s) => World.onPing && World.onPing(this, s)
+    });
+    this.ripple.attach(model);
+    this.rippleReduced = reducedRM;
+
     // Atmosphere: back-face fresnel shell, brighter on the core-lit side.
     const shell = 1.16;
     this.atmoGeom = new THREE.SphereGeometry(def.radius * shell, 64, 40);
@@ -3512,7 +3878,7 @@ class World {
     this.haloMat = additive({
       uniforms: {
         uTime: shared.uTime, uMotion: shared.uMotion, uInk: shared.uInk, uAccent: { value: rawColor(def.accent) },
-        uRadius: { value: def.radius }, uHover: { value: 0 }, uReveal: { value: 0 }, uPixelRatio: { value: 1 }, uHaloT: { value: 0 }
+        uRadius: { value: def.radius }, uHover: { value: 0 }, uReveal: { value: 0 }, uPixelRatio: { value: 1 }, uHaloT: { value: 0 }, uSpinA: { value: 0 }
       },
       vertexShader: HALO_VERT, fragmentShader: HALO_FRAG
     });
@@ -3559,6 +3925,8 @@ class World {
     this.orbitLine = new THREE.Line(this.orbitGeom, this.orbitMat);
     this.orbitLine.frustumCulled = false;
     this.applyColor();
+    // The halo shares the ripple uniforms (added after the halo material exists).
+    Object.assign(this.haloMat.uniforms, this.ripple.uniforms);
   }
 
   patch(m) {
@@ -3572,7 +3940,7 @@ class World {
         .replace('#include <common>', '#include <common>\n' + WORLD_PARS_FRAG)
         .replace('#include <opaque_fragment>', '#include <opaque_fragment>\n' + WORLD_MAIN_FRAG);
     };
-    m.customProgramCacheKey = () => 'ky-world-' + m.type;
+    m.customProgramCacheKey = () => 'ky-world-ripple-' + m.type;
     m.needsUpdate = true;
   }
 
@@ -3587,8 +3955,17 @@ class World {
     d.accent = '#' + acc.getHexString();
     this.U.uKyAccent.value.copy(acc).multiplyScalar(0.9);
     [this.atmoMat.uniforms.uColor, this.haloMat.uniforms.uAccent, this.orbitMat.uniforms.uAccent, this.ringMat.uniforms.uColor].forEach(u => u.value.copy(acc));
+    if (this.ripple) this.ripple.set({ color: d.accent });
+  }
+  /* Ripple settings are stored in the same per-world tune object with an r_ prefix. */
+  setRipple(k, v) {
+    this.tune['r_' + k] = v;
+    const p = { [k]: v };
+    if (this.rippleReduced) { if (k === 'trail') p.trail = false; if (k === 'strength') p.strength = v * 0.4; }
+    this.ripple.set(p);
   }
   setTune(k, v) {
+    if (k.startsWith('r_')) return this.setRipple(k.slice(2), v);
     this.tune[k] = v;
     if (k === 'hue' || k === 'sat' || k === 'bright') this.applyColor();
     if (k === 'halo') this.haloGeom.setDrawRange(0, Math.round(this.haloN * clamp(v, 0, 3) / 3));
@@ -3604,6 +3981,8 @@ class World {
     this.axis.rotation.z = T.tilt;
     this.spinPhase += dt * d.spin * T.spin * T.dir;
     this.haloT += dt * T.haloSpeed * (0.3 + 0.7 * (f.reduced ? 0.25 : 1));
+    this.ripple.update(t);
+    this.haloMat.uniforms.uSpinA.value = this.spinG.rotation.y;
     this.haloMat.uniforms.uHaloT.value = this.haloT;
     this.group.position.set(Math.cos(a) * R, Math.sin(a) * R * Math.sin(d.incl), Math.sin(a) * R * Math.cos(d.incl));
 
@@ -3653,7 +4032,7 @@ class World {
         m.dispose();
       });
     });
-    [this.atmoGeom, this.haloGeom, this.orbitGeom, this.ringGeom].forEach(g => g.dispose());
+    [this.atmoGeom, this.haloGeom, this.orbitGeom, this.ringGeom, this.hit.geometry].forEach(g => g.dispose());
     [this.atmoMat, this.haloMat, this.orbitMat, this.ringMat].forEach(m => m.dispose());
   }
 }
@@ -5006,7 +5385,7 @@ class App {
       const gltf = await files[i];
       await nextFrame();
       if (gltf instanceof Error || !gltf || !gltf.scene) { console.error(gltf); tick(`${def.name} could not be decoded`); continue; }
-      const w = new World(def, i, gltf, this.shared, { anisotropy: aniso, halo });
+      const w = new World(def, i, gltf, this.shared, { anisotropy: aniso, halo, mobile: this.mobile });
       this.orrery.add(w);
       tick(`${def.name} resolved`);
     }
@@ -5172,6 +5551,7 @@ class App {
     $('[data-d-close]').addEventListener('click', () => this.closeWorld(), { signal });
     // Surface exploration: a button on every world that has a map, and one in the detail panel.
     this.explorer = new Explorer(this);
+    World.onPing = (w, s) => this.sound && this.sound.tone(380 + w.index * 55, 0.5, 0.035 * s, 0.7);
     WORLDS.forEach((w, i) => {
       if (!this.explorer.has(w)) return;
       const sec = $('#world-' + w.id.toLowerCase().replace(/_/g, '-')), enter = sec && sec.querySelector('.enter');
@@ -5246,6 +5626,11 @@ class App {
         const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
         m.firstElementChild.style.transform = `translate(${(dx * 0.16).toFixed(1)}px,${(dy * 0.3).toFixed(1)}px)`;
       }
+      // Dragging across a world leaves a trail of smaller ripples.
+      if (this.rippleDown && this.down) {
+        const now = performance.now(), w = this.rippleWorld;
+        if (w && w.ripple.params.trail && now - this.rippleDown > w.ripple.params.trailEvery * 1000) { this.rippleDown = now; this.pingWorld(e.clientX, e.clientY, 0.45); }
+      }
       // Drag to turn the open world.
       if (this.drag && this.orrery) {
         const w = this.orrery.worlds[this.detail.index], now = performance.now();
@@ -5261,6 +5646,10 @@ class App {
     // Tap on empty space: worlds first, then the core.
     addEventListener('pointerdown', e => {
       this.down = { x: e.clientX, y: e.clientY, t: performance.now() };
+      // A tap on a world sends a ripple from that point; the tap still opens or turns the world as before.
+      if (!(e.target.closest && e.target.closest('a,button,input,label,.tune,.hud,.rail,.picker,.fab,.d-nav,.specs'))) {
+        this.rippleDown = this.pingWorld(e.clientX, e.clientY, 1) ? performance.now() : 0;
+      }
       if (this.detail.open && this.orrery && !(e.target.closest && e.target.closest('.d-panel,.d-close,a,button'))) {
         this.drag = { x: e.clientX, x0: e.clientX, t: performance.now(), moved: false };
         const w = this.orrery.worlds[this.detail.index]; w.userVel = 0;
@@ -5269,6 +5658,7 @@ class App {
     const endDrag = () => { this.drag = null; };
     addEventListener('pointercancel', endDrag, { signal });
     addEventListener('pointerup', e => {
+      this.rippleDown = 0;
       const d = this.down; this.down = null;
       const dragged = this.drag && this.drag.moved; endDrag();
       if (!d || !this.core || !this.introOn || dragged) return;
@@ -5359,6 +5749,22 @@ class App {
       s.x = (c.x * 0.5 + 0.5) * W; s.y = (-c.y * 0.5 + 0.5) * H;
       s.r = (w.radius / (s.dist * tanH)) * (H / 2);
     });
+  }
+
+  /* Ray-cast the worlds' hit spheres and ripple the nearest one at that point. */
+  pingWorld(x, y, strength) {
+    if (!this.orrery || !this.orrery.worlds.length || !this.stage) return false;
+    const rc = this._rc || (this._rc = new THREE.Raycaster()), ndc = this._ndc || (this._ndc = new THREE.Vector2());
+    const rect = this.stage.renderer.domElement.getBoundingClientRect();
+    ndc.set(((x - rect.left) / rect.width) * 2 - 1, -((y - rect.top) / rect.height) * 2 + 1);
+    rc.setFromCamera(ndc, this.rig.camera);
+    const hits = this.orrery.worlds.filter(w => w.group.visible && w.ripple.params.enabled).map(w => w.hit);
+    const hit = rc.intersectObjects(hits, false)[0];
+    if (!hit) return false;
+    const w = this.orrery.worlds.find(v => v.hit === hit.object);
+    w.ripple.trigger(w.hit.worldToLocal(hit.point.clone()), strength);
+    this.rippleWorld = w;
+    return true;
   }
 
   hitWorld(x, y) {
