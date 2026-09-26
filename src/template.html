@@ -322,6 +322,10 @@ main a,main button,main [data-interactive]{pointer-events:auto}
 .d-nav .nm{font-family:var(--f-display);font-style:italic;font-size:17px}
 .d-close{position:absolute;right:var(--pad);top:calc(env(safe-area-inset-top,0px) + 70px);pointer-events:auto;display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--ink-2);opacity:0}
 .d-close:hover{color:var(--ink)}
+/* back arrow, shown in place of the label on phones */
+.d-close .arr,.xp-exit .arr{display:none;position:relative;width:18px;height:14px}
+.d-close .arr::before,.xp-exit .arr::before{content:"";position:absolute;left:1px;right:0;top:6.5px;height:1.5px;background:currentColor}
+.d-close .arr::after,.xp-exit .arr::after{content:"";position:absolute;left:1px;top:2px;width:9px;height:9px;border-left:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg)}
 .d-close kbd{font-family:var(--f-num);font-size:10.5px;border:1px solid var(--line-2);border-radius:3px;padding:2px 5px;color:var(--ink-3)}
 .d-close .x{position:relative;width:14px;height:14px}
 .d-close .x::before,.d-close .x::after{content:"";position:absolute;left:0;top:7px;width:14px;height:1px;background:currentColor;transform:rotate(45deg)}
@@ -366,6 +370,11 @@ body.no-gl .windex button{pointer-events:none}
   .d-title{font-size:clamp(48px,14vw,72px)}
   .d-hint{display:none}
   .d-close{top:calc(env(safe-area-inset-top,0px) + 64px)}
+  .d-close .lbl,.d-close kbd,.d-close .x{display:none}
+  .d-close{width:44px;height:44px;justify-content:center;border:1px solid var(--line-2);background:rgba(8,10,16,.55);backdrop-filter:blur(8px);color:var(--ink)}
+  .d-close .arr,.xp-exit .arr{display:block}
+  .xp-exit .lbl{display:none}
+  .xp-exit{width:44px;height:44px;padding:0;justify-content:center}
   .worldword{font-size:clamp(90px,30vw,160px)}
 }
 @media (prefers-reduced-motion: reduce){
@@ -868,7 +877,7 @@ body.tune-open .picker{opacity:0!important;pointer-events:none}
       <button type="button" data-d-next data-cursor="Next"><span class="nm" data-d-next-name></span><i></i></button>
     </div>
   </div>
-  <button class="d-close" type="button" data-d-close data-cursor="Back to orbit"><span>Back to orbit</span><kbd>Esc</kbd><span class="x" aria-hidden="true"></span></button>
+  <button class="d-close" type="button" data-d-close data-cursor="Back to orbit" aria-label="Back to orbit"><span class="arr" aria-hidden="true"></span><span class="lbl">Back to orbit</span><kbd>Esc</kbd><span class="x" aria-hidden="true"></span></button>
   <div class="d-hint" aria-hidden="true"><span><b>Drag</b>to turn the world</span><span><b>Scroll</b>to return</span></div>
 </section>
 
@@ -3625,7 +3634,7 @@ class Explorer {
       <div class="xp-load" data-xp-load><p class="xp-load-h" data-xp-load-h>Entering the atmosphere</p><div class="xp-bar"><i data-xp-bar></i></div><p class="xp-load-p" data-xp-load-p>0%</p></div>
       <div class="xp-hud" data-xp-hud>
         <div class="xp-top"><p class="xp-tag"><i></i><span data-xp-label>Surface</span></p>
-          <button type="button" class="xp-exit" data-xp-exit><span>Return to orbit</span><kbd>Esc</kbd></button></div>
+          <button type="button" class="xp-exit" data-xp-exit aria-label="Return to orbit"><span class="arr" aria-hidden="true"></span><span class="lbl">Return to orbit</span><kbd>Esc</kbd></button></div>
         <dl class="xp-read">
           <div><dt>Altitude</dt><dd data-xp-alt>0 m</dd></div>
           <div><dt>Ground</dt><dd data-xp-gnd>0 m</dd></div>
