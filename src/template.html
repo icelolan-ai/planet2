@@ -418,6 +418,67 @@ body *{font-style:normal!important}
   30%{text-shadow:-2px 0 var(--val),2px 0 #4ff0ff;transform:translateX(-3px)}60%{text-shadow:1px 0 var(--val);transform:translateX(1px) skewX(3deg)}
   100%{text-shadow:none;transform:none}}
 html,body{overflow-x:clip}
+/* surface exploration */
+.explore{display:inline-flex;align-items:center;gap:12px;margin:4px 0 0 0;padding:11px 18px 11px 14px;font:600 12px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;
+  color:#0b0d12;background:var(--a,var(--val));clip-path:polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%);transition:filter .25s,transform .25s}
+.explore i{width:9px;height:9px;border:2px solid #0b0d12;transform:rotate(45deg)}
+.explore:hover,.explore:focus-visible{filter:brightness(1.15);transform:translateY(-1px)}
+.world .sec-inner .explore{display:flex;width:max-content}
+.sec[data-side="right"] .explore{margin-left:auto}
+.d-explore{margin:0 0 22px}
+.d-explore[hidden]{display:none}
+body.is-exploring main,body.is-exploring .hud,body.is-exploring .rail,body.is-exploring .picker,body.is-exploring .tune-toggle,body.is-exploring .labels,
+body.is-exploring .detail,body.is-exploring .backword,body.is-exploring .worldword,body.is-exploring .cursor{opacity:0!important;pointer-events:none!important;transition:opacity .6s}
+html:has(body.is-exploring){overflow:hidden}
+.xp{position:fixed;inset:0;z-index:30;pointer-events:none;font:500 12px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
+.xp[aria-hidden="true"]{visibility:hidden}
+.xp.is-explore{pointer-events:auto;cursor:grab;touch-action:none}
+.xp.is-explore:active{cursor:grabbing}
+.xp-veil{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,#fff 0%,var(--xp-fog,#9fdcd4) 45%,var(--xp-fog,#9fdcd4) 100%);opacity:0;pointer-events:none}
+.xp-load{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(360px,80vw);text-align:center;color:#06232a;opacity:0;transition:opacity .5s}
+.xp.is-load .xp-load{opacity:1}
+.xp-load-h{margin:0 0 14px;font-weight:600;letter-spacing:.24em}
+.xp-bar{height:3px;background:rgba(6,35,42,.18);overflow:hidden}
+.xp-bar i{display:block;height:100%;background:#06232a;transform-origin:0 50%;transform:scaleX(0);transition:transform .25s}
+.xp-load-p{margin:10px 0 0;font:400 12px var(--f-num);letter-spacing:0}
+.xp.is-fail .xp-bar{display:none}
+.xp-hud{position:absolute;inset:0;opacity:0;transition:opacity .8s .6s;pointer-events:none}
+.xp.is-explore .xp-hud{opacity:1}
+.xp-hud button{pointer-events:auto}
+.xp-top{position:absolute;left:var(--pad);right:var(--pad);top:calc(env(safe-area-inset-top,0px) + 22px);display:flex;justify-content:space-between;align-items:center;gap:16px}
+.xp-tag{display:flex;align-items:center;gap:10px;margin:0;font-weight:600;letter-spacing:.24em;text-shadow:0 1px 8px rgba(0,0,0,.45)}
+.xp-tag i{width:8px;height:8px;background:var(--xp,var(--val));transform:rotate(45deg)}
+.xp-exit{display:flex;align-items:center;gap:10px;padding:9px 14px;background:rgba(6,10,14,.55);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.18);border-left:2px solid var(--xp,var(--val));
+  font:600 11.5px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;color:var(--ink)}
+.xp-exit kbd{font:400 10px var(--f-num);color:var(--ink-3);border:1px solid rgba(255,255,255,.2);padding:1px 5px}
+.xp-exit:hover{border-color:var(--xp,var(--val))}
+.xp-read{position:absolute;left:var(--pad);bottom:calc(env(safe-area-inset-bottom,0px) + 26px);display:grid;grid-template-columns:repeat(4,auto);gap:4px 26px;margin:0;
+  padding:12px 16px;background:rgba(6,10,14,.5);backdrop-filter:blur(8px);border-left:2px solid var(--xp,var(--val))}
+.xp-read dt{font-size:10px;color:rgba(223,228,234,.6);letter-spacing:.2em}
+.xp-read dd{margin:0;font:400 14px var(--f-num);letter-spacing:0}
+.xp-mode{position:absolute;right:var(--pad);bottom:calc(env(safe-area-inset-bottom,0px) + 26px);display:flex;border:1px solid rgba(255,255,255,.22);background:rgba(6,10,14,.5);backdrop-filter:blur(8px)}
+.xp-mode button{padding:9px 16px;font:600 11px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;color:rgba(223,228,234,.7)}
+.xp-mode button[aria-pressed=true]{background:var(--xp,var(--val));color:#0b0d12}
+.xp-help{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 34px);transform:translateX(-50%);margin:0;font-size:11px;color:rgba(223,228,234,.75);white-space:nowrap;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.xp-help b{color:#fff;font-weight:600;margin:0 4px 0 12px}
+.xp-map{position:absolute;right:var(--pad);top:calc(env(safe-area-inset-top,0px) + 74px);width:96px;height:96px;border:1px solid rgba(255,255,255,.3);background:rgba(6,10,14,.35);backdrop-filter:blur(6px)}
+.xp-map::before,.xp-map::after{content:"";position:absolute;background:rgba(255,255,255,.12)}
+.xp-map::before{left:50%;top:0;bottom:0;width:1px}.xp-map::after{top:50%;left:0;right:0;height:1px}
+.xp-map i{position:absolute;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:11px solid var(--xp,var(--val))}
+.xp-pad{display:none}
+@media (max-width:760px),(pointer:coarse){
+  .xp-help{display:none}
+  .xp-read{grid-template-columns:repeat(2,auto);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);left:16px;padding:10px 12px;gap:2px 16px}
+  .xp-mode{top:calc(env(safe-area-inset-top,0px) + 70px);bottom:auto;right:16px}
+  .xp-map{top:calc(env(safe-area-inset-top,0px) + 116px);right:16px;width:72px;height:72px}
+  .xp-top{left:16px;right:16px;align-items:flex-start}
+  .xp-tag{font-size:10.5px;letter-spacing:.16em;max-width:52%}
+  .xp-exit kbd{display:none}
+  .xp-exit{font-size:10.5px;padding:8px 11px}
+  .xp-pad{display:grid;position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);grid-template-columns:64px 64px;gap:8px}
+  .xp-pad button{height:54px;background:rgba(6,10,14,.55);border:1px solid rgba(255,255,255,.22);font:600 12px var(--f-cond);letter-spacing:.14em;color:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
+  .xp-pad button:active{background:var(--xp,var(--val));color:#0b0d12}
+}
 /* core tuning drawer: docks on the side the text is on, never over the planet */
 html.tune-lock,html.tune-lock body{overflow:hidden;overscroll-behavior:none}
 .tune-toggle{position:fixed;left:var(--pad);bottom:calc(env(safe-area-inset-bottom,0px) + 104px);z-index:7;display:flex;align-items:center;gap:10px;padding:9px 14px;
@@ -781,6 +842,7 @@ body.tune-open .picker{opacity:0!important;pointer-events:none}
       <div><dt>Orbit radius</dt><dd data-d-orbit>—</dd></div>
       <div><dt>Exported at</dt><dd data-d-exports>—</dd></div>
     </dl>
+    <button type="button" class="explore d-explore d-item" data-d-explore hidden><i></i><span>Explore the surface</span></button>
     <div class="d-nav d-item">
       <button type="button" data-d-prev data-cursor="Previous"><i></i><span class="nm" data-d-prev-name></span></button>
       <button type="button" data-d-next data-cursor="Next"><span class="nm" data-d-next-name></span><i></i></button>
@@ -3450,6 +3512,419 @@ class Loader {
   }
 }
 
+/* ================================================================
+   Surface exploration. A world with a surface map gets an Explore button: the camera dives at the planet,
+   the atmosphere swallows the view, and a separately loaded 3D map takes over the renderer.
+================================================================ */
+const SURFACES = {
+  Aqua_Foam: {
+    url: 'src/glb/Aqua_Foam_Surface_4km.glb', size: 4000, grid: 513, label: 'Aqua Foam, surface survey',
+    zenith: '#0d3b4a', horizon: '#9fdcd4', fog: '#9fdcd4', fogDensity: 0.00042, sea: '#4e9f9c', sun: '#fff6df',
+    sunDir: [-0.45, 0.32, -0.83], motes: '#e9fffb'
+  }
+};
+
+const XP_SKY_VERT = `
+varying vec3 vDir;
+void main(){
+  vDir = normalize(position);
+  vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  gl_Position = p.xyww;
+}`;
+const XP_SKY_FRAG = `
+uniform vec3 uZenith, uHorizon, uSun, uSunDir;
+varying vec3 vDir;
+void main(){
+  vec3 d = normalize(vDir);
+  float h = clamp(d.y, -0.2, 1.0);
+  vec3 col = mix(uHorizon, uZenith, pow(max(h, 0.0), 0.55));
+  float s = max(dot(d, normalize(uSunDir)), 0.0);
+  col += uSun * (smoothstep(0.99955, 0.99975, s) * 1.6 + pow(s, 400.0) * 0.5 + pow(s, 16.0) * 0.18);
+  gl_FragColor = vec4(col, 1.0);
+}`;
+const XP_MOTE_VERT = `
+uniform float uTime, uPixelRatio;
+uniform vec3 uCam;
+attribute vec4 aSeed;
+varying float vA;
+void main(){
+  // Motes live in a 60 m box that wraps around the camera, so there are always some nearby.
+  vec3 p = position + vec3(sin(uTime * aSeed.z + aSeed.x) * 2.0, uTime * (0.4 + aSeed.w), cos(uTime * aSeed.z + aSeed.y) * 2.0);
+  p = uCam + mod(p - uCam + 30.0, 60.0) - 30.0;
+  vec4 mv = modelViewMatrix * vec4(p, 1.0);
+  gl_Position = projectionMatrix * mv;
+  vA = smoothstep(30.0, 6.0, length(mv.xyz)) * (0.4 + 0.6 * aSeed.w);
+  gl_PointSize = clamp(uPixelRatio * 60.0 / -mv.z, 1.0, 8.0 * uPixelRatio);
+}`;
+const XP_MOTE_FRAG = `
+uniform vec3 uColor;
+varying float vA;
+void main(){
+  float d = length(gl_PointCoord - 0.5);
+  if (d > 0.5) discard;
+  gl_FragColor = vec4(uColor, smoothstep(0.5, 0.0, d) * vA * 0.8);
+}`;
+
+class Explorer {
+  constructor(app) {
+    this.app = app;
+    this.phase = null;            // null | 'dive' | 'load' | 'explore' | 'exit'
+    this.cache = {};
+    this.keys = new Set();
+    this.look = { yaw: 0, pitch: 0 };
+    this.pos = new THREE.Vector3();
+    this.vel = new THREE.Vector3();
+    this.mode = 'fly';
+    this.speedMul = 1;
+    this.camera = new THREE.PerspectiveCamera(46, 1, 0.1, 9000);
+    this.ui = this.buildUI();
+  }
+  has(def) { return !!(def && SURFACES[def.id]); }
+
+  /* ---------- UI ---------- */
+  buildUI() {
+    const el = document.createElement('div');
+    el.className = 'xp'; el.setAttribute('aria-hidden', 'true');
+    el.innerHTML = `
+      <div class="xp-veil" data-xp-veil></div>
+      <div class="xp-load" data-xp-load><p class="xp-load-h" data-xp-load-h>Entering the atmosphere</p><div class="xp-bar"><i data-xp-bar></i></div><p class="xp-load-p" data-xp-load-p>0%</p></div>
+      <div class="xp-hud" data-xp-hud>
+        <div class="xp-top"><p class="xp-tag"><i></i><span data-xp-label>Surface</span></p>
+          <button type="button" class="xp-exit" data-xp-exit><span>Return to orbit</span><kbd>Esc</kbd></button></div>
+        <dl class="xp-read">
+          <div><dt>Altitude</dt><dd data-xp-alt>0 m</dd></div>
+          <div><dt>Ground</dt><dd data-xp-gnd>0 m</dd></div>
+          <div><dt>Speed</dt><dd data-xp-spd>0 m/s</dd></div>
+          <div><dt>Position</dt><dd data-xp-pos>0, 0</dd></div>
+        </dl>
+        <div class="xp-mode" role="group" aria-label="Movement mode"><button type="button" data-xp-mode="fly" aria-pressed="true">Fly</button><button type="button" data-xp-mode="walk" aria-pressed="false">Walk</button></div>
+        <p class="xp-help"><b>Drag</b> look <b>W A S D</b> move <b>Q / E</b> down / up <b>Shift</b> fast <b>Scroll</b> speed <b>F</b> fly / walk</p>
+        <div class="xp-pad" aria-label="Move">
+          <button type="button" data-xp-hold="up" aria-label="Up">&#9650;</button>
+          <button type="button" data-xp-hold="fwd" aria-label="Forward">Go</button>
+          <button type="button" data-xp-hold="back" aria-label="Back">Back</button>
+          <button type="button" data-xp-hold="down" aria-label="Down">&#9660;</button>
+        </div>
+        <div class="xp-map" aria-hidden="true"><i data-xp-dot></i></div>
+      </div>`;
+    document.body.appendChild(el);
+    const $x = s => el.querySelector(s);
+    $x('[data-xp-exit]').addEventListener('click', () => this.exit());
+    el.querySelectorAll('[data-xp-mode]').forEach(b => b.addEventListener('click', () => this.setMode(b.dataset.xpMode)));
+    el.querySelectorAll('[data-xp-hold]').forEach(b => {
+      const k = 'pad-' + b.dataset.xpHold;
+      const on = e => { e.preventDefault(); this.keys.add(k); }, off = () => this.keys.delete(k);
+      b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointerleave', off); b.addEventListener('pointercancel', off);
+    });
+    // Look: drag anywhere that is not a control.
+    let drag = null;
+    el.addEventListener('pointerdown', e => {
+      if (this.phase !== 'explore' || e.target.closest('button')) return;
+      drag = { x: e.clientX, y: e.clientY, id: e.pointerId }; el.setPointerCapture(e.pointerId);
+    });
+    el.addEventListener('pointermove', e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const k = matchMedia('(pointer: coarse)').matches ? 0.005 : 0.0032;
+      this.look.yaw -= (e.clientX - drag.x) * k; this.look.pitch = clamp(this.look.pitch - (e.clientY - drag.y) * k, -1.45, 1.45);
+      drag.x = e.clientX; drag.y = e.clientY;
+    });
+    const endDrag = () => { drag = null; };
+    el.addEventListener('pointerup', endDrag); el.addEventListener('pointercancel', endDrag);
+    el.addEventListener('wheel', e => { if (this.phase === 'explore') { e.preventDefault(); this.speedMul = clamp(this.speedMul * Math.exp(-e.deltaY * 0.0015), 0.1, 12); } }, { passive: false });
+    addEventListener('keydown', e => {
+      if (!this.phase) return;
+      if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); this.exit(); return; }
+      if (this.phase !== 'explore') return;
+      if (e.key === 'f' || e.key === 'F') { this.setMode(this.mode === 'fly' ? 'walk' : 'fly'); return; }
+      this.keys.add(e.code);
+      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+    }, true);
+    addEventListener('keyup', e => this.keys.delete(e.code));
+    addEventListener('blur', () => this.keys.clear());
+    return { el, $x };
+  }
+  setMode(m) {
+    this.mode = m;
+    this.ui.el.querySelectorAll('[data-xp-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.xpMode === m)));
+  }
+  progress(p, head) {
+    const { $x } = this.ui;
+    $x('[data-xp-bar]').style.transform = `scaleX(${p})`;
+    $x('[data-xp-load-p]').textContent = Math.round(p * 100) + '%';
+    if (head) $x('[data-xp-load-h]').textContent = head;
+  }
+
+  /* ---------- loading ---------- */
+  async load(def) {
+    const S = SURFACES[def.id];
+    if (this.cache[def.id]) return this.cache[def.id];
+    if (location.protocol === 'file:') throw new Error('file');
+    const res = await fetch(S.url);
+    if (!res.ok) throw new Error('http ' + res.status);
+    const total = +res.headers.get('content-length') || 19.1e6;
+    const reader = res.body.getReader(), parts = []; let got = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      parts.push(value); got += value.length;
+      this.loadP = Math.min(0.92, got / total * 0.92);
+    }
+    const buf = new Uint8Array(got); let o = 0; parts.forEach(p => { buf.set(p, o); o += p.length; });
+    this.loadP = 0.94;
+    if (!this.draco) {
+      const wrap = $('#draco-wrapper'), wasm = $('#draco-wasm');
+      this.draco = new THREE.DRACOLoader();
+      this.draco.setDecoderPath({
+        js: URL.createObjectURL(new Blob([atob(wrap.textContent.trim())], { type: 'text/javascript' })),
+        wasm: URL.createObjectURL(new Blob([b64ToBuffer(wasm.textContent.trim())], { type: 'application/wasm' }))
+      });
+      this.gltf = new THREE.GLTFLoader(); this.gltf.setDRACOLoader(this.draco);
+    }
+    const gltf = await new Promise((ok, bad) => this.gltf.parse(buf.buffer, '', ok, bad));
+    this.loadP = 0.98;
+    const world = this.buildWorld(def, gltf);
+    this.cache[def.id] = world;
+    return world;
+  }
+
+  buildWorld(def, gltf) {
+    const S = SURFACES[def.id];
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(new THREE.Color(S.fog), S.fogDensity);
+    const map = gltf.scene;
+    const aniso = Math.min(8, this.app.stage.renderer.capabilities.getMaxAnisotropy());
+    map.traverse(o => {
+      if (!o.isMesh) return;
+      const m = o.material;
+      if (m.map) { m.map.anisotropy = aniso; m.map.colorSpace = THREE.SRGBColorSpace; }
+      m.fog = true;
+    });
+    scene.add(map);
+    map.updateMatrixWorld(true);
+
+    // Height field from the terrain vertices, for ground following without raycasts.
+    const N = S.grid, half = S.size / 2, step = S.size / (N - 1);
+    const H = new Float32Array(N * N).fill(NaN), v = new THREE.Vector3();
+    map.traverse(o => {
+      if (!o.isMesh) return;
+      const p = o.geometry.attributes.position;
+      for (let i = 0; i < p.count; i++) {
+        v.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld);
+        const gx = Math.round((v.x + half) / step), gz = Math.round((v.z + half) / step);
+        if (gx >= 0 && gz >= 0 && gx < N && gz < N) H[gz * N + gx] = v.y;
+      }
+    });
+    for (let i = 0; i < H.length; i++) if (Number.isNaN(H[i])) H[i] = 0;
+    const height = (x, z) => {
+      const fx = clamp((x + half) / step, 0, N - 1.001), fz = clamp((z + half) / step, 0, N - 1.001);
+      const ix = fx | 0, iz = fz | 0, tx = fx - ix, tz = fz - iz;
+      const a = H[iz * N + ix], b = H[iz * N + ix + 1], c = H[(iz + 1) * N + ix], d = H[(iz + 1) * N + ix + 1];
+      return (a * (1 - tx) + b * tx) * (1 - tz) + (c * (1 - tx) + d * tx) * tz;
+    };
+
+    // Sea beyond the map edge, sky dome, drifting spray.
+    const sea = new THREE.Mesh(new THREE.PlaneGeometry(60000, 60000), new THREE.MeshBasicMaterial({ color: S.sea, fog: true }));
+    sea.rotation.x = -Math.PI / 2; sea.position.y = -2.5; sea.renderOrder = -1;
+    scene.add(sea);
+    const sky = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), new THREE.ShaderMaterial({
+      uniforms: { uZenith: { value: new THREE.Color(S.zenith) }, uHorizon: { value: new THREE.Color(S.horizon) }, uSun: { value: new THREE.Color(S.sun) }, uSunDir: { value: new THREE.Vector3(...S.sunDir) } },
+      vertexShader: XP_SKY_VERT, fragmentShader: XP_SKY_FRAG, side: THREE.BackSide, depthWrite: false, depthTest: false
+    }));
+    sky.scale.setScalar(5000); sky.renderOrder = -10; sky.frustumCulled = false;
+    scene.add(sky);
+    const n = 700, mp = new Float32Array(n * 3), ms = new Float32Array(n * 4);
+    for (let i = 0; i < n; i++) { mp.set([Math.random() * 60, Math.random() * 60, Math.random() * 60], i * 3); ms.set([Math.random() * 6, Math.random() * 6, 0.2 + Math.random() * 0.6, Math.random()], i * 4); }
+    const mg = new THREE.BufferGeometry(); mg.setAttribute('position', new THREE.BufferAttribute(mp, 3)); mg.setAttribute('aSeed', new THREE.BufferAttribute(ms, 4));
+    const motes = new THREE.Points(mg, new THREE.ShaderMaterial({
+      uniforms: { uTime: { value: 0 }, uPixelRatio: { value: 1 }, uCam: { value: new THREE.Vector3() }, uColor: { value: new THREE.Color(S.motes) } },
+      vertexShader: XP_MOTE_VERT, fragmentShader: XP_MOTE_FRAG, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+    }));
+    motes.frustumCulled = false; scene.add(motes);
+
+    const spawn = map.getObjectByName('Spawn_Point');
+    const spawnPos = spawn ? spawn.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(0, height(0, 0) + 1.7, 0);
+    let spawnYaw = 0, spawnPitch = -0.04;
+    const scam = map.getObjectByName('Spawn_Camera');
+    if (scam) {
+      const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(scam.getWorldQuaternion(new THREE.Quaternion()));
+      spawnYaw = Math.atan2(-dir.x, -dir.z); spawnPitch = Math.asin(clamp(dir.y, -1, 1));
+    }
+    return { def, S, scene, sky, motes, height, spawnPos, spawnYaw, spawnPitch, half };
+  }
+
+  /* ---------- enter / exit ---------- */
+  async enter(k) {
+    const app = this.app, w = app.orrery && app.orrery.worlds[k];
+    if (!w || this.phase || !this.has(w.def)) return;
+    this.world = null; this.k = k; this.def = w.def; this.loadP = 0; this.error = null; this.exitFromSurface = false;
+    const S = SURFACES[w.def.id];
+    this.ui.$x('[data-xp-label]').textContent = S.label;
+    this.ui.el.style.setProperty('--xp', w.def.accent);
+    this.ui.el.style.setProperty('--xp-fog', S.fog);
+    this.ui.el.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('is-exploring');
+    if (app.sound) app.sound.tone(110, 2.2, 0.22, 2.2);
+    // The dive: the camera leaves its pose and falls toward the planet while the veil thickens.
+    this.phase = 'dive'; this.t = 0;
+    this.from = { pos: app.rig.camera.position.clone(), look: app.poses.out.look.clone(), fov: app.rig.camera.fov };
+    this.progress(0, 'Entering the atmosphere of ' + w.def.name);
+    this.loading = this.load(w.def).then(world => { this.world = world; }, err => { this.error = err; });
+  }
+  exit() {
+    if (!this.phase || this.phase === 'exit') return;
+    this.phase = 'exit'; this.t = 0;
+    this.keys.clear();
+    if (this.app.sound) this.app.sound.tone(330, 1.2, 0.14, 0.5);
+  }
+  finishExit() {
+    const app = this.app;
+    this.phase = null;
+    this.ui.el.classList.remove('is-dive', 'is-load', 'is-explore', 'is-fail');
+    this.ui.el.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('is-exploring');
+    app.stage.renderer.setClearColor(0x000000, 0);
+  }
+
+  /* Called at the top of the app frame. Returns true when the explorer owns the frame. */
+  own(dt) {
+    if (this.phase === 'explore' || (this.phase === 'exit' && this.exitFromSurface) || (this.phase === 'load' && this.world)) { this.surfaceFrame(dt); return true; }
+    return false;
+  }
+  /* Called just before the orbit renders, to steer its camera during the dive and the way back. */
+  steer(dt, cam) {
+    if (this.phase !== 'dive' && this.phase !== 'load' && !(this.phase === 'exit' && !this.exitFromSurface)) return;
+    const app = this.app, w = app.orrery.worlds[this.k];
+    const c = w.group.getWorldPosition(new THREE.Vector3());
+    const r = w.def.radius * w.group.getWorldScale(new THREE.Vector3()).x;
+    const toCam = this.from.pos.clone().sub(c).normalize();
+    const end = c.clone().addScaledVector(toCam, r * 1.06);
+    const veil = this.ui.$x('[data-xp-veil]');
+    if (this.phase === 'dive' || this.phase === 'load') {
+      this.t += dt;
+      const k = smootherstep(clamp(this.t / 2.6, 0, 1));
+      const kk = k * k;
+      cam.position.lerpVectors(this.from.pos, end, kk);
+      cam.lookAt(this.from.look.clone().lerp(c, smootherstep(clamp(this.t / 1.2, 0, 1))));
+      cam.fov = this.from.fov + (70 - this.from.fov) * kk; cam.updateProjectionMatrix();
+      this.ui.el.classList.add('is-dive');
+      veil.style.opacity = smoothstep(0.55, 1, k);
+      if (k >= 1 && this.phase === 'dive') { this.phase = 'load'; this.ui.el.classList.add('is-load'); }
+      if (this.phase === 'load') {
+        this.progress(this.world ? 1 : this.loadP, this.error ? null : 'Mapping the surface');
+        if (this.error) {
+          this.ui.el.classList.add('is-fail');
+          this.ui.$x('[data-xp-load-h]').textContent = this.error.message === 'file'
+            ? 'Open the site from its web address to explore the surface' : 'The surface map could not be loaded';
+          if (this.t > 5.5) { this.exitFromSurface = false; this.exit(); }
+        } else if (this.world) this.startSurface();
+      }
+    } else {
+      // Way back when the surface never opened: rise out of the veil.
+      this.t += dt;
+      const k = smootherstep(clamp(this.t / 1.4, 0, 1));
+      veil.style.opacity = 1 - k;
+      cam.position.lerpVectors(end, this.from.pos, k);
+      cam.lookAt(c.clone().lerp(this.from.look, k));
+      if (k >= 1) this.finishExit();
+    }
+  }
+  startSurface() {
+    const W = this.world;
+    this.phase = 'explore'; this.t = 0; this.exitFromSurface = true;
+    this.ui.el.classList.remove('is-load', 'is-fail'); this.ui.el.classList.add('is-explore');
+    this.setMode('fly'); this.speedMul = 1; this.vel.set(0, 0, 0);
+    // Descent: from high above the lagoons down to the spawn point.
+    this.descent = { from: W.spawnPos.clone().add(new THREE.Vector3(-900, 1500, 1100)), to: W.spawnPos.clone(), t: 0, dur: 6 };
+    this.pos.copy(this.descent.from);
+    this.look.yaw = W.spawnYaw; this.look.pitch = -0.9;
+    this.app.stage.renderer.setClearColor(new THREE.Color(W.S.fog), 1);
+  }
+
+  surfaceFrame(dt) {
+    const app = this.app, W = this.world, cam = this.camera, r = app.stage.renderer;
+    const veil = this.ui.$x('[data-xp-veil]');
+    this.t += dt;
+    const aspect = app.stage.width / Math.max(1, app.stage.height);
+    if (Math.abs(cam.aspect - aspect) > 1e-3) { cam.aspect = aspect; cam.updateProjectionMatrix(); }
+
+    if (this.phase === 'exit') {
+      // Lift off and fade to the atmosphere, then hand the renderer back to the orbit.
+      const k = clamp(this.t / 1.2, 0, 1);
+      veil.style.opacity = smoothstep(0, 0.8, k);
+      this.pos.y += dt * (80 + 900 * k * k);
+      if (k >= 1) {
+        this.exitFromSurface = false; this.phase = 'exit'; this.t = 0;
+        r.setClearColor(0x000000, 0);
+        app.rig.camera.fov = this.from.fov; app.rig.camera.updateProjectionMatrix();
+        return this.finishExitToOrbit();
+      }
+    } else if (this.descent && this.descent.t < 1) {
+      const D = this.descent;
+      D.t = Math.min(1, D.t + dt / D.dur);
+      const e = 1 - Math.pow(1 - D.t, 3);
+      this.pos.lerpVectors(D.from, D.to, e);
+      this.look.pitch = -0.9 + (W.spawnPitch + 0.9) * smootherstep(D.t);
+      veil.style.opacity = 1 - smoothstep(0, 0.35, D.t);
+      if (D.t >= 1) this.descent = null;
+    } else {
+      veil.style.opacity = 0;
+      this.move(dt);
+    }
+
+    cam.position.copy(this.pos);
+    cam.rotation.set(this.look.pitch, this.look.yaw, 0, 'YXZ');
+    // Near plane follows height above ground, so the water never shimmers from high up.
+    const near = clamp((this.pos.y - Math.max(W.height(this.pos.x, this.pos.z), 0)) * 0.04, 0.1, 25);
+    if (Math.abs(cam.near - near) > near * 0.1) { cam.near = near; cam.updateProjectionMatrix(); }
+    W.sky.position.copy(this.pos);
+    const mu = W.motes.material.uniforms;
+    mu.uTime.value += dt; mu.uCam.value.copy(this.pos); mu.uPixelRatio.value = app.stage.pixelRatio;
+    r.render(W.scene, cam);
+
+    this.hudT = (this.hudT || 0) + dt;
+    if (this.hudT > 0.12) {
+      this.hudT = 0;
+      const g = W.height(this.pos.x, this.pos.z), $x = this.ui.$x;
+      $x('[data-xp-alt]').textContent = Math.round(this.pos.y) + ' m';
+      $x('[data-xp-gnd]').textContent = Math.max(0, Math.round(this.pos.y - g)) + ' m';
+      $x('[data-xp-spd]').textContent = this.vel.length().toFixed(1) + ' m/s';
+      $x('[data-xp-pos]').textContent = `${Math.round(this.pos.x)}, ${Math.round(-this.pos.z)}`;
+      const dot = $x('[data-xp-dot]');
+      dot.style.left = (50 + this.pos.x / W.S.size * 100) + '%'; dot.style.top = (50 + this.pos.z / W.S.size * 100) + '%';
+      dot.style.transform = `translate(-50%,-50%) rotate(${-this.look.yaw}rad)`;
+    }
+  }
+  finishExitToOrbit() {
+    // The orbit camera resumes from the planet's surface and rises back out.
+    this.t = 0;
+    const veil = this.ui.$x('[data-xp-veil]'); veil.style.opacity = 1;
+    this.ui.el.classList.remove('is-explore');
+  }
+
+  move(dt) {
+    const W = this.world, K = this.keys;
+    const f = (K.has('KeyW') || K.has('ArrowUp') || K.has('pad-fwd') ? 1 : 0) - (K.has('KeyS') || K.has('ArrowDown') || K.has('pad-back') ? 1 : 0);
+    const s = (K.has('KeyD') || K.has('ArrowRight') ? 1 : 0) - (K.has('KeyA') || K.has('ArrowLeft') ? 1 : 0);
+    const u = (K.has('KeyE') || K.has('Space') || K.has('pad-up') ? 1 : 0) - (K.has('KeyQ') || K.has('ControlLeft') || K.has('pad-down') ? 1 : 0);
+    const fast = K.has('ShiftLeft') || K.has('ShiftRight');
+    const walk = this.mode === 'walk';
+    const base = (walk ? 6 : 45) * this.speedMul * (fast ? 4 : 1);
+    const cy = Math.cos(this.look.yaw), sy = Math.sin(this.look.yaw), cp = Math.cos(this.look.pitch), sp = Math.sin(this.look.pitch);
+    const want = new THREE.Vector3();
+    if (walk) want.set(-sy * f + cy * s, 0, -cy * f - sy * s);
+    else want.set(-sy * cp * f + cy * s, sp * f + u, -cy * cp * f - sy * s);
+    if (want.lengthSq() > 1) want.normalize();
+    want.multiplyScalar(base);
+    this.vel.lerp(want, 1 - Math.exp(-6 * dt));
+    this.pos.addScaledVector(this.vel, dt);
+    const lim = W.half * 2.5;
+    this.pos.x = clamp(this.pos.x, -lim, lim); this.pos.z = clamp(this.pos.z, -lim, lim);
+    const g = Math.max(W.height(this.pos.x, this.pos.z), 0);
+    if (walk) this.pos.y += (g + 1.7 - this.pos.y) * (1 - Math.exp(-12 * dt));
+    else this.pos.y = clamp(this.pos.y, g + 1.7, 2600);
+  }
+}
+
 /** Reads the embedded GLB files and decodes them with an inline Draco decoder. No network, works from file://. */
 class WorldLibrary {
   constructor() {
@@ -3788,6 +4263,19 @@ class App {
     // Worlds: index buttons, section buttons, detail navigation.
     $$('[data-open-world]').forEach(b => b.addEventListener('click', () => this.openWorld(+b.dataset.openWorld, b), { signal }));
     $('[data-d-close]').addEventListener('click', () => this.closeWorld(), { signal });
+    // Surface exploration: a button on every world that has a map, and one in the detail panel.
+    this.explorer = new Explorer(this);
+    WORLDS.forEach((w, i) => {
+      if (!this.explorer.has(w)) return;
+      const sec = $('#world-' + w.id.toLowerCase().replace(/_/g, '-')), enter = sec && sec.querySelector('.enter');
+      if (!enter) return;
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'explore reveal'; b.style.setProperty('--d', 6); b.dataset.explore = i; b.dataset.cursor = 'Explore';
+      b.innerHTML = '<i></i><span>Explore the surface</span>';
+      enter.after(b);
+      b.addEventListener('click', () => this.explorer.enter(i), { signal });
+    });
+    $('[data-d-explore]').addEventListener('click', () => this.explorer.enter(this.detail.index), { signal });
     $('[data-d-prev]').addEventListener('click', () => this.stepWorld(-1), { signal });
     $('[data-d-next]').addEventListener('click', () => this.stepWorld(1), { signal });
 
@@ -3994,6 +4482,7 @@ class App {
     $('[data-d-layers]').textContent = w.stats.layers ? `Surface + ${w.stats.layers > 1 ? 'shell' : 'layer'}` : (w.stats.meshes > 1 ? `${w.stats.meshes} meshes` : 'Surface');
     $('[data-d-orbit]').textContent = `${d.orbit.toFixed(1)} u`;
     $('[data-d-exports]').textContent = d.exports;
+    $('[data-d-explore]').hidden = !(this.explorer && this.explorer.has(d));
     $('[data-d-prev-name]').textContent = WORLDS[(k - 1 + n) % n].name;
     $('[data-d-next-name]').textContent = WORLDS[(k + 1) % n].name;
   }
@@ -4094,6 +4583,7 @@ class App {
     dt = Math.min(dt, 0.05);
     this.clock += dt;
     this.fps = damp(this.fps, 1 / dt, 2, dt);
+    if (this.explorer && this.explorer.own(dt)) return;
 
     const reduced = this.reduced, P = this.pointer, cam = this.rig.camera;
     this.motion = damp(this.motion, reduced ? 0.25 : 1, 3, dt);
@@ -4278,6 +4768,7 @@ class App {
     this.hudTimer += dt;
     if (this.hudTimer > 0.25) { this.hudTimer = 0; this.updateReadouts(morph); }
 
+    if (this.explorer) this.explorer.steer(dt, cam);
     this.stage.render(cam);
   }
 
