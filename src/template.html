@@ -442,8 +442,8 @@ body *{font-style:normal!important}
 .w{position:relative;overflow:visible;padding:0 .04em;margin:0 -.04em}
 .w::after{content:"";position:absolute;left:0;right:0;top:.02em;bottom:.08em;background:var(--val);transform:scaleX(0);transform-origin:0 50%;pointer-events:none}
 .w>span{transform:none;opacity:0;transition:opacity 0s linear;transition-delay:0s}
-.is-active .w>span{opacity:1;transform:none;transition-delay:calc(var(--i) * 70ms + 420ms)}
-.is-active .w::after{animation:valwipe .8s cubic-bezier(.7,0,.2,1) both;animation-delay:calc(var(--i) * 70ms + 60ms)}
+.is-active .w>span{opacity:1;transform:none;transition-delay:calc(var(--i) * 35ms + 210ms)}
+.is-active .w::after{animation:valwipe .4s cubic-bezier(.7,0,.2,1) both;animation-delay:calc(var(--i) * 35ms + 30ms)}
 @keyframes valwipe{0%{transform:scaleX(0);transform-origin:0 50%}45%{transform:scaleX(1);transform-origin:0 50%}55%{transform:scaleX(1);transform-origin:100% 50%}100%{transform:scaleX(0);transform-origin:100% 50%}}
 .is-active .title{animation:valglitch .45s steps(2,end) both;animation-delay:calc(var(--glitch, 0) * 1ms + 1.1s)}
 @keyframes valglitch{0%{text-shadow:3px 0 var(--val),-3px 0 #4ff0ff;transform:translateX(2px) skewX(-6deg)}
@@ -903,6 +903,15 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
     <label class="tune-row"><span>Dust</span><input type="range" min="0" max="3" step="0.05" value="1" data-t-haze><b data-out>100%</b></label>
     <label class="tune-row"><span>Flare rate</span><input type="range" min="0" max="3" step="0.05" value="1" data-t-frate><b data-out>1.0x</b></label>
     <label class="tune-row"><span>Flare glow</span><input type="range" min="0" max="3" step="0.05" value="1" data-t-famt><b data-out>1.0x</b></label>
+    <div class="tune-row"><span>Flare colour</span>
+      <div class="tune-sw" role="group" aria-label="Flare colour" data-t-fsw>
+        <button type="button" style="--c:#ffffff" data-c="#ffffff" aria-label="White" aria-pressed="true"></button>
+        <button type="button" style="--c:#ff4655" data-c="#ff4655" aria-label="Red"></button>
+        <button type="button" style="--c:#b44cff" data-c="#b44cff" aria-label="Purple"></button>
+        <button type="button" style="--c:#3ff2ff" data-c="#3ff2ff" aria-label="Cyan"></button>
+        <button type="button" style="--c:#ffc94d" data-c="#ffc94d" aria-label="Gold"></button>
+        <label class="tune-pick" aria-label="Custom flare colour"><input type="color" value="#ffffff" data-t-fcolor></label>
+      </div></div>
   </div>
 
   <div class="tune-pane" data-pane="play" hidden>
@@ -1492,6 +1501,7 @@ const WorldTune = (() => {
     const shape = shapeGrid(q('[data-t-shape]'), v => call('setShape', v));
     const picker = q('[data-t-color]');
     const neon = swatch('[data-t-sw]', hex => call('setNeon', hex), picker);
+    const flareC = swatch('[data-t-fsw]', hex => call('setFlareColor', hex), q('[data-t-fcolor]'));
     const metal = swatch('[data-t-metal]', hex => call('setMetal', hex));
     neon.set('#b44cff'); metal.set('#c9ccd6');
     const themes = qa('[data-t-theme] button');
@@ -1517,7 +1527,7 @@ const WorldTune = (() => {
     const resetUI = () => {
       [[dens, 1, pct], [spd, 1, times], [thick, 1, times], [clar, 1, times], [rim, 0.55, v => v.toFixed(2)], [haze, 1, pct],
        [frate, 1, times], [famt, 1, times], [ptrs, 1, times], [gain, 1, times], [zoom, 1, v => v.toFixed(2) + 'x']].forEach(([el, v, f]) => setRange(el, v, f));
-      dir.set(1); band.set(1); inner.set(1); ptr.set(0); shape.set(0); setTheme('nebula'); neon.set('#b44cff');
+      dir.set(1); band.set(1); inner.set(1); ptr.set(0); shape.set(0); setTheme('nebula'); neon.set('#b44cff'); flareC.set('#ffffff');
       const L = LENS_DEFAULTS(); Object.keys(L).forEach(k => { LENS_U[k].value = L[k]; });
       setRange(aberr, L.uLensAberr, f3); setRange(blur, L.uLensBlur, f2); setRange(bloom, L.uLensBloom, f2); lens.set(1);
     };
@@ -1626,7 +1636,7 @@ const WorldTune = (() => {
       const b = body(); if (!b) return;
       const s = { density: b.density, speed: b.speed, dir: b.dir, shape: b.shape, neon: hex(b.uNeon.value), theme: b.theme || 'nebula',
         rings: b.ringCount, band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
-        clarity: +clar.value, rim: +rim.value, inner: b.inner.show, haze: b.hazeDensity, frate: b.uFlareRate.value, famt: b.uFlareAmt.value,
+        clarity: +clar.value, rim: +rim.value, inner: b.inner.show, haze: b.hazeDensity, frate: b.uFlareRate.value, famt: b.uFlareAmt.value, fcolor: '#' + b.uFlareColor.value.getHexString(),
         ptr: b.ptrMode, ptrs: b.ptrStrength,
         lens: LENS_U.uLensOn.value, aberr: LENS_U.uLensAberr.value, blur: LENS_U.uLensBlur.value, bloom: LENS_U.uLensBloom.value };
       try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
@@ -1646,7 +1656,7 @@ const WorldTune = (() => {
       b.setGlass(s.clarity, s.rim); setRange(clar, s.clarity, times); setRange(rim, s.rim, v => v.toFixed(2));
       b.setInner(s.inner); inner.set(s.inner ? 1 : 0);
       b.setHaze(s.haze); setRange(haze, s.haze, pct);
-      b.setFlare(s.frate, s.famt); setRange(frate, s.frate, times); setRange(famt, s.famt, times);
+      b.setFlare(s.frate, s.famt); if (s.fcolor) { b.setFlareColor(s.fcolor); flareC.set(s.fcolor); } setRange(frate, s.frate, times); setRange(famt, s.famt, times);
       b.setPointer(s.ptr, s.ptrs); ptr.set(s.ptr); setRange(ptrs, s.ptrs, times);
       if (s.aberr != null) {
         LENS_U.uLensOn.value = s.lens; LENS_U.uLensAberr.value = s.aberr; LENS_U.uLensBlur.value = s.blur; LENS_U.uLensBloom.value = s.bloom; LENS_U.user = true;
@@ -2914,7 +2924,7 @@ ${LENS_MAIN_V}
 }`;
 
 const RUNNER_FRAG = `
-uniform vec3 uInk, uNeon, uTint, uHiColor;
+uniform vec3 uInk, uNeon, uTint, uHiColor, uFlareColor;
 uniform float uOpacity, uTintAmt, uHi;
 varying float vHue, vA, vFlare;
 ${LENS_PARS_F}
@@ -2927,7 +2937,7 @@ void main(){
   float glow = pow(core, 1.6) + pow(core, 6.0) * 1.5;
   float glint = (smoothstep(0.06, 0.0, abs(q.x)) + smoothstep(0.06, 0.0, abs(q.y))) * core * vFlare;
   vec3 base = mix(mix(uInk, uTint, uTintAmt), uHiColor, uHi * 0.55);
-  vec3 col = mix(base, uNeon, vHue) * (1.2 + vHue * 1.4) * (1.0 + uHi * 0.5) + vec3(1.0) * (pow(core, 5.0) * 2.0 + glint) * vFlare;
+  vec3 col = mix(base, uNeon, vHue) * (1.2 + vHue * 1.4) * (1.0 + uHi * 0.5) + uFlareColor * (pow(core, 5.0) * 2.0 + glint) * vFlare;
   float ca = max(cov.r, max(cov.g, cov.b));
   gl_FragColor = vec4(lensBloom(col, core) * cov / max(ca, 1e-3), (glow * vA + glint + vFlare * core) * uOpacity * 1.4 * lensEnergy());
 }`;
@@ -3019,6 +3029,7 @@ class PlanetBody {
     this.uPtrAmt = { value: 0 };
     this.uFlareRate = { value: 1 };
     this.uFlareAmt = { value: 1 };
+    this.uFlareColor = { value: new THREE.Color('#ffffff') };
     this.ptrMode = 0; this.ptrStrength = 1;
     this.zoom = 1; this.userRotX = 0; this.userRotY = 0; this.zoomT = 1; this.rotXT = 0; this.rotYT = 0;
     this.hover = null; this.selected = null;
@@ -3188,7 +3199,7 @@ class PlanetBody {
     const mat = additive({
       uniforms: Object.assign({
         uTime: shared.uTime, uPixelRatio: { value: 1 }, uOpacity: { value: 0 }, uRunT: { value: 0 },
-        uNeon: this.uNeon, uPtr: this.uPtr, uPtrAmt: this.uPtrAmt, uFlareRate: this.uFlareRate, uFlareAmt: this.uFlareAmt
+        uNeon: this.uNeon, uPtr: this.uPtr, uPtrAmt: this.uPtrAmt, uFlareRate: this.uFlareRate, uFlareAmt: this.uFlareAmt, uFlareColor: this.uFlareColor
       }, shapeU, common),
       vertexShader: RUNNER_VERT, fragmentShader: RUNNER_FRAG
     });
@@ -3244,6 +3255,7 @@ class PlanetBody {
     this.hazeGeom.setDrawRange(0, Math.round(h.puffs * Math.min(1, this.hazeDensity)) + Math.round(h.motes * this.hazeDensity));
   }
   setNeon(hex) { this.uNeon.value.set(hex); }
+  setFlareColor(hex) { this.uFlareColor.value.set(hex); }
   setSpeed(s) { this.speed = clamp(s, 0, 4); }
   setDirection(d) { this.dir = d < 0 ? -1 : 1; }
   setShape(k) { this.shape = clamp(k | 0, 0, 6); this.runners.forEach(rn => this.setRingShape(rn, this.shape)); }
@@ -3294,7 +3306,7 @@ class PlanetBody {
     this.runners.forEach(rn => { rn.pivot.visible = true; rn.speedMul = 1; rn.c.rx0 != null && (rn.c.rx = rn.c.rx0, rn.c.rz = rn.c.rz0); });
     this.setTheme('nebula');
     this.setDensity(1); this.setHaze(1); this.setSpeed(1); this.setDirection(1); this.setShape(0);
-    this.setFlare(1, 1); this.setPointer(0, 1); this.setBand(true, 1); this.setInner(true); this.setGlass(1, 0.55);
+    this.setFlare(1, 1); this.setFlareColor("#ffffff"); this.setPointer(0, 1); this.setBand(true, 1); this.setInner(true); this.setGlass(1, 0.55);
     this.outer.show = true; this.resetView(); this.selected = null;
   }
 
