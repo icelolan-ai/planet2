@@ -132,20 +132,22 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .tel span{white-space:nowrap}
 .tel b{font-weight:400;color:var(--ink-2)}
 
-.rail{position:fixed;right:calc(var(--pad) - 6px);top:50%;z-index:5;display:grid;gap:14px;transform:translateY(-50%);
+.rail{position:fixed;right:calc(var(--pad) - 6px);top:50%;z-index:5;display:grid;gap:6px;transform:translateY(-50%);
   opacity:0;transition:opacity 1.2s var(--ease-out) 1.4s}
 .is-ready .rail{opacity:1}
 .is-detail .rail{opacity:0;pointer-events:none;transition-delay:0s}
-.rail button{display:flex;align-items:center;justify-content:flex-end;gap:12px;height:14px;padding:0 6px;color:var(--ink-3)}
-.rail button i{display:block;width:12px;height:1px;background:currentColor;transition:width .6s var(--ease-out),background-color .4s}
-.rail button span{font-size:12px;opacity:0;transform:translateX(6px);transition:opacity .35s,transform .5s var(--ease-out)}
-.rail button:hover span,.rail button:focus-visible span{opacity:1;transform:none}
+/* scroll ruler: one tick per section, a short tick per world; the active one is longer, brighter and named */
+.rail button{display:flex;align-items:center;justify-content:flex-end;gap:12px;height:12px;padding:0 6px;color:var(--ink-4);border-radius:2px}
+.rail button i{display:block;width:12px;height:1px;background:currentColor;transition:width .6s var(--ease-out),background-color .4s,box-shadow .4s}
+.rail button.w{height:8px}
+.rail button.w i{width:6px;background:var(--a);opacity:.55}
+.rail button span{font-size:11px;opacity:0;transform:translateX(6px);transition:opacity .35s,transform .5s var(--ease-out);white-space:nowrap}
+.rail button:hover span,.rail button:focus-visible span,.rail button[aria-current="true"] span{opacity:1;transform:none}
+.rail button:hover{color:var(--ink-2)}
+.rail button:focus-visible{outline:1px solid var(--hl,#ff4655);outline-offset:2px}
 .rail button[aria-current="true"]{color:var(--ink)}
-.rail button[aria-current="true"] i{width:30px}
-.rail .rail-worlds{display:flex;justify-content:flex-end;gap:5px;padding:0 6px;height:8px;align-items:center;opacity:.0;transition:opacity .6s}
-.rail.in-orbit .rail-worlds{opacity:1}
-.rail-worlds i{width:3px;height:3px;border-radius:50%;background:var(--ink-4);transition:background-color .5s,transform .5s var(--ease-out)}
-.rail-worlds i.on{background:var(--accent);transform:scale(1.6)}
+.rail button[aria-current="true"] i{width:30px;opacity:1;height:2px}
+.rail button.w[aria-current="true"] i{width:22px}
 
 /* planet picker */
 .picker{position:fixed;left:var(--pad);bottom:calc(env(safe-area-inset-bottom,0px) + 56px);z-index:6;opacity:0;transition:opacity 1.2s var(--ease-out) 1.6s}
@@ -370,7 +372,12 @@ body.no-gl .windex button{pointer-events:none}
   .windex .wd{display:none}
   #projects .lede{margin-bottom:18px}
   [data-depth-num],[data-sound-label]{display:none}
-  .rail,.tel .opt,.hint{display:none}
+  .tel .opt,.hint{display:none}
+  .rail{right:2px;gap:3px}
+  .rail button{height:9px;padding:0 4px}.rail button.w{height:6px}
+  .rail button span{display:none}
+  .rail button i{width:8px}.rail button.w i{width:4px}
+  .rail button[aria-current="true"] i{width:16px}.rail button.w[aria-current="true"] i{width:12px}
   .depth{min-width:0}
   .brand-sub{display:none}
   .glabel:not(.keep){display:none}
@@ -735,13 +742,14 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
   </div>
 </header>
 
-<nav class="rail" aria-label="Layers">
-  <button type="button" data-target="1"><span>Perimeter</span><i></i></button>
-  <button type="button" data-target="2"><span>Lattice</span><i></i></button>
-  <button type="button" data-target="3"><span>Orbit</span><i></i></button>
-  <div class="rail-worlds" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-  <button type="button" data-target="11"><span>Memory</span><i></i></button>
-  <button type="button" data-target="12"><span>Nucleus</span><i></i></button>
+<nav class="rail" aria-label="Sections">
+  <button type="button" data-target="0" aria-label="Go to The core"><span>The core</span><i></i></button>
+  <button type="button" data-target="1" aria-label="Go to Perimeter"><span>Perimeter</span><i></i></button>
+  <button type="button" data-target="2" aria-label="Go to Lattice"><span>Lattice</span><i></i></button>
+  <button type="button" data-target="3" aria-label="Go to Orbit"><span>Orbit</span><i></i></button>
+  <button type="button" class="w" data-target="4" style="--a:#86d9cf" aria-label="Go to world 01, Aqua Foam"><span>Aqua Foam</span><i></i></button><button type="button" class="w" data-target="5" style="--a:#e38b5f" aria-label="Go to world 02, Arcanum"><span>Arcanum</span><i></i></button><button type="button" class="w" data-target="6" style="--a:#7fdcae" aria-label="Go to world 03, Emerald Tide"><span>Emerald Tide</span><i></i></button><button type="button" class="w" data-target="7" style="--a:#ff7a3d" aria-label="Go to world 04, Inferno"><span>Inferno</span><i></i></button><button type="button" class="w" data-target="8" style="--a:#a98bff" aria-label="Go to world 05, Nebula"><span>Nebula</span><i></i></button><button type="button" class="w" data-target="9" style="--a:#8ec3ff" aria-label="Go to world 06, Terra Nova"><span>Terra Nova</span><i></i></button><button type="button" class="w" data-target="10" style="--a:#8fe6ff" aria-label="Go to world 07, Tempest"><span>Tempest</span><i></i></button>
+  <button type="button" data-target="11" aria-label="Go to Memory"><span>Memory</span><i></i></button>
+  <button type="button" data-target="12" aria-label="Go to Nucleus"><span>Nucleus</span><i></i></button>
 </nav>
 
 <button class="tune-toggle" type="button" aria-expanded="false" aria-controls="tune" data-tune-toggle><i></i><span>Tune the core</span></button>
@@ -1113,6 +1121,6 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.05004a6e06.js", 194412]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.8cc9a0deee.js", 194236]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>
