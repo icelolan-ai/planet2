@@ -550,6 +550,13 @@ body.is-exploring .fab,body.tune-open .fab,body.wtune-open .fab,body.obuild-open
 .fab-ico i::after{content:"";position:absolute;top:-3px;width:6px;height:8px;background:#0b0d12;left:var(--k,4px)}
 .fab-ico i:nth-child(1){--k:12px}.fab-ico i:nth-child(2){--k:3px}.fab-ico i:nth-child(3){--k:9px}
 .fab:hover .fab-lbl,.fab.peek .fab-lbl,.fab-btn:focus-visible .fab-lbl{max-width:260px;padding:0 16px 0 22px}
+/* section menu: always-on chips stacked above the button */
+.fab-menu{position:absolute;right:0;bottom:calc(100% + 10px);display:grid;gap:6px;justify-items:end}
+.fab-menu button{height:30px;padding:0 14px;border:1px solid var(--line-2);background:rgba(8,10,14,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  font:600 10.5px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);transition:border-color .3s,color .3s,background-color .3s}
+.fab-menu button:hover,.fab-menu button:focus-visible{border-color:var(--val);color:var(--ink)}
+.fab-menu button.here{border-color:var(--val);color:var(--val)}
+@media (max-width:760px){.fab-menu{gap:5px}.fab-menu button{height:28px;padding:0 11px;font-size:9.5px}}
 .fab:hover .fab-ico i::after{transition:left .5s var(--ease-out)}
 .fab:hover .fab-ico i:nth-child(1){--k:3px}.fab:hover .fab-ico i:nth-child(2){--k:12px}
 .tune-toggle{display:none!important}
@@ -778,6 +785,11 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
 </aside>
 <aside class="tune wtune" id="wtune" aria-label="Tune this world" data-open="false">
   <header class="tune-h"><span>Tune <b data-wt-name>World</b></span><button type="button" class="tune-x" data-wt-close aria-label="Close"></button></header>
+  <nav class="tune-tabs" role="tablist">
+    <button type="button" role="tab" data-wt-tab="world" aria-selected="true">World</button>
+    <button type="button" role="tab" data-wt-tab="fx" aria-selected="false">Effects</button>
+  </nav>
+  <div data-wt-pane="world">
   <p class="tune-sub">Colour</p>
   <label class="tune-row"><span>Hue</span><input type="range" min="-180" max="180" step="1" data-wt="hue"><b data-out></b></label>
   <label class="tune-row"><span>Saturation</span><input type="range" min="0" max="2" step="0.02" data-wt="sat"><b data-out></b></label>
@@ -802,6 +814,8 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
   <label class="tune-row"><span>Particle speed</span><input type="range" min="0" max="5" step="0.05" data-wt="haloSpeed"><b data-out></b></label>
   <div class="tune-row"><span>Ring</span><div class="tune-seg" data-wt-seg="ring"><button type="button" data-v="0">Off</button><button type="button" data-v="1">On</button></div></div>
   <div class="tune-row"><span>Orbit line</span><div class="tune-seg" data-wt-seg="line"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>
+  </div>
+  <div data-wt-pane="fx" hidden>
   <p class="tune-sub">Ripple</p>
   <div class="tune-row"><span>Ripple</span><div class="tune-seg" data-wt-seg="r_enabled"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>
   <div class="tune-row"><span>Trail</span><div class="tune-seg" data-wt-seg="r_trail"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>
@@ -809,6 +823,7 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
   <div data-wt-rsliders></div>
   <p class="tune-hint">Tap or drag across the world to send ripples.</p>
   <div data-wt-effects></div>
+  </div>
   <p class="tune-hint" data-wt-note>Colour changes follow you down to the surface when you explore.</p>
   <button type="button" class="tune-btn" data-wt-random>&#9861; Randomize this world</button>
   <button type="button" class="tune-reset" data-wt-reset>Reset this world</button>
@@ -1268,15 +1283,39 @@ const Fab = (() => {
       setTimeout(() => dispatchEvent(new Event('cerebra:tune')), on ? 0 : 700);
     }
   };
+  /* Section menu above the button: each entry flies the page to the part it tunes and opens its tools. */
+  const goto = kind => {
+    const el = document.querySelector('.fab'); el.classList.remove('peek');
+    if (kind === 'orbit') {
+      if (app.detail.open) app.closeWorld();
+      app.scroll.scrollTo(ORBIT_START, app.reduced);
+      let n = 0; const wait = () => (app.scroll.index === ORBIT_START ? OrbitBuilder.open(true) : ++n < 60 && setTimeout(wait, 120)); setTimeout(wait, 120);
+    } else if (kind === 'world' || kind === 'fx') {
+      const c = ctx(), k = c && c.kind === 'world' ? c.k : 0;
+      if (!app.detail.open || app.detail.index !== k) app.openWorld(k);
+      setTimeout(() => WorldTune.open(true, kind === 'fx' ? 'fx' : 'world'), app.detail.busy ? 1400 : 60);
+    } else {
+      if (app.detail.open) app.closeWorld();
+      const on = ['identity', 'capabilities'].some(id => document.getElementById(id).classList.contains('is-active'));
+      if (!on) app.scroll.jumpTo(1);
+      setTimeout(() => dispatchEvent(new Event('cerebra:tune')), on ? 0 : 700);
+    }
+  };
   const wire = a => {
     app = a;
     const el = document.createElement('div');
     el.className = 'fab';
     el.innerHTML = `<button type="button" class="fab-btn" aria-label="Tune" data-cursor="Tune"><span class="fab-lbl" data-fab-lbl>Tune the core</span><span class="fab-ico" aria-hidden="true"><i></i><i></i><i></i></span></button>`;
     document.body.appendChild(el);
-    const btn = el.querySelector('button'), lbl = el.querySelector('[data-fab-lbl]');
+    const menu = document.createElement('nav');
+    menu.className = 'fab-menu'; menu.setAttribute('aria-label', 'Tune a part');
+    menu.innerHTML = [['core', 'Cerebra'], ['orbit', 'Orbit'], ['world', 'Worlds'], ['fx', 'Effects']]
+      .map(([k, n]) => `<button type="button" data-fab-go="${k}">${n}</button>`).join('');
+    el.prepend(menu);
+    menu.querySelectorAll('[data-fab-go]').forEach(b => b.addEventListener('click', () => goto(b.dataset.fabGo)));
+    const btn = el.querySelector('.fab-btn'), lbl = el.querySelector('[data-fab-lbl]');
     document.addEventListener('pointerdown', e => { if (!el.contains(e.target)) el.classList.remove('peek'); }, true);
-    const sync = () => { const c = ctx(); if (c) { lbl.textContent = c.label; btn.setAttribute('aria-label', c.label); } };
+    const sync = () => { const c = ctx(); if (c) { lbl.textContent = c.label; btn.setAttribute('aria-label', c.label); menu.querySelectorAll('[data-fab-go]').forEach(b => b.classList.toggle('here', b.dataset.fabGo === c.kind)); } };
     setInterval(sync, 400); sync();
     // Touch: the first tap opens the tray, the second one goes.
     btn.addEventListener('click', e => {
@@ -1353,8 +1392,14 @@ const WorldTune = (() => {
     P.querySelectorAll('[data-wt-seg]').forEach(g => g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === w.tune[g.dataset.wtSeg]))));
   };
   const set = (k, v) => { if (!w) return; w.setTune(k, v); (store[w.def.id] = store[w.def.id] || {})[k] = v; save(); if (k === 'hue' || k === 'sat' || k === 'bright') syncAccent(); };
-  const open = on => {
+  const tab = id => {
     const P = panel(); if (!P) return;
+    P.querySelectorAll('[data-wt-tab]').forEach(t => t.setAttribute('aria-selected', String(t.dataset.wtTab === id)));
+    P.querySelectorAll('[data-wt-pane]').forEach(p => { p.hidden = p.dataset.wtPane !== id; });
+  };
+  const open = (on, pane) => {
+    const P = panel(); if (!P) return;
+    if (on && pane) tab(pane);
     if (on) { w = app && app.orrery && app.orrery.worlds[app.detail.index]; if (!w) return; fill(); syncAccent(); }
     P.dataset.open = String(on); document.body.classList.toggle('wtune-open', on);
     // Phone: the sheet covers the lower half, so lift the scene until the planet sits centred in the space above it.
@@ -1392,6 +1437,7 @@ const WorldTune = (() => {
     const P = panel();
     document.querySelector('[data-wt-open]').addEventListener('click', () => open(true));
     P.querySelector('[data-wt-close]').addEventListener('click', () => open(false));
+    P.querySelectorAll('[data-wt-tab]').forEach(t => t.addEventListener('click', () => tab(t.dataset.wtTab)));
     P.querySelectorAll('input[data-wt]').forEach(el => el.addEventListener('input', () => { set(el.dataset.wt, +el.value); out(el); }));
     P.querySelectorAll('[data-wt-seg]').forEach(g => g.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
       g.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); set(g.dataset.wtSeg, +b.dataset.v);
@@ -1423,7 +1469,7 @@ const WorldTune = (() => {
     Signals.on('world:exit', () => open(false));
     Signals.on('world:swap', () => { if (P.dataset.open === 'true') setTimeout(() => open(true), 0); });
   };
-  return { wire, open };
+  return { wire, open, tab };
 })();
 
 /* Core tuning drawer. Talks to the planet through PlanetBody.active once the scene exists.
