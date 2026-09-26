@@ -12,5 +12,7 @@ const Effects = {
   // Called from World: add uniforms before the shader compiles, route settings, advance per frame.
   attach(w) { this.list.forEach(fx => fx.attach && fx.attach(w)); },
   set(w, k, v) { const fx = this.byKey(k); if (!fx) return false; w.tune[k] = v; if (fx.apply) fx.apply(w, k.slice(fx.prefix.length), v); return true; },
+  // GLSL spliced into the world surface shader: uniforms, code at the top of the main block, code at its end.
+  glsl(part) { return this.list.map(fx => fx[part] || '').join('\n'); },
   update(w, dt, t) { this.list.forEach(fx => fx.update && fx.update(w, dt, t)); },
 };
