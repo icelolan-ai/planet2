@@ -445,6 +445,14 @@ html,body{overflow-x:clip}
 }
 /* tuning clears the page so the planet has the stage */
 body.tune-open main,body.tune-open .labels,body.tune-open .backword{opacity:0!important;pointer-events:none!important;transition:opacity .5s}
+/* orbit loading status, shown when the visitor reaches the orbit before its worlds have arrived */
+.orbit-wait{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);z-index:20;display:flex;align-items:center;gap:12px;padding:10px 16px;transform:translate(-50%,10px);opacity:0;pointer-events:none;
+  background:rgba(8,10,16,.8);backdrop-filter:blur(8px);border:1px solid var(--line);border-left:2px solid var(--val);font:600 11.5px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;color:var(--ink);transition:opacity .4s,transform .5s var(--ease-out)}
+.orbit-wait.is-on{opacity:1;transform:translate(-50%,0)}
+.orbit-wait.is-done{opacity:0}
+.orbit-wait i{width:8px;height:8px;background:var(--val);transform:rotate(45deg);animation:owspin 1s linear infinite}
+.orbit-wait b{font:400 11px var(--f-num);color:var(--val);letter-spacing:0}
+@keyframes owspin{to{transform:rotate(405deg)}}
 /* surface exploration */
 .explore{display:inline-flex;align-items:center;gap:12px;margin:4px 0 0 0;padding:11px 18px 11px 14px;font:600 12px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;
   color:#0b0d12;background:var(--a,var(--val));clip-path:polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%);transition:filter .25s,transform .25s}
@@ -688,7 +696,7 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
 </head>
 <body class="is-loading">
 
-<div class="backword" aria-hidden="true"><span class="bl">Cere</span><span class="br">bra</span></div>
+<div class="backword" aria-hidden="true"><span class="bl"><span class="ch">C</span><span class="ch">e</span><span class="ch">r</span><span class="ch">e</span></span><span class="br"><span class="ch">b</span><span class="ch">r</span><span class="ch">a</span></span></div>
 <div class="worldword" aria-hidden="true"></div>
 <canvas id="gl" aria-hidden="true"></canvas>
 <div class="nogl" aria-hidden="true"></div>
@@ -1559,7 +1567,7 @@ const WorldTune = (() => {
     const syncOn = () => { const on = !!activeSec(); document.body.classList.toggle('tune-on', on); if (!on && isOpen()) open(false); };
     TUNE_SECTIONS.forEach(id => { const el = document.getElementById(id); if (el) new MutationObserver(syncOn).observe(el, { attributes: true, attributeFilter: ['class'] }); });
   };
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', wire) : wire();
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', wire) : setTimeout(wire);
 })();
 /* Letters light up red under the pointer or a finger, then fade back. */
 const Letters = (() => {
@@ -1602,7 +1610,7 @@ const Letters = (() => {
   let outlinePt = null;
   const outlineHeat = () => {
     const pt = outlinePt; outlinePt = null; if (!pt) return;
-    document.querySelectorAll('.worldword .ch, .backword .bl, .backword .br').forEach(el => {
+    document.querySelectorAll('.worldword .ch, .backword .ch').forEach(el => {
       const r = el.getBoundingClientRect();
       if (pt[0] >= r.left && pt[0] <= r.right && pt[1] >= r.top && pt[1] <= r.bottom) {
         el.classList.add('hot'); clearTimeout(el._lt); el._lt = setTimeout(() => el.classList.remove('hot'), 160);
@@ -1639,7 +1647,7 @@ const Scramble = (() => {
       if (sec.classList.contains('is-active')) leaves(sec).forEach(e => run(e, e.dataset.text, 700));
     }).observe(sec, { attributes: true, attributeFilter: ['class'] });
   });
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', watch) : watch();
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', watch) : setTimeout(watch);
   return { run };
 })();
 
@@ -2627,11 +2635,11 @@ class PlanetBody {
       { r: 0.75, rx: 1.3, rz: -0.5, n: 60, dir: -1, inner: true },
       { r: 0.95, rx: 2.1, rz: 0.3, n: 70, dir: 1, inner: true },
       { r: 1.15, rx: 0.9, rz: -1.3, n: 80, dir: -1, inner: true }
-    ].forEach(c => this.addRing(c));
+    ].forEach(c => { c.n = Math.round(c.n * 0.7); this.addRing(c); });
     PlanetBody.active = this;
 
     // Cosmic dust and haze around the planet. Puffs come first so the density control only thins the motes.
-    const motes = 1400, puffs = 60, cap = puffs + motes * 3;
+    const motes = 600, puffs = 40, cap = puffs + motes * 3;
     this.hazeBase = { puffs, motes }; this.hazeDensity = 1;
     const hp = new Float32Array(cap * 3), hs = new Float32Array(cap * 4), hh = new Float32Array(cap);
     for (let i = 0; i < cap; i++) {
@@ -3620,10 +3628,10 @@ class World {
     this.U.uKyHover.value = this.hover;
 
     const L = this.atmoMat.uniforms.uLight.value.copy(f.sun).sub(this.group.position).normalize();
-    this.atmoMat.uniforms.uAlpha.value = smoothstep(0.35, 1, rv) * (0.85 + this.hover * 0.5 + this.focus * 0.2) * T.atmo;
-    this.ringMat.uniforms.uAlpha.value += ((smoothstep(0.35, 1, rv) * T.ring) - this.ringMat.uniforms.uAlpha.value) * (1 - Math.exp(-5 * dt));
+    this.atmoMat.uniforms.uAlpha.value = smoothstep(0.35, 1, rv) * (0.85 + this.hover * 0.5 + this.focus * 0.2) * T.atmo * (1 - 0.92 * (this.dimK || 0));
+    this.ringMat.uniforms.uAlpha.value += ((smoothstep(0.35, 1, rv) * T.ring * (1 - 0.8 * (this.dimK || 0))) - this.ringMat.uniforms.uAlpha.value) * (1 - Math.exp(-5 * dt));
     this.ring.visible = this.ringMat.uniforms.uAlpha.value > 0.003;
-    this.haloMat.uniforms.uReveal.value = smoothstep(0.4, 1, rv);
+    this.haloMat.uniforms.uReveal.value = smoothstep(0.4, 1, rv) * (1 - 0.85 * (this.dimK || 0));
     this.haloMat.uniforms.uHover.value = this.hover;
     this.haloMat.uniforms.uPixelRatio.value = f.pixelRatio;
     this.haloMat.uniforms.uRadius.value = d.radius;
@@ -4273,7 +4281,8 @@ class Loader {
   constructor(el) {
     this.el = el; this.num = $('[data-num]', el); this.bar = $('[data-bar]', el); this.status = $('[data-status]', el);
     this.worldEls = $$('.ld-worlds li', el);
-    this.shown = 0; this.target = 0; this.t0 = performance.now(); this.running = false;
+    // The split build's bootstrap already counted the script download; carry on from there.
+    this.shown = this.target = window.__BOOT_P || 0; this.t0 = performance.now(); this.running = false;
     this.tick = this.tick.bind(this);
   }
   start() { this.running = true; this.last = performance.now(); requestAnimationFrame(this.tick); }
@@ -4291,7 +4300,7 @@ class Loader {
   async finish(minMs) {
     const elapsed = performance.now() - this.t0;
     if (elapsed < minMs) await wait(minMs - elapsed);
-    this.set(1, 'Core online, seven worlds in orbit');
+    this.set(1, 'Core online');
     for (let i = 0; i < 40 && this.shown < 1; i++) await wait(40);
     await wait(260);
     this.el.classList.add('is-done');
@@ -4472,12 +4481,9 @@ class Explorer {
     const buf = new Uint8Array(got); let o = 0; parts.forEach(p => { buf.set(p, o); o += p.length; });
     this.loadP = 0.94;
     if (!this.draco) {
-      const wrap = $('#draco-wrapper'), wasm = $('#draco-wasm');
+      const d = dracoPaths();
       this.draco = new THREE.DRACOLoader();
-      this.draco.setDecoderPath({
-        js: URL.createObjectURL(new Blob([atob(wrap.textContent.trim())], { type: 'text/javascript' })),
-        wasm: URL.createObjectURL(new Blob([b64ToBuffer(wasm.textContent.trim())], { type: 'application/wasm' }))
-      });
+      this.draco.setDecoderPath({ js: d.js, wasm: d.wasm });
       this.gltf = new THREE.GLTFLoader(); this.gltf.setDRACOLoader(this.draco);
     }
     const gltf = await new Promise((ok, bad) => this.gltf.parse(buf.buffer, '', ok, bad));
@@ -4759,25 +4765,51 @@ class Explorer {
   }
 }
 
-/** Reads the embedded GLB files and decodes them with an inline Draco decoder. No network, works from file://. */
+/* Where the Draco decoder lives: hashed files in the split build, inline base64 in the single-file build. */
+function dracoPaths() {
+  const A = window.__ASSETS;
+  if (A && A.draco) return { js: new URL(A.draco.js, location.href).href, wasm: new URL(A.draco.wasm, location.href).href, urls: [] };
+  const wrap = $('#draco-wrapper'), wasm = $('#draco-wasm');
+  const js = URL.createObjectURL(new Blob([atob(wrap.textContent.trim())], { type: 'text/javascript' }));
+  const bin = URL.createObjectURL(new Blob([b64ToBuffer(wasm.textContent.trim())], { type: 'application/wasm' }));
+  return { js, wasm: bin, urls: [js, bin] };
+}
+
+/* Fetch with byte progress. */
+async function fetchBytes(url, onBytes) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('HTTP ' + res.status + ' for ' + url);
+  if (!res.body || !res.body.getReader) { const b = new Uint8Array(await res.arrayBuffer()); onBytes && onBytes(b.length); return b; }
+  const reader = res.body.getReader(), parts = []; let got = 0;
+  for (;;) { const { done, value } = await reader.read(); if (done) break; parts.push(value); got += value.length; onBytes && onBytes(value.length); }
+  const out = new Uint8Array(got); let o = 0; parts.forEach(p => { out.set(p, o); o += p.length; });
+  return out;
+}
+
+/** Loads the world GLBs (hashed files when split, embedded base64 otherwise) and decodes them with Draco. */
 class WorldLibrary {
   constructor() {
-    this.urls = [];
-    const wrap = $('#draco-wrapper'), wasm = $('#draco-wasm');
-    const js = URL.createObjectURL(new Blob([atob(wrap.textContent.trim())], { type: 'text/javascript' }));
-    const bin = URL.createObjectURL(new Blob([b64ToBuffer(wasm.textContent.trim())], { type: 'application/wasm' }));
-    this.urls.push(js, bin);
+    const d = dracoPaths();
+    this.urls = d.urls;
     this.draco = new THREE.DRACOLoader();
-    this.draco.setDecoderPath({ js, wasm: bin });
+    this.draco.setDecoderPath({ js: d.js, wasm: d.wasm });
     this.loader = new THREE.GLTFLoader();
     this.loader.setDRACOLoader(this.draco);
   }
-  bytes(id) { const el = $(`script[data-world="${id}"]`); return el ? el.textContent.length * 0.75 : 0; }
-  parse(id) {
-    const el = $(`script[data-world="${id}"]`);
-    if (!el) return Promise.reject(new Error('Missing world data: ' + id));
-    const buf = b64ToBuffer(el.textContent.trim());
-    el.textContent = ''; // release the base64 string
+  bytes(id) {
+    const A = window.__ASSETS; if (A && A.sizes) return A.sizes[id] || 1;
+    const el = $(`script[data-world="${id}"]`); return el ? el.textContent.length * 0.75 : 0;
+  }
+  async parse(id, onBytes) {
+    const A = window.__ASSETS;
+    let buf;
+    if (A && A.worlds) buf = (await fetchBytes(A.worlds[id], onBytes)).buffer;
+    else {
+      const el = $(`script[data-world="${id}"]`);
+      if (!el) throw new Error('Missing world data: ' + id);
+      buf = b64ToBuffer(el.textContent.trim()); el.textContent = '';
+      onBytes && onBytes(buf.byteLength);
+    }
     return new Promise((res, rej) => this.loader.parse(buf, '', res, rej));
   }
   dispose() { this.draco.dispose(); this.urls.forEach(u => URL.revokeObjectURL(u)); }
@@ -4895,11 +4927,14 @@ class App {
       return;
     }
 
-    this.loader.set(0.06, 'Loading typefaces');
+    const b0 = this.loader.target, span = (a, b) => b0 + (1 - b0) * a + (1 - b0) * (b - a) * 0; // stages share what the scripts left
+    const at = f => b0 + (1 - b0) * f;
+    this.loader.set(at(0.1), 'Loading typefaces');
     await Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), wait(1600)]);
+    void span;
 
     const m = this.mobile;
-    const count = m ? 6000 : 14000;
+    const count = m ? 3500 : 7000;
     this.stage = new Stage($('#gl'), m ? 1.5 : 1.75);
     this.rig = new CameraRig(32);
     PlanetBody.camera = this.rig.camera;
@@ -4907,19 +4942,19 @@ class App {
     this.core = new AICore(this.shared);
     this.stage.scene.add(this.core.group);
 
-    this.loader.set(0.12, 'Allocating the particle field'); await nextFrame();
+    this.loader.set(at(0.25), 'Allocating the particle field'); await nextFrame();
     this.core.buildField(count);
-    this.loader.set(0.18, 'Calibrating rings and scaffolding'); await nextFrame();
+    this.loader.set(at(0.45), 'Calibrating rings and scaffolding'); await nextFrame();
     this.core.buildStructure();
-    this.loader.set(0.22, 'Routing energy paths'); await nextFrame();
+    this.loader.set(at(0.6), 'Routing energy paths'); await nextFrame();
     this.core.buildEnergy(m ? 16 : 28);
     this.core.buildTelemetry();
 
-    this.loader.set(0.26, 'Charting the orbit'); await nextFrame();
+    this.loader.set(at(0.7), 'Charting the orbit'); await nextFrame();
     this.orrery = new Orrery(this.shared, { stars: m ? 1800 : 4200, dust: m ? 1400 : 3600, motes: m ? 900 : 2400, puffs: m ? 70 : 160, remnant: m ? 3000 : 7000 });
     this.stage.scene.add(this.orrery.group);
-    await this.loadWorlds(0.28, 0.9);
-
+    // Worlds load after the page is up (see loadWorldsInBackground); the core is all the first screen needs.
+    this.worldsReady = false;
     this.buildLabels(count);
     this.buildStates();
     this.scroll = new ScrollDirector(this.sections, this.states);
@@ -4927,39 +4962,53 @@ class App {
     this.resize();
     this.bindRuntime();
 
-    this.loader.set(0.93, 'Compiling shaders, uploading worlds to the GPU'); await nextFrame();
+    this.loader.set(at(0.85), 'Compiling shaders'); await nextFrame();
     await this.warmUp();
 
     this.last = performance.now();
     this.raf = requestAnimationFrame(this.frame);
-    await this.loader.finish(1600);
+    await this.loader.finish(900);
     this.reveal();
     this.introOn = true;
+    this.loadWorldsInBackground();
   }
 
-  async loadWorlds(p0, p1) {
+  /* Worlds stream in while the visitor reads the first sections. The orbit opens once they are all in. */
+  async loadWorldsInBackground() {
+    const pill = document.createElement('div');
+    pill.className = 'orbit-wait'; pill.setAttribute('role', 'status');
+    pill.innerHTML = '<i></i><span data-ow>Charting the orbit</span><b data-owp>0%</b>';
+    document.body.appendChild(pill);
+    this.orbitWait = pill;
+    await this.loadWorlds((p, text) => {
+      pill.querySelector('[data-owp]').textContent = Math.round(p * 100) + '%';
+      if (text) pill.querySelector('[data-ow]').textContent = text;
+    });
+    this.attachWorldLabels();
+    await this.warmUp();
+    this.worldsReady = true;
+    pill.classList.add('is-done'); setTimeout(() => pill.remove(), 900);
+  }
+
+  async loadWorlds(progress) {
     const lib = new WorldLibrary();
     this.library = lib;
     const sizes = WORLDS.map(w => lib.bytes(w.id)), total = sizes.reduce((a, b) => a + b, 0) || 1;
     const aniso = Math.min(8, this.stage.renderer.capabilities.getMaxAnisotropy());
     const halo = this.mobile ? 140 : 320;
-    let acc = 0;
+    let got = 0;
+    const tick = text => progress(Math.min(1, got / total), text);
+    // Downloads run in parallel; decoding and scene insertion stay in order so world indices never shift.
+    const files = WORLDS.map(def => lib.parse(def.id, n => { got += n; tick(); }).catch(err => err));
     for (let i = 0; i < WORLDS.length; i++) {
       const def = WORLDS[i];
-      this.loader.set(p0 + (p1 - p0) * (acc / total), `Decoding ${def.name}`);
+      tick(`Decoding ${def.name}`);
+      const gltf = await files[i];
       await nextFrame();
-      try {
-        const gltf = await lib.parse(def.id);
-        const w = new World(def, i, gltf, this.shared, { anisotropy: aniso, halo });
-        this.orrery.add(w);
-        this.loader.world(i);
-        acc += sizes[i];
-        this.loader.set(p0 + (p1 - p0) * (acc / total), `${def.name} resolved, ${fmt(w.stats.verts)} vertices`);
-      } catch (err) {
-        console.error(err);
-        acc += sizes[i];
-        this.loader.set(p0 + (p1 - p0) * (acc / total), `${def.name} could not be decoded`);
-      }
+      if (gltf instanceof Error || !gltf || !gltf.scene) { console.error(gltf); tick(`${def.name} could not be decoded`); continue; }
+      const w = new World(def, i, gltf, this.shared, { anisotropy: aniso, halo });
+      this.orrery.add(w);
+      tick(`${def.name} resolved`);
     }
     // Once decoded, the decoder worker is not needed again.
     lib.dispose();
@@ -5009,6 +5058,34 @@ class App {
     if (this.sections[0]) this.sections[0].classList.add('is-active');
   }
 
+  /* Low frame rates first drop the pixel ratio, then thin the particle field. */
+  adaptQuality(dt) {
+    const Q = this.quality || (this.quality = { low: 0, step: 0, maxDPR: this.stage.maxDPR });
+    if (this.fps < 28 && this.introOn && !(this.explorer && this.explorer.phase)) Q.low += dt; else Q.low = Math.max(0, Q.low - dt * 2);
+    if (Q.low < 3.5 || Q.step >= 3) return;
+    Q.low = 0; Q.step++;
+    if (Q.step <= 2 && this.stage.maxDPR > 1) {
+      this.stage.maxDPR = Math.max(1, this.stage.maxDPR - 0.35); this.resize();
+    } else {
+      const g = this.core.field.geometry; g.setDrawRange(0, Math.round(this.core.field.count * 0.6));
+      [this.orrery.dust.points, this.orrery.cloud.points].forEach(p => { const n = p.geometry.attributes.position.count; p.geometry.setDrawRange(0, Math.round(n * 0.6)); });
+    }
+  }
+
+  attachWorldLabels() {
+    this.worldLabels = this.orrery.worlds.map(w => {
+      const it = this.labels.add('world', pad2(w.index + 1), w.def.name, out => out.copy(w.group.position).addScaledVector(this.camUp, w.radius * 1.25), this.edgeFlip(false));
+      it.el.style.setProperty('--a', w.def.accent);
+      return it;
+    });
+    const verts = this.orrery.worlds.reduce((a, w) => a + w.stats.verts, 0);
+    $$('[data-bind-verts]').forEach(el => { el.textContent = verts >= 1e6 ? (verts / 1e6).toFixed(2) + 'M' : fmt(verts); });
+    this.orrery.worlds.forEach(w => {
+      const el = $(`[data-world-meta="${w.index}"]`);
+      if (el) el.innerHTML = `<span><b>${fmt(w.stats.verts)}</b> vertices</span><span><b>${w.stats.surfaceTiles}</b> ${w.stats.surfaceTiles > 1 ? 'tiles' : 'mesh'}</span><span>orbit <b>${w.def.orbit.toFixed(1)}</b> u</span>`;
+    });
+  }
+
   buildLabels(count) {
     this.labels = new ScreenLabels($('#labels'));
     const c = this.core;
@@ -5045,13 +5122,11 @@ class App {
       return item;
     });
 
-    // World names in the overview, and two live readouts beside the world in frame.
-    this.worldLabels = this.orrery.worlds.map(w => {
-      const it = this.labels.add('world', pad2(w.index + 1), w.def.name, out => out.copy(w.group.position).addScaledVector(this.camUp, w.radius * 1.25), edgeFlip(false));
-      it.el.style.setProperty('--a', w.def.accent);
-      return it;
-    });
-    const focusWorld = () => this.orrery.worlds[clamp(Math.round(this.stopF) - 1, 0, this.orrery.worlds.length - 1)];
+    // World names in the overview are added once the worlds have loaded (attachWorldLabels).
+    this.worldLabels = [];
+    this.edgeFlip = edgeFlip;
+    const noWorld = { index: 0, radius: 0, group: { position: new THREE.Vector3() } };
+    const focusWorld = () => this.orrery.worlds[clamp(Math.round(this.stopF) - 1, 0, this.orrery.worlds.length - 1)] || noWorld;
     this.lblPhase = this.labels.add('', 'Orbital phase', '000.0°', out => {
       const w = focusWorld(), side = w.index % 2 === 0 ? 1 : -1;
       return out.copy(w.group.position).addScaledVector(this.camRight, side * w.radius * 0.78).addScaledVector(this.camUp, -w.radius * 0.72);
@@ -5064,12 +5139,7 @@ class App {
     const nodes = count.toLocaleString('en-US');
     $$('[data-bind-nodes]').forEach(el => { el.textContent = nodes; });
     $('[data-tel-nodes]').textContent = nodes;
-    const verts = this.orrery.worlds.reduce((a, w) => a + w.stats.verts, 0);
-    $$('[data-bind-verts]').forEach(el => { el.textContent = verts >= 1e6 ? (verts / 1e6).toFixed(2) + 'M' : fmt(verts); });
-    this.orrery.worlds.forEach(w => {
-      const el = $(`[data-world-meta="${w.index}"]`);
-      if (el) el.innerHTML = `<span><b>${fmt(w.stats.verts)}</b> vertices</span><span><b>${w.stats.surfaceTiles}</b> ${w.stats.surfaceTiles > 1 ? 'tiles' : 'mesh'}</span><span>orbit <b>${w.def.orbit.toFixed(1)}</b> u</span>`;
-    });
+
     this.ptag = $('.ptag'); this.ptagName = $('.ptag .pn'); this.ptagKick = $('.ptag .pk');
     this.ptagState = { x: 0, y: 0, index: -1, on: false };
     this.wordEl = $('.worldword');
@@ -5428,6 +5498,13 @@ class App {
     if (this.introOn) this.intro = Math.min(1, this.intro + dt / (reduced ? 0.6 : 2.8));
     P.update(dt);
 
+    // Until every world has loaded, the orbit sections wait: scroll is held at the lattice and a status pill shows progress.
+    if (!this.worldsReady && this.scroll.raw() > ORBIT_START - 0.75) {
+      window.scrollTo({ top: this.scroll.top(ORBIT_START - 1) + (innerHeight * 0.2), behavior: 'instant' });
+      if (this.orbitWait) { this.orbitWait.classList.add('is-on'); clearTimeout(this.owT); this.owT = setTimeout(() => this.orbitWait && this.orbitWait.classList.remove('is-on'), 2600); }
+    }
+    this.adaptQuality(dt);
+
     // Scroll composition
     const st = this.scroll.update(dt, reduced ? 12 : 2.6);
     this.stateNow = st;
@@ -5494,6 +5571,8 @@ class App {
       const hov = (i === this.hoverWorld || i === this.hoverWorldEl) ? 1 : 0;
       w.hover = damp(w.hover, hov, 6, dt);
       w.focus = damp(w.focus, i === focusIdx ? 1 : 0, 3, dt);
+      // With a world open, the others' additive glow must not wash over it.
+      w.dimK = damp(w.dimK || 0, this.detail.open && i !== this.detail.index ? 1 : 0, 4, dt);
     });
     const boost = 1 + 0.55 * (1 - smoothstep(0, 1, this.stopF)) * (1 - this.fly.t);
     this.sun.set(0, 0, 0);
@@ -5620,7 +5699,7 @@ class App {
   updateWorldType(dt, G) {
     const worlds = this.orrery.worlds, W = this.word;
     const near = this.stopF >= 0.5 ? Math.round(this.stopF) - 1 : -1;
-    const k = this.fly.t > 0.02 ? -1 : near;
+    const k = this.fly.t > 0.02 || !worlds[near] ? -1 : near;
     if (k !== W.index) {
       W.index = k;
       if (k >= 0) {
