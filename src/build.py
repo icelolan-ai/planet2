@@ -25,7 +25,7 @@ fonts = '\n'.join(
 
 n = len(worlds)
 words = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
-sections, index, loader = [], [], []
+sections, index, loader, menu = [], [], [], []
 for i, w in enumerate(worlds):
     side = 'left' if i % 2 == 0 else 'right'
     num = f'{i + 1:02d}'
@@ -41,6 +41,7 @@ for i, w in enumerate(worlds):
     </div>
   </section>''')
     index.append(f'<li style="--a:{w["accent"]}"><button type="button" data-open-world="{i}" data-cursor="Land"><span class="wi">{num}</span><span class="wn">{esc(w["name"])}</span><span class="wd"></span></button></li>')
+    menu.append(f'<li style="--a:{w["accent"]}"><button type="button" role="menuitem" data-open-world="{i}" data-cursor="Land"><i></i><span class="wm-n">{num}</span>{esc(w["name"])}</button></li>')
     loader.append(f'<li style="--a:{w["accent"]}"><i></i>{esc(w["name"])}</li>')
 
 data = [f'<script type="text/plain" id="draco-wrapper">{b64(NM + "/three/examples/jsm/libs/draco/gltf/draco_wasm_wrapper.js")}</script>',
@@ -56,11 +57,12 @@ js_worlds = json.dumps([{k: w[k] for k in ('id', 'name', 'kicker', 'accent', 'ra
 out = (tpl.replace('/*__FONTS__*/', fonts)
           .replace('<!--__LOADER_WORLDS__-->', ''.join(loader))
           .replace('<!--__WORLD_INDEX__-->', ''.join(index))
+          .replace('<!--__WORLD_MENU__-->', ''.join(menu))
           .replace('<!--__WORLD_SECTIONS__-->', '\n\n'.join(sections))
           .replace('<!--__DATA__-->', '\n'.join(data))
           .replace('/*__VENDOR__*/', vendor)
           .replace('/*__WORLDS__*/', js_worlds))
-for m in ['__FONTS__', '__LOADER_WORLDS__', '__WORLD_INDEX__', '__WORLD_SECTIONS__', '__DATA__', '__VENDOR__', '__WORLDS__']:
+for m in ['__FONTS__', '__LOADER_WORLDS__', '__WORLD_INDEX__', '__WORLD_MENU__', '__WORLD_SECTIONS__', '__DATA__', '__VENDOR__', '__WORLDS__']:
     assert m not in out, m
 os.makedirs(ROOT + '/dist', exist_ok=True)
 open(ROOT + '/dist/index.html', 'w').write(out)
