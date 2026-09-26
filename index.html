@@ -426,6 +426,29 @@ body *{font-style:normal!important}
   30%{text-shadow:-2px 0 var(--val),2px 0 #4ff0ff;transform:translateX(-3px)}60%{text-shadow:1px 0 var(--val);transform:translateX(1px) skewX(3deg)}
   100%{text-shadow:none;transform:none}}
 html,body{overflow-x:clip}
+/* core tuning panel (perimeter section) */
+.pctl{position:absolute;right:calc(var(--pad) + 56px);bottom:calc(var(--pad) * 1.6 + 26px);width:260px;padding:16px 16px 14px;z-index:3;
+  background:rgba(8,10,16,.62);backdrop-filter:blur(10px);border:1px solid var(--line);border-left:2px solid var(--val);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%);font-family:var(--f-cond);text-transform:uppercase;letter-spacing:.14em;font-size:11.5px;color:var(--ink-2)}
+.sec:not(.is-active) .pctl{pointer-events:none}
+.pctl-h{display:flex;justify-content:space-between;margin:0 0 12px;color:var(--ink);font-weight:600;letter-spacing:.24em}
+.pctl-h b{color:var(--val);font-weight:600;font-family:var(--f-num);letter-spacing:0}
+.pctl-row{display:grid;grid-template-columns:74px 1fr;align-items:center;gap:10px;margin:0 0 12px}
+.pctl input[type=range]{width:100%;accent-color:var(--val);height:18px;cursor:pointer}
+.pctl-sw{display:flex;gap:7px;align-items:center}
+.pctl-sw button,.pctl-pick{width:20px;height:20px;background:var(--c,#fff);border:1px solid rgba(255,255,255,.2);transform:rotate(45deg) scale(.8);transition:transform .3s var(--ease-out),box-shadow .3s;cursor:pointer;position:relative;overflow:hidden}
+.pctl-sw button:hover,.pctl-sw button[aria-pressed=true]{transform:rotate(45deg) scale(1);box-shadow:0 0 12px var(--c)}
+.pctl-pick{--c:conic-gradient(#ff4655,#ffc94d,#3ff2ff,#b44cff,#ff4655);background:var(--c)}
+.pctl-pick input{position:absolute;inset:-6px;opacity:0;cursor:pointer}
+.pctl-btns{display:flex;gap:8px}
+.pctl-btn{flex:1;padding:9px 10px;background:var(--val);color:#0b0d12;font:600 12px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);transition:filter .2s,transform .2s}
+.pctl-btn:hover{filter:brightness(1.15)}.pctl-btn:active{transform:translateY(1px)}
+.pctl-btn.ghost{background:transparent;color:var(--ink-2);border:1px solid var(--line-2)}
+.pctl-btn:disabled{opacity:.4;cursor:default}
+.pctl-note{margin:10px 0 0;color:var(--ink-3);font-size:10.5px}.pctl-note b{color:var(--ink);font-family:var(--f-num)}
+@media (max-width:760px){.pctl{position:relative;right:auto;bottom:auto;width:100%;margin:18px 0 96px;padding:12px 14px}
+  .pctl-row{grid-template-columns:62px 1fr;margin-bottom:9px}.pctl-note{display:none}}
 .backword,.worldword{overflow:hidden}
 @media (max-width:640px){.brand-name{font-size:17px}.depth-name{font-size:13px}.depth{min-width:0}.brand-sub,[data-depth-num],[data-sound-label]{display:none}.hud-right{gap:14px}.backword{font-size:17vw}.mail{font-size:5.2vw;letter-spacing:0}}
 @media (prefers-reduced-motion:reduce){.w::after{display:none}.is-active .w>span{transition-delay:0s}.is-active .title{animation:none}}
@@ -505,7 +528,26 @@ html,body{overflow-x:clip}
         <div><dt>Worlds in orbit</dt><dd>Seven</dd></div>
         <div><dt>Vertices in orbit</dt><dd data-bind-verts>—</dd></div>
       </dl>
+      <div class="pctl reveal" style="--d:6" data-planet-ctl aria-label="Tune the core">
+        <p class="pctl-h"><span>Tune the core</span><b data-ctl-readout>100%</b></p>
+        <label class="pctl-row"><span>Particles</span><input type="range" min="0.2" max="3" step="0.1" value="1" data-ctl-density></label>
+        <div class="pctl-row"><span>Colour</span>
+          <div class="pctl-sw" role="group" aria-label="Particle colour">
+            <button type="button" style="--c:#b44cff" data-ctl-sw="#b44cff" aria-label="Neon purple" aria-pressed="true"></button>
+            <button type="button" style="--c:#ff4655" data-ctl-sw="#ff4655" aria-label="Red"></button>
+            <button type="button" style="--c:#3ff2ff" data-ctl-sw="#3ff2ff" aria-label="Cyan"></button>
+            <button type="button" style="--c:#ffc94d" data-ctl-sw="#ffc94d" aria-label="Gold"></button>
+            <label class="pctl-pick" aria-label="Custom colour"><input type="color" value="#b44cff" data-ctl-color></label>
+          </div>
+        </div>
+        <div class="pctl-btns">
+          <button type="button" class="pctl-btn" data-ctl-ring>+ Add ring</button>
+          <button type="button" class="pctl-btn ghost" data-ctl-reset>Reset</button>
+        </div>
+        <p class="pctl-note" data-ctl-note>Rings <b data-ctl-rings>0</b> added</p>
+      </div>
     </div>
+
   </section>
 
   <section class="sec" id="capabilities" data-side="right" data-name="Lattice" data-depth="Depth 2 of 5" data-layer="3">
@@ -4911,6 +4953,31 @@ void main() {
 const THREE = window.KY;
 const WORLDS = [{"id": "Aqua_Foam", "name": "Aqua Foam", "kicker": "Ocean world, foam study", "accent": "#86d9cf", "radius": 0.78, "orbit": 5.6, "incl": 0.035, "phase": 0.4, "tilt": 0.32, "spin": 0.05, "lede": "A water world where the whole surface is foam: teal troughs, white crests, and nothing calm anywhere.", "body": "Built in Blender as a cube-sphere of 24 tiles, each with its own baked texture, so the surface keeps its detail even up close. Exported in lo and hi versions; this page uses a lighter web cut of the lo file.", "exports": "lo, hi"}, {"id": "Arcanum", "name": "Arcanum", "kicker": "Sigil world", "accent": "#e38b5f", "radius": 0.6, "orbit": 7.4, "incl": -0.05, "phase": 2.3, "tilt": 0.18, "spin": 0.04, "lede": "Grey cloud cover scored with rings of orange sigils, like survey marks left behind on a moon.", "body": "One baked colour map on a single sphere. The sigil rings sit in the texture itself, so the world reads as a drawing as much as a planet. Exported at 2K, 4K and 8K.", "exports": "2K, 4K, 8K"}, {"id": "Emerald_Tide", "name": "Emerald Tide", "kicker": "Tidal world", "accent": "#7fdcae", "radius": 0.82, "orbit": 9.3, "incl": 0.02, "phase": 4.1, "tilt": 0.41, "spin": 0.045, "lede": "Shallow green seas braided with bright tidal channels, under a thin drift of cloud.", "body": "A single baked colour map, tuned so the channels stay legible from orbit and still hold up when you land. Exported at 2K, 4K and 8K.", "exports": "2K, 4K, 8K"}, {"id": "Inferno", "name": "Inferno", "kicker": "Molten world", "accent": "#ff7a3d", "radius": 0.7, "orbit": 11.2, "incl": 0.06, "phase": 1.2, "tilt": 0.1, "spin": 0.03, "lede": "A crust of cooling lava split by glowing seams, wrapped in its own layer of heat haze.", "body": "24 surface tiles plus a separate six-tile haze shell that glows on its own. The shell is what makes the planet feel hot rather than just orange. Exported at lo, hi and ultra.", "exports": "lo, hi, ultra"}, {"id": "Nebula_Planet", "name": "Nebula", "kicker": "Gas giant", "accent": "#a98bff", "radius": 1.18, "orbit": 13.4, "incl": -0.03, "phase": 3.3, "tilt": 0.47, "spin": 0.06, "lede": "Violet and cobalt bands folding into each other, cut by one bright jet stream across the face.", "body": "The largest world in the system. One baked colour map on a sphere, lit here by the core so its bands turn with the light. Exported at 2K, 4K and 8K.", "exports": "2K, 4K, 8K"}, {"id": "Terra_Nova", "name": "Terra Nova", "kicker": "Earthlike world", "accent": "#8ec3ff", "radius": 0.92, "orbit": 15.4, "incl": 0.04, "phase": 5.4, "tilt": 0.41, "spin": 0.04, "lede": "Continents, shallow seas and a separate cloud layer. The most ordinary world here, and the hardest to get right.", "body": "24 surface tiles and a six-tile cloud shell floating just above them, so weather and ground move as two layers. Exported at lo, hi and ultra.", "exports": "lo, hi, ultra"}, {"id": "Tempest", "name": "Tempest", "kicker": "Storm world", "accent": "#8fe6ff", "radius": 0.86, "orbit": 17.3, "incl": -0.045, "phase": 0.1, "tilt": 0.22, "spin": 0.055, "lede": "A deep blue ocean ringed by cyclone cells, with a second storm layer riding above the surface.", "body": "Two meshes: the ocean surface and a storm layer that sits just above it. The cyclones are baked into the colour map. Exported at 2K, 4K and 8K.", "exports": "2K, 4K, 8K"}];
 
+/* Core tuning panel: particle density, particle colour and extra rings on the planet. */
+(() => {
+  const wire = () => {
+    const root = document.querySelector('[data-planet-ctl]');
+    if (!root) return;
+    const body = () => (typeof PlanetBody !== 'undefined' && PlanetBody.active) || null;
+    const range = root.querySelector('[data-ctl-density]'), readout = root.querySelector('[data-ctl-readout]');
+    const rings = root.querySelector('[data-ctl-rings]'), addBtn = root.querySelector('[data-ctl-ring]');
+    const picker = root.querySelector('[data-ctl-color]'), sws = Array.from(root.querySelectorAll('[data-ctl-sw]'));
+    const syncRings = () => { const b = body(); const n = b ? b.runners.filter(r => r.added).length : 0; rings.textContent = n; addBtn.disabled = n >= 12; };
+    const setColor = hex => { const b = body(); if (b) b.setNeon(hex); picker.value = hex; sws.forEach(s => s.setAttribute('aria-pressed', String(s.dataset.ctlSw === hex))); };
+    range.addEventListener('input', () => { const b = body(); if (b) b.setDensity(+range.value); readout.textContent = Math.round(range.value * 100) + '%'; });
+    sws.forEach(s => s.addEventListener('click', () => setColor(s.dataset.ctlSw)));
+    picker.addEventListener('input', () => setColor(picker.value));
+    addBtn.addEventListener('click', () => { const b = body(); if (b) b.addRandomRing(); syncRings(); });
+    root.querySelector('[data-ctl-reset]').addEventListener('click', () => {
+      const b = body(); if (b) { b.removeAddedRings(); b.setDensity(1); }
+      range.value = 1; readout.textContent = '100%'; setColor('#b44cff'); syncRings();
+    });
+    // Keep the panel's gestures from reaching the page's scroll and core interactions.
+    ['wheel', 'touchmove'].forEach(t => root.addEventListener(t, e => e.stopPropagation(), { passive: true }));
+  };
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', wire) : wire();
+})();
+
 /* Valorant-style text decode: short labels shuffle through glyphs before settling. */
 const Scramble = (() => {
   const G = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#/_<>';
@@ -5668,9 +5735,9 @@ void main(){
 /* Particles running along the planet's rings: each has its own speed, some glow neon purple. */
 const RUNNER_VERT = `
 attribute vec4 aRun; // phase, speed, radius jitter, size
-attribute float aHue;
+attribute float aHue, aFlare;
 uniform float uTime, uPixelRatio, uMotion, uRadius;
-varying float vHue, vA;
+varying float vHue, vA, vFlare;
 void main(){
   float a = aRun.x + uTime * aRun.y * (0.3 + 0.7 * uMotion);
   float r = uRadius + aRun.z;
@@ -5679,20 +5746,26 @@ void main(){
   vHue = aHue;
   float facing = smoothstep(-1.2, 0.8, normalize(mv.xyz).z * -1.0 + 0.2);
   vA = 0.55 + 0.45 * sin(uTime * (1.5 + abs(aRun.y) * 3.0) + aRun.x * 11.0);
-  gl_PointSize = clamp(aRun.w * uPixelRatio * (15.0 / -mv.z) * (1.0 + aHue * 1.2), 1.5, 26.0 * uPixelRatio);
+  // A few neon runners catch the light: a brief, sharp flare every few seconds.
+  float fl = pow(max(0.0, sin(uTime * (0.6 + fract(aRun.x * 7.13) * 1.1) + aRun.x * 17.0)), 40.0) * aFlare;
+  vFlare = fl;
+  gl_PointSize = clamp(aRun.w * uPixelRatio * (15.0 / -mv.z) * (1.0 + aHue * 1.2) * (1.0 + fl * 2.6), 1.5, 44.0 * uPixelRatio);
 }`;
 
 const RUNNER_FRAG = `
 uniform vec3 uInk, uNeon;
 uniform float uOpacity;
-varying float vHue, vA;
+varying float vHue, vA, vFlare;
 void main(){
-  float d = length(gl_PointCoord - 0.5);
+  vec2 q = gl_PointCoord - 0.5;
+  float d = length(q);
   if (d > 0.5) discard;
   float core = smoothstep(0.5, 0.0, d);
   float glow = pow(core, 1.6) + pow(core, 6.0) * 1.5;
-  vec3 col = mix(uInk, uNeon, vHue) * (1.2 + vHue * 1.4);
-  gl_FragColor = vec4(col, glow * vA * uOpacity * 1.4);
+  // Flaring runners get a hot white centre and a four-point glint.
+  float glint = (smoothstep(0.06, 0.0, abs(q.x)) + smoothstep(0.06, 0.0, abs(q.y))) * core * vFlare;
+  vec3 col = mix(uInk, uNeon, vHue) * (1.2 + vHue * 1.4) + vec3(1.0) * (pow(core, 5.0) * 2.0 + glint) * vFlare;
+  gl_FragColor = vec4(col, (glow * vA + glint + vFlare * core) * uOpacity * 1.4);
 }`;
 
 /* Cosmic dust and interstellar haze hugging the planet: drifting motes and soft violet/blue puffs. */
@@ -5799,75 +5872,115 @@ class PlanetBody {
 
     // Thin rings with particles running along them.
     const neon = new THREE.Color('#b44cff'), blue = new THREE.Color('#5aa8ff');
+    this.uNeon = { value: neon };
+    this.density = 1;
     this.runMat = additive({
-      uniforms: { uTime: shared.uTime, uMotion: shared.uMotion, uPixelRatio: { value: 1 }, uRadius: { value: 1 }, uOpacity: { value: 0 }, uInk: shared.uInk, uNeon: { value: neon } },
+      uniforms: { uTime: shared.uTime, uMotion: shared.uMotion, uPixelRatio: { value: 1 }, uRadius: { value: 1 }, uOpacity: { value: 0 }, uInk: shared.uInk, uNeon: this.uNeon },
       vertexShader: RUNNER_VERT, fragmentShader: RUNNER_FRAG
     });
-    const RINGS = [
-      { r: 1.62, rx: 1.42, rz: 0.35, n: 90, dir: 1 },
-      { r: 1.78, rx: 1.05, rz: -0.8, n: 70, dir: -1 },
-      { r: 1.95, rx: 1.62, rz: -0.25, n: 110, dir: 1 },
-      { r: 2.2, rx: 0.7, rz: 0.95, n: 60, dir: -1 },
-      // Inside the glass shell: tighter rings, mostly neon.
+    this.runners = [];
+    [
+      { r: 1.55, rx: 1.42, rz: 0.35, n: 90, dir: 1 },
+      { r: 1.7, rx: 1.05, rz: -0.8, n: 70, dir: -1, wob: 0.35 },
+      { r: 1.86, rx: 1.62, rz: -0.25, n: 110, dir: 1 },
+      { r: 2.05, rx: 0.7, rz: 0.95, n: 60, dir: -1, spin: 0.22 },
+      { r: 2.3, rx: 1.25, rz: -1.1, n: 80, dir: 1, wob: 0.5 },
+      { r: 2.6, rx: 1.5, rz: 0.6, n: 100, dir: -1, spin: -0.12 },
+      // Inside the glass shell: tighter, faster rings.
       { r: 0.48, rx: 0.4, rz: 1.1, n: 40, dir: 1, inner: true },
       { r: 0.75, rx: 1.3, rz: -0.5, n: 60, dir: -1, inner: true },
       { r: 0.95, rx: 2.1, rz: 0.3, n: 70, dir: 1, inner: true },
       { r: 1.15, rx: 0.9, rz: -1.3, n: 80, dir: -1, inner: true }
-    ];
-    this.runners = RINGS.map(c => {
-      const pivot = new THREE.Group();
-      pivot.rotation.set(c.rx, 0, c.rz);
-      const lineGeom = circleGeometry(c.r, 256);
-      const lineMat = lineMaterial(shared, { opacity: c.inner ? 0.12 : 0.3, dash: 220 });
-      pivot.add(new THREE.Line(lineGeom, lineMat));
-      const run = new Float32Array(c.n * 4), hue = new Float32Array(c.n);
-      for (let i = 0; i < c.n; i++) {
-        const fast = Math.random() < 0.3;
-        run[i * 4] = Math.random() * Math.PI * 2;
-        run[i * 4 + 1] = c.dir * (fast ? 0.6 + Math.random() * 0.9 : 0.05 + Math.random() * 0.2);
-        run[i * 4 + 2] = (Math.random() - 0.5) * 0.05;
-        run[i * 4 + 3] = fast ? 2.2 + Math.random() * 1.5 : 1.2 + Math.random() * 1.6;
-        hue[i] = Math.random() < (c.inner ? 0.6 : 0.28) ? 1 : 0;
-      }
-      const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(c.n * 3), 3));
-      g.setAttribute('aRun', new THREE.BufferAttribute(run, 4));
-      g.setAttribute('aHue', new THREE.BufferAttribute(hue, 1));
-      const mat = this.runMat.clone();
-      mat.uniforms.uTime = shared.uTime; mat.uniforms.uMotion = shared.uMotion; mat.uniforms.uInk = shared.uInk;
-      mat.uniforms.uRadius.value = c.r;
-      const pts = new THREE.Points(g, mat);
-      pts.frustumCulled = false;
-      pivot.add(pts);
-      this.group.add(pivot);
-      return { pivot, lineGeom, lineMat, g, mat, spin: (c.inner ? 0.12 : 0.02) * c.dir, lo: c.inner ? 0.12 : 0.3 };
-    });
+    ].forEach(c => this.addRing(c));
+    PlanetBody.active = this;
 
-    // Cosmic dust and haze around the planet.
-    const motes = 1400, puffs = 60, n = motes + puffs;
-    const hp = new Float32Array(n * 3), hs = new Float32Array(n * 4), hh = new Float32Array(n);
-    for (let i = 0; i < n; i++) {
-      const puff = i >= motes;
+    // Cosmic dust and haze around the planet. Puffs come first so the density control only thins the motes.
+    const motes = 1400, puffs = 60, cap = puffs + motes * 3;
+    this.hazeBase = { puffs, motes };
+    const hp = new Float32Array(cap * 3), hs = new Float32Array(cap * 4), hh = new Float32Array(cap);
+    for (let i = 0; i < cap; i++) {
+      const puff = i < puffs;
       const u = Math.random() * 2 - 1, th = Math.random() * Math.PI * 2, w = Math.sqrt(1 - u * u);
       const rr = puff ? 1.6 + Math.random() * 2.2 : 1.35 + Math.pow(Math.random(), 0.8) * 3.2;
       hp[i * 3] = Math.cos(th) * w * rr; hp[i * 3 + 1] = u * rr * 0.7; hp[i * 3 + 2] = Math.sin(th) * w * rr;
       hs[i * 4] = Math.random() * 6.283; hs[i * 4 + 1] = Math.random() * 6.283;
       hs[i * 4 + 2] = puff ? 0.05 + Math.random() * 0.08 : 0.1 + Math.random() * 0.5;
       hs[i * 4 + 3] = puff ? 1 : 0;
-      hh[i] = puff ? Math.random() : (Math.random() < 0.22 ? 1 : 0);
+      hh[i] = puff ? Math.random() : (Math.random() < 0.1 ? 1 : 0);
     }
     this.hazeGeom = new THREE.BufferGeometry();
     this.hazeGeom.setAttribute('position', new THREE.BufferAttribute(hp, 3));
     this.hazeGeom.setAttribute('aSeed', new THREE.BufferAttribute(hs, 4));
     this.hazeGeom.setAttribute('aHue', new THREE.BufferAttribute(hh, 1));
+    this.hazeGeom.setDrawRange(0, puffs + motes);
     this.hazeMat = additive({
-      uniforms: { uTime: shared.uTime, uMotion: shared.uMotion, uPixelRatio: { value: 1 }, uOpacity: { value: 0 }, uInk: shared.uInk, uNeon: { value: neon }, uBlue: { value: blue } },
+      uniforms: { uTime: shared.uTime, uMotion: shared.uMotion, uPixelRatio: { value: 1 }, uOpacity: { value: 0 }, uInk: shared.uInk, uNeon: this.uNeon, uBlue: { value: blue } },
       vertexShader: HAZE_VERT, fragmentShader: HAZE_FRAG
     });
     this.haze = new THREE.Points(this.hazeGeom, this.hazeMat);
     this.haze.frustumCulled = false;
     this.group.add(this.haze);
   }
+
+  /* One ring and its runners. Buffers hold three times the base count so density can rise without rebuilding. */
+  addRing(c, added = false) {
+    const shared = this.shared;
+    const pivot = new THREE.Group();
+    pivot.rotation.set(c.rx, 0, c.rz);
+    const lineGeom = circleGeometry(c.r, 256);
+    const lo = c.inner ? 0.12 : 0.28;
+    const lineMat = lineMaterial(shared, { opacity: lo, dash: 220 });
+    pivot.add(new THREE.Line(lineGeom, lineMat));
+    const cap = c.n * 3;
+    const run = new Float32Array(cap * 4), hue = new Float32Array(cap), flare = new Float32Array(cap);
+    for (let i = 0; i < cap; i++) {
+      const fast = Math.random() < 0.3;
+      run[i * 4] = Math.random() * Math.PI * 2;
+      run[i * 4 + 1] = c.dir * (fast ? 0.6 + Math.random() * 0.9 : 0.05 + Math.random() * 0.2);
+      run[i * 4 + 2] = (Math.random() - 0.5) * 0.05;
+      run[i * 4 + 3] = fast ? 2.2 + Math.random() * 1.5 : 1.2 + Math.random() * 1.6;
+      hue[i] = Math.random() < (c.inner ? 0.22 : 0.1) ? 1 : 0;
+      flare[i] = hue[i] && Math.random() < 0.4 ? 1 : 0;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(cap * 3), 3));
+    g.setAttribute('aRun', new THREE.BufferAttribute(run, 4));
+    g.setAttribute('aHue', new THREE.BufferAttribute(hue, 1));
+    g.setAttribute('aFlare', new THREE.BufferAttribute(flare, 1));
+    g.setDrawRange(0, Math.round(c.n * this.density));
+    const mat = this.runMat.clone();
+    Object.assign(mat.uniforms, { uTime: shared.uTime, uMotion: shared.uMotion, uInk: shared.uInk, uNeon: this.uNeon });
+    mat.uniforms.uRadius.value = c.r;
+    const pts = new THREE.Points(g, mat);
+    pts.frustumCulled = false;
+    pivot.add(pts);
+    this.group.add(pivot);
+    const rn = { c, pivot, lineGeom, lineMat, g, mat, lo, added, grow: added ? 0 : 1,
+      spin: c.spin != null ? c.spin : (c.inner ? 0.12 : 0.02) * c.dir, wob: c.wob || 0, wobT: Math.random() * 6 };
+    this.runners.push(rn);
+    return rn;
+  }
+  addRandomRing() {
+    if (this.runners.filter(r => r.added).length >= 12) return false;
+    const R = (a, b) => a + Math.random() * (b - a);
+    const dir = Math.random() < 0.5 ? -1 : 1;
+    this.addRing({ r: R(1.5, 3), rx: R(0.3, 2.3), rz: R(-1.4, 1.4), n: Math.round(R(60, 110)), dir, spin: dir * R(0.04, 0.3), wob: Math.random() < 0.5 ? R(0.2, 0.6) : 0 }, true);
+    return true;
+  }
+  removeAddedRings() {
+    this.runners = this.runners.filter(rn => {
+      if (!rn.added) return true;
+      this.group.remove(rn.pivot); rn.lineGeom.dispose(); rn.lineMat.dispose(); rn.g.dispose(); rn.mat.dispose();
+      return false;
+    });
+  }
+  setDensity(d) {
+    this.density = clamp(d, 0.2, 3);
+    this.runners.forEach(rn => rn.g.setDrawRange(0, Math.round(rn.c.n * this.density)));
+    const h = this.hazeBase;
+    this.hazeGeom.setDrawRange(0, h.puffs + Math.round(h.motes * this.density));
+  }
+  setNeon(hex) { this.uNeon.value.set(hex); }
   update(dt, f) {
     const on = this.shared.uIntro.value * (1 - f.expand * 0.6);
     this.outer.material.uniforms.uOpacity.value = on;
@@ -5881,7 +5994,13 @@ class PlanetBody {
     this.group.scale.setScalar(sc);
     this.runners.forEach(rn => {
       rn.pivot.rotation.y += dt * rn.spin * f.motion;
-      rn.mat.uniforms.uOpacity.value = on;
+      if (rn.wob) {
+        rn.wobT += dt * f.motion;
+        rn.pivot.rotation.x = rn.c.rx + Math.sin(rn.wobT * 0.35) * rn.wob;
+        rn.pivot.rotation.z = rn.c.rz + Math.cos(rn.wobT * 0.27) * rn.wob * 0.6;
+      }
+      if (rn.grow < 1) { rn.grow = Math.min(1, rn.grow + dt * 0.8); rn.pivot.scale.setScalar(0.6 + 0.4 * smootherstep(rn.grow)); }
+      rn.mat.uniforms.uOpacity.value = on * (rn.grow < 1 ? smootherstep(rn.grow) : 1);
       rn.mat.uniforms.uPixelRatio.value = f.pixelRatio;
       rn.lineMat.uniforms.uOpacity.value = rn.lo * on;
     });
