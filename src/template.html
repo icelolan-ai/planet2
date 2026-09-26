@@ -4053,8 +4053,8 @@ class World {
         .replace('#include <common>', '#include <common>\n' + WORLD_PARS_VERT)
         .replace('#include <project_vertex>', '#include <project_vertex>\n' + WORLD_MAIN_VERT);
       sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', '#include <common>\n' + WORLD_PARS_FRAG + FORMATION.PARS)
-        .replace('#include <opaque_fragment>', '#include <opaque_fragment>\n' + WORLD_MAIN_FRAG.replace('{\n', '{\n' + FORMATION.MAIN + '\n').replace(/}\s*$/, FORMATION.TAIL + '\n}'));
+        .replace('#include <common>', '#include <common>\n' + WORLD_PARS_FRAG + Effects.glsl('PARS'))
+        .replace('#include <opaque_fragment>', '#include <opaque_fragment>\n' + WORLD_MAIN_FRAG.replace('{\n', '{\n' + Effects.glsl('MAIN') + '\n').replace(/}\s*$/, Effects.glsl('TAIL') + '\n}'));
     };
     m.customProgramCacheKey = () => 'ky-world-ripple-' + m.type;
     m.needsUpdate = true;
