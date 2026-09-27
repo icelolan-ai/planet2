@@ -591,7 +591,7 @@ body.obuild-open main,body.obuild-open .labels,body.obuild-open .worldword{opaci
 .ob-pal button i{font-style:normal;font-size:18px;line-height:1;color:var(--val)}
 .ob-pal button:hover{border-color:var(--val);color:var(--ink)}
 .ob-pal button[aria-pressed="true"]{border-color:var(--val);background:rgba(255,70,85,.12);color:var(--ink)}
-body.obuild-open #gl{cursor:crosshair}
+body.obuild-open.ob-armed #gl{cursor:crosshair}
 .ob-list{list-style:none;margin:0 0 12px;padding:0;border-top:1px solid var(--line)}
 .ob-empty{padding:14px 0;font:400 12px var(--f-sans);text-transform:none;letter-spacing:0;color:var(--ink-3)}
 .ob-item{border-bottom:1px solid var(--line)}
@@ -783,7 +783,7 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
 <button class="tune-toggle" type="button" aria-expanded="false" aria-controls="tune" data-tune-toggle><i></i><span>Tune the core</span></button>
 <aside class="tune obuild" id="obuild" aria-label="Build the orbit" data-open="false">
   <header class="tune-h"><span>Build the orbit</span><button type="button" class="tune-x" data-ob-close aria-label="Close"></button></header>
-  <p class="tune-hint">Pick an item, then click anywhere on an orbit line to place it there (the line lights red). You can also drag an item onto the orbit.</p>
+  <p class="tune-hint" data-ob-hint>Pick an item below first, then tap an orbit line to place it.</p>
   <div class="ob-pal">
     <button type="button" data-ob-add="planet"><i>&#9679;</i>Planet</button>
     <button type="button" data-ob-add="comet"><i>&#10022;</i>Comet</button>
@@ -1160,7 +1160,7 @@ const OrbitBuilder = (() => {
   const open = on => {
     const P = panel(); if (!P) return;
     P.dataset.open = String(on); document.body.classList.toggle('obuild-open', on);
-    if (on) list(); else if (C) C.showPreview(null);
+    if (on) list(); else { if (C) C.showPreview(null); if (armed) arm(armed); }
   };
   const pctOf = el => el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%');
   const rowFor = it => {
@@ -1273,10 +1273,13 @@ const OrbitBuilder = (() => {
 
   /* Click-to-place: the armed item follows the pointer over the orbital plane, the nearest orbit line lights up,
      and a click drops it exactly there. */
-  let armed = 'planet';
+  let armed = null;   // nothing is placed until an item is picked
   const arm = type => {
-    armed = type;
-    panel().querySelectorAll('[data-ob-add]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.obAdd === type)));
+    armed = armed === type ? null : type;   // tapping the picked item again puts it down
+    document.body.classList.toggle('ob-armed', !!armed);
+    const hint = panel().querySelector('[data-ob-hint]');
+    if (hint) hint.textContent = armed ? `Now tap an orbit line to place the ${CREATION_TYPES[armed].label.toLowerCase()}.` : 'Pick an item below first, then tap an orbit line to place it.';
+    panel().querySelectorAll('[data-ob-add]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.obAdd === armed)));
   };
   const aim = (x, y) => {
     const cv = document.getElementById('gl'); if (!cv || !PlanetBody.camera) return null;
@@ -1285,7 +1288,7 @@ const OrbitBuilder = (() => {
     const sn = armed === 'orbit' ? { r, snapped: false } : C.snap(r);
     return { r: sn.r, snapped: sn.snapped, a: Math.atan2(p.z, p.x) };
   };
-  const onScene = e => isOpen() && !panel().contains(e.target) && !(e.target.closest && e.target.closest('.hud,.rail,.fab,.picker,.ob-ghost,button,a,input'));
+  const onScene = e => isOpen() && !!armed && !panel().contains(e.target) && !(e.target.closest && e.target.closest('.hud,.rail,.fab,.picker,.ob-ghost,button,a,input'));
   const wirePlace = () => {
     let downAt = null;
     addEventListener('pointermove', e => {
@@ -1304,6 +1307,7 @@ const OrbitBuilder = (() => {
       const s = aim(e.clientX, e.clientY); if (!s) return;
       const it = C.add(armed, s.r, s.a);
       if (app.sound) app.sound.tone(880, 0.12, 0.05, 1.5);
+      C.showPreview(null); arm(armed);   // one placement per pick
       list(it.id); refreshPicker();
     }, true);
   };
@@ -1315,7 +1319,7 @@ const OrbitBuilder = (() => {
     P.querySelector('[data-ob-clear]').addEventListener('click', () => { C.clear(); list(); refreshPicker(); });
     ['wheel', 'touchmove'].forEach(t => P.addEventListener(t, e => e.stopPropagation(), { passive: true }));
     addEventListener('keydown', e => { if (e.key === 'Escape' && isOpen()) open(false); });
-    wireDrag(); wirePlace(); arm('planet'); refreshPicker();
+    wireDrag(); wirePlace(); refreshPicker();
     // The builder belongs to the orbit overview; leaving it folds the drawer.
     const sec = document.getElementById('projects');
     if (sec) new MutationObserver(() => { if (!sec.classList.contains('is-active') && isOpen()) open(false); }).observe(sec, { attributes: true, attributeFilter: ['class'] });
