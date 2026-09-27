@@ -592,6 +592,22 @@ body.obuild-open main,body.obuild-open .labels,body.obuild-open .worldword{opaci
 .ob-pal button:hover{border-color:var(--val);color:var(--ink)}
 .ob-pal button[aria-pressed="true"]{border-color:var(--val);background:rgba(255,70,85,.12);color:var(--ink)}
 body.obuild-open.ob-armed #gl{cursor:crosshair}
+body.obuild-open.ob-armed{touch-action:none}
+.ob-hintrow{display:flex;align-items:center;gap:10px}
+.ob-hintrow .tune-hint{flex:1}
+.ob-cancel{display:none;padding:8px 12px;border:1px solid var(--val);color:var(--val);font:600 10.5px var(--f-cond);letter-spacing:.16em;text-transform:uppercase}
+body.ob-armed .ob-cancel{display:block}
+body.ob-armed .ob-hintrow .tune-hint{color:var(--ink)}
+@media (max-width:760px){
+  /* phones: a compact tray. The palette is one scrolling row; picking an item folds the tray to a slim bar
+     so most of the solar system is free to tap. */
+  .tune.obuild{max-height:46vh}
+  .ob-pal{display:flex;overflow-x:auto;gap:8px;scroll-snap-type:x mandatory;margin:0 -16px;padding:0 16px 4px}
+  .ob-pal button{flex:0 0 76px;scroll-snap-align:start;padding:10px 2px 8px}
+  body.ob-armed .tune.obuild{max-height:none}
+  body.ob-armed .tune.obuild>*:not(.tune-h):not(.ob-hintrow){display:none}
+  body.ob-armed .tune.obuild .tune-h{margin-bottom:6px}
+}
 .ob-list{list-style:none;margin:0 0 12px;padding:0;border-top:1px solid var(--line)}
 .ob-empty{padding:14px 0;font:400 12px var(--f-sans);text-transform:none;letter-spacing:0;color:var(--ink-3)}
 .ob-item{border-bottom:1px solid var(--line)}
@@ -783,7 +799,7 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
 <button class="tune-toggle" type="button" aria-expanded="false" aria-controls="tune" data-tune-toggle><i></i><span>Tune the core</span></button>
 <aside class="tune obuild" id="obuild" aria-label="Build the orbit" data-open="false">
   <header class="tune-h"><span>Build the orbit</span><button type="button" class="tune-x" data-ob-close aria-label="Close"></button></header>
-  <p class="tune-hint" data-ob-hint>Pick an item below first, then tap an orbit line to place it.</p>
+  <div class="ob-hintrow"><p class="tune-hint" data-ob-hint>Pick an item below first, then tap an orbit line to place it.</p><button type="button" class="ob-cancel" data-ob-cancel>Cancel</button></div>
   <div class="ob-pal">
     <button type="button" data-ob-add="planet"><i>&#9679;</i>Planet</button>
     <button type="button" data-ob-add="comet"><i>&#10022;</i>Comet</button>
@@ -1187,7 +1203,7 @@ const OrbitBuilder = (() => {
   };
   const list = focusId => {
     const ul = panel().querySelector('[data-ob-list]');
-    ul.innerHTML = C.items.length ? C.items.map(rowFor).join('') : '<li class="ob-empty">Nothing added yet. Drag something onto the orbit.</li>';
+    ul.innerHTML = C.items.length ? C.items.map(rowFor).join('') : '<li class="ob-empty">Nothing added yet. Pick an item above, then tap an orbit line.</li>';
     ul.querySelectorAll('input[type=range]').forEach(pctOf);
     ul.querySelectorAll('.ob-item').forEach(li => {
       const it = C.items.find(i => i.id === li.dataset.id); if (!it) return;
@@ -1261,7 +1277,13 @@ const OrbitBuilder = (() => {
         const d = drag; drag = null; ghost.classList.remove('on', 'snap', 'bad'); C.showPreview(null);
         let s = null;
         if (d.moved) { if (!P.contains(document.elementFromPoint(e.clientX, e.clientY))) { drag = d; s = place(e.clientX, e.clientY); drag = null; } }
-        else { arm(d.type); return; }
+        else {
+          // The tray folds as soon as an item is picked, so the browser's follow-up click would land on whatever
+          // is now under the finger (a world's Land button). Swallow that one click.
+          const eat = ev => { ev.stopPropagation(); ev.preventDefault(); };
+          addEventListener('click', eat, { capture: true, once: true }); setTimeout(() => removeEventListener('click', eat, true), 450);
+          arm(d.type); return;
+        }
         if (!s) return;
         const it = C.add(d.type, s.r, s.a);
         if (app.sound) app.sound.tone(880, 0.12, 0.05, 1.5);
@@ -1297,16 +1319,25 @@ const OrbitBuilder = (() => {
       C.showPreview(s ? s.r : null, s && (s.snapped || armed === 'orbit'));
     }, { passive: true });
     // Swallow scene clicks while building so they place things instead of poking the core or a world.
-    addEventListener('pointerdown', e => { if (onScene(e)) { downAt = [e.clientX, e.clientY]; e.stopPropagation(); } }, true);
+    addEventListener('pointerdown', e => {
+      if (!onScene(e)) return;
+      downAt = [e.clientX, e.clientY]; e.stopPropagation();
+      const s = aim(e.clientX, e.clientY); C.showPreview(s ? s.r : null, s && (s.snapped || armed === 'orbit'));   // touch has no hover: light the line on contact
+    }, true);
     addEventListener('click', e => { if (onScene(e)) e.stopPropagation(); }, true);
+    // Phones: while an item is picked the page must not scroll under the finger (that cancels the touch),
+    // and a finger can slide to aim, then lift to place.
+    addEventListener('touchmove', e => { if (armed && isOpen() && !panel().contains(e.target)) e.preventDefault(); }, { passive: false });
     addEventListener('pointerup', e => {
       if (!downAt || !onScene(e)) { downAt = null; return; }
       const moved = Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 8; downAt = null;
-      if (moved) return;
+      if (moved && e.pointerType === 'mouse') return;
       e.stopPropagation();
       const s = aim(e.clientX, e.clientY); if (!s) return;
       const it = C.add(armed, s.r, s.a);
       if (app.sound) app.sound.tone(880, 0.12, 0.05, 1.5);
+      const eat = ev => { ev.stopPropagation(); ev.preventDefault(); };   // the tray unfolds under the finger: eat the stray click
+      addEventListener('click', eat, { capture: true, once: true }); setTimeout(() => removeEventListener('click', eat, true), 450);
       C.showPreview(null); arm(armed);   // one placement per pick
       list(it.id); refreshPicker();
     }, true);
@@ -1316,6 +1347,7 @@ const OrbitBuilder = (() => {
     app = a; C = a.orrery.creations;
     const P = panel(); if (!P) return;
     P.querySelector('[data-ob-close]').addEventListener('click', () => open(false));
+    P.querySelector('[data-ob-cancel]').addEventListener('click', () => { if (armed) arm(armed); });
     P.querySelector('[data-ob-clear]').addEventListener('click', () => { C.clear(); list(); refreshPicker(); });
     ['wheel', 'touchmove'].forEach(t => P.addEventListener(t, e => e.stopPropagation(), { passive: true }));
     addEventListener('keydown', e => { if (e.key === 'Escape' && isOpen()) open(false); });
