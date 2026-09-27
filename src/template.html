@@ -684,6 +684,12 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
 .tune-pick{background:conic-gradient(#ff4655,#ffc94d,#3ff2ff,#b44cff,#ff4655)}
 .tune-pick input{position:absolute;inset:-8px;opacity:0;cursor:pointer}
 .tune-btns{display:flex;gap:8px;margin-top:6px}
+.ps-list{list-style:none;margin:10px 0 4px;padding:0;display:grid;gap:6px}
+.ps-list li{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line-2);font:500 12px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.ps-list li span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ps-list li button{padding:4px 8px;border:1px solid var(--line-2);font:600 10px var(--f-cond);letter-spacing:.14em;color:var(--ink-2)}
+.ps-list li button:hover{border-color:var(--val);color:var(--ink)}
+.ps-list .ps-empty{border-style:dashed;color:var(--ink-4)}
 .tune-btn{flex:1;padding:10px;background:var(--val);color:#0b0d12;font:600 11.5px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;
   clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%)}
 .tune-btn:hover{filter:brightness(1.15)}
@@ -864,6 +870,7 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
     <button type="button" role="tab" data-tab="motion" aria-selected="false">Motion</button>
     <button type="button" role="tab" data-tab="planet" aria-selected="false">Planet</button>
     <button type="button" role="tab" data-tab="play" aria-selected="false">Play</button>
+    <button type="button" role="tab" data-tab="save" aria-selected="false">Save</button>
   </nav>
 
   <div class="tune-pane" data-pane="style">
@@ -943,6 +950,19 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
     <label class="tune-row"><span>Zoom</span><input type="range" min="0.45" max="2.4" step="0.01" value="1" data-t-zoom><b data-out>1.00x</b></label>
     <p class="tune-hint">Drag the planet to turn it, scroll or pinch to zoom.</p>
     <button type="button" class="tune-reset" data-t-view>Reset view</button>
+  </div>
+
+  <div class="tune-pane" data-pane="save" hidden>
+    <p class="tune-sub">Presets</p>
+    <div class="tune-row"><span>Name</span><input class="ob-name" type="text" maxlength="24" placeholder="My core" data-p-name></div>
+    <button type="button" class="tune-btn" data-p-save>Save preset</button>
+    <ul class="ps-list" data-p-list></ul>
+    <p class="tune-sub">Capture image</p>
+    <div class="tune-row"><span>Format</span><div class="tune-seg" data-cap-type><button type="button" data-v="image/png" aria-pressed="true">PNG</button><button type="button" data-v="image/jpeg" aria-pressed="false">JPEG</button></div></div>
+    <div class="tune-row"><span>Quality</span><div class="tune-seg" data-cap-scale><button type="button" data-v="1" aria-pressed="false">Low</button><button type="button" data-v="2" aria-pressed="true">High</button><button type="button" data-v="4" aria-pressed="false">Ultra</button></div></div>
+    <div class="tune-row"><span>Background</span><div class="tune-seg" data-cap-bg><button type="button" data-v="1" aria-pressed="true">Transparent</button><button type="button" data-v="0" aria-pressed="false">Space</button></div></div>
+    <p class="tune-hint" data-cap-note>Only the 3D scene is saved, no page text. Transparent needs PNG.</p>
+    <button type="button" class="tune-btn" data-cap-go>&#9673; Save image</button>
   </div>
 </aside>
 
@@ -1710,20 +1730,19 @@ const WorldTune = (() => {
     addEventListener('touchend', e => { if (e.touches.length < 2) pinch = null; }, { passive: true });
 
     /* ---- remember settings ---- */
-    function save() {
-      const b = body(); if (!b) return;
-      const s = { density: b.density, speed: b.speed, dir: b.dir, shape: b.shape, neon: hex(b.uNeon.value), theme: b.theme || 'nebula',
+    function snapshot() {
+      const b = body(); if (!b) return null;
+      return { density: b.density, speed: b.speed, dir: b.dir, shape: b.shape, neon: hex(b.uNeon.value), theme: b.theme || 'nebula',
         rings: b.ringCount, band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
         clarity: +clar.value, rim: +rim.value, inner: b.inner.show, haze: b.hazeDensity, frate: b.uFlareRate.value, famt: b.uFlareAmt.value, fcolor: '#' + b.uFlareColor.value.getHexString(),
         ptr: b.ptrMode, ptrs: b.ptrStrength,
         lens: LENS_U.uLensOn.value, aberr: LENS_U.uLensAberr.value, blur: LENS_U.uLensBlur.value, bloom: LENS_U.uLensBloom.value };
-      try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
     }
+    function save() { const s = snapshot(); if (s) try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {} }
     let saved = null; try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
-    const restore = () => {
-      const b = body(); if (!b) { setTimeout(restore, 300); return; }
-      if (!saved) return;
-      const s = saved;
+    const restore = () => { const b = body(); if (!b) { setTimeout(restore, 300); return; } if (saved) apply(saved); };
+    const apply = s => {
+      const b = body(); if (!b || !s) return;
       setTheme(s.theme); b.setNeon(s.neon); neon.set(s.neon); b.setMetal(s.metal); metal.set(s.metal);
       b.setDensity(s.density); setRange(dens, s.density, pct);
       b.setSpeed(s.speed); setRange(spd, s.speed, times);
@@ -1742,6 +1761,46 @@ const WorldTune = (() => {
       }
     };
     restore();
+
+    /* ---- named presets ---- */
+    const PKEY = 'cerebra.presets.v1';
+    let presets = []; try { presets = JSON.parse(localStorage.getItem(PKEY) || '[]') || []; } catch (e) {}
+    const putPresets = () => { try { localStorage.setItem(PKEY, JSON.stringify(presets)); } catch (e) {} };
+    const escP = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const listPresets = () => {
+      const ul = q('[data-p-list]');
+      ul.innerHTML = presets.length ? presets.map((p, i) => `<li><span>${escP(p.name)}</span><button type="button" data-p-load="${i}">Load</button><button type="button" data-p-del="${i}" aria-label="Delete ${escP(p.name)}">&times;</button></li>`).join('')
+        : '<li class="ps-empty">No presets yet</li>';
+      ul.querySelectorAll('[data-p-load]').forEach(x => x.addEventListener('click', () => { apply(presets[+x.dataset.pLoad].s); save(); }));
+      ul.querySelectorAll('[data-p-del]').forEach(x => x.addEventListener('click', () => { presets.splice(+x.dataset.pDel, 1); putPresets(); listPresets(); }));
+    };
+    q('[data-p-save]').addEventListener('click', () => {
+      const s = snapshot(); if (!s) return;
+      const inp = q('[data-p-name]'), name = (inp.value || '').trim() || 'Preset ' + (presets.length + 1);
+      const at = presets.findIndex(p => p.name === name);
+      if (at >= 0) presets[at].s = s; else presets.push({ name, s });
+      putPresets(); listPresets(); inp.value = '';
+    });
+    listPresets();
+
+    /* ---- image capture ---- */
+    const segVal = sel => { const b = q(sel + ' [aria-pressed="true"]'); return b ? b.dataset.v : null; };
+    ['[data-cap-type]', '[data-cap-scale]', '[data-cap-bg]'].forEach(sel => qa(sel + ' button').forEach(x => x.addEventListener('click', () => {
+      qa(sel + ' button').forEach(y => y.setAttribute('aria-pressed', String(y === x)));
+    })));
+    q('[data-cap-go]').addEventListener('click', async () => {
+      const app = window.__cerebra; if (!app || !app.capture) return;
+      const btn = q('[data-cap-go]'), type = segVal('[data-cap-type]'), scale = +segVal('[data-cap-scale]'), transparent = segVal('[data-cap-bg]') === '1';
+      btn.disabled = true; const label = btn.innerHTML; btn.textContent = 'Rendering...';
+      try {
+        const { blob, width, height } = await app.capture({ type, scale, transparent });
+        const a = document.createElement('a'), ext = type === 'image/png' ? 'png' : 'jpg';
+        a.href = URL.createObjectURL(blob); a.download = `cerebra-${width}x${height}.${ext}`;
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        q('[data-cap-note]').textContent = `Saved ${width} x ${height} ${ext.toUpperCase()}.`;
+        window.__lastCapture = { width, height, type: blob.type, size: blob.size };
+      } finally { btn.disabled = false; btn.innerHTML = label; }
+    });
 
     // Keep the drawer's own gestures away from the page's scroll and core interactions.
     ['wheel', 'touchmove'].forEach(t => panel.addEventListener(t, e => e.stopPropagation(), { passive: true }));
@@ -6382,6 +6441,45 @@ class App {
 
     if (this.explorer) this.explorer.steer(dt, cam);
     this.stage.render(cam);
+    if (this.cap) this.captureStep();
+  }
+
+  /* Still capture of the canvas only (no page text). The first frame switches the drawing buffer to the export
+     size so every size-dependent uniform catches up; the next frame is copied out, then the view is restored.
+     o: { scale: 1|2|4, type: 'image/png'|'image/jpeg', transparent: bool } */
+  capture(o) { return new Promise(res => { this.cap = { o, res, n: 0 }; }); }
+  captureStep() {
+    const C = this.cap, st = this.stage, r = st.renderer;
+    if (C.n === 0) {
+      const gl = r.getContext(), maxRB = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) || 4096;
+      const lim = Math.min(8192, maxRB) / Math.max(st.width, st.height);
+      C.prev = r.getPixelRatio();
+      r.setPixelRatio(Math.max(0.5, Math.min(C.o.scale, lim))); r.setSize(st.width, st.height, false);
+      C.n = 1; return;
+    }
+    const src = r.domElement, out = document.createElement('canvas');
+    out.width = src.width; out.height = src.height;
+    const g = out.getContext('2d', { willReadFrequently: true });
+    const opaque = C.o.type === 'image/jpeg' || !C.o.transparent;
+    if (opaque) {
+      g.fillStyle = getComputedStyle(document.body).backgroundColor || '#05070a'; g.fillRect(0, 0, out.width, out.height); g.drawImage(src, 0, 0);
+    } else {
+      // Solid parts keep their own alpha, but the additive light has almost none, so it would vanish on another
+      // background. Coverage is therefore the larger of the real alpha and the brightness over black.
+      g.drawImage(src, 0, 0);
+      const A = g.getImageData(0, 0, out.width, out.height).data;
+      g.globalCompositeOperation = 'destination-over'; g.fillStyle = '#000'; g.fillRect(0, 0, out.width, out.height); g.globalCompositeOperation = 'source-over';
+      const img = g.getImageData(0, 0, out.width, out.height), d = img.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const al = Math.max(A[i + 3], d[i], d[i + 1], d[i + 2]);
+        if (al === 0) { d[i + 3] = 0; continue; }
+        const k = 255 / al; d[i] = Math.min(255, d[i] * k); d[i + 1] = Math.min(255, d[i + 1] * k); d[i + 2] = Math.min(255, d[i + 2] * k); d[i + 3] = al;
+      }
+      g.putImageData(img, 0, 0);
+    }
+    r.setPixelRatio(C.prev); r.setSize(st.width, st.height, false);
+    this.cap = null;
+    out.toBlob(b => C.res({ blob: b, width: out.width, height: out.height }), C.o.type, 0.95);
   }
 
   /* The world's name, drawn huge behind it, and a small tag that follows the hovered world. */
