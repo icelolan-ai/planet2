@@ -193,7 +193,10 @@ html.has-cursor,html.has-cursor *{cursor:none!important}
 .glabel .gb b{display:block;font-weight:400;color:var(--ink);font-family:var(--f-num);font-size:12px;font-variant-numeric:tabular-nums}
 .glabel.is-flip .lead{left:auto;right:5px;transform-origin:100% 50%;background:linear-gradient(270deg,var(--ion-dim),var(--line-2))}
 .glabel.is-flip .gb{left:auto;right:calc(var(--lead) + 12px);text-align:right}
-.glabel.legend .gb{top:calc(-12px + var(--dy))}
+.glabel.legend .gb{top:calc(-12px + var(--dy));pointer-events:auto;cursor:pointer;padding:2px 4px;margin:-2px -4px}
+.caps li[data-layer]{cursor:pointer}.caps li[data-layer].is-pinned .cl{color:var(--val)}
+.glabel.legend .gb:hover b,.glabel.legend.is-pinned .gb b{color:var(--val)}
+.glabel.legend.is-pinned .gb::after{content:"Click again to zoom out";display:block;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-4);margin-top:2px}
 .glabel.legend .gb b,.glabel.world .gb b{font-family:var(--f-display);font-style:italic;font-size:19px;line-height:1.05;color:var(--ink)}
 .glabel.world{--lead:16px}
 .glabel.world i{border-color:var(--a)}
@@ -551,7 +554,9 @@ body.is-exploring .fab,body.tune-open .fab,body.wtune-open .fab,body.obuild-open
 .fab-ico i:nth-child(1){--k:12px}.fab-ico i:nth-child(2){--k:3px}.fab-ico i:nth-child(3){--k:9px}
 .fab:hover .fab-lbl,.fab.peek .fab-lbl,.fab-btn:focus-visible .fab-lbl{max-width:260px;padding:0 16px 0 22px}
 /* section menu: always-on chips stacked above the button */
-.fab-menu{position:absolute;right:0;bottom:calc(100% + 10px);display:grid;gap:6px;justify-items:end}
+.fab-menu{position:absolute;right:0;bottom:calc(100% + 10px);display:grid;gap:6px;justify-items:end;opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .25s,transform .35s var(--ease-out),visibility 0s .35s}
+.fab.open .fab-menu{opacity:1;visibility:visible;transform:none;transition:opacity .25s,transform .35s var(--ease-out),visibility 0s}
+.fab-menu button{min-width:120px;text-align:right}
 .fab-menu button{height:30px;padding:0 14px;border:1px solid var(--line-2);background:rgba(8,10,14,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
   font:600 10.5px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);transition:border-color .3s,color .3s,background-color .3s}
 .fab-menu button:hover,.fab-menu button:focus-visible{border-color:var(--val);color:var(--ink)}
@@ -684,6 +689,7 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
 .tune-pick{background:conic-gradient(#ff4655,#ffc94d,#3ff2ff,#b44cff,#ff4655)}
 .tune-pick input{position:absolute;inset:-8px;opacity:0;cursor:pointer}
 .tune-btns{display:flex;gap:8px;margin-top:6px}
+.lc-cols{display:flex;gap:6px}.lc-cols input{width:30px;height:26px}
 .ps-list{list-style:none;margin:10px 0 4px;padding:0;display:grid;gap:6px}
 .ps-list li{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line-2);font:500 12px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
 .ps-list li span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -890,6 +896,15 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
         <button type="button" style="--c:#ffc94d" data-c="#ffc94d" aria-label="Gold"></button>
         <label class="tune-pick" aria-label="Custom colour"><input type="color" value="#b44cff" data-t-color></label>
       </div></div>
+    <p class="tune-sub">Layer colours</p>
+    <div class="tune-row"><span>Layers 0-4</span><div class="ob-cols lc-cols" data-t-layers>
+      <input type="color" value="#dfe4ea" data-l="0" aria-label="Layer 0, Nucleus" title="Layer 0, Nucleus">
+      <input type="color" value="#dfe4ea" data-l="1" aria-label="Layer 1, Memory" title="Layer 1, Memory">
+      <input type="color" value="#dfe4ea" data-l="2" aria-label="Layer 2, Flow field" title="Layer 2, Flow field">
+      <input type="color" value="#dfe4ea" data-l="3" aria-label="Layer 3, Lattice" title="Layer 3, Lattice">
+      <input type="color" value="#dfe4ea" data-l="4" aria-label="Layer 4, Perimeter" title="Layer 4, Perimeter">
+    </div></div>
+    <p class="tune-hint">Tip: open the core and click a layer name to zoom in on it.</p>
     <p class="tune-sub">Lens</p>
     <div class="tune-row"><span>Lens</span><div class="tune-seg" data-t-lens><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
     <label class="tune-row"><span>Aberration</span><input type="range" min="0" max="0.12" step="0.002" value="0.035" data-t-aberr><b data-out>0.035</b></label>
@@ -1319,20 +1334,7 @@ const Fab = (() => {
     if (i === ORBIT_START) return { kind: 'orbit', label: 'Build the orbit' };
     return { kind: 'core', label: 'Tune the core' };
   };
-  const go = () => {
-    const c = ctx(); if (!c) return;
-    const el = document.querySelector('.fab'); el.classList.remove('peek');
-    if (c.kind === 'world') {
-      if (!app.detail.open || app.detail.index !== c.k) app.openWorld(c.k);
-      setTimeout(() => WorldTune.open(true), app.detail.busy ? 1400 : 60);
-    } else if (c.kind === 'orbit') OrbitBuilder.open(true);
-    else {
-      const on = ['identity', 'capabilities'].some(id => document.getElementById(id).classList.contains('is-active'));
-      if (!on) app.scroll.jumpTo(1);
-      setTimeout(() => dispatchEvent(new Event('cerebra:tune')), on ? 0 : 700);
-    }
-  };
-  /* Section menu above the button: each entry flies the page to the part it tunes and opens its tools. */
+  /* Menu behind the red button: each entry flies the page to the part it tunes and opens its tools. */
   const goto = kind => {
     const el = document.querySelector('.fab'); el.classList.remove('peek');
     if (kind === 'orbit') {
@@ -1358,23 +1360,20 @@ const Fab = (() => {
     document.body.appendChild(el);
     const menu = document.createElement('nav');
     menu.className = 'fab-menu'; menu.setAttribute('aria-label', 'Tune a part');
-    menu.innerHTML = [['core', 'Cerebra'], ['orbit', 'Orbit'], ['world', 'Worlds'], ['fx', 'Effects']]
+    menu.innerHTML = [['core', 'Cerebra'], ['orbit', 'Orbit'], ['world', 'Worlds']]
       .map(([k, n]) => `<button type="button" data-fab-go="${k}">${n}</button>`).join('');
     el.prepend(menu);
-    menu.querySelectorAll('[data-fab-go]').forEach(b => b.addEventListener('click', () => goto(b.dataset.fabGo)));
+    menu.querySelectorAll('[data-fab-go]').forEach(b => b.addEventListener('click', () => { el.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); goto(b.dataset.fabGo); }));
     const btn = el.querySelector('.fab-btn'), lbl = el.querySelector('[data-fab-lbl]');
     document.addEventListener('pointerdown', e => { if (!el.contains(e.target)) el.classList.remove('peek'); }, true);
     const sync = () => { const c = ctx(); if (c) { lbl.textContent = c.label; btn.setAttribute('aria-label', c.label); menu.querySelectorAll('[data-fab-go]').forEach(b => b.classList.toggle('here', b.dataset.fabGo === c.kind)); } };
     setInterval(sync, 400); sync();
     // Touch: the first tap opens the tray, the second one goes.
-    btn.addEventListener('click', e => {
-      if (matchMedia('(hover: none)').matches) {
-        const now = performance.now();
-        if (!el.classList.contains('peek')) { el.classList.add('peek'); el._peekAt = now; sync(); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('peek'), 9000); return; }
-        if (now - el._peekAt < 300) return; // the same tap delivered twice
-      }
-      go();
-    });
+    // The red button opens the menu of parts to tune; picking one flies there and opens its tools.
+    btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');
+    btn.addEventListener('click', () => { const on = !el.classList.contains('open'); el.classList.toggle('open', on); btn.setAttribute('aria-expanded', String(on)); sync(); });
+    document.addEventListener('pointerdown', e => { if (!el.contains(e.target)) { el.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); } }, true);
+    addEventListener('keydown', e => { if (e.key === 'Escape') { el.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); } });
   };
   return { wire };
 })();
@@ -1639,6 +1638,9 @@ const WorldTune = (() => {
     const neon = swatch('[data-t-sw]', hex => call('setNeon', hex), picker);
     const swarmC = swatch('[data-t-swsw]', hex => call('setSwarm', null, null, hex), q('[data-t-swcolor]'));
     const cometC = swatch('[data-t-cmsw]', hex => call('setComets', { color: hex }), q('[data-t-cmcolor]'));
+    const layerIn = qa('[data-t-layers] input');
+    const setLayers = arr => arr.forEach((hx, i) => { LAYER_U.uLayerCol.value[i].set(hx); if (layerIn[i]) layerIn[i].value = hx; });
+    layerIn.forEach(el => el.addEventListener('input', () => { LAYER_U.uLayerCol.value[+el.dataset.l].set(el.value); save(); }));
     const flareC = swatch('[data-t-fsw]', hex => call('setFlareColor', hex), q('[data-t-fcolor]'));
     const metal = swatch('[data-t-metal]', hex => call('setMetal', hex));
     neon.set('#b44cff'); metal.set('#c9ccd6');
@@ -1665,7 +1667,7 @@ const WorldTune = (() => {
     const resetUI = () => {
       [[dens, 1, pct], [spd, 1, times], [thick, 1, times], [clar, 1, times], [rim, 0.55, v => v.toFixed(2)], [haze, 1, pct],
        [frate, 1, times], [famt, 1, times], [bands, 1, v => String(Math.round(v))], [swarm, 1, pct], [swsize, 1, times], [cmN, 4, intf], [cmTail, 1, times], [cmSpeed, 1, times], [cmSize, 1, times], [cmDive, 1, times], [ptrs, 1, times], [gain, 1, times], [zoom, 1, v => v.toFixed(2) + 'x']].forEach(([el, v, f]) => setRange(el, v, f));
-      dir.set(1); band.set(1); inner.set(1); ptr.set(0); shape.set(0); setTheme('nebula'); neon.set('#b44cff'); flareC.set('#ffffff'); swarmC.set('#cfe3ff'); cometC.set('#9fd4ff');
+      dir.set(1); band.set(1); inner.set(1); ptr.set(0); shape.set(0); setTheme('nebula'); neon.set('#b44cff'); flareC.set('#ffffff'); swarmC.set('#cfe3ff'); cometC.set('#9fd4ff'); setLayers([0, 1, 2, 3, 4].map(() => LAYER_DEFAULT));
       const L = LENS_DEFAULTS(); Object.keys(L).forEach(k => { LENS_U[k].value = L[k]; });
       setRange(aberr, L.uLensAberr, f3); setRange(blur, L.uLensBlur, f2); setRange(bloom, L.uLensBloom, f2); lens.set(1);
     };
@@ -1773,7 +1775,7 @@ const WorldTune = (() => {
     function snapshot() {
       const b = body(); if (!b) return null;
       return { density: b.density, speed: b.speed, dir: b.dir, shape: b.shape, neon: hex(b.uNeon.value), theme: b.theme || 'nebula',
-        rings: b.ringCount, comets: b.cometState(), bands: b.bandCount, swarm: b.swarmAmt, swsize: b.swarmMat.uniforms.uSize.value, swcolor: hex(b.swarmMat.uniforms.uColor.value), band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
+        rings: b.ringCount, layers: LAYER_U.uLayerCol.value.map(c => '#' + c.getHexString()), comets: b.cometState(), bands: b.bandCount, swarm: b.swarmAmt, swsize: b.swarmMat.uniforms.uSize.value, swcolor: hex(b.swarmMat.uniforms.uColor.value), band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
         clarity: +clar.value, rim: +rim.value, inner: b.inner.show, haze: b.hazeDensity, frate: b.uFlareRate.value, famt: b.uFlareAmt.value, fcolor: '#' + b.uFlareColor.value.getHexString(),
         ptr: b.ptrMode, ptrs: b.ptrStrength,
         lens: LENS_U.uLensOn.value, aberr: LENS_U.uLensAberr.value, blur: LENS_U.uLensBlur.value, bloom: LENS_U.uLensBloom.value };
@@ -1790,6 +1792,7 @@ const WorldTune = (() => {
       b.setShape(s.shape); shape.set(s.shape);
       b.setRingCount(s.rings); syncRings();
       b.setBand(s.band, s.thick); band.set(s.band ? 1 : 0); setRange(thick, s.thick, times);
+      if (s.layers) setLayers(s.layers);
       if (s.comets) { const c = s.comets; b.setComets(c); setRange(cmN, c.n, intf); setRange(cmTail, c.tail, times); setRange(cmSpeed, c.speed, times); setRange(cmSize, c.size, times); setRange(cmDive, c.dive, times); cometC.set(c.color); }
       if (s.bands) { b.setBandCount(s.bands); setRange(bands, s.bands, v => String(Math.round(v))); }
       if (s.swarm != null) { b.setSwarm(s.swarm, s.swsize, s.swcolor); setRange(swarm, s.swarm, pct); setRange(swsize, s.swsize, times); swarmC.set(s.swcolor); }
@@ -2025,6 +2028,10 @@ function b64ToBuffer(b64) {
 const rawColor = css => new THREE.Color().setStyle(css, THREE.LinearSRGBColorSpace);
 
 /* Mirrors the radius maths in the particle shader, so DOM callouts can find each layer. */
+/* Per-layer particle colours (Layer 0 nucleus .. Layer 4 perimeter). They start as the ink colour. */
+const LAYER_NAMES = ['Nucleus', 'Memory', 'Flow field', 'Lattice', 'Perimeter'];
+const LAYER_DEFAULT = '#dfe4ea';
+const LAYER_U = { uLayerCol: { value: [0, 1, 2, 3, 4].map(() => new THREE.Color(LAYER_DEFAULT)) } };
 const layerRadius = (L, expand, sep) => (0.32 + L * 0.235) * (1 + expand * (0.14 + L * 0.2)) + sep * L * 0.22;
 
 /* Kepler-ish angular speed shared by the dust disc and the worlds. */
@@ -2119,7 +2126,9 @@ uniform float uTime, uExpand, uSeparation, uStack, uMorph, uIntro, uMotion, uFoc
 uniform float uPixelRatio, uSize, uPointerStrength;
 uniform vec3 uPointer;
 uniform float uCrowd;
+uniform vec3 uLayerCol[5];
 attribute float aLayer;
+varying vec3 vLCol;
 attribute vec4 aSeed;
 attribute vec3 aLattice;
 varying float vAlpha;
@@ -2182,6 +2191,8 @@ void main(){
   vAlpha = (0.2 + 0.8 * depth) * (0.5 + aSeed.y * 0.5) * it;
   vAlpha *= 1.0 - uFocus * (1.0 - isFocus) * 0.45;
   vAlpha *= uCrowd;
+  int li = int(clamp(aLayer + 0.5, 0.0, 4.0));
+  vLCol = li == 0 ? uLayerCol[0] : li == 1 ? uLayerCol[1] : li == 2 ? uLayerCol[2] : li == 3 ? uLayerCol[3] : uLayerCol[4];
 
   float size = uSize * (0.55 + aSeed.y * 0.9) * (1.0 + vHeat * 1.3) * (1.0 + sweep * 0.3);
   gl_PointSize = min(size * uPixelRatio * (6.0 / -mv.z), 24.0 * uPixelRatio);
@@ -2191,6 +2202,7 @@ ${LENS_MAIN_V}
 const PARTICLE_FRAG = `
 uniform vec3 uInk;
 uniform vec3 uSpark;
+varying vec3 vLCol;
 varying float vAlpha;
 varying float vHeat;
 varying float vCore;
@@ -2200,7 +2212,7 @@ void main(){
   float d = length(q);
   if (d > 0.5) discard;
   vec3 cov = lensCover(q, 0.05);
-  vec3 col = lensBloom(mix(uInk, uSpark, clamp(vHeat + vCore * 0.4, 0.0, 1.0)), cov.g);
+  vec3 col = lensBloom(mix(vLCol, uSpark, clamp(vHeat + vCore * 0.4, 0.0, 1.0)), cov.g);
   float a = max(cov.r, max(cov.g, cov.b));
   gl_FragColor = vec4(col * cov / max(a, 1e-3), a * vAlpha * 0.85 * lensEnergy());
 }`;
@@ -2960,7 +2972,7 @@ class ParticleField {
         uPointerStrength: { value: 0 }, uCrowd: { value: 1 },
         uPixelRatio: { value: 1 },
         uSize: { value: 2.3 }
-      }),
+      }, LAYER_U),
       vertexShader: PARTICLE_VERT,
       fragmentShader: PARTICLE_FRAG
     });
@@ -5733,7 +5745,7 @@ class App {
     this.rotX = new Spring(0, 34, 10); this.rotY = new Spring(0, 34, 10);
     this.spinVel = 0.07; this.intro = 0; this.introOn = false;
     this.motion = this.reduced ? 0.25 : 1; this.simTime = 0; this.clock = 0;
-    this.focus = 0; this.focusTarget = 0; this.focusLayer = -1; this.hoverLayer = null; this.hoverWorldEl = -1;
+    this.focus = 0; this.focusTarget = 0; this.focusLayer = -1; this.hoverLayer = null; this.pinLayer = null; this.hoverWorldEl = -1;
     this.pull = 0; this.rippleT = -1; this.fps = 60; this.hudTimer = 0;
     this.cx = 0; this.cy = 0; this.cs = 1; this.legendVis = 0; this.side = 1; this.heroVar = -1; this.gVar = -1;
     this.coreScreen = { x: 0, y: 0, r: 0 };
@@ -5995,6 +6007,12 @@ class App {
         st.setProperty('--ang', ang.toFixed(2) + 'deg');
       });
       item.L = L;
+      // Click a layer name: the core zooms until that shell fills the view and the layer lights up.
+      item.el.setAttribute('data-interactive', '');
+      const gb = item.el.querySelector('.gb'); gb.setAttribute('role', 'button'); gb.tabIndex = 0; gb.setAttribute('aria-label', 'Focus ' + v);
+      const hit = e => { e.stopPropagation(); e.preventDefault(); this.pinLayerTo(this.pinLayer === L ? null : L); };
+      gb.addEventListener('click', hit); gb.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') hit(e); });
+      gb.addEventListener('pointerenter', () => { this.hoverLayer = L; }); gb.addEventListener('pointerleave', () => { if (this.hoverLayer === L) this.hoverLayer = null; });
       return item;
     });
 
@@ -6113,6 +6131,12 @@ class App {
     addEventListener('pointerover', e => setHover(e.target.closest ? e.target.closest('a,button,[data-interactive]') : null), { signal, passive: true });
     addEventListener('focusin', e => setHover(e.target.closest ? e.target.closest('a,button,[data-interactive]') : null), { signal });
     addEventListener('focusout', () => setHover(null), { signal });
+
+    // The verbs list names the layers too: clicking one zooms the core onto that layer (this is also the way in on phones).
+    $$('li[data-layer]').forEach(li => {
+      const go = () => { const L = +li.dataset.layer; this.pinLayerTo(this.pinLayer === L ? null : L); $$('li[data-layer]').forEach(x => x.classList.toggle('is-pinned', x === li && this.pinLayer === L)); };
+      li.addEventListener('click', go, { signal }); li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }, { signal });
+    });
 
     // Magnetic elements move their inner span toward the pointer.
     addEventListener('pointermove', e => {
@@ -6439,7 +6463,8 @@ class App {
 
     // Layer focus: hover wins, otherwise the layer of the current section.
     const secLayer = this.sections[sectionIdx] && this.sections[sectionIdx].dataset.layer;
-    if (this.hoverLayer != null) { this.focusLayer = this.hoverLayer; this.focusTarget = 1; }
+    if (this.pinLayer != null) { this.focusLayer = this.pinLayer; this.focusTarget = 1; }
+    else if (this.hoverLayer != null) { this.focusLayer = this.hoverLayer; this.focusTarget = 1; }
     else if (secLayer != null) { this.focusLayer = +secLayer; this.focusTarget = 0.45; }
     else this.focusTarget = 0;
     this.focus = damp(this.focus, this.focusTarget, 5, dt);
@@ -6723,7 +6748,19 @@ class App {
     });
   }
 
+  /* Zoom the core onto one layer (or back out with null). Uses the planet's own zoom so the tuner stays in sync. */
+  pinLayerTo(L) {
+    if (L == null) $$('li[data-layer].is-pinned').forEach(x => x.classList.remove('is-pinned'));
+    const P = this.core && this.core.planet;
+    if (this.pinLayer == null && L != null && P) this.pinZoom0 = P.zoomT;
+    this.pinLayer = L;
+    if (P) P.setView(L == null ? (this.pinZoom0 || 1) : clamp(layerRadius(4, 0, 0) / layerRadius(L, 0, 0) * 0.85, 1, 2.4));
+    this.legend.forEach(it => it.el.classList.toggle('is-pinned', it.L === L));
+    if (L != null && this.sound) this.sound.tone(520 + L * 90, 0.12, 0.05, 1.2);
+  }
+
   onSection(i) {
+    if (this.pinLayer != null && !(i === 1 || i === 2)) this.pinLayerTo(null);
     const sec = this.sections[i];
     $('[data-depth-num]').textContent = sec ? sec.dataset.depth || '' : '';
     const n = $('[data-depth-name]');
