@@ -754,6 +754,45 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
 .backword,.worldword{overflow:hidden}
 @media (max-width:640px){.brand-name{font-size:17px}.depth-name{font-size:13px}.depth{min-width:0}.brand-sub,[data-depth-num],[data-sound-label]{display:none}.hud-right{gap:14px}.backword{font-size:17vw}.mail{font-size:5.2vw;letter-spacing:0}}
 @media (prefers-reduced-motion:reduce){.w::after{display:none}.is-active .w>span{transition-delay:0s}.is-active .title{animation:none}}
+/* Studio is a separate, reversible view of the same core and tuning state. */
+html.studio-lock,html.studio-lock body{overflow:hidden!important;overscroll-behavior:none}
+body.studio-on> :not(#gl):not(#studio):not(#studio-bg):not(#tune):not(script){visibility:hidden!important;pointer-events:none!important}
+body.studio-on #gl{transform:none!important;touch-action:none;pointer-events:auto;cursor:grab}
+body.studio-on #gl:active{cursor:grabbing}
+#studio-bg{position:fixed;inset:0;z-index:0;pointer-events:none;display:none}
+body.studio-on #studio-bg{display:block}
+#studio{position:fixed;inset:0;z-index:90;pointer-events:none;display:none;color:#eef0f6;font:13px var(--f-mono)}
+body.studio-on #studio{display:block}
+#studio button,#studio select,#studio input{font:inherit;min-height:44px}
+#studio button,#studio select{border:1px solid #ffffff24;border-radius:9px;background:#181c24;color:#eef0f6;padding:8px 13px;cursor:pointer}
+#studio button:hover{border-color:#ff4655}
+#studio :focus-visible{outline:2px solid #ff6571;outline-offset:3px}
+.studio-bar{position:absolute;top:max(16px,env(safe-area-inset-top));left:20px;right:20px;display:flex;justify-content:space-between;gap:8px;pointer-events:auto}
+.studio-actions{display:flex;gap:8px}
+#studio [data-studio-tune]{background:#ff4655;border-color:#ff4655;color:#fff}
+.studio-panel{position:absolute;right:20px;top:80px;width:264px;max-height:calc(100dvh - 106px);overflow:auto;overscroll-behavior:contain;padding:18px;background:#0e1119ed;border:1px solid #ffffff20;border-radius:14px;pointer-events:auto;box-shadow:0 14px 60px #0004}
+.studio-panel[hidden]{display:none}
+.studio-panel h2{font-size:16px;margin:0 0 14px}
+.studio-panel h3{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#9ba5b8;margin:20px 0 8px}
+.studio-panel label{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.studio-panel select{width:100%}
+.studio-layer{display:flex;width:100%;align-items:center;justify-content:space-between;margin:5px 0;text-align:left}
+.studio-eye{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6}
+.studio-layer[aria-pressed="false"]{opacity:.45}
+.studio-layer[aria-pressed="true"] .eye-slash{display:none}
+.studio-note{font:12px/1.5 var(--f-body);color:#aab3c4;margin:12px 0 0}
+.studio-home{width:100%;margin-top:8px}
+body.studio-on.tune-open .studio-panel{display:none}
+body.studio-on.tune-open #studio{z-index:45}
+body.studio-on #tune{z-index:100}
+@media(max-width:760px){
+  .studio-bar{left:12px;right:12px;gap:5px}
+  #studio button{padding:8px 10px;font-size:12px}
+  .studio-actions{gap:5px}
+  .studio-panel{right:12px;left:12px;width:auto;top:auto;bottom:max(12px,env(safe-area-inset-bottom));max-height:45dvh;padding:14px}
+  .studio-layers{display:grid;grid-template-columns:1fr 1fr;gap:0 6px}
+}
+
 </style>
 </head>
 <body class="is-loading">
@@ -1373,6 +1412,7 @@ const Fab = (() => {
   /* Menu behind the red button: each entry flies the page to the part it tunes and opens its tools. */
   const goto = kind => {
     const el = document.querySelector('.fab'); el.classList.remove('peek');
+    if (kind === 'studio') { app.studio.open(); return; }
     if (kind === 'orbit') {
       if (app.detail.open) app.closeWorld();
       app.scroll.scrollTo(ORBIT_START, app.reduced);
@@ -1396,7 +1436,7 @@ const Fab = (() => {
     document.body.appendChild(el);
     const menu = document.createElement('nav');
     menu.className = 'fab-menu'; menu.setAttribute('aria-label', 'Tune a part');
-    menu.innerHTML = [['core', 'Cerebra'], ['orbit', 'Orbit'], ['world', 'Worlds']]
+    menu.innerHTML = [['core', 'Cerebra'], ['orbit', 'Orbit'], ['world', 'Worlds'], ['studio', 'Studio mode']]
       .map(([k, n]) => `<button type="button" data-fab-go="${k}">${n}</button>`).join('');
     el.prepend(menu);
     menu.querySelectorAll('[data-fab-go]').forEach(b => b.addEventListener('click', () => { el.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); goto(b.dataset.fabGo); }));
@@ -1761,7 +1801,7 @@ const WorldTune = (() => {
     /* ---- picking, turning and zooming the planet while the drawer is open ---- */
     const canvas = () => document.getElementById('gl');
     const pickAt = (x, y) => { const b = body(); const cv = canvas(); return b && cv && PlanetBody.camera ? b.pick(x, y, PlanetBody.camera, cv.getBoundingClientRect()) : null; };
-    const inUI = t => panel.contains(t) || toggle.contains(t) || (t.closest && t.closest('.hud a,.hud button,.picker,.rail'));
+    const inUI = t => panel.contains(t) || toggle.contains(t) || (t.closest && t.closest('.hud a,.hud button,.picker,.rail,#studio'));
     let down = null, pinch = null;
     addEventListener('pointerdown', e => {
       if (!isOpen() || inUI(e.target)) return;
@@ -1887,7 +1927,7 @@ const WorldTune = (() => {
     // Keep the drawer's own gestures away from the page's scroll and core interactions.
     ['wheel', 'touchmove'].forEach(t => panel.addEventListener(t, e => e.stopPropagation(), { passive: true }));
     // The toggle belongs to the perimeter and lattice sections.
-    const syncOn = () => { const on = !!activeSec(); document.body.classList.toggle('tune-on', on); if (!on && isOpen()) open(false); };
+    const syncOn = () => { const on = document.body.classList.contains('studio-on') || !!activeSec(); document.body.classList.toggle('tune-on', on); if (!on && isOpen()) open(false); };
     TUNE_SECTIONS.forEach(id => { const el = document.getElementById(id); if (el) new MutationObserver(syncOn).observe(el, { attributes: true, attributeFilter: ['class'] }); });
   };
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', wire) : setTimeout(wire);
@@ -5760,6 +5800,159 @@ const ORBIT_START = 3; // index of the orbit overview section
 /* ================================================================
    Application
 ================================================================ */
+/** A lightweight isolated studio. No extra WebGL passes or assets when closed. */
+class CoreStudio {
+  constructor(app) {
+    this.app = app; this.active = false; this.pending = false;
+    this.background = 'space'; this.gravity = true;
+    this.layers = { shells: true, rings: true, bands: true, particles: true, comets: true, energy: true, dust: true, glass: true };
+    this.x = 0; this.y = 0; this.vx = 0; this.vy = 0; this.drag = null;
+    this.bg = document.createElement('canvas'); this.bg.id = 'studio-bg'; this.bg.setAttribute('aria-hidden', 'true');
+    this.el = document.createElement('section'); this.el.id = 'studio'; this.el.setAttribute('aria-label', 'Cerebra studio');
+    const eye = '<svg class="studio-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg>';
+    const names = { shells: 'Shells', rings: 'Rings', bands: 'Metal bands', particles: 'Inner particles', comets: 'Comets', energy: 'Energy lines', dust: 'Dust', glass: 'Glass' };
+    this.el.innerHTML = `<div class="studio-bar"><button type="button" data-studio-exit>← Exit studio</button><div class="studio-actions"><button type="button" data-studio-tune>Tune core</button><button type="button" data-studio-tools aria-expanded="false" aria-controls="studio-tools">Studio tools</button></div></div>
+      <aside id="studio-tools" class="studio-panel" aria-label="Studio tools" hidden><h2>Your core, in focus.</h2>
+      <h3>Background</h3><select aria-label="Studio background"><option value="space">Space</option><option value="white">White</option><option value="studio">Studio light</option><option value="model">Model workspace</option></select>
+      <h3>Layers</h3><div class="studio-layers">${Object.keys(names).map(k => `<button type="button" class="studio-layer" data-studio-layer="${k}" aria-pressed="true" aria-label="Show ${names[k]}"><span>${names[k]}</span>${eye}</button>`).join('')}</div>
+      <h3>Motion</h3><label>Gravity<input type="checkbox" data-studio-gravity checked></label><button type="button" class="studio-home" data-studio-home>Recenter</button>
+      <p class="studio-note">Drag the core, then release to throw. Reduced motion stops momentum. Open Tune core → Save to export a picture.</p></aside>`;
+    document.body.append(this.bg, this.el);
+    this.panel = this.el.querySelector('.studio-panel');
+    this.el.querySelector('[data-studio-exit]').onclick = () => this.close();
+    this.el.querySelector('[data-studio-tools]').onclick = () => this.tools(this.panel.hidden);
+    this.el.querySelector('[data-studio-tune]').onclick = () => { this.tools(false); dispatchEvent(new Event('cerebra:tune')); };
+    this.el.querySelector('select').onchange = e => { this.background = e.target.value; this.paintBackground(); };
+    this.el.querySelector('[data-studio-gravity]').onchange = e => { this.gravity = e.target.checked; };
+    this.el.querySelector('[data-studio-home]').onclick = () => this.home();
+    this.el.querySelectorAll('[data-studio-layer]').forEach(b => b.onclick = () => { const k = b.dataset.studioLayer; this.layers[k] = !this.layers[k]; b.setAttribute('aria-pressed', String(this.layers[k])); });
+    const signal = app.ac.signal, canvas = app.stage.renderer.domElement;
+    canvas.addEventListener('pointerdown', e => {
+      if (!this.active || document.body.classList.contains('tune-open') || this.drag || e.button !== 0) return;
+      if (!app.hitCore(e.clientX, e.clientY)) return;
+      e.preventDefault(); canvas.setPointerCapture(e.pointerId);
+      this.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
+      this.vx = this.vy = 0;
+    }, { signal });
+    canvas.addEventListener('pointermove', e => {
+      const d = this.drag; if (!d || d.id !== e.pointerId) return;
+      const now = performance.now(), dt = Math.max(.008, (now - d.t) / 1000);
+      const sx = 2 * app.rig.halfWidth / app.stage.width, sy = 2 * app.rig.halfHeight / app.stage.height;
+      const dx = (e.clientX - d.x) * sx, dy = -(e.clientY - d.y) * sy;
+      this.x += dx; this.y += dy; this.vx = clamp(dx / dt, -10, 10); this.vy = clamp(dy / dt, -10, 10);
+      d.x = e.clientX; d.y = e.clientY; d.t = now;
+    }, { signal });
+    const release = (e, cancel = false) => {
+      if (!this.drag || e.pointerId !== this.drag.id) return;
+      if (cancel || app.reduced || performance.now() - this.drag.t > 120) this.vx = this.vy = 0;
+      this.drag = null;
+      if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+    };
+    canvas.addEventListener('pointerup', e => release(e), { signal });
+    canvas.addEventListener('pointercancel', e => release(e, true), { signal });
+    canvas.addEventListener('lostpointercapture', e => release(e, true), { signal });
+    addEventListener('blur', () => { this.drag = null; this.vx = this.vy = 0; }, { signal });
+    addEventListener('keydown', e => {
+      if (!this.active || e.key !== 'Escape' || document.body.classList.contains('tune-open')) return;
+      e.preventDefault(); e.stopImmediatePropagation(); if (!this.panel.hidden) this.tools(false); else this.close();
+    }, { signal, capture: true });
+    addEventListener('resize', () => { if (this.active) this.paintBackground(); }, { signal });
+  }
+  tools(on) { this.panel.hidden = !on; this.el.querySelector('[data-studio-tools]').setAttribute('aria-expanded', String(on)); }
+  home() { this.x = this.y = this.vx = this.vy = 0; this.app.core.planet.resetView(); }
+  open() {
+    const a = this.app;
+    if (this.active || this.pending || !a.worldsReady) return;
+    if (a.detail.busy) return;
+    if (a.detail.open) { this.pending = true; a.closeWorld(); return; }
+    this.active = true; this.home(); this.tools(false);
+    OrbitBuilder.open(false); WorldTune.open(false);
+    document.querySelector('[data-tune-close]').click();
+    this.saved = { y: scrollY, inert: [], visibility: new Map(), background: document.body.style.backgroundColor };
+    // Keep hidden page controls out of keyboard and accessibility navigation, too.
+    [...document.body.children].forEach(el => { if (![this.bg, this.el, document.getElementById('gl'), document.getElementById('tune')].includes(el) && el.tagName !== 'SCRIPT') { this.saved.inert.push([el, el.inert]); el.inert = true; } });
+    a.stage.scene.traverse(o => this.saved.visibility.set(o, o.visible));
+    document.documentElement.classList.add('studio-lock'); document.body.classList.add('studio-on');
+    this.paintBackground(); this.el.querySelector('[data-studio-exit]').focus();
+  }
+  close() {
+    if (!this.active) { this.pending = false; return; }
+    const a = this.app; this.active = false; this.drag = null;
+    document.querySelector('[data-tune-close]').click();
+    document.documentElement.classList.remove('studio-lock'); document.body.classList.remove('studio-on');
+    document.body.style.backgroundColor = this.saved.background;
+    this.saved.inert.forEach(([el, value]) => { el.inert = value; });
+    this.saved.visibility.forEach((v, o) => { o.visible = v; });
+    // Rings added through Tune during Studio did not exist in the entry snapshot.
+    a.core.planet.runners.forEach(r => { r.pivot.visible = true; });
+    scrollTo({ top: this.saved.y, behavior: 'instant' });
+    document.querySelector('.fab-btn').focus({ preventScroll: true });
+  }
+  paintBackground() {
+    this.bg.width = this.app.stage.width; this.bg.height = this.app.stage.height;
+    this.paint(this.bg.getContext('2d'), this.bg.width, this.bg.height);
+    document.body.style.backgroundColor = this.background === 'white' ? '#ffffff' : '#05070a';
+  }
+  paint(g, w, h) {
+    const mode = this.background;
+    g.fillStyle = mode === 'white' ? '#ffffff' : mode === 'model' ? '#333945' : '#05070a'; g.fillRect(0, 0, w, h);
+    if (mode === 'studio' || mode === 'model') {
+      const grd = g.createRadialGradient(w * .45, h * .32, 0, w * .5, h * .5, Math.max(w, h) * .7);
+      grd.addColorStop(0, mode === 'studio' ? '#70788a' : '#566171'); grd.addColorStop(1, '#111621');
+      g.fillStyle = grd; g.fillRect(0, 0, w, h);
+    }
+    if (mode === 'model') {
+      g.strokeStyle = '#c2cad91a'; g.lineWidth = Math.max(1, w / 1440);
+      const step = w / 24; g.beginPath();
+      for (let x = 0; x <= w; x += step) { g.moveTo(x, 0); g.lineTo(x, h); }
+      for (let y = 0; y <= h; y += step) { g.moveTo(0, y); g.lineTo(w, y); } g.stroke();
+    }
+  }
+  update(dt) {
+    const a = this.app;
+    if (this.pending && !a.detail.busy && a.fly.t < .001) { this.pending = false; this.open(); }
+    if (!this.active) return false;
+    a.G = 0; a.updateLens(dt); a.pointer.update(dt); a.simTime += dt * (a.reduced ? .25 : 1); a.intro = 1;
+    const cam = a.rig.camera, tune = document.getElementById('tune'), tuning = tune.dataset.open === 'true';
+    const portrait = a.stage.width < 760, hh = a.rig.halfHeight, hw = a.rig.halfWidth;
+    let x = 0, y = 0, scale = portrait ? .55 : .88;
+    if (tuning) {
+      if (portrait) { const sheet = tune.getBoundingClientRect().height / a.stage.height; y = sheet * hh; scale = Math.min(.55, (1 - sheet) * 1.25); }
+      else { x = (tune.dataset.side === 'right' ? -1 : 1) * tune.getBoundingClientRect().width / a.stage.width * hw; scale = .78; }
+    } else if (!this.panel.hidden) {
+      if (portrait) { const sheet = this.panel.getBoundingClientRect().height / a.stage.height; y = sheet * hh; scale = Math.min(.55, (1 - sheet) * 1.25); }
+      else x = -.25 * hw;
+    }
+    if (a.reduced || tuning) this.vx = this.vy = 0;
+    if (!this.drag && !a.reduced && !tuning) {
+      if (this.gravity) this.vy -= dt * 1.8;
+      this.x += this.vx * dt; this.y += this.vy * dt;
+      const friction = Math.exp(-dt * .65); this.vx *= friction; this.vy *= friction;
+    }
+    const r = 1.6 * scale * a.core.planet.zoom;
+    const maxX = Math.max(0, hw - r - .1), maxY = Math.max(0, hh - r - .3);
+    if (Math.abs(this.x + x) > maxX) { this.x = clamp(this.x + x, -maxX, maxX) - x; this.vx *= -.55; }
+    if (Math.abs(this.y + y) > maxY) { this.y = clamp(this.y + y, -maxY, maxY) - y; this.vy *= -.48; if (Math.abs(this.vy) < .15) this.vy = 0; }
+    cam.position.set(0, 0, a.rig.baseZ); cam.lookAt(0, 0, 0); cam.fov = 32; cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+    a.camRight.set(1, 0, 0); a.camUp.set(0, 1, 0);
+    a.core.update(dt, a.simTime, { expand:0,separation:0,stack:0,morph:0,flatten:0,intro:1,motion:a.reduced?0:1,reduced:a.reduced,focus:0,focusLayer:-1,rippleT:-1,pointer:a.pointerWorld,pull:0,x:x+this.x,y:y+this.y,scale,G:0,rotX:0,rotY:0,sun:0,spinVel:a.reduced?0:.07,pixelRatio:a.stage.pixelRatio,sizeScale:a.rig.baseZ/7.2 });
+    const c = a.core, p = c.planet, L = this.layers;
+    c.shells.group.visible = L.shells; c.rings.group.visible = L.rings;
+    p.runners.forEach(r => { r.pivot.visible = L.rings; });
+    p.bandPivot.visible = p.bandPivot.visible && L.bands; p.extraBands.forEach(e => { e.pv.visible = e.pv.visible && L.bands; });
+    c.field.points.visible = L.particles; p.swarm.visible = p.swarm.visible && L.particles;
+    p.comets.visible = p.comets.visible && L.comets; c.energy.group.visible = L.energy;
+    p.haze.visible = L.dust; p.debris.visible = p.debris.visible && L.dust;
+    p.outer.mesh.visible = p.outer.show && L.glass; p.inner.mesh.visible = p.inner.show && L.glass;
+    c.orbit.group.visible = false; p.axis.visible = false;
+    a.orrery.group.visible = this.background === 'space';
+    if (a.orrery.group.visible) { a.orrery.group.children.forEach(o => { o.visible = o === a.orrery.stars.points; }); }
+    a.stage.scene.updateMatrixWorld(); a.stage.render(cam);
+    if (a.cap) a.captureStep();
+    return true;
+  }
+}
+
 class App {
   constructor() {
     this.root = document.documentElement;
@@ -5916,6 +6109,7 @@ class App {
     this.orrery.creations = new Creations(this.orrery);
     WorldTune.wire(this);
     OrbitBuilder.wire(this); Fab.wire(this); Settings.wire(this);
+    this.studio = new CoreStudio(this);
   }
 
   /* Compile every program and upload every buffer and texture while the loader is still up,
@@ -6202,6 +6396,7 @@ class App {
 
     // Tap on empty space: worlds first, then the core.
     addEventListener('pointerdown', e => {
+      if (this.studio && this.studio.active) return;
       this.down = { x: e.clientX, y: e.clientY, t: performance.now() };
       // A tap on a world sends a ripple from that point; the tap still opens or turns the world as before.
       if (!(e.target.closest && e.target.closest('a,button,input,label,.tune,.hud,.rail,.picker,.fab,.d-nav,.specs'))) {
@@ -6215,6 +6410,7 @@ class App {
     const endDrag = () => { this.drag = null; };
     addEventListener('pointercancel', endDrag, { signal });
     addEventListener('pointerup', e => {
+      if (this.studio && this.studio.active) return;
       this.rippleDown = 0;
       const d = this.down; this.down = null;
       const dragged = this.drag && this.drag.moved; endDrag();
@@ -6287,7 +6483,7 @@ class App {
     const cam = this.rig.camera, g = this.core.group;
     const c = this.tmpA.copy(g.position).project(cam);
     const sx = (c.x * 0.5 + 0.5) * this.stage.width, sy = (-c.y * 0.5 + 0.5) * this.stage.height;
-    const R = (layerRadius(4, this.expandSpring.value, this.stateNow ? this.stateNow.sep : 0) + 0.06) * g.scale.x;
+    const R = (layerRadius(4, this.studio && this.studio.active ? 0 : this.expandSpring.value, this.studio && this.studio.active ? 0 : this.stateNow ? this.stateNow.sep : 0) + 0.06) * g.scale.x;
     const e = this.tmpB.copy(g.position).addScaledVector(this.camRight, R).project(cam);
     const r = Math.hypot((e.x * 0.5 + 0.5) * this.stage.width - sx, (-e.y * 0.5 + 0.5) * this.stage.height - sy);
     this.coreScreen.x = sx; this.coreScreen.y = sy; this.coreScreen.r = r;
@@ -6455,6 +6651,7 @@ class App {
     dt = Math.min(dt, 0.05);
     this.clock += dt;
     this.fps = damp(this.fps, 1 / dt, 2, dt);
+    if (this.studio && this.studio.update(dt)) return;
     if (this.explorer && this.explorer.own(dt)) return;
 
     const reduced = this.reduced, P = this.pointer, cam = this.rig.camera;
@@ -6683,7 +6880,9 @@ class App {
     const g = out.getContext('2d', { willReadFrequently: true });
     const opaque = C.o.type === 'image/jpeg' || !C.o.transparent;
     if (opaque) {
-      g.fillStyle = getComputedStyle(document.body).backgroundColor || '#05070a'; g.fillRect(0, 0, out.width, out.height); g.drawImage(src, 0, 0);
+      if (this.studio && this.studio.active) this.studio.paint(g, out.width, out.height);
+      else { g.fillStyle = getComputedStyle(document.body).backgroundColor || '#05070a'; g.fillRect(0, 0, out.width, out.height); }
+      g.drawImage(src, 0, 0);
     } else {
       // Solid parts keep their own alpha, but the additive light has almost none, so it would vanish on another
       // background. Coverage is therefore the larger of the real alpha and the brightness over black.
