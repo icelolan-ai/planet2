@@ -554,7 +554,9 @@ body.is-exploring .fab,body.tune-open .fab,body.wtune-open .fab,body.obuild-open
 .fab-ico i:nth-child(1){--k:12px}.fab-ico i:nth-child(2){--k:3px}.fab-ico i:nth-child(3){--k:9px}
 .fab:hover .fab-lbl,.fab.peek .fab-lbl,.fab-btn:focus-visible .fab-lbl{max-width:260px;padding:0 16px 0 22px}
 /* section menu: always-on chips stacked above the button */
-.fab-menu{position:absolute;right:0;bottom:calc(100% + 10px);display:grid;gap:6px;justify-items:end}
+.fab-menu{position:absolute;right:0;bottom:calc(100% + 10px);display:grid;gap:6px;justify-items:end;opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .25s,transform .35s var(--ease-out),visibility 0s .35s}
+.fab.open .fab-menu{opacity:1;visibility:visible;transform:none;transition:opacity .25s,transform .35s var(--ease-out),visibility 0s}
+.fab-menu button{min-width:120px;text-align:right}
 .fab-menu button{height:30px;padding:0 14px;border:1px solid var(--line-2);background:rgba(8,10,14,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
   font:600 10.5px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);transition:border-color .3s,color .3s,background-color .3s}
 .fab-menu button:hover,.fab-menu button:focus-visible{border-color:var(--val);color:var(--ink)}
@@ -1332,20 +1334,7 @@ const Fab = (() => {
     if (i === ORBIT_START) return { kind: 'orbit', label: 'Build the orbit' };
     return { kind: 'core', label: 'Tune the core' };
   };
-  const go = () => {
-    const c = ctx(); if (!c) return;
-    const el = document.querySelector('.fab'); el.classList.remove('peek');
-    if (c.kind === 'world') {
-      if (!app.detail.open || app.detail.index !== c.k) app.openWorld(c.k);
-      setTimeout(() => WorldTune.open(true), app.detail.busy ? 1400 : 60);
-    } else if (c.kind === 'orbit') OrbitBuilder.open(true);
-    else {
-      const on = ['identity', 'capabilities'].some(id => document.getElementById(id).classList.contains('is-active'));
-      if (!on) app.scroll.jumpTo(1);
-      setTimeout(() => dispatchEvent(new Event('cerebra:tune')), on ? 0 : 700);
-    }
-  };
-  /* Section menu above the button: each entry flies the page to the part it tunes and opens its tools. */
+  /* Menu behind the red button: each entry flies the page to the part it tunes and opens its tools. */
   const goto = kind => {
     const el = document.querySelector('.fab'); el.classList.remove('peek');
     if (kind === 'orbit') {
@@ -1371,23 +1360,20 @@ const Fab = (() => {
     document.body.appendChild(el);
     const menu = document.createElement('nav');
     menu.className = 'fab-menu'; menu.setAttribute('aria-label', 'Tune a part');
-    menu.innerHTML = [['core', 'Cerebra'], ['orbit', 'Orbit'], ['world', 'Worlds'], ['fx', 'Effects']]
+    menu.innerHTML = [['core', 'Cerebra'], ['orbit', 'Orbit'], ['world', 'Worlds']]
       .map(([k, n]) => `<button type="button" data-fab-go="${k}">${n}</button>`).join('');
     el.prepend(menu);
-    menu.querySelectorAll('[data-fab-go]').forEach(b => b.addEventListener('click', () => goto(b.dataset.fabGo)));
+    menu.querySelectorAll('[data-fab-go]').forEach(b => b.addEventListener('click', () => { el.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); goto(b.dataset.fabGo); }));
     const btn = el.querySelector('.fab-btn'), lbl = el.querySelector('[data-fab-lbl]');
     document.addEventListener('pointerdown', e => { if (!el.contains(e.target)) el.classList.remove('peek'); }, true);
     const sync = () => { const c = ctx(); if (c) { lbl.textContent = c.label; btn.setAttribute('aria-label', c.label); menu.querySelectorAll('[data-fab-go]').forEach(b => b.classList.toggle('here', b.dataset.fabGo === c.kind)); } };
     setInterval(sync, 400); sync();
     // Touch: the first tap opens the tray, the second one goes.
-    btn.addEventListener('click', e => {
-      if (matchMedia('(hover: none)').matches) {
-        const now = performance.now();
-        if (!el.classList.contains('peek')) { el.classList.add('peek'); el._peekAt = now; sync(); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('peek'), 9000); return; }
-        if (now - el._peekAt < 300) return; // the same tap delivered twice
-      }
-      go();
-    });
+    // The red button opens the menu of parts to tune; picking one flies there and opens its tools.
+    btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');
+    btn.addEventListener('click', () => { const on = !el.classList.contains('open'); el.classList.toggle('open', on); btn.setAttribute('aria-expanded', String(on)); sync(); });
+    document.addEventListener('pointerdown', e => { if (!el.contains(e.target)) { el.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); } }, true);
+    addEventListener('keydown', e => { if (e.key === 'Escape') { el.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); } });
   };
   return { wire };
 })();
