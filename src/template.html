@@ -4650,13 +4650,13 @@ const CREATION_TYPES = {
 const PLANET_NAMES = ['Vesper', 'Oriel', 'Nyx', 'Halcyon', 'Ember', 'Solace', 'Cinder', 'Lumen', 'Morrow', 'Quill', 'Rune', 'Thalia'];
 
 class Creations {
-  constructor(orrery) {
+  constructor(orrery, options = {}) {
     this.orrery = orrery;
     this.group = new THREE.Group();
     orrery.group.add(this.group);
     this.items = [];
     this.v = new THREE.Vector3();
-    this.KEY = 'cerebra.creations.v1';
+    this.KEY = options.persistent === false ? null : 'cerebra.creations.v1';
     // Snap preview ring.
     this.preview = new THREE.Line(circleGeometry(1, 256), new THREE.LineBasicMaterial({ color: 0xff4655, transparent: true, opacity: 0, depthWrite: false }));
     this.preview.rotation.x = Math.PI / 2; this.preview.visible = false;
@@ -4789,9 +4789,11 @@ class Creations {
     it.geoms.forEach(g => g.dispose()); it.mats.forEach(m => m.dispose());
   }
   save() {
+    if (!this.KEY) return;
     try { localStorage.setItem(this.KEY, JSON.stringify(this.items.map(({ id, type, r, a0, params }) => ({ id, type, r, a0, params })))); } catch (e) {}
   }
   load() {
+    if (!this.KEY) return;
     let data = []; try { data = JSON.parse(localStorage.getItem(this.KEY) || '[]') || []; } catch (e) {}
     data.forEach(d => { const it = this.add(d.type, d.r, d.a0, d.params, true); if (it) it.id = d.id; });
   }
@@ -4828,7 +4830,7 @@ class Creations {
         const lx = Math.cos(E) * O.a - O.c, lz = Math.sin(E) * O.b;
         const ca = Math.cos(-it.a0), sa = Math.sin(-it.a0);
         const x = lx * ca + lz * sa, z = -lx * sa + lz * ca;
-        const d = Math.hypot(x, z), ux = x / d, uz = z / d, len = Math.min(9, 26 / d) * it.params.size;
+        const d = Math.hypot(x, z), ux = x / d, uz = z / d, len = Math.min(9, 26 / d) * it.params.size * (it.params.tail || 1);
         const T = it.tail;
         for (let i = 0; i < T.n; i++) {
           const q = i / T.n, s = T.seed[i], spread = q * 0.35 * len * 0.25;
@@ -4844,6 +4846,83 @@ class Creations {
 }
 
 /** The system: owns the worlds, the dust, the stars and the camera poses that frame them. */
+/** Default orbital ambience, independent of the visitor's placed objects. */
+class OrbitEnvironment {
+  constructor(app) {
+    this.app=app;this.time=0;this.orbit=app.orrery;
+    this.defaults={dust:1,clouds:2,comets:2,meteors:12,speed:1,tail:1,size:1,spread:2.4,color:'#b7c9de'};
+    this.settings={...this.defaults};
+    try{const v=JSON.parse(localStorage.getItem('cerebra.environment.v1')||'{}');this.assign(v);}catch(e){}
+    this.creations=new Creations(this.orbit,{persistent:false});
+    const g=new THREE.IcosahedronGeometry(1,1),p=g.attributes.position;
+    for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),k=.82+.18*Math.sin(x*13+y*17+z*23);p.setXYZ(i,x*k,y*k,z*k);}g.computeVertexNormals();
+    const m=new THREE.ShaderMaterial({transparent:true,uniforms:{uAlpha:{value:0},uColor:{value:new THREE.Color('#a89b8c')}},
+      vertexShader:`varying vec3 vN,vW;void main(){vec4 w=modelMatrix*instanceMatrix*vec4(position,1.);vW=w.xyz;vN=normalize(mat3(modelMatrix*instanceMatrix)*normal);gl_Position=projectionMatrix*viewMatrix*w;}`,
+      fragmentShader:`uniform float uAlpha;uniform vec3 uColor;varying vec3 vN,vW;void main(){float l=.18+.82*max(0.,dot(normalize(vN),normalize(-vW)));gl_FragColor=vec4(uColor*l,uAlpha);}`});
+    this.rocks=new THREE.InstancedMesh(g,m,40);this.rocks.frustumCulled=false;this.orbit.group.add(this.rocks);
+    this.dummy=new THREE.Object3D();this.build();this.wire();
+  }
+  assign(values){
+    if(!values||typeof values!=='object')return;
+    const ranges={dust:[0,2],clouds:[0,4],comets:[0,6],meteors:[0,40],speed:[0,3],tail:[.2,3],size:[.3,2],spread:[.5,4]};
+    for(const [k,[lo,hi]]of Object.entries(ranges))if(Number.isFinite(values[k]))this.settings[k]=clamp(values[k],lo,hi);
+    for(const k of ['clouds','comets','meteors'])this.settings[k]=Math.round(this.settings[k]);
+    if(typeof values.color==='string'&&/^#[0-9a-f]{6}$/i.test(values.color))this.settings.color=values.color;
+  }
+  build(){
+    const s=this.settings,C=this.creations;C.clear();
+    for(let i=0;i<s.clouds;i++)C.add('cloud',9+i*3,i*2.4,{color:s.color,amount:.55,spread:s.spread},true);
+    for(let i=0;i<s.comets;i++){const it=C.add('comet',3.2+i*.7,i*2.1,{color:s.color,size:s.size,ecc:.38,tail:s.tail},true);it.orb.M=.25+i*.9;}
+    // Environment objects are already present at entry; only their orbital reveal fades.
+    C.items.forEach(it=>{it.t=1;});this.rocks.count=s.meteors;
+    this.rocks.material.uniforms.uColor.value.set(s.color);
+  }
+  change(values,rebuild=true){this.assign(values);if(rebuild)this.build();try{localStorage.setItem('cerebra.environment.v1',JSON.stringify(this.settings));}catch(e){}this.sync();}
+  wire(){
+    const panel=document.getElementById('obuild'),header=panel.querySelector('header');
+    const build=document.createElement('div');build.dataset.orbitPane='build';
+    while(header.nextSibling)build.appendChild(header.nextSibling);panel.append(build);
+    const tabs=document.createElement('nav');tabs.className='tune-tabs';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','Orbit tools');
+    tabs.innerHTML='<button type="button" role="tab" data-orbit-tab="build" aria-selected="true">Build the orbit</button><button type="button" role="tab" data-orbit-tab="atmosphere" aria-selected="false">Atmosphere</button>';header.after(tabs);
+    const p=document.createElement('div');p.dataset.orbitPane='atmosphere';p.hidden=true;
+    const row=(k,label,min,max,step)=>`<label class="tune-row"><span>${label}</span><input aria-label="${label}" data-env="${k}" type="range" min="${min}" max="${max}" step="${step}"><b data-out></b></label>`;
+    p.innerHTML='<p class="tune-sub">Solar ambience</p>'+row('dust','Cosmic dust',0,2,.05)+row('clouds','Interstellar clouds',0,4,1)+row('spread','Cloud spread',.5,4,.1)+row('comets','Comets',0,6,1)+row('meteors','Meteoroids',0,40,1)+
+      '<div class="tune-btns"><button type="button" class="tune-btn" data-env-add="clouds">+ Cloud</button><button type="button" class="tune-btn" data-env-add="comets">+ Comet</button><button type="button" class="tune-btn" data-env-add="meteors">+ Rock</button></div>'+row('speed','Ambient orbit speed',0,3,.05)+row('tail','Comet tail',.2,3,.1)+row('size','Comet and rock size',.3,2,.1)+
+      '<label class="tune-row"><span>Ambient colour</span><input type="color" data-env="color" aria-label="Ambient colour"></label><p class="tune-sub">Floating dots</p><label class="tune-row"><span>Count</span><input type="range" min="0" max="240" step="1" value="80" data-ambient-count aria-label="Floating dots"><b data-out>80</b></label><button type="button" class="tune-reset" data-env-reset>Reset ambience</button><p class="tune-hint">These defaults are separate from the objects you place in Build the orbit.</p>';
+    panel.append(p);this.panel=p;
+    tabs.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+      // Disarm placement before switching; tapping a control must never place an object.
+      OrbitBuilder.open(false);OrbitBuilder.open(true);
+      tabs.querySelectorAll('button').forEach(x=>x.setAttribute('aria-selected',String(x===b)));
+      panel.querySelectorAll('[data-orbit-pane]').forEach(x=>{x.hidden=x.dataset.orbitPane!==b.dataset.orbitTab;});
+    });
+    p.querySelectorAll('[data-env]').forEach(el=>{
+      el.addEventListener('input',()=>{const o=el.parentElement.querySelector('[data-out]');if(o)o.textContent=el.value;});
+      el.addEventListener('change',()=>this.change({[el.dataset.env]:el.type==='color'?el.value:+el.value},el.dataset.env!=='speed'&&el.dataset.env!=='dust'));
+    });
+    p.querySelectorAll('[data-env-add]').forEach(b=>b.onclick=()=>this.change({[b.dataset.envAdd]:this.settings[b.dataset.envAdd]+1}));
+    p.querySelector('[data-env-reset]').onclick=()=>this.change(this.defaults);this.sync();
+  }
+  sync(){if(!this.panel)return;this.panel.querySelectorAll('[data-env]').forEach(el=>{el.value=this.settings[el.dataset.env];const o=el.parentElement.querySelector('[data-out]');if(o)o.textContent=String(this.settings[el.dataset.env]);});}
+  update(dt,t,f){
+    const s=this.settings,o=this.orbit,visible=f.G>.002&&!this.app.detail.open;
+    this.creations.group.visible=this.rocks.visible=visible;
+    if(!visible)return;
+    const step=f.reduced?0:dt*s.speed;this.time+=step;
+    this.creations.update(step,this.time,{...f,orbitVis:0});
+    o.dust.material.uniforms.uOpacity.value*=s.dust;
+    o.cloud.material.uniforms.uOpacity.value*=s.clouds===0?0:Math.min(1.5,s.clouds*.5);
+    this.rocks.material.uniforms.uAlpha.value=f.G;
+    for(let i=0;i<this.rocks.count;i++){
+      const radius=7+(i*2.73)%12,angle=i*2.399+this.time*.45/Math.sqrt(radius),d=this.dummy;
+      d.position.set(Math.cos(angle)*radius,Math.sin(i*1.7)*.5,Math.sin(angle)*radius);d.rotation.set(i+this.time*.11,i*2+this.time*.07,i*.4);
+      const z=(.075+(i%5)*.027)*s.size;d.scale.set(z,z*.7,z*1.3);d.updateMatrix();this.rocks.setMatrixAt(i,d.matrix);
+    }
+    this.rocks.instanceMatrix.needsUpdate=true;
+  }
+  dispose(){this.creations.clear();this.creations.preview.geometry.dispose();this.creations.preview.material.dispose();this.orbit.group.remove(this.creations.group,this.rocks);this.rocks.geometry.dispose();this.rocks.material.dispose();}
+}
+
 class Orrery {
   constructor(shared, opts) {
     this.shared = shared; this.opts = opts;
@@ -4876,6 +4955,7 @@ class Orrery {
     cu.uTime.value = t; cu.uPixelRatio.value = f.pixelRatio; cu.uOpacity.value = 0.35 + 0.65 * f.G;
     this.remnant.update(dt, t, f);
     if (this.creations) this.creations.update(dt, t, f);
+    if (this.environment) this.environment.update(dt, t, f);
   }
 
   /* Camera poses. `out` is {pos, look}. */
@@ -6156,6 +6236,7 @@ class App {
     WorldTune.wire(this);
     OrbitBuilder.wire(this); Fab.wire(this); Settings.wire(this);
     this.studio = new CoreStudio(this);
+    this.orrery.environment = new OrbitEnvironment(this);
     this.ambient = new AmbientDots(this);
   }
 
@@ -7066,7 +7147,7 @@ class App {
     if (this.ro) this.ro.disconnect();
     if (this.labels) this.labels.dispose();
     if (this.core) { this.stage.scene.remove(this.core.group); this.core.dispose(); }
-    if (this.orrery) { this.stage.scene.remove(this.orrery.group); this.orrery.dispose(); }
+    if (this.orrery) { if (this.orrery.environment) this.orrery.environment.dispose(); this.stage.scene.remove(this.orrery.group); this.orrery.dispose(); }
     if (this.ambient) this.ambient.dispose();
     if (this.stage) this.stage.dispose();
     this.sound.dispose();
