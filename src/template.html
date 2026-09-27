@@ -935,6 +935,22 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
         <button type="button" style="--c:#ffc94d" data-c="#ffc94d" aria-label="Gold"></button>
         <label class="tune-pick" aria-label="Custom inner particle colour"><input type="color" value="#cfe3ff" data-t-swcolor></label>
       </div></div>
+    <p class="tune-sub">Comets</p>
+    <label class="tune-row"><span>Count</span><input type="range" min="0" max="40" step="1" value="4" data-t-cm-n><b data-out>4</b></label>
+    <label class="tune-row"><span>Tail length</span><input type="range" min="0.1" max="3" step="0.05" value="1" data-t-cm-tail><b data-out>1.0x</b></label>
+    <label class="tune-row"><span>Speed</span><input type="range" min="0.1" max="4" step="0.05" value="1" data-t-cm-speed><b data-out>1.0x</b></label>
+    <label class="tune-row"><span>Size</span><input type="range" min="0.3" max="3" step="0.05" value="1" data-t-cm-size><b data-out>1.0x</b></label>
+    <label class="tune-row"><span>Plunge</span><input type="range" min="0.3" max="2.5" step="0.05" value="1" data-t-cm-dive><b data-out>1.0x</b></label>
+    <div class="tune-row"><span>Colour</span>
+      <div class="tune-sw" role="group" aria-label="Comet colour" data-t-cmsw>
+        <button type="button" style="--c:#9fd4ff" data-c="#9fd4ff" aria-label="Ice blue" aria-pressed="true"></button>
+        <button type="button" style="--c:#ffffff" data-c="#ffffff" aria-label="White"></button>
+        <button type="button" style="--c:#ff4655" data-c="#ff4655" aria-label="Red"></button>
+        <button type="button" style="--c:#b44cff" data-c="#b44cff" aria-label="Purple"></button>
+        <button type="button" style="--c:#ffc94d" data-c="#ffc94d" aria-label="Gold"></button>
+        <label class="tune-pick" aria-label="Custom comet colour"><input type="color" value="#9fd4ff" data-t-cmcolor></label>
+      </div></div>
+    <p class="tune-hint">Comets fall in on long ellipses, whip round the core (through the glass when Plunge is low) and fly back out.</p>
     <div class="tune-row"><span>Inner orb</span><div class="tune-seg" data-t-inner><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
     <p class="tune-sub">Dust &amp; flares</p>
     <label class="tune-row"><span>Dust</span><input type="range" min="0" max="3" step="0.05" value="1" data-t-haze><b data-out>100%</b></label>
@@ -1584,6 +1600,12 @@ const WorldTune = (() => {
     const bands = range('[data-t-bands]', v => call('setBandCount', v), v => String(Math.round(v)));
     const swarm = range('[data-t-swarm]', v => call('setSwarm', v, null, null), pct);
     const swsize = range('[data-t-swsize]', v => call('setSwarm', null, v, null), times);
+    const intf = v => String(Math.round(v));
+    const cmN = range('[data-t-cm-n]', v => call('setComets', { n: v }), intf);
+    const cmTail = range('[data-t-cm-tail]', v => call('setComets', { tail: v }), times);
+    const cmSpeed = range('[data-t-cm-speed]', v => call('setComets', { speed: v }), times);
+    const cmSize = range('[data-t-cm-size]', v => call('setComets', { size: v }), times);
+    const cmDive = range('[data-t-cm-dive]', v => call('setComets', { dive: v }), times);
     const clar = range('[data-t-clarity]', v => call('setGlass', v, null), times);
     const rim = range('[data-t-rim]', v => call('setGlass', null, v), v => v.toFixed(2));
     const haze = range('[data-t-haze]', v => call('setHaze', v), pct);
@@ -1616,6 +1638,7 @@ const WorldTune = (() => {
     const picker = q('[data-t-color]');
     const neon = swatch('[data-t-sw]', hex => call('setNeon', hex), picker);
     const swarmC = swatch('[data-t-swsw]', hex => call('setSwarm', null, null, hex), q('[data-t-swcolor]'));
+    const cometC = swatch('[data-t-cmsw]', hex => call('setComets', { color: hex }), q('[data-t-cmcolor]'));
     const flareC = swatch('[data-t-fsw]', hex => call('setFlareColor', hex), q('[data-t-fcolor]'));
     const metal = swatch('[data-t-metal]', hex => call('setMetal', hex));
     neon.set('#b44cff'); metal.set('#c9ccd6');
@@ -1641,8 +1664,8 @@ const WorldTune = (() => {
     q('[data-t-view]').addEventListener('click', () => { call('resetView'); setRange(zoom, 1, v => v.toFixed(2) + 'x'); });
     const resetUI = () => {
       [[dens, 1, pct], [spd, 1, times], [thick, 1, times], [clar, 1, times], [rim, 0.55, v => v.toFixed(2)], [haze, 1, pct],
-       [frate, 1, times], [famt, 1, times], [bands, 1, v => String(Math.round(v))], [swarm, 1, pct], [swsize, 1, times], [ptrs, 1, times], [gain, 1, times], [zoom, 1, v => v.toFixed(2) + 'x']].forEach(([el, v, f]) => setRange(el, v, f));
-      dir.set(1); band.set(1); inner.set(1); ptr.set(0); shape.set(0); setTheme('nebula'); neon.set('#b44cff'); flareC.set('#ffffff'); swarmC.set('#cfe3ff');
+       [frate, 1, times], [famt, 1, times], [bands, 1, v => String(Math.round(v))], [swarm, 1, pct], [swsize, 1, times], [cmN, 4, intf], [cmTail, 1, times], [cmSpeed, 1, times], [cmSize, 1, times], [cmDive, 1, times], [ptrs, 1, times], [gain, 1, times], [zoom, 1, v => v.toFixed(2) + 'x']].forEach(([el, v, f]) => setRange(el, v, f));
+      dir.set(1); band.set(1); inner.set(1); ptr.set(0); shape.set(0); setTheme('nebula'); neon.set('#b44cff'); flareC.set('#ffffff'); swarmC.set('#cfe3ff'); cometC.set('#9fd4ff');
       const L = LENS_DEFAULTS(); Object.keys(L).forEach(k => { LENS_U[k].value = L[k]; });
       setRange(aberr, L.uLensAberr, f3); setRange(blur, L.uLensBlur, f2); setRange(bloom, L.uLensBloom, f2); lens.set(1);
     };
@@ -1750,7 +1773,7 @@ const WorldTune = (() => {
     function snapshot() {
       const b = body(); if (!b) return null;
       return { density: b.density, speed: b.speed, dir: b.dir, shape: b.shape, neon: hex(b.uNeon.value), theme: b.theme || 'nebula',
-        rings: b.ringCount, bands: b.bandCount, swarm: b.swarmAmt, swsize: b.swarmMat.uniforms.uSize.value, swcolor: hex(b.swarmMat.uniforms.uColor.value), band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
+        rings: b.ringCount, comets: b.cometState(), bands: b.bandCount, swarm: b.swarmAmt, swsize: b.swarmMat.uniforms.uSize.value, swcolor: hex(b.swarmMat.uniforms.uColor.value), band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
         clarity: +clar.value, rim: +rim.value, inner: b.inner.show, haze: b.hazeDensity, frate: b.uFlareRate.value, famt: b.uFlareAmt.value, fcolor: '#' + b.uFlareColor.value.getHexString(),
         ptr: b.ptrMode, ptrs: b.ptrStrength,
         lens: LENS_U.uLensOn.value, aberr: LENS_U.uLensAberr.value, blur: LENS_U.uLensBlur.value, bloom: LENS_U.uLensBloom.value };
@@ -1767,6 +1790,7 @@ const WorldTune = (() => {
       b.setShape(s.shape); shape.set(s.shape);
       b.setRingCount(s.rings); syncRings();
       b.setBand(s.band, s.thick); band.set(s.band ? 1 : 0); setRange(thick, s.thick, times);
+      if (s.comets) { const c = s.comets; b.setComets(c); setRange(cmN, c.n, intf); setRange(cmTail, c.tail, times); setRange(cmSpeed, c.speed, times); setRange(cmSize, c.size, times); setRange(cmDive, c.dive, times); cometC.set(c.color); }
       if (s.bands) { b.setBandCount(s.bands); setRange(bands, s.bands, v => String(Math.round(v))); }
       if (s.swarm != null) { b.setSwarm(s.swarm, s.swsize, s.swcolor); setRange(swarm, s.swarm, pct); setRange(swsize, s.swsize, times); swarmC.set(s.swcolor); }
       b.setGlass(s.clarity, s.rim); setRange(clar, s.clarity, times); setRange(rim, s.rim, v => v.toFixed(2));
@@ -3267,6 +3291,56 @@ class PlanetBody {
     this.swarmGeom.setDrawRange(0, SW / 4);
     this.group.add(this.swarm);
 
+    // Comets: long ellipses that dive at the core and swing back out. One point sprite per tail sample;
+    // the path is solved in the shader, so the count, tail and speed are just uniforms.
+    const CM = 40, TS = 34, cn = CM * TS;
+    const co = new Float32Array(cn * 4), cr = new Float32Array(cn * 3), ck = new Float32Array(cn);
+    for (let c = 0; c < CM; c++) {
+      const q = 0.55 + Math.random() * 1.1, e = 0.82 + Math.random() * 0.14, a = q / (1 - e);
+      const ph = Math.random() * 6.283, sj = 0.6 + Math.random() * 0.8, rx = (Math.random() - 0.5) * 2.6, rz = Math.random() * 6.283;
+      for (let k = 0; k < TS; k++) {
+        const i = c * TS + k;
+        co.set([a, e, ph, sj], i * 4); cr.set([rx, rz, c], i * 3); ck[i] = k / (TS - 1);
+      }
+    }
+    this.cometGeom = new THREE.BufferGeometry();
+    this.cometGeom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(cn * 3), 3));
+    this.cometGeom.setAttribute('aOrb', new THREE.BufferAttribute(co, 4));
+    this.cometGeom.setAttribute('aRot', new THREE.BufferAttribute(cr, 3));
+    this.cometGeom.setAttribute('aK', new THREE.BufferAttribute(ck, 1));
+    this.cometMat = new THREE.ShaderMaterial({
+      uniforms: { uT: { value: 0 }, uCount: { value: 4 }, uTail: { value: 1 }, uSize: { value: 1 }, uDive: { value: 1 },
+        uColor: { value: new THREE.Color('#9fd4ff') }, uOpacity: { value: 0 }, uPixelRatio: { value: 1 } },
+      vertexShader: `uniform float uT, uCount, uTail, uSize, uDive, uPixelRatio; attribute vec4 aOrb; attribute vec3 aRot; attribute float aK;
+        varying float vA, vK;
+        void main(){
+          vK = aK;
+          if (aRot.z >= uCount) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); gl_PointSize = 0.0; vA = 0.0; return; }
+          float e = aOrb.y, a = aOrb.x * uDive;
+          // mean anomaly -> eccentric anomaly (a few Newton steps) -> true anomaly, so comets race past the core
+          float M = mod(aOrb.z + uT * aOrb.w * 0.6 / pow(a, 1.5) - aK * uTail * 0.35 / pow(a, 1.5), 6.2831853) - 3.14159265;
+          float E = M; for (int i = 0; i < 4; i++) E -= (E - e * sin(E) - M) / (1.0 - e * cos(E));
+          float th = 2.0 * atan(sqrt((1.0 + e) / (1.0 - e)) * tan(E * 0.5));
+          float r = a * (1.0 - e * e) / (1.0 + e * cos(th));
+          vec3 p = vec3(r * cos(th), 0.0, r * sin(th));
+          float cx = cos(aRot.x), sx = sin(aRot.x), cz = cos(aRot.y), sz = sin(aRot.y);
+          p = vec3(p.x, p.y * cx - p.z * sx, p.y * sx + p.z * cx);
+          p = vec3(p.x * cz - p.y * sz, p.x * sz + p.y * cz, p.z);
+          vec4 mv = modelViewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv;
+          // fade in from far away and out again, so they arrive from and leave for deep space
+          vA = pow(1.0 - aK, 1.6) * (1.0 - smoothstep(4.0, 7.0, r));
+          gl_PointSize = clamp(uSize * (1.6 + 7.0 * pow(1.0 - aK, 3.0)) * uPixelRatio * (9.0 / -mv.z), 0.0, 28.0 * uPixelRatio);
+        }`,
+      fragmentShader: `uniform vec3 uColor; uniform float uOpacity; varying float vA, vK;
+        void main(){ float d = length(gl_PointCoord - 0.5); if (d > 0.5) discard; float g = pow(1.0 - d * 2.0, 2.0);
+          vec3 c = mix(vec3(1.0), uColor, smoothstep(0.0, 0.25, vK));
+          gl_FragColor = vec4(c * (1.0 + g * 1.5), min(1.0, g * vA * uOpacity * 1.8)); }`,
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+    });
+    this.comets = new THREE.Points(this.cometGeom, this.cometMat);
+    this.comets.frustumCulled = false; this.cometSpeed = 1; this.cometT = 0;
+    this.group.add(this.comets);
+
     // Loose debris drifting around the shell.
     const nD = 70;
     this.debris = new THREE.InstancedMesh(box, this.blockMat, nD);
@@ -3466,6 +3540,16 @@ class PlanetBody {
     }
     this.extraBands.forEach((e, i) => { e.pv.visible = i < n - 1; });
   }
+  setComets(o) {
+    const u = this.cometMat.uniforms;
+    if (o.n != null) u.uCount.value = clamp(Math.round(o.n), 0, 40);
+    if (o.tail != null) u.uTail.value = o.tail;
+    if (o.speed != null) this.cometSpeed = o.speed;
+    if (o.size != null) u.uSize.value = o.size;
+    if (o.dive != null) u.uDive.value = o.dive;
+    if (o.color) u.uColor.value.set(o.color);
+  }
+  cometState() { const u = this.cometMat.uniforms; return { n: u.uCount.value, tail: u.uTail.value, speed: this.cometSpeed, size: u.uSize.value, dive: u.uDive.value, color: '#' + u.uColor.value.getHexString() }; }
   setSwarm(amt, size, hex) {
     if (amt != null) { this.swarmAmt = clamp(amt, 0, 4); this.swarmGeom.setDrawRange(0, Math.round(6000 * this.swarmAmt / 4)); }
     if (size != null) this.swarmMat.uniforms.uSize.value = size;
@@ -3508,7 +3592,7 @@ class PlanetBody {
     this.runners.forEach(rn => { rn.pivot.visible = true; rn.speedMul = 1; rn.c.rx0 != null && (rn.c.rx = rn.c.rx0, rn.c.rz = rn.c.rz0); });
     this.setTheme('nebula');
     this.setDensity(1); this.setHaze(1); this.setSpeed(1); this.setDirection(1); this.setShape(0);
-    this.setFlare(1, 1); this.setFlareColor("#ffffff"); this.setPointer(0, 1); this.setBand(true, 1); this.setBandCount(1); this.setSwarm(1, 1, '#cfe3ff'); this.setInner(true); this.setGlass(1, 0.55);
+    this.setFlare(1, 1); this.setFlareColor("#ffffff"); this.setPointer(0, 1); this.setBand(true, 1); this.setBandCount(1); this.setSwarm(1, 1, '#cfe3ff'); this.setComets({ n: 4, tail: 1, speed: 1, size: 1, dive: 1, color: '#9fd4ff' }); this.setInner(true); this.setGlass(1, 0.55);
     this.outer.show = true; this.resetView(); this.selected = null;
   }
 
@@ -3643,6 +3727,9 @@ class PlanetBody {
     });
     this.swarmMat.uniforms.uOpacity.value = on; this.swarmMat.uniforms.uPixelRatio.value = f.pixelRatio || 1;
     this.swarm.visible = on > 0.01 && this.swarmAmt > 0;
+    this.cometT += dt * this.cometSpeed * (0.25 + 0.75 * f.motion);
+    const cu = this.cometMat.uniforms; cu.uT.value = this.cometT; cu.uOpacity.value = on; cu.uPixelRatio.value = f.pixelRatio || 1;
+    this.comets.visible = on > 0.01 && cu.uCount.value > 0;
     this.debris.rotation.y -= dt * 0.03 * f.motion;
     this.debris.rotation.x += dt * 0.01 * f.motion;
     const sc = 1 + f.expand * 0.15;
@@ -3675,7 +3762,7 @@ class PlanetBody {
   dispose() {
     this.stopAudio();
     [this.outer, this.inner].forEach(it => { it.mesh.geometry.dispose(); it.mat.dispose(); });
-    this.swarmGeom.dispose(); this.swarmMat.dispose(); this.extraBands.forEach(e => e.m.dispose());
+    this.swarmGeom.dispose(); this.swarmMat.dispose(); this.cometGeom.dispose(); this.cometMat.dispose(); this.extraBands.forEach(e => e.m.dispose());
     this.box.dispose(); this.blockMat.dispose(); this.axis.geometry.dispose(); this.axisMat.dispose();
     this.runners.forEach(rn => { rn.lineMat.dispose(); rn.g.dispose(); rn.mat.dispose(); });
     this.lineGeomBase.dispose(); this.hazeGeom.dispose(); this.hazeMat.dispose();
