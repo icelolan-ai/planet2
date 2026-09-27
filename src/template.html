@@ -912,6 +912,7 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
     <p class="tune-sub">Metal band</p>
     <div class="tune-row"><span>Show</span><div class="tune-seg" data-t-band><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
     <label class="tune-row"><span>Thickness</span><input type="range" min="0.3" max="3" step="0.05" value="1" data-t-thick><b data-out>1.0x</b></label>
+    <label class="tune-row"><span>Bands</span><input type="range" min="1" max="6" step="1" value="1" data-t-bands><b data-out>1</b></label>
     <div class="tune-row"><span>Metal</span>
       <div class="tune-sw" data-t-metal>
         <button type="button" style="--c:#c9ccd6" data-c="#c9ccd6" aria-label="Silver"></button>
@@ -922,6 +923,18 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
     <p class="tune-sub">Glass</p>
     <label class="tune-row"><span>Clarity</span><input type="range" min="0" max="4" step="0.05" value="1" data-t-clarity><b data-out>1.0x</b></label>
     <label class="tune-row"><span>Rim glow</span><input type="range" min="0" max="2" step="0.05" value="0.55" data-t-rim><b data-out>0.55</b></label>
+    <p class="tune-sub">Inner particles</p>
+    <label class="tune-row"><span>Amount</span><input type="range" min="0" max="4" step="0.05" value="1" data-t-swarm><b data-out>100%</b></label>
+    <label class="tune-row"><span>Size</span><input type="range" min="0.3" max="3" step="0.05" value="1" data-t-swsize><b data-out>1.0x</b></label>
+    <div class="tune-row"><span>Colour</span>
+      <div class="tune-sw" role="group" aria-label="Inner particle colour" data-t-swsw>
+        <button type="button" style="--c:#cfe3ff" data-c="#cfe3ff" aria-label="Ice" aria-pressed="true"></button>
+        <button type="button" style="--c:#b44cff" data-c="#b44cff" aria-label="Purple"></button>
+        <button type="button" style="--c:#ff4655" data-c="#ff4655" aria-label="Red"></button>
+        <button type="button" style="--c:#3ff2ff" data-c="#3ff2ff" aria-label="Cyan"></button>
+        <button type="button" style="--c:#ffc94d" data-c="#ffc94d" aria-label="Gold"></button>
+        <label class="tune-pick" aria-label="Custom inner particle colour"><input type="color" value="#cfe3ff" data-t-swcolor></label>
+      </div></div>
     <div class="tune-row"><span>Inner orb</span><div class="tune-seg" data-t-inner><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
     <p class="tune-sub">Dust &amp; flares</p>
     <label class="tune-row"><span>Dust</span><input type="range" min="0" max="3" step="0.05" value="1" data-t-haze><b data-out>100%</b></label>
@@ -1568,6 +1581,9 @@ const WorldTune = (() => {
     const dens = range('[data-t-density]', v => call('setDensity', v), pct);
     const spd = range('[data-t-speed]', v => call('setSpeed', v), times);
     const thick = range('[data-t-thick]', v => call('setBand', null, v), times);
+    const bands = range('[data-t-bands]', v => call('setBandCount', v), v => String(Math.round(v)));
+    const swarm = range('[data-t-swarm]', v => call('setSwarm', v, null, null), pct);
+    const swsize = range('[data-t-swsize]', v => call('setSwarm', null, v, null), times);
     const clar = range('[data-t-clarity]', v => call('setGlass', v, null), times);
     const rim = range('[data-t-rim]', v => call('setGlass', null, v), v => v.toFixed(2));
     const haze = range('[data-t-haze]', v => call('setHaze', v), pct);
@@ -1599,6 +1615,7 @@ const WorldTune = (() => {
     const shape = shapeGrid(q('[data-t-shape]'), v => call('setShape', v));
     const picker = q('[data-t-color]');
     const neon = swatch('[data-t-sw]', hex => call('setNeon', hex), picker);
+    const swarmC = swatch('[data-t-swsw]', hex => call('setSwarm', null, null, hex), q('[data-t-swcolor]'));
     const flareC = swatch('[data-t-fsw]', hex => call('setFlareColor', hex), q('[data-t-fcolor]'));
     const metal = swatch('[data-t-metal]', hex => call('setMetal', hex));
     neon.set('#b44cff'); metal.set('#c9ccd6');
@@ -1624,8 +1641,8 @@ const WorldTune = (() => {
     q('[data-t-view]').addEventListener('click', () => { call('resetView'); setRange(zoom, 1, v => v.toFixed(2) + 'x'); });
     const resetUI = () => {
       [[dens, 1, pct], [spd, 1, times], [thick, 1, times], [clar, 1, times], [rim, 0.55, v => v.toFixed(2)], [haze, 1, pct],
-       [frate, 1, times], [famt, 1, times], [ptrs, 1, times], [gain, 1, times], [zoom, 1, v => v.toFixed(2) + 'x']].forEach(([el, v, f]) => setRange(el, v, f));
-      dir.set(1); band.set(1); inner.set(1); ptr.set(0); shape.set(0); setTheme('nebula'); neon.set('#b44cff'); flareC.set('#ffffff');
+       [frate, 1, times], [famt, 1, times], [bands, 1, v => String(Math.round(v))], [swarm, 1, pct], [swsize, 1, times], [ptrs, 1, times], [gain, 1, times], [zoom, 1, v => v.toFixed(2) + 'x']].forEach(([el, v, f]) => setRange(el, v, f));
+      dir.set(1); band.set(1); inner.set(1); ptr.set(0); shape.set(0); setTheme('nebula'); neon.set('#b44cff'); flareC.set('#ffffff'); swarmC.set('#cfe3ff');
       const L = LENS_DEFAULTS(); Object.keys(L).forEach(k => { LENS_U[k].value = L[k]; });
       setRange(aberr, L.uLensAberr, f3); setRange(blur, L.uLensBlur, f2); setRange(bloom, L.uLensBloom, f2); lens.set(1);
     };
@@ -1733,7 +1750,7 @@ const WorldTune = (() => {
     function snapshot() {
       const b = body(); if (!b) return null;
       return { density: b.density, speed: b.speed, dir: b.dir, shape: b.shape, neon: hex(b.uNeon.value), theme: b.theme || 'nebula',
-        rings: b.ringCount, band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
+        rings: b.ringCount, bands: b.bandCount, swarm: b.swarmAmt, swsize: b.swarmMat.uniforms.uSize.value, swcolor: hex(b.swarmMat.uniforms.uColor.value), band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
         clarity: +clar.value, rim: +rim.value, inner: b.inner.show, haze: b.hazeDensity, frate: b.uFlareRate.value, famt: b.uFlareAmt.value, fcolor: '#' + b.uFlareColor.value.getHexString(),
         ptr: b.ptrMode, ptrs: b.ptrStrength,
         lens: LENS_U.uLensOn.value, aberr: LENS_U.uLensAberr.value, blur: LENS_U.uLensBlur.value, bloom: LENS_U.uLensBloom.value };
@@ -1750,6 +1767,8 @@ const WorldTune = (() => {
       b.setShape(s.shape); shape.set(s.shape);
       b.setRingCount(s.rings); syncRings();
       b.setBand(s.band, s.thick); band.set(s.band ? 1 : 0); setRange(thick, s.thick, times);
+      if (s.bands) { b.setBandCount(s.bands); setRange(bands, s.bands, v => String(Math.round(v))); }
+      if (s.swarm != null) { b.setSwarm(s.swarm, s.swsize, s.swcolor); setRange(swarm, s.swarm, pct); setRange(swsize, s.swsize, times); swarmC.set(s.swcolor); }
       b.setGlass(s.clarity, s.rim); setRange(clar, s.clarity, times); setRange(rim, s.rim, v => v.toFixed(2));
       b.setInner(s.inner); inner.set(s.inner ? 1 : 0);
       b.setHaze(s.haze); setRange(haze, s.haze, pct);
@@ -3218,6 +3237,35 @@ class PlanetBody {
     this.bandPivot.add(this.band);
     this.group.add(this.bandPivot);
     this.bandItem = { kind: 'band', name: 'Metal band', hi: 0, show: true, thick: 1 };
+    // Extra metal bands: copies of the first one on their own tilts and slightly wider radii.
+    this.extraBands = []; this.bandCount = 1;
+
+    // Inner particles: a slow swarm inside the glass, with its own amount, size and colour.
+    const SW = 6000, sp = new Float32Array(SW * 3), sd = new Float32Array(SW);
+    for (let i = 0; i < SW; i++) {
+      const u = Math.random() * 2 - 1, th = Math.random() * Math.PI * 2, w = Math.sqrt(1 - u * u), rr = 0.25 + Math.pow(Math.random(), 0.6) * 0.95;
+      sp[i * 3] = Math.cos(th) * w * rr; sp[i * 3 + 1] = u * rr; sp[i * 3 + 2] = Math.sin(th) * w * rr; sd[i] = Math.random();
+    }
+    this.swarmGeom = new THREE.BufferGeometry();
+    this.swarmGeom.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+    this.swarmGeom.setAttribute('aSeed', new THREE.BufferAttribute(sd, 1));
+    this.swarmMat = new THREE.ShaderMaterial({
+      uniforms: { uTime: shared.uTime, uColor: { value: new THREE.Color('#cfe3ff') }, uOpacity: { value: 0 }, uSize: { value: 1 }, uPixelRatio: { value: 1 } },
+      vertexShader: `uniform float uTime, uSize, uPixelRatio; attribute float aSeed; varying float vA;
+        void main(){ vec3 p = position; float a = uTime * (0.15 + aSeed * 0.35); float c = cos(a), s = sin(a);
+          p.xz = mat2(c, -s, s, c) * p.xz; p.y += sin(uTime * 0.7 + aSeed * 30.0) * 0.02;
+          vec4 mv = modelViewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv;
+          vA = 0.45 + 0.55 * sin(uTime * (1.0 + aSeed * 2.0) + aSeed * 40.0);
+          gl_PointSize = clamp(uSize * (1.2 + aSeed * 1.8) * uPixelRatio * (5.0 / -mv.z), 1.0, 14.0 * uPixelRatio); }`,
+      fragmentShader: `uniform vec3 uColor; uniform float uOpacity; varying float vA;
+        void main(){ float d = length(gl_PointCoord - 0.5); if (d > 0.5) discard; float g = pow(1.0 - d * 2.0, 1.8);
+          gl_FragColor = vec4(uColor * (0.6 + g), g * vA * uOpacity); }`,
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+    });
+    this.swarm = new THREE.Points(this.swarmGeom, this.swarmMat);
+    this.swarm.frustumCulled = false; this.swarmAmt = 1;
+    this.swarmGeom.setDrawRange(0, SW / 4);
+    this.group.add(this.swarm);
 
     // Loose debris drifting around the shell.
     const nD = 70;
@@ -3406,6 +3454,23 @@ class PlanetBody {
   setFlare(rate, amt) { if (rate != null) this.uFlareRate.value = rate; if (amt != null) this.uFlareAmt.value = amt; }
   setPointer(mode, strength) { if (mode != null) this.ptrMode = mode; if (strength != null) this.ptrStrength = strength; }
   setBand(show, thick) { if (show != null) this.bandItem.show = show; if (thick != null) this.bandItem.thick = thick; }
+  setBandCount(n) {
+    n = clamp(Math.round(n), 1, 6); this.bandCount = n;
+    while (this.extraBands.length < n - 1) {
+      const k = this.extraBands.length + 1, m = new THREE.InstancedMesh(this.band.geometry, this.blockMat, this.band.count);
+      m.instanceMatrix.copy(this.band.instanceMatrix); m.instanceMatrix.needsUpdate = true;
+      const pv = new THREE.Group(), g = k * 2.399;   // golden-angle spread of tilts
+      pv.rotation.set(1.38 + Math.sin(g) * 0.9, 0.2 + g, -0.62 + Math.cos(g) * 0.7);
+      const sc = 1 + k * 0.09; m.userData.sc = sc; m.userData.spin = (k % 2 ? -1 : 1) * (0.04 + k * 0.012);
+      pv.add(m); this.group.add(pv); this.extraBands.push({ pv, m });
+    }
+    this.extraBands.forEach((e, i) => { e.pv.visible = i < n - 1; });
+  }
+  setSwarm(amt, size, hex) {
+    if (amt != null) { this.swarmAmt = clamp(amt, 0, 4); this.swarmGeom.setDrawRange(0, Math.round(6000 * this.swarmAmt / 4)); }
+    if (size != null) this.swarmMat.uniforms.uSize.value = size;
+    if (hex) this.swarmMat.uniforms.uColor.value.set(hex);
+  }
   setInner(show) { this.inner.show = show; }
   setGlass(clarity, rim) {
     [this.outer, this.inner].forEach(it => {
@@ -3443,7 +3508,7 @@ class PlanetBody {
     this.runners.forEach(rn => { rn.pivot.visible = true; rn.speedMul = 1; rn.c.rx0 != null && (rn.c.rx = rn.c.rx0, rn.c.rz = rn.c.rz0); });
     this.setTheme('nebula');
     this.setDensity(1); this.setHaze(1); this.setSpeed(1); this.setDirection(1); this.setShape(0);
-    this.setFlare(1, 1); this.setFlareColor("#ffffff"); this.setPointer(0, 1); this.setBand(true, 1); this.setInner(true); this.setGlass(1, 0.55);
+    this.setFlare(1, 1); this.setFlareColor("#ffffff"); this.setPointer(0, 1); this.setBand(true, 1); this.setBandCount(1); this.setSwarm(1, 1, '#cfe3ff'); this.setInner(true); this.setGlass(1, 0.55);
     this.outer.show = true; this.resetView(); this.selected = null;
   }
 
@@ -3571,6 +3636,13 @@ class PlanetBody {
     this.debris.visible = on > 0.01;
     this.band.scale.set(1, B.thick, 1 + (B.thick - 1) * 0.4);
     this.band.rotation.y += dt * 0.05 * f.motion;
+    this.extraBands.forEach((e, i) => {
+      if (i >= this.bandCount - 1) return;
+      e.pv.visible = this.bandPivot.visible; const sc = e.m.userData.sc;
+      e.m.scale.set(sc, sc * B.thick, sc * (1 + (B.thick - 1) * 0.4)); e.m.rotation.y += dt * e.m.userData.spin * f.motion;
+    });
+    this.swarmMat.uniforms.uOpacity.value = on; this.swarmMat.uniforms.uPixelRatio.value = f.pixelRatio || 1;
+    this.swarm.visible = on > 0.01 && this.swarmAmt > 0;
     this.debris.rotation.y -= dt * 0.03 * f.motion;
     this.debris.rotation.x += dt * 0.01 * f.motion;
     const sc = 1 + f.expand * 0.15;
@@ -3603,6 +3675,7 @@ class PlanetBody {
   dispose() {
     this.stopAudio();
     [this.outer, this.inner].forEach(it => { it.mesh.geometry.dispose(); it.mat.dispose(); });
+    this.swarmGeom.dispose(); this.swarmMat.dispose(); this.extraBands.forEach(e => e.m.dispose());
     this.box.dispose(); this.blockMat.dispose(); this.axis.geometry.dispose(); this.axisMat.dispose();
     this.runners.forEach(rn => { rn.lineMat.dispose(); rn.g.dispose(); rn.mat.dispose(); });
     this.lineGeomBase.dispose(); this.hazeGeom.dispose(); this.hazeMat.dispose();
