@@ -600,6 +600,22 @@ body.obuild-open main,body.obuild-open .labels,body.obuild-open .worldword{opaci
 .ob-pal button:hover{border-color:var(--val);color:var(--ink)}
 .ob-pal button[aria-pressed="true"]{border-color:var(--val);background:rgba(255,70,85,.12);color:var(--ink)}
 body.obuild-open.ob-armed #gl{cursor:crosshair}
+body.obuild-open.ob-armed{touch-action:none}
+.ob-hintrow{display:flex;align-items:center;gap:10px}
+.ob-hintrow .tune-hint{flex:1}
+.ob-cancel{display:none;padding:8px 12px;border:1px solid var(--val);color:var(--val);font:600 10.5px var(--f-cond);letter-spacing:.16em;text-transform:uppercase}
+body.ob-armed .ob-cancel{display:block}
+body.ob-armed .ob-hintrow .tune-hint{color:var(--ink)}
+@media (max-width:760px){
+  /* phones: a compact tray. The palette is one scrolling row; picking an item folds the tray to a slim bar
+     so most of the solar system is free to tap. */
+  .tune.obuild{max-height:46vh}
+  .ob-pal{display:flex;overflow-x:auto;gap:8px;scroll-snap-type:x mandatory;margin:0 -16px;padding:0 16px 4px}
+  .ob-pal button{flex:0 0 76px;scroll-snap-align:start;padding:10px 2px 8px}
+  body.ob-armed .tune.obuild{max-height:none}
+  body.ob-armed .tune.obuild>*:not(.tune-h):not(.ob-hintrow){display:none}
+  body.ob-armed .tune.obuild .tune-h{margin-bottom:6px}
+}
 .ob-list{list-style:none;margin:0 0 12px;padding:0;border-top:1px solid var(--line)}
 .ob-empty{padding:14px 0;font:400 12px var(--f-sans);text-transform:none;letter-spacing:0;color:var(--ink-3)}
 .ob-item{border-bottom:1px solid var(--line)}
@@ -791,7 +807,7 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
 <button class="tune-toggle" type="button" aria-expanded="false" aria-controls="tune" data-tune-toggle><i></i><span>Tune the core</span></button>
 <aside class="tune obuild" id="obuild" aria-label="Build the orbit" data-open="false">
   <header class="tune-h"><span>Build the orbit</span><button type="button" class="tune-x" data-ob-close aria-label="Close"></button></header>
-  <p class="tune-hint" data-ob-hint>Pick an item below first, then tap an orbit line to place it.</p>
+  <div class="ob-hintrow"><p class="tune-hint" data-ob-hint>Pick an item below first, then tap an orbit line to place it.</p><button type="button" class="ob-cancel" data-ob-cancel>Cancel</button></div>
   <div class="ob-pal">
     <button type="button" data-ob-add="planet"><i>&#9679;</i>Planet</button>
     <button type="button" data-ob-add="comet"><i>&#10022;</i>Comet</button>
@@ -1226,6 +1242,6 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.792aafdea8.js", 214670]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.76d289622f.js", 215285]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>
