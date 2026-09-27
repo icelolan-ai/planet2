@@ -960,6 +960,7 @@ body.studio-on #tune{z-index:100}
       <input type="color" value="#dfe4ea" data-l="4" aria-label="Layer 4, Perimeter" title="Layer 4, Perimeter">
     </div></div>
     <p class="tune-hint">Tip: open the core and click a layer name to zoom in on it.</p>
+    <p class="tune-sub">Ambient dust</p><label class="tune-row"><span>Floating dots</span><input type="range" min="0" max="240" step="1" value="80" data-ambient-count><b data-out>80</b></label>
     <p class="tune-sub">Lens</p>
     <div class="tune-row"><span>Lens</span><div class="tune-seg" data-t-lens><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
     <label class="tune-row"><span>Aberration</span><input type="range" min="0" max="0.12" step="0.002" value="0.035" data-t-aberr><b data-out>0.035</b></label>
@@ -5801,6 +5802,50 @@ const ORBIT_START = 3; // index of the orbit overview section
    Application
 ================================================================ */
 /** A lightweight isolated studio. No extra WebGL passes or assets when closed. */
+/** Sparse, camera-space motes; one bounded draw call, no per-frame buffer uploads. */
+class AmbientDots {
+  constructor(app) {
+    this.app = app; this.time = 0; this.max = 240; this.defaultCount = app.mobile ? 40 : 80;
+    const pos = new Float32Array(this.max * 3), seed = new Float32Array(this.max * 4);
+    for (let i = 0; i < this.max; i++) {
+      pos[i*3] = Math.random()*2-1; pos[i*3+1] = Math.random()*2-1;
+      seed.set([Math.random()*6.283, .3+Math.random()*.7, i%5===0?1:0, Math.random()], i*4);
+    }
+    this.geometry = new THREE.BufferGeometry();
+    this.geometry.setAttribute('position', new THREE.BufferAttribute(pos,3));
+    this.geometry.setAttribute('aSeed', new THREE.BufferAttribute(seed,4));
+    this.material = new THREE.ShaderMaterial({ transparent:true,depthWrite:false,depthTest:false,
+      uniforms:{uTime:{value:0},uOpacity:{value:1},uPixelRatio:{value:1},uPointer:{value:new THREE.Vector2()}},
+      vertexShader:`attribute vec4 aSeed; uniform float uTime,uPixelRatio; uniform vec2 uPointer; varying float vDark;
+        void main(){vec2 p=position.xy; p.y=mod(p.y+1.+uTime*(.003+aSeed.y*.005),2.)-1.; p.x+=sin(uTime*.06+aSeed.x)*.035;
+          p+=uPointer*.012*aSeed.y; gl_Position=vec4(p,.99,1.); vDark=aSeed.z;
+          gl_PointSize=mix(1.5+aSeed.w*3.,12.+aSeed.w*18.,vDark)*uPixelRatio;}`,
+      fragmentShader:`uniform float uOpacity; varying float vDark; void main(){float r=length(gl_PointCoord-.5)*2.; if(r>1.)discard;
+        float a=exp(-r*r*mix(5.,3.,vDark))*(1.-smoothstep(.75,1.,r));
+        gl_FragColor=vec4(mix(vec3(.48,.57,.72),vec3(.008,.012,.022),vDark),a*uOpacity*mix(.38,.66,vDark));}`
+    });
+    this.points=new THREE.Points(this.geometry,this.material);this.points.frustumCulled=false;this.points.renderOrder=20;
+    app.stage.scene.add(this.points);
+    let count=this.defaultCount;try{const raw=localStorage.getItem('cerebra.ambient.v1');if(raw!==null&&Number.isFinite(+raw))count=+raw;}catch(e){}
+    this.setCount(count,false);
+    document.querySelectorAll('[data-ambient-count]').forEach(el=>el.addEventListener('input',()=>this.setCount(+el.value)));
+    document.querySelector('[data-t-reset]').addEventListener('click',()=>this.setCount(this.defaultCount));
+  }
+  setCount(n,save=true){
+    this.count=clamp(Math.round(Number.isFinite(n)?n:this.defaultCount),0,this.max);this.geometry.setDrawRange(0,this.count);
+    document.querySelectorAll('[data-ambient-count]').forEach(el=>{el.value=this.count;el.parentElement.querySelector('[data-out]').textContent=this.count;el.style.setProperty('--p',this.count/this.max*100+'%');});
+    if(save)try{localStorage.setItem('cerebra.ambient.v1',String(this.count));}catch(e){}
+  }
+  update(dt){
+    const a=this.app;this.points.visible=this.count>0&&!(a.studio&&a.studio.active)&&!a.detail.open&&(a.scroll.smooth<.8||a.G>.5);
+    if(!this.points.visible)return;
+    if(!a.reduced)this.time+=dt;
+    const u=this.material.uniforms;u.uTime.value=this.time;u.uPixelRatio.value=a.stage.pixelRatio;u.uOpacity.value=a.G>.5?1:1-smoothstep(.2,.8,a.scroll.smooth);
+    u.uPointer.value.set(a.reduced?0:a.pointer.nx,a.reduced?0:a.pointer.ny);
+  }
+  dispose(){this.geometry.dispose();this.material.dispose();this.app.stage.scene.remove(this.points);}
+}
+
 class CoreStudio {
   constructor(app) {
     this.app = app; this.active = false; this.pending = false;
@@ -5912,6 +5957,7 @@ class CoreStudio {
     const a = this.app;
     if (this.pending && !a.detail.busy && a.fly.t < .001) { this.pending = false; this.open(); }
     if (!this.active) return false;
+    if (a.ambient) a.ambient.points.visible = false;
     a.G = 0; a.updateLens(dt); a.pointer.update(dt); a.simTime += dt * (a.reduced ? .25 : 1); a.intro = 1;
     const cam = a.rig.camera, tune = document.getElementById('tune'), tuning = tune.dataset.open === 'true';
     const portrait = a.stage.width < 760, hh = a.rig.halfHeight, hw = a.rig.halfWidth;
@@ -6110,6 +6156,7 @@ class App {
     WorldTune.wire(this);
     OrbitBuilder.wire(this); Fab.wire(this); Settings.wire(this);
     this.studio = new CoreStudio(this);
+    this.ambient = new AmbientDots(this);
   }
 
   /* Compile every program and upload every buffer and texture while the loader is still up,
@@ -6858,6 +6905,7 @@ class App {
     if (this.hudTimer > 0.25) { this.hudTimer = 0; this.updateReadouts(morph); }
 
     if (this.explorer) this.explorer.steer(dt, cam);
+    if (this.ambient) this.ambient.update(dt);
     this.stage.render(cam);
     if (this.cap) this.captureStep();
   }
@@ -7019,6 +7067,7 @@ class App {
     if (this.labels) this.labels.dispose();
     if (this.core) { this.stage.scene.remove(this.core.group); this.core.dispose(); }
     if (this.orrery) { this.stage.scene.remove(this.orrery.group); this.orrery.dispose(); }
+    if (this.ambient) this.ambient.dispose();
     if (this.stage) this.stage.dispose();
     this.sound.dispose();
     Signals.clear();
