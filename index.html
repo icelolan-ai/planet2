@@ -180,7 +180,7 @@ body.legend-on .rail button[aria-current="true"] span{opacity:0}
 @media (max-width:640px){.picker{left:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 48px)}}
 
 /* ------------------------------------------------------------------ Cursor */
-html.has-cursor,html.has-cursor *{cursor:none!important}
+html.has-cursor:not(.studio-lock),html.has-cursor:not(.studio-lock) *{cursor:none!important}
 .cursor{position:fixed;inset:0;z-index:50;pointer-events:none;opacity:0;transition:opacity .4s}
 .cursor.is-visible{opacity:1}
 .cursor-ring,.cursor-dot,.cursor-label{position:absolute;left:0;top:0;will-change:transform}
