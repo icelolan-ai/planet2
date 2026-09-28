@@ -734,6 +734,15 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
   .tune[data-open="true"]{transform:none}
   .tune-row{grid-template-columns:70px 1fr auto;margin-bottom:11px}
 }
+/* Keep orbit controls within the drawer at narrow desktop and phone widths. */
+#obuild{width:min(420px,100vw);overflow-x:hidden;touch-action:pan-y}
+#obuild .tune-row{grid-template-columns:minmax(70px,90px) minmax(0,1fr) 36px;gap:8px}
+#obuild input{min-width:0;max-width:100%}
+#obuild .tune-row b{min-width:0}
+#obuild .tune-btns{gap:6px;margin:14px 0}
+#obuild .tune-btn{min-width:0;letter-spacing:.08em}
+#obuild .tune-tabs button{min-height:44px}
+@media(max-width:760px){#obuild{width:auto;max-height:60dvh;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 24px)}}
 /* the header's section name, the rail and the sound bars take the colour of where you are */
 .depth-name{color:var(--hl);transition:color .6s}
 .rail button[aria-current="true"]{color:var(--hl)}
@@ -756,7 +765,7 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
 @media (prefers-reduced-motion:reduce){.w::after{display:none}.is-active .w>span{transition-delay:0s}.is-active .title{animation:none}}
 /* Studio is a separate, reversible view of the same core and tuning state. */
 html.studio-lock,html.studio-lock body{overflow:hidden!important;overscroll-behavior:none}
-body.studio-on> :not(#gl):not(#studio):not(#studio-bg):not(#tune):not(script){visibility:hidden!important;pointer-events:none!important}
+body.studio-on> :not(#gl):not(#studio):not(#studio-bg):not(#tune):not(script),body.studio-on> :not(#gl):not(#studio):not(#studio-bg):not(#tune):not(script) *{visibility:hidden!important;pointer-events:none!important}
 body.studio-on #gl{transform:none!important;touch-action:none;pointer-events:auto;cursor:grab}
 body.studio-on #gl:active{cursor:grabbing}
 #studio-bg{position:fixed;inset:0;z-index:0;pointer-events:none;display:none}
@@ -789,7 +798,7 @@ body.studio-on #tune{z-index:100}
   .studio-bar{left:12px;right:12px;gap:5px}
   #studio button{padding:8px 10px;font-size:12px}
   .studio-actions{gap:5px}
-  .studio-panel{right:12px;left:12px;width:auto;top:auto;bottom:max(12px,env(safe-area-inset-bottom));max-height:45dvh;padding:14px}
+  .studio-panel{right:auto;left:50%;width:calc(100% - 24px);top:50%;bottom:auto;transform:translate(-50%,-50%);max-height:calc(100dvh - 180px);padding:14px}
   .studio-layers{display:grid;grid-template-columns:1fr 1fr;gap:0 6px}
 }
 
@@ -4897,13 +4906,12 @@ class OrbitEnvironment {
       panel.querySelectorAll('[data-orbit-pane]').forEach(x=>{x.hidden=x.dataset.orbitPane!==b.dataset.orbitTab;});
     });
     p.querySelectorAll('[data-env]').forEach(el=>{
-      el.addEventListener('input',()=>{const o=el.parentElement.querySelector('[data-out]');if(o)o.textContent=el.value;});
-      el.addEventListener('change',()=>this.change({[el.dataset.env]:el.type==='color'?el.value:+el.value},el.dataset.env!=='speed'&&el.dataset.env!=='dust'));
+      el.addEventListener('input',()=>{this.assign({[el.dataset.env]:el.type==='color'?el.value:+el.value});this.sync();this.needsRebuild=this.needsRebuild||!['speed','dust'].includes(el.dataset.env);if(!this.rebuildFrame)this.rebuildFrame=requestAnimationFrame(()=>{this.rebuildFrame=0;const rebuild=this.needsRebuild;this.needsRebuild=false;this.change(this.settings,rebuild);});});
     });
     p.querySelectorAll('[data-env-add]').forEach(b=>b.onclick=()=>this.change({[b.dataset.envAdd]:this.settings[b.dataset.envAdd]+1}));
     p.querySelector('[data-env-reset]').onclick=()=>this.change(this.defaults);this.sync();
   }
-  sync(){if(!this.panel)return;this.panel.querySelectorAll('[data-env]').forEach(el=>{el.value=this.settings[el.dataset.env];const o=el.parentElement.querySelector('[data-out]');if(o)o.textContent=String(this.settings[el.dataset.env]);});}
+  sync(){if(!this.panel)return;this.panel.querySelectorAll('[data-env]').forEach(el=>{el.value=this.settings[el.dataset.env];if(el.type==='range')el.style.setProperty('--p',((+el.value- +el.min)/(+el.max- +el.min)*100)+'%');const o=el.parentElement.querySelector('[data-out]');if(o)o.textContent=String(this.settings[el.dataset.env]);});}
   update(dt,t,f){
     const s=this.settings,o=this.orbit,visible=f.G>.002&&!this.app.detail.open;
     this.creations.group.visible=this.rocks.visible=visible;
@@ -4920,7 +4928,7 @@ class OrbitEnvironment {
     }
     this.rocks.instanceMatrix.needsUpdate=true;
   }
-  dispose(){this.creations.clear();this.creations.preview.geometry.dispose();this.creations.preview.material.dispose();this.orbit.group.remove(this.creations.group,this.rocks);this.rocks.geometry.dispose();this.rocks.material.dispose();}
+  dispose(){if(this.rebuildFrame)cancelAnimationFrame(this.rebuildFrame);this.creations.clear();this.creations.preview.geometry.dispose();this.creations.preview.material.dispose();this.orbit.group.remove(this.creations.group,this.rocks);this.rocks.geometry.dispose();this.rocks.material.dispose();}
 }
 
 class Orrery {
@@ -5929,7 +5937,7 @@ class AmbientDots {
 class CoreStudio {
   constructor(app) {
     this.app = app; this.active = false; this.pending = false;
-    this.background = 'space'; this.gravity = true;
+    this.background = 'space'; this.gravity = false;
     this.layers = { shells: true, rings: true, bands: true, particles: true, comets: true, energy: true, dust: true, glass: true };
     this.x = 0; this.y = 0; this.vx = 0; this.vy = 0; this.drag = null;
     this.bg = document.createElement('canvas'); this.bg.id = 'studio-bg'; this.bg.setAttribute('aria-hidden', 'true');
@@ -5940,7 +5948,7 @@ class CoreStudio {
       <aside id="studio-tools" class="studio-panel" aria-label="Studio tools" hidden><h2>Your core, in focus.</h2>
       <h3>Background</h3><select aria-label="Studio background"><option value="space">Space</option><option value="white">White</option><option value="studio">Studio light</option><option value="model">Model workspace</option></select>
       <h3>Layers</h3><div class="studio-layers">${Object.keys(names).map(k => `<button type="button" class="studio-layer" data-studio-layer="${k}" aria-pressed="true" aria-label="Show ${names[k]}"><span>${names[k]}</span>${eye}</button>`).join('')}</div>
-      <h3>Motion</h3><label>Gravity<input type="checkbox" data-studio-gravity checked></label><button type="button" class="studio-home" data-studio-home>Recenter</button>
+      <h3>Motion</h3><label>Gravity<input type="checkbox" data-studio-gravity></label><button type="button" class="studio-home" data-studio-home>Recenter</button>
       <p class="studio-note">Drag the core, then release to throw. Reduced motion stops momentum. Open Tune core → Save to export a picture.</p></aside>`;
     document.body.append(this.bg, this.el);
     this.panel = this.el.querySelector('.studio-panel');
@@ -5983,7 +5991,7 @@ class CoreStudio {
     }, { signal, capture: true });
     addEventListener('resize', () => { if (this.active) this.paintBackground(); }, { signal });
   }
-  tools(on) { this.panel.hidden = !on; this.el.querySelector('[data-studio-tools]').setAttribute('aria-expanded', String(on)); }
+  tools(on) { if (on) this.home(); this.panel.hidden = !on; this.el.querySelector('[data-studio-tools]').setAttribute('aria-expanded', String(on)); }
   home() { this.x = this.y = this.vx = this.vy = 0; this.app.core.planet.resetView(); }
   open() {
     const a = this.app;
@@ -6049,8 +6057,8 @@ class CoreStudio {
       if (portrait) { const sheet = this.panel.getBoundingClientRect().height / a.stage.height; y = sheet * hh; scale = Math.min(.55, (1 - sheet) * 1.25); }
       else x = -.25 * hw;
     }
-    if (a.reduced || tuning) this.vx = this.vy = 0;
-    if (!this.drag && !a.reduced && !tuning) {
+    if (a.reduced || tuning || !this.panel.hidden) this.vx = this.vy = 0;
+    if (!this.drag && !a.reduced && !tuning && this.panel.hidden) {
       if (this.gravity) this.vy -= dt * 1.8;
       this.x += this.vx * dt; this.y += this.vy * dt;
       const friction = Math.exp(-dt * .65); this.vx *= friction; this.vy *= friction;
