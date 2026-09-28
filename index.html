@@ -742,6 +742,8 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
   .tune[data-open="true"]{transform:none}
   .tune-row{grid-template-columns:70px 1fr auto;margin-bottom:11px}
 }
+#wtune .tune-tabs{flex-wrap:wrap}
+#wtune .tune-tabs button{flex:1 1 45%;min-height:40px}
 /* Keep orbit controls within the drawer at narrow desktop and phone widths. */
 #obuild{width:min(420px,100vw);overflow-x:hidden;touch-action:pan-y}
 #obuild .tune-row{grid-template-columns:minmax(70px,90px) minmax(0,1fr) 36px;gap:8px}
@@ -872,6 +874,8 @@ body.studio-on #tune{z-index:100}
   <nav class="tune-tabs" role="tablist">
     <button type="button" role="tab" data-wt-tab="world" aria-selected="true">World</button>
     <button type="button" role="tab" data-wt-tab="fx" aria-selected="false">Effects</button>
+    <button type="button" role="tab" data-wt-tab="camera" aria-selected="false">Camera</button>
+    <button type="button" role="tab" data-wt-tab="atmosphere" aria-selected="false">Atmosphere</button>
   </nav>
   <div data-wt-pane="world">
   <p class="tune-sub">Colour</p>
@@ -899,6 +903,8 @@ body.studio-on #tune{z-index:100}
   <div class="tune-row"><span>Ring</span><div class="tune-seg" data-wt-seg="ring"><button type="button" data-v="0">Off</button><button type="button" data-v="1">On</button></div></div>
   <div class="tune-row"><span>Orbit line</span><div class="tune-seg" data-wt-seg="line"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>
   </div>
+  <div data-wt-pane="camera" hidden></div>
+  <div data-wt-pane="atmosphere" hidden></div>
   <div data-wt-pane="fx" hidden>
   <p class="tune-sub">Ripple</p>
   <div class="tune-row"><span>Ripple</span><div class="tune-seg" data-wt-seg="r_enabled"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>
@@ -1293,6 +1299,6 @@ body.studio-on #tune{z-index:100}
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.612daf1393.js", 239787]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.33b4ad239c.js", 241516]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>

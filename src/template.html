@@ -734,6 +734,8 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
   .tune[data-open="true"]{transform:none}
   .tune-row{grid-template-columns:70px 1fr auto;margin-bottom:11px}
 }
+#wtune .tune-tabs{flex-wrap:wrap}
+#wtune .tune-tabs button{flex:1 1 45%;min-height:40px}
 /* Keep orbit controls within the drawer at narrow desktop and phone widths. */
 #obuild{width:min(420px,100vw);overflow-x:hidden;touch-action:pan-y}
 #obuild .tune-row{grid-template-columns:minmax(70px,90px) minmax(0,1fr) 36px;gap:8px}
@@ -864,6 +866,8 @@ body.studio-on #tune{z-index:100}
   <nav class="tune-tabs" role="tablist">
     <button type="button" role="tab" data-wt-tab="world" aria-selected="true">World</button>
     <button type="button" role="tab" data-wt-tab="fx" aria-selected="false">Effects</button>
+    <button type="button" role="tab" data-wt-tab="camera" aria-selected="false">Camera</button>
+    <button type="button" role="tab" data-wt-tab="atmosphere" aria-selected="false">Atmosphere</button>
   </nav>
   <div data-wt-pane="world">
   <p class="tune-sub">Colour</p>
@@ -891,6 +895,8 @@ body.studio-on #tune{z-index:100}
   <div class="tune-row"><span>Ring</span><div class="tune-seg" data-wt-seg="ring"><button type="button" data-v="0">Off</button><button type="button" data-v="1">On</button></div></div>
   <div class="tune-row"><span>Orbit line</span><div class="tune-seg" data-wt-seg="line"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>
   </div>
+  <div data-wt-pane="camera" hidden></div>
+  <div data-wt-pane="atmosphere" hidden></div>
   <div data-wt-pane="fx" hidden>
   <p class="tune-sub">Ripple</p>
   <div class="tune-row"><span>Ripple</span><div class="tune-seg" data-wt-seg="r_enabled"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>
@@ -1557,11 +1563,12 @@ const WorldTune = (() => {
     // One section per registered effect: on/off, its sliders and a replay button.
     Pn.querySelector('[data-wt-effects]').innerHTML = Effects.list.map(fx => {
       fx.controls.forEach(c => { fmt[fx.prefix + c.key] = v => (+v).toFixed(c.step < 0.01 ? 3 : 2); });
-      return `<p class="tune-sub">${fx.title}</p>` +
+      return `<section data-effect="${fx.id}"><p class="tune-sub">${fx.title}</p>` +
         `<div class="tune-row"><span>${fx.title}</span><div class="tune-seg" data-wt-seg="${fx.prefix}enabled"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>` +
         fx.controls.map(c => `<label class="tune-row"><span>${c.label}</span><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" data-wt="${fx.prefix}${c.key}"><b data-out></b></label>`).join('') +
-        (fx.play ? `<button type="button" class="tune-btn" data-fx-replay="${fx.id}">&#8635; Replay ${fx.title.toLowerCase()}</button>` : '');
+        (fx.play ? `<button type="button" class="tune-btn" data-fx-replay="${fx.id}">&#8635; Replay ${fx.title.toLowerCase()}</button>` : '') + '</section>';
     }).join('');
+    ['camera','atmosphere'].forEach(id=>Pn.querySelector(`[data-wt-pane="${id}"]`).append(Pn.querySelector(`[data-effect="${id}"]`)));
     Pn.querySelectorAll('[data-fx-replay]').forEach(b => b.addEventListener('click', () => { const fx = Effects.list.find(x => x.id === b.dataset.fxReplay); if (w && fx) fx.play(w); }));
     Pn.querySelector('[data-wt-rpresets]').innerHTML = Object.keys(RIPPLE_PRESETS).map(n => `<button type="button" data-rp="${n}">${n}</button>`).join('');
     // Every world starts from the ripple defaults, then its saved tuning.
@@ -4997,7 +5004,7 @@ class Orrery {
     } else {
       out.look.copy(P).addScaledVector(right, -(detail ? 1 : side) * r * (detail ? 0.92 : 1.15));
     }
-    return out;
+    return CAMERA_RIG.pose(w,out);
   }
   poseAt(i, t, portrait, out) { return i <= 0 ? this.overview(t, portrait, out) : this.frame(Math.min(i, this.worlds.length) - 1, portrait, false, out); }
   /** Continuous pose along the scroll: 0 is the overview, 1..7 frame each world. */
@@ -6961,7 +6968,7 @@ class App {
       const from = this.fly.mix >= 1 ? poses.live : (this.fly.mix <= 0 ? this.fly.snap : lerpPose(this.fly.snap, poses.live, this.fly.mix, 0, poses.from));
       lerpPose(from, poses.detail, this.fly.t, 0.12, poses.out);
       out = poses.out;
-      fov = lerp(fov, 34, this.fly.t);
+      fov = lerp(fov, this.orrery.worlds[k].tune.c_enabled ? this.orrery.worlds[k].tune.c_fov : 34, this.fly.t);
     } else {
       poses.out.pos.copy(out.pos); poses.out.look.copy(out.look);
     }
