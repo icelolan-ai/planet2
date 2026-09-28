@@ -5050,8 +5050,8 @@ class Stage {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.maxDPR));
     this.renderer.setSize(w, h, false);
   }
-  render(camera) { this.renderer.render(this.scene, camera); }
-  dispose() { this.renderer.dispose(); }
+  render(camera) { if(this.post)this.post.render(camera);else this.renderer.render(this.scene, camera); }
+  dispose() { if(this.post)this.post.dispose();this.renderer.dispose(); }
 }
 
 /** A dolly-and-drift camera for the core. Every move is damped; nothing is ever set directly. */
@@ -6247,6 +6247,7 @@ class App {
     this.resize();
     this.bindRuntime();
 
+    this.stage.post = new CerebraPostStack(this.stage,this.rig.camera);
     this.loader.set(at(0.85), 'Compiling shaders'); await nextFrame();
     await this.warmUp();
 
@@ -6330,6 +6331,7 @@ class App {
       if (r.compileAsync) await r.compileAsync(scene, cam); else r.compile(scene, cam);
     } catch (e) { r.compile(scene, cam); }
     r.render(scene, cam);
+    if(this.stage.post)this.stage.render(cam);
     await nextFrame();
     culled.forEach(obj => { obj.frustumCulled = true; });
     worlds.forEach((w, i) => { w.group.visible = saved[i][0]; w.orbitLine.visible = saved[i][1]; w.U.uKyReveal.value = saved[i][2]; });
@@ -6844,9 +6846,11 @@ class App {
     this.raf = requestAnimationFrame(this.frame);
     let dt = (now - this.last) / 1000; this.last = now;
     if (!(dt > 0)) dt = 1 / 60;
+    const rawDt=dt;
+    if(this.stage.post&&!this.cap)this.stage.post.sample(rawDt*1000);
     dt = Math.min(dt, 0.05);
     this.clock += dt;
-    this.fps = damp(this.fps, 1 / dt, 2, dt);
+    this.fps = damp(this.fps, 1 / rawDt, 2, dt);
     if (this.studio && this.studio.update(dt)) return;
     if (this.explorer && this.explorer.own(dt)) return;
 
