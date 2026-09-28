@@ -736,6 +736,7 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
 }
 #wtune .tune-tabs{flex-wrap:wrap}
 #wtune .tune-tabs button{flex:1 1 45%;min-height:40px}
+.cerebra-debug-status{position:fixed;bottom:12px;right:12px;z-index:121;padding:6px 10px;background:#10151e;color:#eef0f6;font:12px sans-serif;max-width:calc(100vw - 24px)}
 /* Keep orbit controls within the drawer at narrow desktop and phone widths. */
 #obuild{width:min(420px,100vw);overflow-x:hidden;touch-action:pan-y}
 #obuild .tune-row{grid-template-columns:minmax(70px,90px) minmax(0,1fr) 36px;gap:8px}
@@ -1612,7 +1613,7 @@ const WorldTune = (() => {
     Signals.on('world:exit', () => open(false));
     Signals.on('world:swap', () => { if (P.dataset.open === 'true') setTimeout(() => open(true), 0); });
   };
-  return { wire, open, tab };
+  return { wire, open, tab, applyValues(target,values){Object.entries(values).forEach(([k,v])=>target.setTune(k,v));store[target.def.id]={...(store[target.def.id]||{}),...values};save();if(w===target){syncAccent();fill();}} };
 })();
 
 /* Core tuning drawer. Talks to the planet through PlanetBody.active once the scene exists.
@@ -6149,6 +6150,7 @@ class CoreStudio {
 class App {
   constructor() {
     this.root = document.documentElement;
+    this.metrics = new FrameMetrics();
     this.mqReduce = matchMedia('(prefers-reduced-motion: reduce)');
     this.reduced = this.mqReduce.matches;
     this.mobile = matchMedia('(max-width: 760px), (pointer: coarse)').matches;
@@ -6275,6 +6277,7 @@ class App {
     this.attachWorldLabels();
     await this.warmUp();
     this.worldsReady = true;
+    this.metrics.ready(); CerebraDebug.open(this);
     pill.classList.add('is-done'); setTimeout(() => pill.remove(), 900);
   }
 
@@ -6312,10 +6315,13 @@ class App {
   /* Compile every program and upload every buffer and texture while the loader is still up,
      so the first arrival in the orbit never hitches (shader compiles are slow on Windows/ANGLE). */
   async warmUp() {
+    const mark=this.metrics.beginWarmup(this.orrery.worlds.length?'worlds':'core');
     const r = this.stage.renderer, cam = this.rig.camera, scene = this.stage.scene, o = this.orrery;
     const worlds = o.worlds;
     const saved = worlds.map(w => [w.group.visible, w.orbitLine.visible, w.U.uKyReveal.value]);
+    const orbitVisible=o.group.visible; o.group.visible=true;
     const culled = [];
+    try {
     worlds.forEach(w => {
       w.group.visible = true; w.orbitLine.visible = true; w.U.uKyReveal.value = 1;
       w.group.traverse(obj => { if (obj.frustumCulled) { culled.push(obj); obj.frustumCulled = false; } });
@@ -6333,8 +6339,12 @@ class App {
     r.render(scene, cam);
     if(this.stage.post)this.stage.render(cam);
     await nextFrame();
+    } finally {
+    o.group.visible=orbitVisible;
     culled.forEach(obj => { obj.frustumCulled = true; });
     worlds.forEach((w, i) => { w.group.visible = saved[i][0]; w.orbitLine.visible = saved[i][1]; w.U.uKyReveal.value = saved[i][2]; });
+    this.metrics.endWarmup(mark);
+    }
   }
 
   buildStates() {
@@ -7225,6 +7235,7 @@ class App {
     if (this.ambient) this.ambient.dispose();
     if (this.stage) this.stage.dispose();
     this.sound.dispose();
+    this.metrics.dispose();
     Signals.clear();
   }
 }
