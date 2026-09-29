@@ -796,7 +796,7 @@ body.studio-on #studio{display:block}
 .studio-note{font:12px/1.5 var(--f-body);color:#aab3c4;margin:12px 0 0}
 .studio-home{width:100%;margin-top:8px}
 body.studio-on.tune-open .studio-panel{display:none}
-body.studio-on.tune-open #studio{z-index:45}
+body.studio-on.tune-open #studio{z-index:110}
 body.studio-on #tune{z-index:100}
 @media(max-width:760px){
   .studio-bar{left:12px;right:12px;gap:5px}
@@ -6015,7 +6015,12 @@ class CoreStudio {
     document.body.append(this.bg, this.el);
     this.panel = this.el.querySelector('.studio-panel');
     this.el.querySelector('[data-studio-exit]').onclick = () => this.close();
-    this.el.querySelector('[data-studio-tools]').onclick = () => this.tools(this.panel.hidden);
+    this.el.querySelector('[data-studio-tools]').onclick = () => {
+      if (document.body.classList.contains('tune-open')) {
+        document.querySelector('[data-tune-close]').click();
+        this.tools(true);
+      } else this.tools(this.panel.hidden);
+    };
     this.el.querySelector('[data-studio-tune]').onclick = () => { this.tools(false); dispatchEvent(new Event('cerebra:tune')); };
     this.el.querySelector('select').onchange = e => { this.background = e.target.value; this.paintBackground(); };
     this.el.querySelector('[data-studio-gravity]').onchange = e => { this.gravity = e.target.checked; };
