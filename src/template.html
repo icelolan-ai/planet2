@@ -838,7 +838,7 @@ html.route-lock,html.route-lock body{overflow:hidden!important;overscroll-behavi
 .atelier-track{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scroll-snap-type:y proximity;pointer-events:auto;scrollbar-width:none}
 .atelier-track::-webkit-scrollbar{display:none}
 .atelier-stop{height:100dvh;position:relative;scroll-snap-align:center;pointer-events:none}
-.atelier-copy{position:absolute;left:clamp(24px,5vw,80px);bottom:clamp(65px,11vh,150px);width:min(340px,42vw);pointer-events:auto}
+.atelier-copy{position:absolute;left:clamp(24px,5vw,80px);top:50%;transform:translateY(-50%);width:min(340px,42vw);pointer-events:auto}
 .atelier-copy b{font:600 12px var(--f-cond);letter-spacing:.28em;color:var(--a);text-transform:uppercase}
 .atelier-copy h2{font:400 clamp(36px,5vw,74px)/1 var(--f-display);text-transform:uppercase;margin:12px 0}
 .atelier-copy p{font-size:14px;line-height:1.5;color:#b2bac9;margin:0 0 18px}
@@ -847,10 +847,11 @@ html.route-lock,html.route-lock body{overflow:hidden!important;overscroll-behavi
 .atelier-bar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 18px);left:clamp(16px,4vw,64px);right:clamp(16px,4vw,64px);display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:auto}
 .atelier-bar span{font:500 12px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;color:#c3cad8}
 .atelier-count{position:absolute;right:clamp(16px,4vw,64px);bottom:24px;font:12px var(--f-mono);color:#bac3d2}
-body.route-choose> :not(#gl):not(#gateway):not(script),body.atelier-on> :not(#gl):not(#atelier):not(#wtune):not(script){visibility:hidden!important;pointer-events:none!important}
-body.atelier-on #wtune{z-index:70;visibility:visible!important}
-body.atelier-on.wtune-open .atelier-copy{visibility:hidden;pointer-events:none}
-body.atelier-on.wtune-open .atelier-track{overflow:hidden}
+body.route-choose> :not(#gl):not(#gateway):not(script),body.atelier-on> :not(#gl):not(#atelier):not(#wtune):not(#tune):not(script){visibility:hidden!important;pointer-events:none!important}
+body.atelier-on #wtune,body.atelier-on #tune{z-index:70;visibility:visible!important}
+body.atelier-on.wtune-open .atelier-copy,body.atelier-on.tune-open .atelier-copy{visibility:hidden;pointer-events:none}
+body.atelier-on.wtune-open .atelier-track,body.atelier-on.tune-open .atelier-track{overflow:hidden}
+body.atelier-on.wtune-open #gl{transform:none!important}
 @media(max-width:760px){
   #gateway{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
   .gateway-choice{padding:25px;gap:8px}
@@ -860,7 +861,7 @@ body.atelier-on.wtune-open .atelier-track{overflow:hidden}
   .gateway-choice strong{font-size:clamp(30px,8vw,46px);max-width:65%}
   .gateway-choice small{font-size:12px;max-width:63%}
   .gateway-status{bottom:calc(env(safe-area-inset-bottom,0px) + 4px);white-space:nowrap}
-  .atelier-copy{left:20px;right:20px;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);width:auto;text-shadow:0 2px 15px #05070a}
+  .atelier-copy{left:20px;right:20px;top:54%;width:auto;text-shadow:0 2px 15px #05070a}
   .atelier-copy h2{font-size:42px}.atelier-copy p{max-width:32ch}
   .atelier-bar span{display:none}.atelier-bar button{padding:8px 10px;font-size:10px}
 }
@@ -6135,8 +6136,9 @@ class WorldAtelier {
     this.track = this.el.querySelector('[data-at-track]'); this.active = false; this.pending = false; this.progress = 0; this.index = 0;
     this.sun = new THREE.Vector3(4, 2, 7); this.saved = null;
     const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-    this.track.innerHTML = WORLDS.map((d, i) => `<article class="atelier-stop" style="--a:${esc(d.accent)}" aria-label="${esc(d.name)}">
-      <div class="atelier-copy"><b>World ${String(i + 1).padStart(2, '0')} / ${String(WORLDS.length).padStart(2, '0')}</b><h2>${esc(d.name)}</h2><p>${esc(d.kicker)} · ${esc(d.lede)}</p><button type="button" data-at-tune="${i}">Tune this world →</button></div>
+    const stages = [{ name: 'Cerebra', accent: '#ff4655', kicker: 'The living planet', lede: 'A core that rebuilds itself while you watch.' }, ...WORLDS];
+    this.track.innerHTML = stages.map((d, i) => `<article class="atelier-stop" style="--a:${esc(d.accent)}" aria-label="${esc(d.name)}">
+      <div class="atelier-copy"><b>${i ? 'World ' + String(i).padStart(2, '0') : 'Core'} / ${String(stages.length).padStart(2, '0')}</b><h2>${esc(d.name)}</h2><p>${esc(d.kicker)} · ${esc(d.lede)}</p><button type="button" data-at-tune="${i}">Tune ${i ? 'this world' : 'the core'} →</button></div>
     </article>`).join('');
     this.choice.querySelector('[data-route="orbit"]').addEventListener('click', () => this.orbit());
     this.choice.querySelector('[data-route="atelier"]').addEventListener('click', () => this.enter());
@@ -6144,7 +6146,9 @@ class WorldAtelier {
     this.el.querySelector('[data-at-orbit]').addEventListener('click', () => this.orbit());
     this.track.querySelectorAll('[data-at-tune]').forEach(b => b.addEventListener('click', () => {
       this.track.scrollTo({ top: +b.dataset.atTune * this.track.clientHeight, behavior: 'instant' });
-      this.select(+b.dataset.atTune); WorldTune.open(true, 'world');
+      this.select(+b.dataset.atTune);
+      if (+b.dataset.atTune === 0) dispatchEvent(new Event('cerebra:tune'));
+      else WorldTune.open(true, 'world');
     }));
   }
   open() {
@@ -6165,7 +6169,7 @@ class WorldAtelier {
     this.choice.hidden = true; document.body.classList.remove('route-choose'); document.body.classList.add('atelier-on');
     this.el.hidden = false; this.track.scrollTop = 0; this.progress = 0; this.select(0);
     this.saved = new Map(); a.stage.scene.traverse(o => this.saved.set(o, o.visible));
-    a.core.group.visible = false; if (a.ambient) a.ambient.points.visible = false;
+    if (a.ambient) a.ambient.points.visible = false;
     if (a.organisms) a.organisms.group.visible = false;
     a.orrery.group.visible = true;
     a.orrery.group.children.forEach(o => { o.visible = o === a.orrery.stars.points || a.orrery.worlds.some(w => w.group === o); });
@@ -6173,12 +6177,14 @@ class WorldAtelier {
     this.el.querySelector('[data-at-back]').focus({ preventScroll: true });
   }
   select(i) {
-    this.index = clamp(i, 0, this.app.orrery.worlds.length - 1); this.app.detail.index = this.index;
-    this.el.querySelector('[data-at-count]').textContent = `${String(this.index + 1).padStart(2, '0')} / ${String(WORLDS.length).padStart(2, '0')}`;
+    this.index = clamp(i, 0, this.app.orrery.worlds.length);
+    if (this.index > 0) this.app.detail.index = this.index - 1;
+    this.el.querySelector('[data-at-count]').textContent = `${String(this.index + 1).padStart(2, '0')} / ${String(WORLDS.length + 1).padStart(2, '0')}`;
   }
   leave() {
     if (!this.active) return;
-    WorldTune.open(false); this.active = false; this.el.hidden = true; document.body.classList.remove('atelier-on');
+    WorldTune.open(false); document.querySelector('[data-tune-close]').click();
+    this.active = false; this.el.hidden = true; document.body.classList.remove('atelier-on');
     if (this.saved) this.saved.forEach((on, o) => { o.visible = on; });
     this.app.orrery.worlds.forEach(w => { w.solo = false; });
     this.saved = null; this.app.scroll.jumpTo(0);
@@ -6195,27 +6201,39 @@ class WorldAtelier {
   update(dt) {
     if (!this.active) return false;
     const a = this.app, worlds = a.orrery.worlds, h = this.track.clientHeight || innerHeight;
-    const target = clamp(this.track.scrollTop / h, 0, worlds.length - 1);
+    const target = clamp(this.track.scrollTop / h, 0, worlds.length);
     this.progress = a.reduced ? target : damp(this.progress, target, 7, dt);
     const nearest = Math.round(target);
-    if (nearest !== this.index && document.getElementById('wtune').dataset.open !== 'true') this.select(nearest);
+    const tuning = document.getElementById('wtune').dataset.open === 'true' || document.getElementById('tune').dataset.open === 'true';
+    if (nearest !== this.index && !tuning) this.select(nearest);
     a.simTime += a.reduced ? 0 : dt; a.shared.uTime.value = a.simTime; a.shared.uMotion.value = a.reduced ? 0 : 1;
-    const cam = a.rig.camera, portrait = a.stage.width < 760, tuning = document.getElementById('wtune').dataset.open === 'true';
-    cam.position.set(0, 0, portrait ? 14 : 13); cam.lookAt(0, tuning && portrait ? -1.35 : 0, 0); cam.fov = 32; cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+    const cam = a.rig.camera, portrait = a.stage.width < a.stage.height * .9;
+    cam.position.set(0, 0, portrait ? 14 : 13); cam.lookAt(0, tuning && portrait ? -.8 : 0, 0); cam.fov = 32; cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+    const baseY = portrait ? 2.15 : 0, spacing = portrait ? 4.5 : 4.15;
+    const radius = portrait ? Math.min(1.55, Math.tan(THREE.MathUtils.degToRad(16)) * 14 * cam.aspect * .74) : 1.7;
+    const x = portrait ? 0 : 1.5;
+    const coreDist = Math.abs(this.progress);
+    if (coreDist < 1.55) {
+      const near = .43 + .57 * Math.exp(-coreDist * coreDist * 1.4);
+      a.core.update(a.reduced ? 0 : dt, a.simTime, { expand:0,separation:0,stack:0,morph:0,flatten:0,intro:1,motion:a.reduced?0:1,reduced:a.reduced,focus:0,focusLayer:-1,rippleT:-1,pointer:a.pointerWorld,pull:0,x,y:baseY + this.progress * spacing,scale:radius / 1.6 * near,G:0,rotX:0,rotY:0,sun:0,spinVel:a.reduced?0:.07,pixelRatio:a.stage.pixelRatio,sizeScale:1 });
+      a.core.orbit.group.visible = false;
+    }
+    a.core.group.visible = coreDist < 1.55;
     worlds.forEach((w, i) => {
-      w.reveal = 1; w.hover = 0; w.focus = i === this.index ? 1 : 0;
-      w.update(a.reduced ? 0 : dt, a.simTime, { G: 1, sun: this.sun, boost: 1, pixelRatio: a.stage.pixelRatio, reduced: a.reduced, orbitVis: 0, dragging: false, active: this.index });
-      const dist = Math.abs(i - this.progress), near = .43 + .57 * Math.exp(-dist * dist * 1.4);
-      const radius = portrait ? 1.48 : 1.7, x = portrait ? 0 : 1.1;
-      w.group.position.set(x, (this.progress - i) * (portrait ? 4.25 : 4.15), -Math.min(2, dist * .6));
+      const dist = Math.abs(i + 1 - this.progress);
+      if (dist >= 1.55 || w.solo) { w.group.visible = false; return; }
+      w.reveal = 1; w.hover = 0; w.focus = i + 1 === this.index ? 1 : 0;
+      w.update(a.reduced ? 0 : dt, a.simTime, { G: 1, sun: this.sun, boost: 1, pixelRatio: a.stage.pixelRatio, reduced: a.reduced, orbitVis: 0, dragging: false, active: this.index - 1 });
+      const near = .43 + .57 * Math.exp(-dist * dist * 1.4);
+      w.group.position.set(x, baseY + (this.progress - i - 1) * spacing, -Math.min(2, dist * .6));
       w.group.scale.setScalar(radius / w.def.radius * near * w.tune.size);
       w.U.uKyCenter.value.copy(w.group.position);
       w.orbitLine.visible = false;
-      w.group.visible = !w.solo && dist < 1.55;
+      w.group.visible = true;
     });
-    a.core.group.visible = false; if (a.ambient) a.ambient.points.visible = false;
+    if (a.ambient) a.ambient.points.visible = false;
     a.orrery.stars.material.uniforms.uOpacity.value = .24;
-    a.stage.scene.updateMatrixWorld(); a.stage.render(cam);
+    a.stage.scene.updateMatrixWorld(); a.stage.renderer.render(a.stage.scene, cam);
     if (a.cap) a.captureStep();
     return true;
   }
