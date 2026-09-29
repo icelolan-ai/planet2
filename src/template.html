@@ -820,6 +820,50 @@ body.studio-on #tune{z-index:100}
   .studio-panel{right:auto;left:50%;width:calc(100% - 24px);top:50%;bottom:auto;transform:translate(-50%,-50%);max-height:calc(100dvh - 180px);padding:14px}
   .studio-layers{display:grid;grid-template-columns:1fr 1fr;gap:0 6px}
 }
+/* The post-loader choice and the independent, scroll-driven world atelier. */
+html.route-lock,html.route-lock body{overflow:hidden!important;overscroll-behavior:none}
+#gateway[hidden],#atelier[hidden]{display:none!important}
+#gateway{position:fixed;inset:0;z-index:55;background:#05070a;color:#edf0f7;display:grid;grid-template-columns:1fr 1fr;font-family:var(--f-sans)}
+.gateway-choice{position:relative;min-width:0;padding:clamp(24px,5vw,90px);display:flex;flex-direction:column;justify-content:flex-end;gap:20px;background:radial-gradient(circle at 60% 35%,#1e263b 0,#090d17 35%,#05070a 80%);border:1px solid #ffffff17;text-align:left;transition:background .4s,filter .4s}
+.gateway-choice:nth-child(2){background:radial-gradient(circle at 42% 35%,#2e1b28 0,#0d0c15 42%,#05070a 85%)}
+.gateway-choice:hover,.gateway-choice:focus-visible{filter:brightness(1.3);outline:2px solid #ff4655;outline-offset:-4px}
+.gateway-mark{position:absolute;top:clamp(24px,5vw,90px);left:clamp(24px,5vw,90px);font:600 12px var(--f-cond);letter-spacing:.3em;text-transform:uppercase;color:#ff4655}
+.gateway-orb{position:absolute;left:50%;top:38%;width:min(40vw,38vh);aspect-ratio:1;border:1px solid #ffffff69;border-radius:50%;transform:translate(-50%,-50%);box-shadow:inset -30px -15px 65px #6899ff26,0 0 80px #688aff25;pointer-events:none}
+.gateway-choice:nth-child(2) .gateway-orb{width:min(26vw,27vh);box-shadow:0 0 0 25px #ffffff08,0 0 0 80px #ffffff05,inset -10px -8px 40px #ff46554d}
+.gateway-choice strong{font:400 clamp(32px,4.5vw,72px)/1 var(--f-display);letter-spacing:.03em;text-transform:uppercase;max-width:12ch}
+.gateway-choice small{font:400 15px/1.5 var(--f-sans);color:#adb5c7;max-width:34ch}
+.gateway-choice em{font:600 12px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;font-style:normal;color:#ff4655}
+.gateway-status{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);font:12px var(--f-sans);color:#c0c8da;background:#05070adc;padding:7px 12px}
+#atelier{position:fixed;inset:0;z-index:20;color:#eef0f6;font-family:var(--f-sans);pointer-events:none}
+.atelier-track{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scroll-snap-type:y proximity;pointer-events:auto;scrollbar-width:none}
+.atelier-track::-webkit-scrollbar{display:none}
+.atelier-stop{height:100dvh;position:relative;scroll-snap-align:center;pointer-events:none}
+.atelier-copy{position:absolute;left:clamp(24px,5vw,80px);bottom:clamp(65px,11vh,150px);width:min(340px,42vw);pointer-events:auto}
+.atelier-copy b{font:600 12px var(--f-cond);letter-spacing:.28em;color:var(--a);text-transform:uppercase}
+.atelier-copy h2{font:400 clamp(36px,5vw,74px)/1 var(--f-display);text-transform:uppercase;margin:12px 0}
+.atelier-copy p{font-size:14px;line-height:1.5;color:#b2bac9;margin:0 0 18px}
+.atelier-copy button,.atelier-bar button{border:1px solid #ffffff4d;border-radius:5px;background:#10141cd9;color:#eef0f6;padding:12px 17px;font:600 12px var(--f-cond);letter-spacing:.12em;text-transform:uppercase;min-height:44px;cursor:pointer}
+.atelier-copy button{border-color:var(--a);color:var(--a)}
+.atelier-bar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 18px);left:clamp(16px,4vw,64px);right:clamp(16px,4vw,64px);display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:auto}
+.atelier-bar span{font:500 12px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;color:#c3cad8}
+.atelier-count{position:absolute;right:clamp(16px,4vw,64px);bottom:24px;font:12px var(--f-mono);color:#bac3d2}
+body.route-choose> :not(#gl):not(#gateway):not(script),body.atelier-on> :not(#gl):not(#atelier):not(#wtune):not(script){visibility:hidden!important;pointer-events:none!important}
+body.atelier-on #wtune{z-index:70;visibility:visible!important}
+body.atelier-on.wtune-open .atelier-copy{visibility:hidden;pointer-events:none}
+body.atelier-on.wtune-open .atelier-track{overflow:hidden}
+@media(max-width:760px){
+  #gateway{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
+  .gateway-choice{padding:25px;gap:8px}
+  .gateway-mark{top:16px;left:25px}
+  .gateway-orb{left:74%;top:50%;width:min(28vw,18vh);opacity:.75}
+  .gateway-choice:nth-child(2) .gateway-orb{width:min(20vw,13vh)}
+  .gateway-choice strong{font-size:clamp(30px,8vw,46px);max-width:65%}
+  .gateway-choice small{font-size:12px;max-width:63%}
+  .gateway-status{bottom:calc(env(safe-area-inset-bottom,0px) + 4px);white-space:nowrap}
+  .atelier-copy{left:20px;right:20px;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);width:auto;text-shadow:0 2px 15px #05070a}
+  .atelier-copy h2{font-size:42px}.atelier-copy p{max-width:32ch}
+  .atelier-bar span{display:none}.atelier-bar button{padding:8px 10px;font-size:10px}
+}
 
 </style>
 </head>
@@ -844,6 +888,17 @@ body.studio-on #tune{z-index:100}
   </div>
   <div class="ld-status sr-only" data-status aria-live="polite">Starting</div>
 </div>
+
+<section id="gateway" aria-label="Choose your experience" hidden>
+  <button type="button" class="gateway-choice" data-route="atelier"><span class="gateway-mark">01 / Create</span><span class="gateway-orb" aria-hidden="true"></span><strong>Shape a world</strong><small>Choose a planet, bring it closer, and tune its colour, atmosphere and motion.</small><em>Enter world atelier →</em></button>
+  <button type="button" class="gateway-choice" data-route="orbit"><span class="gateway-mark">02 / Explore</span><span class="gateway-orb" aria-hidden="true"></span><strong>Explore the system</strong><small>Travel through Cerebra and its seven worlds in the original journey.</small><em>Enter the solar system →</em></button>
+  <span class="gateway-status" role="status" data-route-status hidden></span>
+</section>
+<section id="atelier" aria-label="World atelier" hidden>
+  <div class="atelier-track" data-at-track></div>
+  <div class="atelier-bar"><button type="button" data-at-back>← Choose mode</button><span>World atelier · scroll to choose</span><button type="button" data-at-orbit>Explore system →</button></div>
+  <span class="atelier-count" data-at-count>01 / 07</span>
+</section>
 
 <header class="hud hud-top">
   <a class="brand" href="#core" data-cursor="Surface"><span class="brand-name">Cerebra</span><span class="brand-sub">The living planet</span></a>
@@ -6073,6 +6128,99 @@ class Organisms {
   dispose(){this.app.core.orient.remove(this.group);this.body.geometry.dispose();this.bodyMat.dispose();this.linesGeom.dispose();this.linesMat.dispose();}
 }
 
+/** A second route with its own scroll and camera; it borrows the seven world models without duplicating assets. */
+class WorldAtelier {
+  constructor(app) {
+    this.app = app; this.choice = document.getElementById('gateway'); this.el = document.getElementById('atelier');
+    this.track = this.el.querySelector('[data-at-track]'); this.active = false; this.pending = false; this.progress = 0; this.index = 0;
+    this.sun = new THREE.Vector3(4, 2, 7); this.saved = null;
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+    this.track.innerHTML = WORLDS.map((d, i) => `<article class="atelier-stop" style="--a:${esc(d.accent)}" aria-label="${esc(d.name)}">
+      <div class="atelier-copy"><b>World ${String(i + 1).padStart(2, '0')} / ${String(WORLDS.length).padStart(2, '0')}</b><h2>${esc(d.name)}</h2><p>${esc(d.kicker)} · ${esc(d.lede)}</p><button type="button" data-at-tune="${i}">Tune this world →</button></div>
+    </article>`).join('');
+    this.choice.querySelector('[data-route="orbit"]').addEventListener('click', () => this.orbit());
+    this.choice.querySelector('[data-route="atelier"]').addEventListener('click', () => this.enter());
+    this.el.querySelector('[data-at-back]').addEventListener('click', () => this.back());
+    this.el.querySelector('[data-at-orbit]').addEventListener('click', () => this.orbit());
+    this.track.querySelectorAll('[data-at-tune]').forEach(b => b.addEventListener('click', () => {
+      this.track.scrollTo({ top: +b.dataset.atTune * this.track.clientHeight, behavior: 'instant' });
+      this.select(+b.dataset.atTune); WorldTune.open(true, 'world');
+    }));
+  }
+  open() {
+    this.choice.hidden = false; document.body.classList.add('route-choose'); document.documentElement.classList.add('route-lock');
+    document.querySelector('main').inert = true;
+    this.app.scroll.jumpTo(0);
+    this.choice.querySelector('[data-route="atelier"]').focus({ preventScroll: true });
+  }
+  ready() { if (this.pending) this.enter(); }
+  enter() {
+    const a = this.app;
+    if (!a.worldsReady) {
+      this.pending = true; const status = this.choice.querySelector('[data-route-status]');
+      status.hidden = false; status.textContent = 'Preparing the worlds…'; return;
+    }
+    this.pending = false;
+    if (!a.orrery.worlds.length) { this.choice.querySelector('[data-route-status]').textContent = 'Worlds unavailable. Explore the system instead.'; return; }
+    this.choice.hidden = true; document.body.classList.remove('route-choose'); document.body.classList.add('atelier-on');
+    this.el.hidden = false; this.track.scrollTop = 0; this.progress = 0; this.select(0);
+    this.saved = new Map(); a.stage.scene.traverse(o => this.saved.set(o, o.visible));
+    a.core.group.visible = false; if (a.ambient) a.ambient.points.visible = false;
+    if (a.organisms) a.organisms.group.visible = false;
+    a.orrery.group.visible = true;
+    a.orrery.group.children.forEach(o => { o.visible = o === a.orrery.stars.points || a.orrery.worlds.some(w => w.group === o); });
+    this.active = true;
+    this.el.querySelector('[data-at-back]').focus({ preventScroll: true });
+  }
+  select(i) {
+    this.index = clamp(i, 0, this.app.orrery.worlds.length - 1); this.app.detail.index = this.index;
+    this.el.querySelector('[data-at-count]').textContent = `${String(this.index + 1).padStart(2, '0')} / ${String(WORLDS.length).padStart(2, '0')}`;
+  }
+  leave() {
+    if (!this.active) return;
+    WorldTune.open(false); this.active = false; this.el.hidden = true; document.body.classList.remove('atelier-on');
+    if (this.saved) this.saved.forEach((on, o) => { o.visible = on; });
+    this.app.orrery.worlds.forEach(w => { w.solo = false; });
+    this.saved = null; this.app.scroll.jumpTo(0);
+  }
+  back() {
+    this.leave(); this.choice.hidden = false; document.body.classList.add('route-choose');
+    this.choice.querySelector('[data-route="atelier"]').focus({ preventScroll: true });
+  }
+  orbit() {
+    this.pending = false; this.leave(); this.choice.hidden = true; document.body.classList.remove('route-choose');
+    document.documentElement.classList.remove('route-lock'); document.querySelector('main').inert = false;
+    this.app.scroll.jumpTo(0);
+  }
+  update(dt) {
+    if (!this.active) return false;
+    const a = this.app, worlds = a.orrery.worlds, h = this.track.clientHeight || innerHeight;
+    const target = clamp(this.track.scrollTop / h, 0, worlds.length - 1);
+    this.progress = a.reduced ? target : damp(this.progress, target, 7, dt);
+    const nearest = Math.round(target);
+    if (nearest !== this.index && document.getElementById('wtune').dataset.open !== 'true') this.select(nearest);
+    a.simTime += a.reduced ? 0 : dt; a.shared.uTime.value = a.simTime; a.shared.uMotion.value = a.reduced ? 0 : 1;
+    const cam = a.rig.camera, portrait = a.stage.width < 760, tuning = document.getElementById('wtune').dataset.open === 'true';
+    cam.position.set(0, 0, portrait ? 14 : 13); cam.lookAt(0, tuning && portrait ? -1.35 : 0, 0); cam.fov = 32; cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+    worlds.forEach((w, i) => {
+      w.reveal = 1; w.hover = 0; w.focus = i === this.index ? 1 : 0;
+      w.update(a.reduced ? 0 : dt, a.simTime, { G: 1, sun: this.sun, boost: 1, pixelRatio: a.stage.pixelRatio, reduced: a.reduced, orbitVis: 0, dragging: false, active: this.index });
+      const dist = Math.abs(i - this.progress), near = .43 + .57 * Math.exp(-dist * dist * 1.4);
+      const radius = portrait ? 1.48 : 1.7, x = portrait ? 0 : 1.1;
+      w.group.position.set(x, (this.progress - i) * (portrait ? 4.25 : 4.15), -Math.min(2, dist * .6));
+      w.group.scale.setScalar(radius / w.def.radius * near * w.tune.size);
+      w.U.uKyCenter.value.copy(w.group.position);
+      w.orbitLine.visible = false;
+      w.group.visible = !w.solo && dist < 1.55;
+    });
+    a.core.group.visible = false; if (a.ambient) a.ambient.points.visible = false;
+    a.orrery.stars.material.uniforms.uOpacity.value = .24;
+    a.stage.scene.updateMatrixWorld(); a.stage.render(cam);
+    if (a.cap) a.captureStep();
+    return true;
+  }
+}
+
 class CoreStudio {
   constructor(app) {
     this.app = app; this.active = false; this.pending = false;
@@ -6339,6 +6487,7 @@ class App {
     this.onSection(0);
     this.resize();
     this.bindRuntime();
+    this.entry = new WorldAtelier(this);
 
     this.stage.post = new CerebraPostStack(this.stage,this.rig.camera);
     this.loader.set(at(0.85), 'Compiling shaders'); await nextFrame();
@@ -6350,6 +6499,7 @@ class App {
     // The worlds assemble as the loader hands over.
     if (this.orrery) this.orrery.worlds.forEach(w => FORMATION.play(w));
     this.reveal();
+    this.entry.open();
     this.introOn = true;
     this.loadWorldsInBackground();
   }
@@ -6368,6 +6518,7 @@ class App {
     this.attachWorldLabels();
     await this.warmUp();
     this.worldsReady = true;
+    if (this.entry) this.entry.ready();
     this.metrics.ready(); CerebraDebug.open(this);
     pill.classList.add('is-done'); setTimeout(() => pill.remove(), 900);
   }
@@ -6696,6 +6847,7 @@ class App {
     // Tap on empty space: worlds first, then the core.
     addEventListener('pointerdown', e => {
       if (this.studio && this.studio.active) return;
+      if (this.entry && (this.entry.active || !this.entry.choice.hidden)) return;
       this.down = { x: e.clientX, y: e.clientY, t: performance.now() };
       // A tap on a world sends a ripple from that point; the tap still opens or turns the world as before.
       if (!(e.target.closest && e.target.closest('a,button,input,label,.tune,.hud,.rail,.picker,.fab,.d-nav,.specs'))) {
@@ -6710,6 +6862,7 @@ class App {
     addEventListener('pointercancel', endDrag, { signal });
     addEventListener('pointerup', e => {
       if (this.studio && this.studio.active) return;
+      if (this.entry && (this.entry.active || !this.entry.choice.hidden)) return;
       this.rippleDown = 0;
       const d = this.down; this.down = null;
       const dragged = this.drag && this.drag.moved; endDrag();
@@ -6763,6 +6916,7 @@ class App {
     this.rig.setViewport(w, h);
     if (this.orrery) this.orrery.aspect = w / h;
     this.scroll.measure();
+    if (this.entry && this.entry.active) this.entry.track.scrollTop = this.entry.index * this.entry.track.clientHeight;
   }
 
   toggleExpand(force) {
@@ -6952,6 +7106,7 @@ class App {
     dt = Math.min(dt, 0.05);
     this.clock += dt;
     this.fps = damp(this.fps, 1 / rawDt, 2, dt);
+    if (this.entry && this.entry.update(dt)) return;
     if (this.studio && this.studio.update(dt)) return;
     if (this.explorer && this.explorer.own(dt)) return;
 
