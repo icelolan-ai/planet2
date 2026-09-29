@@ -715,12 +715,13 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
 .tune-btns{display:flex;gap:8px;margin-top:6px}
 .lc-cols{display:flex;gap:6px}.lc-cols input{width:30px;height:26px}
 .layer-controls{display:grid;gap:9px}
-.layer-controls details{position:relative;border:1px solid var(--line-2);padding:10px 12px}
+.layer-item{position:relative;border:1px solid var(--line-2)}
+.layer-controls details{padding:10px 12px}
 .layer-controls summary{display:flex;align-items:center;justify-content:space-between;min-height:34px;cursor:pointer;font:600 12px var(--f-cond);letter-spacing:.12em;text-transform:uppercase}
 .layer-controls summary{padding-right:74px}
 .layer-controls summary::after{content:'+';font-size:18px;color:var(--val)}
 .layer-controls details[open] summary::after{content:'−'}
-.layer-eye{position:absolute;top:7px;right:43px;width:36px;height:36px;border:1px solid var(--line-2);border-radius:6px;color:var(--ink);display:grid;place-items:center}
+.layer-eye{position:absolute;top:7px;right:43px;width:36px;height:36px;border:1px solid var(--line-2);border-radius:6px;color:var(--ink);display:grid;place-items:center;z-index:1}
 .layer-eye[aria-pressed="false"]{opacity:.45}
 .layer-eye svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6}
 .layer-eye[aria-pressed="true"] .eye-slash{display:none}
@@ -832,15 +833,22 @@ body.studio-on #tune{z-index:100}
 html.route-lock,html.route-lock body{overflow:hidden!important;overscroll-behavior:none}
 #gateway[hidden],#atelier[hidden]{display:none!important}
 #gateway{position:fixed;inset:0;z-index:55;background:#05070a;color:#edf0f7;display:grid;grid-template-columns:1fr 1fr;font-family:var(--f-sans)}
-.gateway-choice{position:relative;min-width:0;padding:clamp(24px,5vw,90px);display:flex;flex-direction:column;justify-content:flex-end;gap:20px;background:radial-gradient(circle at 60% 35%,#1e263b 0,#090d17 35%,#05070a 80%);border:1px solid #ffffff17;text-align:left;transition:background .4s,filter .4s}
+.gateway-choice{position:relative;min-width:0;padding:clamp(24px,5vw,90px);display:flex;flex-direction:column;justify-content:flex-end;gap:20px;background:radial-gradient(circle at 60% 35%,#1e263b 0,#090d17 35%,#05070a 80%);border:1px solid #ffffff17;text-align:left;filter:grayscale(1) brightness(.58);transition:filter .45s,border-color .45s}
 .gateway-choice:nth-child(2){background:radial-gradient(circle at 42% 35%,#2e1b28 0,#0d0c15 42%,#05070a 85%)}
-.gateway-choice:hover,.gateway-choice:focus-visible{filter:brightness(1.3);outline:2px solid #ff4655;outline-offset:-4px}
+.gateway-choice.is-selected{filter:none;border-color:#ff465580}
+.gateway-choice:focus-within{border-color:#ff4655}
 .gateway-mark{position:absolute;top:clamp(24px,5vw,90px);left:clamp(24px,5vw,90px);font:600 12px var(--f-cond);letter-spacing:.3em;text-transform:uppercase;color:#ff4655}
-.gateway-orb{position:absolute;left:50%;top:38%;width:min(40vw,38vh);aspect-ratio:1;border:1px solid #ffffff69;border-radius:50%;transform:translate(-50%,-50%);box-shadow:inset -30px -15px 65px #6899ff26,0 0 80px #688aff25;pointer-events:none}
+.gateway-orb{position:absolute;left:50%;top:38%;width:min(40vw,38vh);aspect-ratio:1;border:1px solid #ffffff69;border-radius:50%;transform:translate(-50%,-50%);box-shadow:inset -30px -15px 65px #6899ff26,0 0 80px #688aff25;pointer-events:none;transition:transform .68s cubic-bezier(.7,0,.84,0),opacity .18s ease .5s}
 .gateway-choice:nth-child(2) .gateway-orb{width:min(26vw,27vh);box-shadow:0 0 0 25px #ffffff08,0 0 0 80px #ffffff05,inset -10px -8px 40px #ff46554d}
 .gateway-choice strong{font:400 clamp(32px,4.5vw,72px)/1 var(--f-display);letter-spacing:.03em;text-transform:uppercase;max-width:12ch}
 .gateway-choice small{font:400 15px/1.5 var(--f-sans);color:#adb5c7;max-width:34ch}
-.gateway-choice em{font:600 12px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;font-style:normal;color:#ff4655}
+.gateway-enter{align-self:flex-start;min-height:44px;padding:10px 12px;border:1px solid #ff4655;color:#ff4655;font:600 12px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;cursor:pointer}
+.gateway-enter:focus-visible{outline:2px solid #fff;outline-offset:3px}.gateway-enter:hover{background:#ff4655;color:#05070a}
+.gateway-choice .w>span{opacity:1}.gateway-choice.is-animating .w>span{opacity:0;animation:gateway-word .01s linear both;animation-delay:calc(var(--i) * 65ms + 230ms)}
+.gateway-choice.is-animating .w::after{animation:valwipe .45s cubic-bezier(.7,0,.2,1) both;animation-delay:calc(var(--i) * 65ms + 30ms)}
+@keyframes gateway-word{to{opacity:1}}
+#gateway.is-entering{pointer-events:none}
+#gateway.is-entering .gateway-choice.is-selected .gateway-orb{transform:translate(-50%,-50%) scale(18);opacity:0}
 .gateway-status{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);font:12px var(--f-sans);color:#c0c8da;background:#05070adc;padding:7px 12px}
 #atelier{position:fixed;inset:0;z-index:20;color:#eef0f6;font-family:var(--f-sans);pointer-events:none}
 .atelier-track{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scroll-snap-type:y proximity;pointer-events:auto;scrollbar-width:none}
@@ -852,6 +860,10 @@ html.route-lock,html.route-lock body{overflow:hidden!important;overscroll-behavi
 .atelier-copy p{font-size:14px;line-height:1.5;color:#b2bac9;margin:0 0 18px}
 .atelier-copy button,.atelier-bar button{border:1px solid #ffffff4d;border-radius:5px;background:#10141cd9;color:#eef0f6;padding:12px 17px;font:600 12px var(--f-cond);letter-spacing:.12em;text-transform:uppercase;min-height:44px;cursor:pointer}
 .atelier-copy button{border-color:var(--a);color:var(--a)}
+.atelier-copy .w>span{opacity:1}.atelier-stop.is-current .atelier-copy .w>span{animation:gateway-word .01s linear both;animation-delay:calc(var(--i) * 55ms + 230ms)}
+.atelier-stop.is-current .atelier-copy .w::after{animation:valwipe .4s cubic-bezier(.7,0,.2,1) both;animation-delay:calc(var(--i) * 55ms + 30ms)}
+.atelier-stop.is-current .atelier-copy b,.atelier-stop.is-current .atelier-copy p,.atelier-stop.is-current .atelier-copy button{animation:atelier-appear .7s var(--ease-out) both;animation-delay:.38s}
+@keyframes atelier-appear{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:none}}
 .atelier-bar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 18px);left:clamp(16px,4vw,64px);right:clamp(16px,4vw,64px);display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:auto}
 .atelier-bar span{font:500 12px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;color:#c3cad8}
 .atelier-count{position:absolute;right:clamp(16px,4vw,64px);bottom:24px;font:12px var(--f-mono);color:#bac3d2}
@@ -860,6 +872,8 @@ body.atelier-on #wtune,body.atelier-on #tune{z-index:70;visibility:visible!impor
 body.atelier-on.wtune-open .atelier-copy,body.atelier-on.tune-open .atelier-copy{visibility:hidden;pointer-events:none}
 body.atelier-on.wtune-open .atelier-track,body.atelier-on.tune-open .atelier-track{overflow:hidden}
 body.atelier-on.wtune-open #gl{transform:none!important}
+#route-back[hidden]{display:none!important}
+#route-back{position:fixed;z-index:18;top:calc(env(safe-area-inset-top,0px) + 74px);left:var(--pad);min-height:44px;padding:10px 14px;border:1px solid #ffffff63;background:#0b0d13e8;color:#eef0f6;font:600 11px var(--f-cond);letter-spacing:.15em;text-transform:uppercase}
 @media(max-width:760px){
   #gateway{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
   .gateway-choice{padding:25px;gap:8px}
@@ -868,11 +882,14 @@ body.atelier-on.wtune-open #gl{transform:none!important}
   .gateway-choice:nth-child(2) .gateway-orb{width:min(20vw,13vh)}
   .gateway-choice strong{font-size:clamp(30px,8vw,46px);max-width:65%}
   .gateway-choice small{font-size:12px;max-width:63%}
+  .gateway-enter{padding:7px 10px;font-size:10px}
+  #route-back{top:calc(env(safe-area-inset-top,0px) + 65px);left:16px}
   .gateway-status{bottom:calc(env(safe-area-inset-bottom,0px) + 4px);white-space:nowrap}
   .atelier-copy{left:20px;right:20px;top:54%;width:auto;text-shadow:0 2px 15px #05070a}
   .atelier-copy h2{font-size:42px}.atelier-copy p{max-width:32ch}
   .atelier-bar span{display:none}.atelier-bar button{padding:8px 10px;font-size:10px}
 }
+@media(prefers-reduced-motion:reduce){.gateway-orb,.gateway-choice,.atelier-copy *{animation:none!important;transition:none!important}}
 
 </style>
 </head>
@@ -899,15 +916,16 @@ body.atelier-on.wtune-open #gl{transform:none!important}
 </div>
 
 <section id="gateway" aria-label="Choose your experience" hidden>
-  <button type="button" class="gateway-choice" data-route="atelier"><span class="gateway-mark">01 / Create</span><span class="gateway-orb" aria-hidden="true"></span><strong>Shape a world</strong><small>Choose a planet, bring it closer, and tune its colour, atmosphere and motion.</small><em>Enter world atelier →</em></button>
-  <button type="button" class="gateway-choice" data-route="orbit"><span class="gateway-mark">02 / Explore</span><span class="gateway-orb" aria-hidden="true"></span><strong>Explore the system</strong><small>Travel through Cerebra and its seven worlds in the original journey.</small><em>Enter the solar system →</em></button>
+  <article class="gateway-choice" data-route="atelier"><span class="gateway-mark">01 / Create</span><span class="gateway-orb" aria-hidden="true"></span><strong data-split>Shape a world</strong><small>Choose Cerebra or a planet, bring it closer, and tune its colour, atmosphere and motion.</small><button type="button" class="gateway-enter" data-enter="atelier">Enter world atelier →</button></article>
+  <article class="gateway-choice" data-route="orbit"><span class="gateway-mark">02 / Explore</span><span class="gateway-orb" aria-hidden="true"></span><strong data-split>Explore the system</strong><small>Travel through Cerebra and its seven worlds in the original journey.</small><button type="button" class="gateway-enter" data-enter="orbit">Enter the solar system →</button></article>
   <span class="gateway-status" role="status" data-route-status hidden></span>
 </section>
 <section id="atelier" aria-label="World atelier" hidden>
   <div class="atelier-track" data-at-track></div>
   <div class="atelier-bar"><button type="button" data-at-back>← Choose mode</button><span>World atelier · scroll to choose</span><button type="button" data-at-orbit>Explore system →</button></div>
-  <span class="atelier-count" data-at-count>01 / 07</span>
+  <span class="atelier-count" data-at-count>01 / 08</span>
 </section>
+<button type="button" id="route-back" hidden>← Choose mode</button>
 
 <header class="hud hud-top">
   <a class="brand" href="#core" data-cursor="Surface"><span class="brand-name">Cerebra</span><span class="brand-sub">The living planet</span></a>
@@ -1375,6 +1393,6 @@ body.atelier-on.wtune-open #gl{transform:none!important}
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.d316a8973e.js", 341462]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.4ab1d5c372.js", 343342]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>
