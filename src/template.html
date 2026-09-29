@@ -707,12 +707,13 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
 .tune-btns{display:flex;gap:8px;margin-top:6px}
 .lc-cols{display:flex;gap:6px}.lc-cols input{width:30px;height:26px}
 .layer-controls{display:grid;gap:9px}
-.layer-controls details{position:relative;border:1px solid var(--line-2);padding:10px 12px}
+.layer-item{position:relative;border:1px solid var(--line-2)}
+.layer-controls details{padding:10px 12px}
 .layer-controls summary{display:flex;align-items:center;justify-content:space-between;min-height:34px;cursor:pointer;font:600 12px var(--f-cond);letter-spacing:.12em;text-transform:uppercase}
 .layer-controls summary{padding-right:74px}
 .layer-controls summary::after{content:'+';font-size:18px;color:var(--val)}
 .layer-controls details[open] summary::after{content:'−'}
-.layer-eye{position:absolute;top:7px;right:43px;width:36px;height:36px;border:1px solid var(--line-2);border-radius:6px;color:var(--ink);display:grid;place-items:center}
+.layer-eye{position:absolute;top:7px;right:43px;width:36px;height:36px;border:1px solid var(--line-2);border-radius:6px;color:var(--ink);display:grid;place-items:center;z-index:1}
 .layer-eye[aria-pressed="false"]{opacity:.45}
 .layer-eye svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6}
 .layer-eye[aria-pressed="true"] .eye-slash{display:none}
@@ -824,15 +825,22 @@ body.studio-on #tune{z-index:100}
 html.route-lock,html.route-lock body{overflow:hidden!important;overscroll-behavior:none}
 #gateway[hidden],#atelier[hidden]{display:none!important}
 #gateway{position:fixed;inset:0;z-index:55;background:#05070a;color:#edf0f7;display:grid;grid-template-columns:1fr 1fr;font-family:var(--f-sans)}
-.gateway-choice{position:relative;min-width:0;padding:clamp(24px,5vw,90px);display:flex;flex-direction:column;justify-content:flex-end;gap:20px;background:radial-gradient(circle at 60% 35%,#1e263b 0,#090d17 35%,#05070a 80%);border:1px solid #ffffff17;text-align:left;transition:background .4s,filter .4s}
+.gateway-choice{position:relative;min-width:0;padding:clamp(24px,5vw,90px);display:flex;flex-direction:column;justify-content:flex-end;gap:20px;background:radial-gradient(circle at 60% 35%,#1e263b 0,#090d17 35%,#05070a 80%);border:1px solid #ffffff17;text-align:left;filter:grayscale(1) brightness(.58);transition:filter .45s,border-color .45s}
 .gateway-choice:nth-child(2){background:radial-gradient(circle at 42% 35%,#2e1b28 0,#0d0c15 42%,#05070a 85%)}
-.gateway-choice:hover,.gateway-choice:focus-visible{filter:brightness(1.3);outline:2px solid #ff4655;outline-offset:-4px}
+.gateway-choice.is-selected{filter:none;border-color:#ff465580}
+.gateway-choice:focus-within{border-color:#ff4655}
 .gateway-mark{position:absolute;top:clamp(24px,5vw,90px);left:clamp(24px,5vw,90px);font:600 12px var(--f-cond);letter-spacing:.3em;text-transform:uppercase;color:#ff4655}
-.gateway-orb{position:absolute;left:50%;top:38%;width:min(40vw,38vh);aspect-ratio:1;border:1px solid #ffffff69;border-radius:50%;transform:translate(-50%,-50%);box-shadow:inset -30px -15px 65px #6899ff26,0 0 80px #688aff25;pointer-events:none}
+.gateway-orb{position:absolute;left:50%;top:38%;width:min(40vw,38vh);aspect-ratio:1;border:1px solid #ffffff69;border-radius:50%;transform:translate(-50%,-50%);box-shadow:inset -30px -15px 65px #6899ff26,0 0 80px #688aff25;pointer-events:none;transition:transform .68s cubic-bezier(.7,0,.84,0),opacity .18s ease .5s}
 .gateway-choice:nth-child(2) .gateway-orb{width:min(26vw,27vh);box-shadow:0 0 0 25px #ffffff08,0 0 0 80px #ffffff05,inset -10px -8px 40px #ff46554d}
 .gateway-choice strong{font:400 clamp(32px,4.5vw,72px)/1 var(--f-display);letter-spacing:.03em;text-transform:uppercase;max-width:12ch}
 .gateway-choice small{font:400 15px/1.5 var(--f-sans);color:#adb5c7;max-width:34ch}
-.gateway-choice em{font:600 12px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;font-style:normal;color:#ff4655}
+.gateway-enter{align-self:flex-start;min-height:44px;padding:10px 12px;border:1px solid #ff4655;color:#ff4655;font:600 12px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;cursor:pointer}
+.gateway-enter:focus-visible{outline:2px solid #fff;outline-offset:3px}.gateway-enter:hover{background:#ff4655;color:#05070a}
+.gateway-choice .w>span{opacity:1}.gateway-choice.is-animating .w>span{opacity:0;animation:gateway-word .01s linear both;animation-delay:calc(var(--i) * 65ms + 230ms)}
+.gateway-choice.is-animating .w::after{animation:valwipe .45s cubic-bezier(.7,0,.2,1) both;animation-delay:calc(var(--i) * 65ms + 30ms)}
+@keyframes gateway-word{to{opacity:1}}
+#gateway.is-entering{pointer-events:none}
+#gateway.is-entering .gateway-choice.is-selected .gateway-orb{transform:translate(-50%,-50%) scale(18);opacity:0}
 .gateway-status{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);font:12px var(--f-sans);color:#c0c8da;background:#05070adc;padding:7px 12px}
 #atelier{position:fixed;inset:0;z-index:20;color:#eef0f6;font-family:var(--f-sans);pointer-events:none}
 .atelier-track{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scroll-snap-type:y proximity;pointer-events:auto;scrollbar-width:none}
@@ -844,6 +852,10 @@ html.route-lock,html.route-lock body{overflow:hidden!important;overscroll-behavi
 .atelier-copy p{font-size:14px;line-height:1.5;color:#b2bac9;margin:0 0 18px}
 .atelier-copy button,.atelier-bar button{border:1px solid #ffffff4d;border-radius:5px;background:#10141cd9;color:#eef0f6;padding:12px 17px;font:600 12px var(--f-cond);letter-spacing:.12em;text-transform:uppercase;min-height:44px;cursor:pointer}
 .atelier-copy button{border-color:var(--a);color:var(--a)}
+.atelier-copy .w>span{opacity:1}.atelier-stop.is-current .atelier-copy .w>span{animation:gateway-word .01s linear both;animation-delay:calc(var(--i) * 55ms + 230ms)}
+.atelier-stop.is-current .atelier-copy .w::after{animation:valwipe .4s cubic-bezier(.7,0,.2,1) both;animation-delay:calc(var(--i) * 55ms + 30ms)}
+.atelier-stop.is-current .atelier-copy b,.atelier-stop.is-current .atelier-copy p,.atelier-stop.is-current .atelier-copy button{animation:atelier-appear .7s var(--ease-out) both;animation-delay:.38s}
+@keyframes atelier-appear{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:none}}
 .atelier-bar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 18px);left:clamp(16px,4vw,64px);right:clamp(16px,4vw,64px);display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:auto}
 .atelier-bar span{font:500 12px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;color:#c3cad8}
 .atelier-count{position:absolute;right:clamp(16px,4vw,64px);bottom:24px;font:12px var(--f-mono);color:#bac3d2}
@@ -852,6 +864,8 @@ body.atelier-on #wtune,body.atelier-on #tune{z-index:70;visibility:visible!impor
 body.atelier-on.wtune-open .atelier-copy,body.atelier-on.tune-open .atelier-copy{visibility:hidden;pointer-events:none}
 body.atelier-on.wtune-open .atelier-track,body.atelier-on.tune-open .atelier-track{overflow:hidden}
 body.atelier-on.wtune-open #gl{transform:none!important}
+#route-back[hidden]{display:none!important}
+#route-back{position:fixed;z-index:18;top:calc(env(safe-area-inset-top,0px) + 74px);left:var(--pad);min-height:44px;padding:10px 14px;border:1px solid #ffffff63;background:#0b0d13e8;color:#eef0f6;font:600 11px var(--f-cond);letter-spacing:.15em;text-transform:uppercase}
 @media(max-width:760px){
   #gateway{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
   .gateway-choice{padding:25px;gap:8px}
@@ -860,11 +874,14 @@ body.atelier-on.wtune-open #gl{transform:none!important}
   .gateway-choice:nth-child(2) .gateway-orb{width:min(20vw,13vh)}
   .gateway-choice strong{font-size:clamp(30px,8vw,46px);max-width:65%}
   .gateway-choice small{font-size:12px;max-width:63%}
+  .gateway-enter{padding:7px 10px;font-size:10px}
+  #route-back{top:calc(env(safe-area-inset-top,0px) + 65px);left:16px}
   .gateway-status{bottom:calc(env(safe-area-inset-bottom,0px) + 4px);white-space:nowrap}
   .atelier-copy{left:20px;right:20px;top:54%;width:auto;text-shadow:0 2px 15px #05070a}
   .atelier-copy h2{font-size:42px}.atelier-copy p{max-width:32ch}
   .atelier-bar span{display:none}.atelier-bar button{padding:8px 10px;font-size:10px}
 }
+@media(prefers-reduced-motion:reduce){.gateway-orb,.gateway-choice,.atelier-copy *{animation:none!important;transition:none!important}}
 
 </style>
 </head>
@@ -891,15 +908,16 @@ body.atelier-on.wtune-open #gl{transform:none!important}
 </div>
 
 <section id="gateway" aria-label="Choose your experience" hidden>
-  <button type="button" class="gateway-choice" data-route="atelier"><span class="gateway-mark">01 / Create</span><span class="gateway-orb" aria-hidden="true"></span><strong>Shape a world</strong><small>Choose a planet, bring it closer, and tune its colour, atmosphere and motion.</small><em>Enter world atelier →</em></button>
-  <button type="button" class="gateway-choice" data-route="orbit"><span class="gateway-mark">02 / Explore</span><span class="gateway-orb" aria-hidden="true"></span><strong>Explore the system</strong><small>Travel through Cerebra and its seven worlds in the original journey.</small><em>Enter the solar system →</em></button>
+  <article class="gateway-choice" data-route="atelier"><span class="gateway-mark">01 / Create</span><span class="gateway-orb" aria-hidden="true"></span><strong data-split>Shape a world</strong><small>Choose Cerebra or a planet, bring it closer, and tune its colour, atmosphere and motion.</small><button type="button" class="gateway-enter" data-enter="atelier">Enter world atelier →</button></article>
+  <article class="gateway-choice" data-route="orbit"><span class="gateway-mark">02 / Explore</span><span class="gateway-orb" aria-hidden="true"></span><strong data-split>Explore the system</strong><small>Travel through Cerebra and its seven worlds in the original journey.</small><button type="button" class="gateway-enter" data-enter="orbit">Enter the solar system →</button></article>
   <span class="gateway-status" role="status" data-route-status hidden></span>
 </section>
 <section id="atelier" aria-label="World atelier" hidden>
   <div class="atelier-track" data-at-track></div>
   <div class="atelier-bar"><button type="button" data-at-back>← Choose mode</button><span>World atelier · scroll to choose</span><button type="button" data-at-orbit>Explore system →</button></div>
-  <span class="atelier-count" data-at-count>01 / 07</span>
+  <span class="atelier-count" data-at-count>01 / 08</span>
 </section>
+<button type="button" id="route-back" hidden>← Choose mode</button>
 
 <header class="hud hud-top">
   <a class="brand" href="#core" data-cursor="Surface"><span class="brand-name">Cerebra</span><span class="brand-sub">The living planet</span></a>
@@ -1811,12 +1829,12 @@ const WorldTune = (() => {
     const swarmC = swatch('[data-t-swsw]', hex => call('setSwarm', null, null, hex), q('[data-t-swcolor]'));
     const cometC = swatch('[data-t-cmsw]', hex => call('setComets', { color: hex }), q('[data-t-cmcolor]'));
     const layerRoot = q('[data-t-layers]');
-    layerRoot.innerHTML = LAYER_NAMES.map((name, i) => `<details><summary>0${i} · ${name}</summary><button type="button" class="layer-eye" data-layer-eye="${i}" aria-pressed="true" aria-label="Hide ${name}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg></button>
+    layerRoot.innerHTML = LAYER_NAMES.map((name, i) => `<div class="layer-item"><details><summary>0${i} · ${name}</summary>
       <label class="tune-row"><span>Colour</span><input type="color" value="${LAYER_DEFAULT}" data-l="${i}" aria-label="${name} colour"></label>
       <label class="tune-row"><span>Radius</span><input type="range" min="0.7" max="1.3" step="0.01" value="1" data-l-range="radius" data-l="${i}" aria-label="${name} radius"><b data-out>1.00x</b></label>
       <label class="tune-row"><span>Density</span><input type="range" min="0" max="1" step="0.01" value="1" data-l-range="density" data-l="${i}" aria-label="${name} density"><b data-out>100%</b></label>
       <label class="tune-row"><span>Motion</span><input type="range" min="0" max="3" step="0.05" value="1" data-l-range="motion" data-l="${i}" aria-label="${name} motion"><b data-out>1.0x</b></label>
-    </details>`).join('');
+    </details><button type="button" class="layer-eye" data-layer-eye="${i}" aria-pressed="true" aria-label="Hide ${name}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg></button></div>`).join('');
     const layerIn = qa('[data-t-layers] input[type=color]');
     const layerRanges = qa('[data-l-range]');
     const layerEyes = qa('[data-layer-eye]');
@@ -6137,11 +6155,17 @@ class WorldAtelier {
     this.sun = new THREE.Vector3(4, 2, 7); this.saved = null;
     const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
     const stages = [{ name: 'Cerebra', accent: '#ff4655', kicker: 'The living planet', lede: 'A core that rebuilds itself while you watch.' }, ...WORLDS];
-    this.track.innerHTML = stages.map((d, i) => `<article class="atelier-stop" style="--a:${esc(d.accent)}" aria-label="${esc(d.name)}">
-      <div class="atelier-copy"><b>${i ? 'World ' + String(i).padStart(2, '0') : 'Core'} / ${String(stages.length).padStart(2, '0')}</b><h2>${esc(d.name)}</h2><p>${esc(d.kicker)} · ${esc(d.lede)}</p><button type="button" data-at-tune="${i}">Tune ${i ? 'this world' : 'the core'} →</button></div>
+    this.track.innerHTML = stages.map((d, i) => `<article class="atelier-stop" style="--a:${esc(d.accent)};--val:${esc(d.accent)}" aria-label="${esc(d.name)}">
+      <div class="atelier-copy"><b>${i ? 'World ' + String(i).padStart(2, '0') : 'Core'} / ${String(stages.length).padStart(2, '0')}</b><h2>${d.name.split(/\s+/).map((part, k) => `<span class="w" style="--i:${k}"><span>${esc(part)}</span></span>`).join(' ')}</h2><p>${esc(d.kicker)} · ${esc(d.lede)}</p><button type="button" data-at-tune="${i}">Tune ${i ? 'this world' : 'the core'} →</button></div>
     </article>`).join('');
-    this.choice.querySelector('[data-route="orbit"]').addEventListener('click', () => this.orbit());
-    this.choice.querySelector('[data-route="atelier"]').addEventListener('click', () => this.enter());
+    this.selectedRoute = 'atelier'; this.entering = false;
+    this.backButton = document.getElementById('route-back');
+    this.choice.querySelectorAll('[data-route]').forEach(card => {
+      card.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') this.selectRoute(card.dataset.route); });
+      card.querySelector('[data-enter]').addEventListener('focus', () => this.selectRoute(card.dataset.route));
+    });
+    this.choice.querySelectorAll('[data-enter]').forEach(b => b.addEventListener('click', () => this.launch(b.dataset.enter)));
+    this.backButton.addEventListener('click', () => this.backFromOrbit());
     this.el.querySelector('[data-at-back]').addEventListener('click', () => this.back());
     this.el.querySelector('[data-at-orbit]').addEventListener('click', () => this.orbit());
     this.track.querySelectorAll('[data-at-tune]').forEach(b => b.addEventListener('click', () => {
@@ -6155,16 +6179,36 @@ class WorldAtelier {
     this.choice.hidden = false; document.body.classList.add('route-choose'); document.documentElement.classList.add('route-lock');
     document.querySelector('main').inert = true;
     this.app.scroll.jumpTo(0);
-    this.choice.querySelector('[data-route="atelier"]').focus({ preventScroll: true });
+    this.selectRoute('atelier'); this.choice.querySelector('[data-enter="atelier"]').focus({ preventScroll: true });
   }
-  ready() { if (this.pending) this.enter(); }
-  enter() {
-    const a = this.app;
-    if (!a.worldsReady) {
+  selectRoute(route) {
+    if (this.entering) return;
+    this.selectedRoute = route;
+    this.choice.querySelectorAll('[data-route]').forEach(card => {
+      const selected = card.dataset.route === route;
+      card.classList.toggle('is-selected', selected);
+      card.classList.remove('is-animating');
+      if (selected) { void card.offsetWidth; card.classList.add('is-animating'); }
+    });
+  }
+  launch(route) {
+    if (this.entering || this.choice.hidden) return;
+    this.selectRoute(route);
+    if (route === 'atelier' && !this.app.worldsReady) {
       this.pending = true; const status = this.choice.querySelector('[data-route-status]');
       status.hidden = false; status.textContent = 'Preparing the worlds…'; return;
     }
-    this.pending = false;
+    this.pending = false; this.choice.querySelector('[data-route-status]').hidden = true;
+    this.entering = true; this.choice.classList.add('is-entering');
+    const finish = () => {
+      this.choice.classList.remove('is-entering'); this.entering = false;
+      if (route === 'atelier') this.enter(); else this.orbit();
+    };
+    if (this.app.reduced) finish(); else setTimeout(finish, 680);
+  }
+  ready() { if (this.pending) this.launch('atelier'); }
+  enter() {
+    const a = this.app;
     if (!a.orrery.worlds.length) { this.choice.querySelector('[data-route-status]').textContent = 'Worlds unavailable. Explore the system instead.'; return; }
     this.choice.hidden = true; document.body.classList.remove('route-choose'); document.body.classList.add('atelier-on');
     this.el.hidden = false; this.track.scrollTop = 0; this.progress = 0; this.select(0);
@@ -6180,6 +6224,7 @@ class WorldAtelier {
     this.index = clamp(i, 0, this.app.orrery.worlds.length);
     if (this.index > 0) this.app.detail.index = this.index - 1;
     this.el.querySelector('[data-at-count]').textContent = `${String(this.index + 1).padStart(2, '0')} / ${String(WORLDS.length + 1).padStart(2, '0')}`;
+    this.track.querySelectorAll('.atelier-stop').forEach((stop, k) => { stop.classList.toggle('is-current', k === this.index); });
   }
   leave() {
     if (!this.active) return;
@@ -6191,12 +6236,22 @@ class WorldAtelier {
   }
   back() {
     this.leave(); this.choice.hidden = false; document.body.classList.add('route-choose');
-    this.choice.querySelector('[data-route="atelier"]').focus({ preventScroll: true });
+    this.selectRoute('atelier'); this.choice.querySelector('[data-enter="atelier"]').focus({ preventScroll: true });
   }
   orbit() {
     this.pending = false; this.leave(); this.choice.hidden = true; document.body.classList.remove('route-choose');
     document.documentElement.classList.remove('route-lock'); document.querySelector('main').inert = false;
-    this.app.scroll.jumpTo(0);
+    this.backButton.hidden = false; document.body.classList.add('route-orbit');
+    const first = this.app.sections[0];
+    if (first) { first.classList.remove('is-active'); void first.offsetWidth; first.classList.add('is-active'); }
+  }
+  backFromOrbit() {
+    this.backButton.hidden = true; document.body.classList.remove('route-orbit');
+    WorldTune.open(false); OrbitBuilder.open(false);
+    document.querySelector('[data-tune-close]').click();
+    this.choice.hidden = false; document.body.classList.add('route-choose'); document.documentElement.classList.add('route-lock');
+    document.querySelector('main').inert = true;
+    this.selectRoute('orbit'); this.choice.querySelector('[data-enter="orbit"]').focus({ preventScroll: true });
   }
   update(dt) {
     if (!this.active) return false;
