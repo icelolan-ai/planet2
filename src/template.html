@@ -706,6 +706,14 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
 .tune-pick input{position:absolute;inset:-8px;opacity:0;cursor:pointer}
 .tune-btns{display:flex;gap:8px;margin-top:6px}
 .lc-cols{display:flex;gap:6px}.lc-cols input{width:30px;height:26px}
+.layer-controls{display:grid;gap:9px}
+.layer-controls details{border:1px solid var(--line-2);padding:10px 12px}
+.layer-controls summary{display:flex;align-items:center;justify-content:space-between;min-height:34px;cursor:pointer;font:600 12px var(--f-cond);letter-spacing:.12em;text-transform:uppercase}
+.layer-controls summary::after{content:'+';font-size:18px;color:var(--val)}
+.layer-controls details[open] summary::after{content:'−'}
+.layer-controls .tune-row{grid-template-columns:74px minmax(0,1fr) 42px}
+.layer-controls .tune-row:first-of-type{margin-top:14px}
+.layer-controls input[type=color]{width:42px;height:32px;background:transparent;border:0;cursor:pointer}
 .ps-list{list-style:none;margin:10px 0 4px;padding:0;display:grid;gap:6px}
 .ps-list li{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line-2);font:500 12px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
 .ps-list li span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -733,6 +741,8 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
     background:rgba(6,8,12,.95);transform:translateY(102%)}
   .tune[data-open="true"]{transform:none}
   .tune-row{grid-template-columns:70px 1fr auto;margin-bottom:11px}
+  #tune .tune-tabs{flex-wrap:wrap}
+  #tune .tune-tabs button{flex:1 1 22%;min-height:42px}
 }
 #wtune .tune-tabs{flex-wrap:wrap}
 #wtune .tune-tabs button{flex:1 1 45%;min-height:40px}
@@ -945,6 +955,7 @@ body.studio-on #tune{z-index:100}
 
   <nav class="tune-tabs" role="tablist">
     <button type="button" role="tab" data-tab="style" aria-selected="true">Style</button>
+    <button type="button" role="tab" data-tab="layers" aria-selected="false">Layers</button>
     <button type="button" role="tab" data-tab="motion" aria-selected="false">Motion</button>
     <button type="button" role="tab" data-tab="planet" aria-selected="false">Planet</button>
     <button type="button" role="tab" data-tab="play" aria-selected="false">Play</button>
@@ -969,15 +980,6 @@ body.studio-on #tune{z-index:100}
         <button type="button" style="--c:#ffc94d" data-c="#ffc94d" aria-label="Gold"></button>
         <label class="tune-pick" aria-label="Custom colour"><input type="color" value="#b44cff" data-t-color></label>
       </div></div>
-    <p class="tune-sub">Layer colours</p>
-    <div class="tune-row"><span>Layers 0-4</span><div class="ob-cols lc-cols" data-t-layers>
-      <input type="color" value="#dfe4ea" data-l="0" aria-label="Layer 0, Nucleus" title="Layer 0, Nucleus">
-      <input type="color" value="#dfe4ea" data-l="1" aria-label="Layer 1, Memory" title="Layer 1, Memory">
-      <input type="color" value="#dfe4ea" data-l="2" aria-label="Layer 2, Flow field" title="Layer 2, Flow field">
-      <input type="color" value="#dfe4ea" data-l="3" aria-label="Layer 3, Lattice" title="Layer 3, Lattice">
-      <input type="color" value="#dfe4ea" data-l="4" aria-label="Layer 4, Perimeter" title="Layer 4, Perimeter">
-    </div></div>
-    <p class="tune-hint">Tip: open the core and click a layer name to zoom in on it.</p>
     <p class="tune-sub">Ambient dust</p><label class="tune-row"><span>Floating dots</span><input type="range" min="0" max="240" step="1" value="80" data-ambient-count><b data-out>80</b></label>
     <p class="tune-sub">Lens</p>
     <div class="tune-row"><span>Lens</span><div class="tune-seg" data-t-lens><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
@@ -986,6 +988,12 @@ body.studio-on #tune{z-index:100}
     <label class="tune-row"><span>Bloom</span><input type="range" min="0" max="1.5" step="0.02" value="0.45" data-t-bloom><b data-out>0.45</b></label>
     <p class="tune-hint">Pick a ring, the glass or the metal band on the planet to edit just that part.</p>
     <div class="tune-btns"><button type="button" class="tune-btn" data-t-random>&#9861; Randomize</button><button type="button" class="tune-reset" data-t-reset>Reset</button></div>
+  </div>
+
+  <div class="tune-pane" data-pane="layers" hidden>
+    <p class="tune-sub">Inside Cerebra · layers 0–4</p>
+    <div class="layer-controls" data-t-layers></div>
+    <p class="tune-hint">Colour, radius, density and motion are independent for each layer. Open the core and tap a layer name to zoom in.</p>
   </div>
 
 <div class="tune-pane" data-pane="life" hidden><p class="tune-sub">Life inside Cerebra</p><label class="tune-row"><span>Organisms</span><input aria-label="Organisms" type="range" min="0" max="16" step="1" data-life="count"><b data-out></b></label><div class="tune-btns life-actions"><button type="button" class="tune-btn" data-life-add aria-label="Add organism">+ Add</button><button type="button" class="tune-btn" data-life-remove aria-label="Remove one organism">− Remove</button><button type="button" class="tune-reset" data-life-clear>Clear all</button></div><label class="tune-row"><span>Organism size</span><input aria-label="Organism size" type="range" min="0.05" max="0.28" step="0.01" data-life="size"><b data-out></b></label><label class="tune-row"><span>Shape</span><select data-life="shape" aria-label="Organism shape"><option value="0">Jelly</option><option value="1">Spindle</option><option value="2">Urchin</option><option value="3">Amoeba</option></select></label><label class="tune-row"><span>Filaments</span><input aria-label="Filaments" type="range" min="0" max="24" step="1" data-life="filaments"><b data-out></b></label><label class="tune-row"><span>Inflation</span><input aria-label="Inflation" type="range" min="0" max="1.5" step="0.05" data-life="breath"><b data-out></b></label><label class="tune-row"><span>Life speed</span><input aria-label="Life speed" type="range" min="0" max="3" step="0.05" data-life="speed"><b data-out></b></label><label class="tune-row"><span>Movement</span><input aria-label="Movement" type="range" min="0" max="2" step="0.05" data-life="motion"><b data-out></b></label><label class="tune-row"><span>Behaviour</span><select data-life="behavior" aria-label="Organism behaviour"><option value="0">Wander</option><option value="1">School</option><option value="2">Orbit</option><option value="3">Curious</option></select></label><label class="tune-row"><span>Colour</span><input type="color" data-life="color" aria-label="Organism colour"></label><button type="button" class="tune-reset" data-life-reset>Reset life</button><p class="tune-hint">Each visit starts empty. Add or remove one organism, or clear them all. Appearance settings are shared. Reduced motion pauses movement.</p></div>
@@ -1735,9 +1743,28 @@ const WorldTune = (() => {
     const neon = swatch('[data-t-sw]', hex => call('setNeon', hex), picker);
     const swarmC = swatch('[data-t-swsw]', hex => call('setSwarm', null, null, hex), q('[data-t-swcolor]'));
     const cometC = swatch('[data-t-cmsw]', hex => call('setComets', { color: hex }), q('[data-t-cmcolor]'));
-    const layerIn = qa('[data-t-layers] input');
-    const setLayers = arr => arr.forEach((hx, i) => { LAYER_U.uLayerCol.value[i].set(hx); if (layerIn[i]) layerIn[i].value = hx; });
+    const layerRoot = q('[data-t-layers]');
+    layerRoot.innerHTML = LAYER_NAMES.map((name, i) => `<details><summary>0${i} · ${name}</summary>
+      <label class="tune-row"><span>Colour</span><input type="color" value="${LAYER_DEFAULT}" data-l="${i}" aria-label="${name} colour"></label>
+      <label class="tune-row"><span>Radius</span><input type="range" min="0.7" max="1.3" step="0.01" value="1" data-l-range="radius" data-l="${i}" aria-label="${name} radius"><b data-out>1.00x</b></label>
+      <label class="tune-row"><span>Density</span><input type="range" min="0" max="1" step="0.01" value="1" data-l-range="density" data-l="${i}" aria-label="${name} density"><b data-out>100%</b></label>
+      <label class="tune-row"><span>Motion</span><input type="range" min="0" max="3" step="0.05" value="1" data-l-range="motion" data-l="${i}" aria-label="${name} motion"><b data-out>1.0x</b></label>
+    </details>`).join('');
+    const layerIn = qa('[data-t-layers] input[type=color]');
+    const layerRanges = qa('[data-l-range]');
+    const layerKey = { radius: 'uLayerRadius', density: 'uLayerDensity', motion: 'uLayerMotion' };
+    const layerFmt = (k, v) => k === 'density' ? pct(v) : k === 'motion' ? times(v) : v.toFixed(2) + 'x';
+    const setLayers = arr => arr.slice(0, 5).forEach((hx, i) => { LAYER_U.uLayerCol.value[i].set(hx); layerIn[i].value = hx; });
+    const setLayerValues = values => layerRanges.forEach(el => {
+      const k = el.dataset.lRange, i = +el.dataset.l, v = values && Array.isArray(values[k]) ? +values[k][i] : 1;
+      LAYER_U[layerKey[k]].value[i] = Number.isFinite(v) ? Math.max(+el.min, Math.min(+el.max, v)) : 1;
+      setRange(el, LAYER_U[layerKey[k]].value[i], n => layerFmt(k, n));
+    });
     layerIn.forEach(el => el.addEventListener('input', () => { LAYER_U.uLayerCol.value[+el.dataset.l].set(el.value); save(); }));
+    layerRanges.forEach(el => el.addEventListener('input', () => {
+      LAYER_U[layerKey[el.dataset.lRange]].value[+el.dataset.l] = +el.value;
+      out(el, layerFmt(el.dataset.lRange, +el.value)); save();
+    }));
     const flareC = swatch('[data-t-fsw]', hex => call('setFlareColor', hex), q('[data-t-fcolor]'));
     const metal = swatch('[data-t-metal]', hex => call('setMetal', hex));
     neon.set('#b44cff'); metal.set('#c9ccd6');
@@ -1764,7 +1791,7 @@ const WorldTune = (() => {
     const resetUI = () => {
       [[dens, 1, pct], [spd, 1, times], [thick, 1, times], [clar, 1, times], [rim, 0.55, v => v.toFixed(2)], [haze, 1, pct],
        [frate, 1, times], [famt, 1, times], [bands, 1, v => String(Math.round(v))], [swarm, 1, pct], [swsize, 1, times], [cmN, 4, intf], [cmTail, 1, times], [cmSpeed, 1, times], [cmSize, 1, times], [cmDive, 1, times], [ptrs, 1, times], [gain, 1, times], [zoom, 1, v => v.toFixed(2) + 'x']].forEach(([el, v, f]) => setRange(el, v, f));
-      dir.set(1); band.set(1); inner.set(1); ptr.set(0); shape.set(0); setTheme('nebula'); neon.set('#b44cff'); flareC.set('#ffffff'); swarmC.set('#cfe3ff'); cometC.set('#9fd4ff'); setLayers([0, 1, 2, 3, 4].map(() => LAYER_DEFAULT));
+      dir.set(1); band.set(1); inner.set(1); ptr.set(0); shape.set(0); setTheme('nebula'); neon.set('#b44cff'); flareC.set('#ffffff'); swarmC.set('#cfe3ff'); cometC.set('#9fd4ff'); setLayers([0, 1, 2, 3, 4].map(() => LAYER_DEFAULT)); setLayerValues(null);
       const L = LENS_DEFAULTS(); Object.keys(L).forEach(k => { LENS_U[k].value = L[k]; });
       setRange(aberr, L.uLensAberr, f3); setRange(blur, L.uLensBlur, f2); setRange(bloom, L.uLensBloom, f2); lens.set(1);
     };
@@ -1872,7 +1899,7 @@ const WorldTune = (() => {
     function snapshot() {
       const b = body(); if (!b) return null;
       return { density: b.density, speed: b.speed, dir: b.dir, shape: b.shape, neon: hex(b.uNeon.value), theme: b.theme || 'nebula',
-        rings: b.ringCount, layers: LAYER_U.uLayerCol.value.map(c => '#' + c.getHexString()), comets: b.cometState(), bands: b.bandCount, swarm: b.swarmAmt, swsize: b.swarmMat.uniforms.uSize.value, swcolor: hex(b.swarmMat.uniforms.uColor.value), band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
+        rings: b.ringCount, layers: LAYER_U.uLayerCol.value.map(c => '#' + c.getHexString()), layerValues: Object.fromEntries(Object.entries(layerKey).map(([k, u]) => [k, [...LAYER_U[u].value]])), comets: b.cometState(), bands: b.bandCount, swarm: b.swarmAmt, swsize: b.swarmMat.uniforms.uSize.value, swcolor: hex(b.swarmMat.uniforms.uColor.value), band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
         clarity: +clar.value, rim: +rim.value, inner: b.inner.show, haze: b.hazeDensity, frate: b.uFlareRate.value, famt: b.uFlareAmt.value, fcolor: '#' + b.uFlareColor.value.getHexString(),
         ptr: b.ptrMode, ptrs: b.ptrStrength,
         lens: LENS_U.uLensOn.value, aberr: LENS_U.uLensAberr.value, blur: LENS_U.uLensBlur.value, bloom: LENS_U.uLensBloom.value };
@@ -1890,6 +1917,7 @@ const WorldTune = (() => {
       b.setRingCount(s.rings); syncRings();
       b.setBand(s.band, s.thick); band.set(s.band ? 1 : 0); setRange(thick, s.thick, times);
       if (s.layers) setLayers(s.layers);
+      setLayerValues(s.layerValues);
       if (s.comets) { const c = s.comets; b.setComets(c); setRange(cmN, c.n, intf); setRange(cmTail, c.tail, times); setRange(cmSpeed, c.speed, times); setRange(cmSize, c.size, times); setRange(cmDive, c.dive, times); cometC.set(c.color); }
       if (s.bands) { b.setBandCount(s.bands); setRange(bands, s.bands, v => String(Math.round(v))); }
       if (s.swarm != null) { b.setSwarm(s.swarm, s.swsize, s.swcolor); setRange(swarm, s.swarm, pct); setRange(swsize, s.swsize, times); swarmC.set(s.swcolor); }
@@ -2128,7 +2156,12 @@ const rawColor = css => new THREE.Color().setStyle(css, THREE.LinearSRGBColorSpa
 /* Per-layer particle colours (Layer 0 nucleus .. Layer 4 perimeter). They start as the ink colour. */
 const LAYER_NAMES = ['Nucleus', 'Memory', 'Flow field', 'Lattice', 'Perimeter'];
 const LAYER_DEFAULT = '#dfe4ea';
-const LAYER_U = { uLayerCol: { value: [0, 1, 2, 3, 4].map(() => new THREE.Color(LAYER_DEFAULT)) } };
+const LAYER_U = {
+  uLayerCol: { value: [0, 1, 2, 3, 4].map(() => new THREE.Color(LAYER_DEFAULT)) },
+  uLayerRadius: { value: [1, 1, 1, 1, 1] },
+  uLayerDensity: { value: [1, 1, 1, 1, 1] },
+  uLayerMotion: { value: [1, 1, 1, 1, 1] }
+};
 const layerRadius = (L, expand, sep) => (0.32 + L * 0.235) * (1 + expand * (0.14 + L * 0.2)) + sep * L * 0.22;
 
 /* Kepler-ish angular speed shared by the dust disc and the worlds. */
@@ -2224,6 +2257,7 @@ uniform float uPixelRatio, uSize, uPointerStrength;
 uniform vec3 uPointer;
 uniform float uCrowd;
 uniform vec3 uLayerCol[5];
+uniform float uLayerRadius[5], uLayerDensity[5], uLayerMotion[5];
 attribute float aLayer;
 varying vec3 vLCol;
 attribute vec4 aSeed;
@@ -2239,17 +2273,24 @@ void main(){
   float sweep = smoothstep(0.0, 1.0, uMorph * 1.7 - (dir.y * 0.5 + 0.5) * 0.7 - aSeed.z * 0.12);
   vec3 d = normalize(mix(dir, aLattice, sweep));
 
-  float n1 = snoise(d * 1.7 + vec3(0.0, uTime * 0.15, aLayer * 3.1));
-  float n2 = snoise(d * 3.1 - vec3(uTime * 0.1, aLayer, 0.0));
+  int li = int(clamp(aLayer + 0.5, 0.0, 4.0));
+  float layerRadiusMul = li == 0 ? uLayerRadius[0] : li == 1 ? uLayerRadius[1] : li == 2 ? uLayerRadius[2] : li == 3 ? uLayerRadius[3] : uLayerRadius[4];
+  float layerDensity = li == 0 ? uLayerDensity[0] : li == 1 ? uLayerDensity[1] : li == 2 ? uLayerDensity[2] : li == 3 ? uLayerDensity[3] : uLayerDensity[4];
+  float layerMotion = li == 0 ? uLayerMotion[0] : li == 1 ? uLayerMotion[1] : li == 2 ? uLayerMotion[2] : li == 3 ? uLayerMotion[3] : uLayerMotion[4];
+  float layerTime = uTime * layerMotion;
+
+  float n1 = snoise(d * 1.7 + vec3(0.0, layerTime * 0.15, aLayer * 3.1));
+  float n2 = snoise(d * 3.1 - vec3(layerTime * 0.1, aLayer, 0.0));
 
   float r = 0.32 + aLayer * 0.235;
   r *= 1.0 + uExpand * (0.14 + aLayer * 0.2);
   r += uSeparation * aLayer * 0.22;
+  r *= layerRadiusMul;
   r += (n1 * 0.05 + n2 * 0.022) * (0.55 + aLayer * 0.22) * (1.0 - sweep * 0.75) * (0.4 + 0.6 * uMotion);
-  r *= 1.0 + sin(uTime * 0.9 + aLayer * 1.3) * 0.012;
+  r *= 1.0 + sin(layerTime * 0.9 + aLayer * 1.3) * 0.012;
 
   // Tangential drift; neighbouring layers counter-rotate.
-  float ang = n2 * 0.12 * uMotion + uTime * 0.025 * (aLayer - 2.0);
+  float ang = n2 * 0.12 * uMotion + layerTime * 0.025 * (aLayer - 2.0);
   float cs = cos(ang), sn = sin(ang);
   d = vec3(d.x * cs - d.z * sn, d.y, d.x * sn + d.z * cs);
 
@@ -2288,7 +2329,7 @@ void main(){
   vAlpha = (0.2 + 0.8 * depth) * (0.5 + aSeed.y * 0.5) * it;
   vAlpha *= 1.0 - uFocus * (1.0 - isFocus) * 0.45;
   vAlpha *= uCrowd;
-  int li = int(clamp(aLayer + 0.5, 0.0, 4.0));
+  vAlpha *= smoothstep(aSeed.x - 0.015, aSeed.x + 0.015, layerDensity);
   vLCol = li == 0 ? uLayerCol[0] : li == 1 ? uLayerCol[1] : li == 2 ? uLayerCol[2] : li == 3 ? uLayerCol[3] : uLayerCol[4];
 
   float size = uSize * (0.55 + aSeed.y * 0.9) * (1.0 + vHeat * 1.3) * (1.0 + sweep * 0.3);
