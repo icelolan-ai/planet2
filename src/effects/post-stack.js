@@ -206,17 +206,22 @@ postprocessing/build/index.js:
 
 /* F5: optional adaptive post stack. No second Three instance or runtime CDN dependency. */
 class CerebraPostStack {
+  static profile(mobile){return mobile
+    ? {bloom:.15,threshold:.65,aberration:0,vignetteOffset:.2,vignetteDarkness:.85,grain:0}
+    : {bloom:.33,threshold:.5,aberration:.008,vignetteOffset:.27,vignetteDarkness:1.5,grain:.004};}
   constructor(stage,camera){
     this.stage=stage;this.tier=0;this.elapsed=0;this.samples=0;this.windowMs=0;this.grace=5;this.status='full';
+    this.mobile=matchMedia('(max-width: 760px), (pointer: coarse)').matches;
+    const optics=CerebraPostStack.profile(this.mobile);
     const P=CerebraPostLibrary,r=stage.renderer;this.autoClear=r.autoClear;
     try{
       this.composer=new P.EffectComposer(r,{multisampling:0,frameBufferType:THREE.HalfFloatType});
       this.composer.addPass(new P.RenderPass(stage.scene,camera));
-      this.bloom=new P.BloomEffect({intensity:.33,luminanceThreshold:.5,levels:5});
+      this.bloom=new P.BloomEffect({intensity:optics.bloom,luminanceThreshold:optics.threshold,levels:5});
       this.bloomPass=new P.EffectPass(camera,this.bloom);this.composer.addPass(this.bloomPass);
-      this.ca=new P.ChromaticAberrationEffect({offset:new THREE.Vector2(.008,.008)});
-      this.vignette=new P.VignetteEffect({offset:.27,darkness:1.5});
-      this.grain=new P.NoiseEffect({blendFunction:P.BlendFunction.SOFT_LIGHT,premultiply:true});this.grain.blendMode.opacity.value=.004;
+      this.ca=new P.ChromaticAberrationEffect({offset:new THREE.Vector2(optics.aberration,optics.aberration)});
+      this.vignette=new P.VignetteEffect({offset:optics.vignetteOffset,darkness:optics.vignetteDarkness});
+      this.grain=new P.NoiseEffect({blendFunction:P.BlendFunction.SOFT_LIGHT,premultiply:true});this.grain.blendMode.opacity.value=optics.grain;
       this.finish=new P.EffectPass(camera,this.ca,this.vignette,this.grain);this.composer.addPass(this.finish);
       this.size='';this.resize();
     }catch(e){this.disable();}
@@ -235,7 +240,7 @@ class CerebraPostStack {
     const a=window.__cerebra,r=this.stage.renderer;
     // Preserve the existing cutout alpha path; opaque captures keep the post stack.
     if(!this.composer||this.tier>=2||a?.cap?.o.transparent){r.autoClear=this.autoClear;r.render(this.stage.scene,camera);return;}
-    try{this.resize();r.autoClear=false;this.composer.setMainCamera(camera);this.grain.blendMode.opacity.value=this.tier===0&&!a?.reduced? .004:0;this.composer.render(0);}
+    try{this.resize();r.autoClear=false;this.composer.setMainCamera(camera);this.grain.blendMode.opacity.value=this.tier===0&&!this.mobile&&!a?.reduced? .004:0;this.composer.render(0);}
     catch(e){this.disable();r.render(this.stage.scene,camera);}
   }
   disable(){this.tier=2;this.status='off';if(this.composer){this.composer.dispose();this.composer=null;}this.stage.renderer.autoClear=this.autoClear;}
