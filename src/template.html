@@ -707,10 +707,15 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
 .tune-btns{display:flex;gap:8px;margin-top:6px}
 .lc-cols{display:flex;gap:6px}.lc-cols input{width:30px;height:26px}
 .layer-controls{display:grid;gap:9px}
-.layer-controls details{border:1px solid var(--line-2);padding:10px 12px}
+.layer-controls details{position:relative;border:1px solid var(--line-2);padding:10px 12px}
 .layer-controls summary{display:flex;align-items:center;justify-content:space-between;min-height:34px;cursor:pointer;font:600 12px var(--f-cond);letter-spacing:.12em;text-transform:uppercase}
+.layer-controls summary{padding-right:74px}
 .layer-controls summary::after{content:'+';font-size:18px;color:var(--val)}
 .layer-controls details[open] summary::after{content:'−'}
+.layer-eye{position:absolute;top:7px;right:43px;width:36px;height:36px;border:1px solid var(--line-2);border-radius:6px;color:var(--ink);display:grid;place-items:center}
+.layer-eye[aria-pressed="false"]{opacity:.45}
+.layer-eye svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6}
+.layer-eye[aria-pressed="true"] .eye-slash{display:none}
 .layer-controls .tune-row{grid-template-columns:74px minmax(0,1fr) 42px}
 .layer-controls .tune-row:first-of-type{margin-top:14px}
 .layer-controls input[type=color]{width:42px;height:32px;background:transparent;border:0;cursor:pointer}
@@ -1744,7 +1749,7 @@ const WorldTune = (() => {
     const swarmC = swatch('[data-t-swsw]', hex => call('setSwarm', null, null, hex), q('[data-t-swcolor]'));
     const cometC = swatch('[data-t-cmsw]', hex => call('setComets', { color: hex }), q('[data-t-cmcolor]'));
     const layerRoot = q('[data-t-layers]');
-    layerRoot.innerHTML = LAYER_NAMES.map((name, i) => `<details><summary>0${i} · ${name}</summary>
+    layerRoot.innerHTML = LAYER_NAMES.map((name, i) => `<details><summary>0${i} · ${name}</summary><button type="button" class="layer-eye" data-layer-eye="${i}" aria-pressed="true" aria-label="Hide ${name}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg></button>
       <label class="tune-row"><span>Colour</span><input type="color" value="${LAYER_DEFAULT}" data-l="${i}" aria-label="${name} colour"></label>
       <label class="tune-row"><span>Radius</span><input type="range" min="0.7" max="1.3" step="0.01" value="1" data-l-range="radius" data-l="${i}" aria-label="${name} radius"><b data-out>1.00x</b></label>
       <label class="tune-row"><span>Density</span><input type="range" min="0" max="1" step="0.01" value="1" data-l-range="density" data-l="${i}" aria-label="${name} density"><b data-out>100%</b></label>
@@ -1752,6 +1757,16 @@ const WorldTune = (() => {
     </details>`).join('');
     const layerIn = qa('[data-t-layers] input[type=color]');
     const layerRanges = qa('[data-l-range]');
+    const layerEyes = qa('[data-layer-eye]');
+    const setLayerEyes = values => layerEyes.forEach((el, i) => {
+      const on = !values || !Array.isArray(values) || values[i] !== 0;
+      LAYER_U.uLayerVisible.value[i] = on ? 1 : 0;
+      el.setAttribute('aria-pressed', String(on)); el.setAttribute('aria-label', `${on ? 'Hide' : 'Show'} ${LAYER_NAMES[i]}`);
+    });
+    layerEyes.forEach(el => el.addEventListener('click', () => {
+      const i = +el.dataset.layerEye, values = [...LAYER_U.uLayerVisible.value];
+      values[i] = 1 - values[i]; setLayerEyes(values); save();
+    }));
     const layerKey = { radius: 'uLayerRadius', density: 'uLayerDensity', motion: 'uLayerMotion' };
     const layerFmt = (k, v) => k === 'density' ? pct(v) : k === 'motion' ? times(v) : v.toFixed(2) + 'x';
     const setLayers = arr => arr.slice(0, 5).forEach((hx, i) => { LAYER_U.uLayerCol.value[i].set(hx); layerIn[i].value = hx; });
@@ -1791,7 +1806,7 @@ const WorldTune = (() => {
     const resetUI = () => {
       [[dens, 1, pct], [spd, 1, times], [thick, 1, times], [clar, 1, times], [rim, 0.55, v => v.toFixed(2)], [haze, 1, pct],
        [frate, 1, times], [famt, 1, times], [bands, 1, v => String(Math.round(v))], [swarm, 1, pct], [swsize, 1, times], [cmN, 4, intf], [cmTail, 1, times], [cmSpeed, 1, times], [cmSize, 1, times], [cmDive, 1, times], [ptrs, 1, times], [gain, 1, times], [zoom, 1, v => v.toFixed(2) + 'x']].forEach(([el, v, f]) => setRange(el, v, f));
-      dir.set(1); band.set(1); inner.set(1); ptr.set(0); shape.set(0); setTheme('nebula'); neon.set('#b44cff'); flareC.set('#ffffff'); swarmC.set('#cfe3ff'); cometC.set('#9fd4ff'); setLayers([0, 1, 2, 3, 4].map(() => LAYER_DEFAULT)); setLayerValues(null);
+      dir.set(1); band.set(1); inner.set(1); ptr.set(0); shape.set(0); setTheme('nebula'); neon.set('#b44cff'); flareC.set('#ffffff'); swarmC.set('#cfe3ff'); cometC.set('#9fd4ff'); setLayers([0, 1, 2, 3, 4].map(() => LAYER_DEFAULT)); setLayerValues(null); setLayerEyes(null);
       const L = LENS_DEFAULTS(); Object.keys(L).forEach(k => { LENS_U[k].value = L[k]; });
       setRange(aberr, L.uLensAberr, f3); setRange(blur, L.uLensBlur, f2); setRange(bloom, L.uLensBloom, f2); lens.set(1);
     };
@@ -1899,7 +1914,7 @@ const WorldTune = (() => {
     function snapshot() {
       const b = body(); if (!b) return null;
       return { density: b.density, speed: b.speed, dir: b.dir, shape: b.shape, neon: hex(b.uNeon.value), theme: b.theme || 'nebula',
-        rings: b.ringCount, layers: LAYER_U.uLayerCol.value.map(c => '#' + c.getHexString()), layerValues: Object.fromEntries(Object.entries(layerKey).map(([k, u]) => [k, [...LAYER_U[u].value]])), comets: b.cometState(), bands: b.bandCount, swarm: b.swarmAmt, swsize: b.swarmMat.uniforms.uSize.value, swcolor: hex(b.swarmMat.uniforms.uColor.value), band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
+        rings: b.ringCount, layers: LAYER_U.uLayerCol.value.map(c => '#' + c.getHexString()), layerVisible: [...LAYER_U.uLayerVisible.value], layerValues: Object.fromEntries(Object.entries(layerKey).map(([k, u]) => [k, [...LAYER_U[u].value]])), comets: b.cometState(), bands: b.bandCount, swarm: b.swarmAmt, swsize: b.swarmMat.uniforms.uSize.value, swcolor: hex(b.swarmMat.uniforms.uColor.value), band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
         clarity: +clar.value, rim: +rim.value, inner: b.inner.show, haze: b.hazeDensity, frate: b.uFlareRate.value, famt: b.uFlareAmt.value, fcolor: '#' + b.uFlareColor.value.getHexString(),
         ptr: b.ptrMode, ptrs: b.ptrStrength,
         lens: LENS_U.uLensOn.value, aberr: LENS_U.uLensAberr.value, blur: LENS_U.uLensBlur.value, bloom: LENS_U.uLensBloom.value };
@@ -1917,6 +1932,7 @@ const WorldTune = (() => {
       b.setRingCount(s.rings); syncRings();
       b.setBand(s.band, s.thick); band.set(s.band ? 1 : 0); setRange(thick, s.thick, times);
       if (s.layers) setLayers(s.layers);
+      setLayerEyes(s.layerVisible);
       setLayerValues(s.layerValues);
       if (s.comets) { const c = s.comets; b.setComets(c); setRange(cmN, c.n, intf); setRange(cmTail, c.tail, times); setRange(cmSpeed, c.speed, times); setRange(cmSize, c.size, times); setRange(cmDive, c.dive, times); cometC.set(c.color); }
       if (s.bands) { b.setBandCount(s.bands); setRange(bands, s.bands, v => String(Math.round(v))); }
@@ -2160,7 +2176,9 @@ const LAYER_U = {
   uLayerCol: { value: [0, 1, 2, 3, 4].map(() => new THREE.Color(LAYER_DEFAULT)) },
   uLayerRadius: { value: [1, 1, 1, 1, 1] },
   uLayerDensity: { value: [1, 1, 1, 1, 1] },
-  uLayerMotion: { value: [1, 1, 1, 1, 1] }
+  uLayerMotion: { value: [1, 1, 1, 1, 1] },
+  uLayerVisible: { value: [1, 1, 1, 1, 1] },
+  uStudioLayerVisible: { value: [1, 1, 1, 1, 1] }
 };
 const layerRadius = (L, expand, sep) => (0.32 + L * 0.235) * (1 + expand * (0.14 + L * 0.2)) + sep * L * 0.22;
 
@@ -2257,7 +2275,7 @@ uniform float uPixelRatio, uSize, uPointerStrength;
 uniform vec3 uPointer;
 uniform float uCrowd;
 uniform vec3 uLayerCol[5];
-uniform float uLayerRadius[5], uLayerDensity[5], uLayerMotion[5];
+uniform float uLayerRadius[5], uLayerDensity[5], uLayerMotion[5], uLayerVisible[5], uStudioLayerVisible[5];
 attribute float aLayer;
 varying vec3 vLCol;
 attribute vec4 aSeed;
@@ -2277,6 +2295,7 @@ void main(){
   float layerRadiusMul = li == 0 ? uLayerRadius[0] : li == 1 ? uLayerRadius[1] : li == 2 ? uLayerRadius[2] : li == 3 ? uLayerRadius[3] : uLayerRadius[4];
   float layerDensity = li == 0 ? uLayerDensity[0] : li == 1 ? uLayerDensity[1] : li == 2 ? uLayerDensity[2] : li == 3 ? uLayerDensity[3] : uLayerDensity[4];
   float layerMotion = li == 0 ? uLayerMotion[0] : li == 1 ? uLayerMotion[1] : li == 2 ? uLayerMotion[2] : li == 3 ? uLayerMotion[3] : uLayerMotion[4];
+  float layerVisible = li == 0 ? uLayerVisible[0] * uStudioLayerVisible[0] : li == 1 ? uLayerVisible[1] * uStudioLayerVisible[1] : li == 2 ? uLayerVisible[2] * uStudioLayerVisible[2] : li == 3 ? uLayerVisible[3] * uStudioLayerVisible[3] : uLayerVisible[4] * uStudioLayerVisible[4];
   float layerTime = uTime * layerMotion;
 
   float n1 = snoise(d * 1.7 + vec3(0.0, layerTime * 0.15, aLayer * 3.1));
@@ -2330,6 +2349,7 @@ void main(){
   vAlpha *= 1.0 - uFocus * (1.0 - isFocus) * 0.45;
   vAlpha *= uCrowd;
   vAlpha *= smoothstep(aSeed.x - 0.015, aSeed.x + 0.015, layerDensity);
+  vAlpha *= layerVisible;
   vLCol = li == 0 ? uLayerCol[0] : li == 1 ? uLayerCol[1] : li == 2 ? uLayerCol[2] : li == 3 ? uLayerCol[3] : uLayerCol[4];
 
   float size = uSize * (0.55 + aSeed.y * 0.9) * (1.0 + vHeat * 1.3) * (1.0 + sweep * 0.3);
@@ -6041,7 +6061,8 @@ class CoreStudio {
   constructor(app) {
     this.app = app; this.active = false; this.pending = false;
     this.background = 'space'; this.gravity = false;
-    this.layers = { shells: true, rings: true, bands: true, particles: true, comets: true, energy: true, dust: true, glass: true };
+    this.layers = { shells: true, rings: true, bands: true, particles: true, comets: true, energy: true, dust: true, glass: true, life: true };
+    this.coreLayers = [true, true, true, true, true];
     this.x = 0; this.y = 0; this.vx = 0; this.vy = 0; this.drag = null;
     this.bg = document.createElement('canvas'); this.bg.id = 'studio-bg'; this.bg.setAttribute('aria-hidden', 'true');
     this.el = document.createElement('section'); this.el.id = 'studio'; this.el.setAttribute('aria-label', 'Cerebra studio');
@@ -6051,6 +6072,7 @@ class CoreStudio {
       <aside id="studio-tools" class="studio-panel" aria-label="Studio tools" hidden><h2>Your core, in focus.</h2>
       <h3>Background</h3><select aria-label="Studio background"><option value="space">Space</option><option value="white">White</option><option value="studio">Studio light</option><option value="model">Model workspace</option></select>
       <h3>Layers</h3><div class="studio-layers">${Object.keys(names).map(k => `<button type="button" class="studio-layer" data-studio-layer="${k}" aria-pressed="true" aria-label="Show ${names[k]}"><span>${names[k]}</span>${eye}</button>`).join('')}</div>
+      <h3>Inside the core</h3><div class="studio-layers">${LAYER_NAMES.map((name, i) => `<button type="button" class="studio-layer" data-studio-core="${i}" aria-pressed="true" aria-label="Hide ${name}"><span>${name}</span>${eye}</button>`).join('')}<button type="button" class="studio-layer" data-studio-layer="life" aria-pressed="true" aria-label="Hide organisms"><span>Organisms</span>${eye}</button></div>
       <h3>Motion</h3><label>Gravity<input type="checkbox" data-studio-gravity></label><button type="button" class="studio-home" data-studio-home>Recenter</button>
       <p class="studio-note">Drag the core, then release to throw. Reduced motion stops momentum. Open Tune core → Save to export a picture.</p></aside>`;
     document.body.append(this.bg, this.el);
@@ -6067,6 +6089,7 @@ class CoreStudio {
     this.el.querySelector('[data-studio-gravity]').onchange = e => { this.gravity = e.target.checked; };
     this.el.querySelector('[data-studio-home]').onclick = () => this.home();
     this.el.querySelectorAll('[data-studio-layer]').forEach(b => b.onclick = () => { const k = b.dataset.studioLayer; this.layers[k] = !this.layers[k]; b.setAttribute('aria-pressed', String(this.layers[k])); });
+    this.el.querySelectorAll('[data-studio-core]').forEach(b => b.onclick = () => { const i = +b.dataset.studioCore; this.coreLayers[i] = !this.coreLayers[i]; b.setAttribute('aria-pressed', String(this.coreLayers[i])); b.setAttribute('aria-label', `${this.coreLayers[i] ? 'Hide' : 'Show'} ${LAYER_NAMES[i]}`); });
     const signal = app.ac.signal, canvas = app.stage.renderer.domElement;
     canvas.addEventListener('pointerdown', e => {
       if (!this.active || document.body.classList.contains('tune-open') || this.drag || e.button !== 0) return;
@@ -6107,6 +6130,7 @@ class CoreStudio {
     if (a.detail.busy) return;
     if (a.detail.open) { this.pending = true; a.closeWorld(); return; }
     this.active = true; this.home(); this.tools(false);
+    this.coreLayers.fill(true); this.el.querySelectorAll('[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', 'true'));
     OrbitBuilder.open(false); WorldTune.open(false);
     document.querySelector('[data-tune-close]').click();
     this.saved = { y: scrollY, inert: [], visibility: new Map(), background: document.body.style.backgroundColor };
@@ -6124,6 +6148,7 @@ class CoreStudio {
     document.body.style.backgroundColor = this.saved.background;
     this.saved.inert.forEach(([el, value]) => { el.inert = value; });
     this.saved.visibility.forEach((v, o) => { o.visible = v; });
+    LAYER_U.uStudioLayerVisible.value.fill(1);
     // Rings added through Tune during Studio did not exist in the entry snapshot.
     a.core.planet.runners.forEach(r => { r.pivot.visible = true; });
     scrollTo({ top: this.saved.y, behavior: 'instant' });
@@ -6179,6 +6204,7 @@ class CoreStudio {
     a.camRight.set(1, 0, 0); a.camUp.set(0, 1, 0);
     a.core.update(dt, a.simTime, { expand:0,separation:0,stack:0,morph:0,flatten:0,intro:1,motion:a.reduced?0:1,reduced:a.reduced,focus:0,focusLayer:-1,rippleT:-1,pointer:a.pointerWorld,pull:0,x:x+this.x,y:y+this.y,scale,G:0,rotX:0,rotY:0,sun:0,spinVel:a.reduced?0:.07,pixelRatio:a.stage.pixelRatio,sizeScale:a.rig.baseZ/7.2 });
     const c = a.core, p = c.planet, L = this.layers;
+    this.coreLayers.forEach((on, i) => { LAYER_U.uStudioLayerVisible.value[i] = on ? 1 : 0; });
     c.shells.group.visible = L.shells; c.rings.group.visible = L.rings;
     p.runners.forEach(r => { r.pivot.visible = L.rings; });
     p.bandPivot.visible = p.bandPivot.visible && L.bands; p.extraBands.forEach(e => { e.pv.visible = e.pv.visible && L.bands; });
@@ -6189,7 +6215,7 @@ class CoreStudio {
     c.orbit.group.visible = false; p.axis.visible = false;
     a.orrery.group.visible = this.background === 'space';
     if (a.orrery.group.visible) { a.orrery.group.children.forEach(o => { o.visible = o === a.orrery.stars.points; }); }
-    if (a.organisms) a.organisms.update(dt,a.reduced);
+    if (a.organisms) { a.organisms.update(dt,a.reduced); a.organisms.group.visible = a.organisms.group.visible && L.life; }
     a.stage.scene.updateMatrixWorld(); a.stage.render(cam);
     if (a.cap) a.captureStep();
     return true;
