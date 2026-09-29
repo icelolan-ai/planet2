@@ -2187,7 +2187,7 @@ float snoise(vec3 v){
    edge, and a light bloom on bright cores. All particle shaders share these uniforms (LENS_U). */
 const LENS_U = { uLensFocus: { value: 10 }, uLensBlur: { value: 0.55 }, uLensAberr: { value: 0.035 }, uLensBloom: { value: 0.45 }, uLensOn: { value: 1 } };
 const LENS_DEFAULTS = () => (matchMedia('(max-width: 760px), (pointer: coarse)').matches
-  ? { uLensOn: 1, uLensAberr: 0.02, uLensBlur: 0.35, uLensBloom: 0.35 }
+  ? { uLensOn: 1, uLensAberr: 0, uLensBlur: 0.08, uLensBloom: 0.25 }
   : { uLensOn: 1, uLensAberr: 0.035, uLensBlur: 0.55, uLensBloom: 0.45 });
 Object.entries(LENS_DEFAULTS()).forEach(([k, v]) => { LENS_U[k].value = v; });
 const LENS_PARS_V = `
