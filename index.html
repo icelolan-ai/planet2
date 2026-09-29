@@ -828,6 +828,50 @@ body.studio-on #tune{z-index:100}
   .studio-panel{right:auto;left:50%;width:calc(100% - 24px);top:50%;bottom:auto;transform:translate(-50%,-50%);max-height:calc(100dvh - 180px);padding:14px}
   .studio-layers{display:grid;grid-template-columns:1fr 1fr;gap:0 6px}
 }
+/* The post-loader choice and the independent, scroll-driven world atelier. */
+html.route-lock,html.route-lock body{overflow:hidden!important;overscroll-behavior:none}
+#gateway[hidden],#atelier[hidden]{display:none!important}
+#gateway{position:fixed;inset:0;z-index:55;background:#05070a;color:#edf0f7;display:grid;grid-template-columns:1fr 1fr;font-family:var(--f-sans)}
+.gateway-choice{position:relative;min-width:0;padding:clamp(24px,5vw,90px);display:flex;flex-direction:column;justify-content:flex-end;gap:20px;background:radial-gradient(circle at 60% 35%,#1e263b 0,#090d17 35%,#05070a 80%);border:1px solid #ffffff17;text-align:left;transition:background .4s,filter .4s}
+.gateway-choice:nth-child(2){background:radial-gradient(circle at 42% 35%,#2e1b28 0,#0d0c15 42%,#05070a 85%)}
+.gateway-choice:hover,.gateway-choice:focus-visible{filter:brightness(1.3);outline:2px solid #ff4655;outline-offset:-4px}
+.gateway-mark{position:absolute;top:clamp(24px,5vw,90px);left:clamp(24px,5vw,90px);font:600 12px var(--f-cond);letter-spacing:.3em;text-transform:uppercase;color:#ff4655}
+.gateway-orb{position:absolute;left:50%;top:38%;width:min(40vw,38vh);aspect-ratio:1;border:1px solid #ffffff69;border-radius:50%;transform:translate(-50%,-50%);box-shadow:inset -30px -15px 65px #6899ff26,0 0 80px #688aff25;pointer-events:none}
+.gateway-choice:nth-child(2) .gateway-orb{width:min(26vw,27vh);box-shadow:0 0 0 25px #ffffff08,0 0 0 80px #ffffff05,inset -10px -8px 40px #ff46554d}
+.gateway-choice strong{font:400 clamp(32px,4.5vw,72px)/1 var(--f-display);letter-spacing:.03em;text-transform:uppercase;max-width:12ch}
+.gateway-choice small{font:400 15px/1.5 var(--f-sans);color:#adb5c7;max-width:34ch}
+.gateway-choice em{font:600 12px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;font-style:normal;color:#ff4655}
+.gateway-status{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);font:12px var(--f-sans);color:#c0c8da;background:#05070adc;padding:7px 12px}
+#atelier{position:fixed;inset:0;z-index:20;color:#eef0f6;font-family:var(--f-sans);pointer-events:none}
+.atelier-track{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scroll-snap-type:y proximity;pointer-events:auto;scrollbar-width:none}
+.atelier-track::-webkit-scrollbar{display:none}
+.atelier-stop{height:100dvh;position:relative;scroll-snap-align:center;pointer-events:none}
+.atelier-copy{position:absolute;left:clamp(24px,5vw,80px);bottom:clamp(65px,11vh,150px);width:min(340px,42vw);pointer-events:auto}
+.atelier-copy b{font:600 12px var(--f-cond);letter-spacing:.28em;color:var(--a);text-transform:uppercase}
+.atelier-copy h2{font:400 clamp(36px,5vw,74px)/1 var(--f-display);text-transform:uppercase;margin:12px 0}
+.atelier-copy p{font-size:14px;line-height:1.5;color:#b2bac9;margin:0 0 18px}
+.atelier-copy button,.atelier-bar button{border:1px solid #ffffff4d;border-radius:5px;background:#10141cd9;color:#eef0f6;padding:12px 17px;font:600 12px var(--f-cond);letter-spacing:.12em;text-transform:uppercase;min-height:44px;cursor:pointer}
+.atelier-copy button{border-color:var(--a);color:var(--a)}
+.atelier-bar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 18px);left:clamp(16px,4vw,64px);right:clamp(16px,4vw,64px);display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:auto}
+.atelier-bar span{font:500 12px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;color:#c3cad8}
+.atelier-count{position:absolute;right:clamp(16px,4vw,64px);bottom:24px;font:12px var(--f-mono);color:#bac3d2}
+body.route-choose> :not(#gl):not(#gateway):not(script),body.atelier-on> :not(#gl):not(#atelier):not(#wtune):not(script){visibility:hidden!important;pointer-events:none!important}
+body.atelier-on #wtune{z-index:70;visibility:visible!important}
+body.atelier-on.wtune-open .atelier-copy{visibility:hidden;pointer-events:none}
+body.atelier-on.wtune-open .atelier-track{overflow:hidden}
+@media(max-width:760px){
+  #gateway{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
+  .gateway-choice{padding:25px;gap:8px}
+  .gateway-mark{top:16px;left:25px}
+  .gateway-orb{left:74%;top:50%;width:min(28vw,18vh);opacity:.75}
+  .gateway-choice:nth-child(2) .gateway-orb{width:min(20vw,13vh)}
+  .gateway-choice strong{font-size:clamp(30px,8vw,46px);max-width:65%}
+  .gateway-choice small{font-size:12px;max-width:63%}
+  .gateway-status{bottom:calc(env(safe-area-inset-bottom,0px) + 4px);white-space:nowrap}
+  .atelier-copy{left:20px;right:20px;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);width:auto;text-shadow:0 2px 15px #05070a}
+  .atelier-copy h2{font-size:42px}.atelier-copy p{max-width:32ch}
+  .atelier-bar span{display:none}.atelier-bar button{padding:8px 10px;font-size:10px}
+}
 
 </style>
 </head>
@@ -852,6 +896,17 @@ body.studio-on #tune{z-index:100}
   </div>
   <div class="ld-status sr-only" data-status aria-live="polite">Starting</div>
 </div>
+
+<section id="gateway" aria-label="Choose your experience" hidden>
+  <button type="button" class="gateway-choice" data-route="atelier"><span class="gateway-mark">01 / Create</span><span class="gateway-orb" aria-hidden="true"></span><strong>Shape a world</strong><small>Choose a planet, bring it closer, and tune its colour, atmosphere and motion.</small><em>Enter world atelier →</em></button>
+  <button type="button" class="gateway-choice" data-route="orbit"><span class="gateway-mark">02 / Explore</span><span class="gateway-orb" aria-hidden="true"></span><strong>Explore the system</strong><small>Travel through Cerebra and its seven worlds in the original journey.</small><em>Enter the solar system →</em></button>
+  <span class="gateway-status" role="status" data-route-status hidden></span>
+</section>
+<section id="atelier" aria-label="World atelier" hidden>
+  <div class="atelier-track" data-at-track></div>
+  <div class="atelier-bar"><button type="button" data-at-back>← Choose mode</button><span>World atelier · scroll to choose</span><button type="button" data-at-orbit>Explore system →</button></div>
+  <span class="atelier-count" data-at-count>01 / 07</span>
+</section>
 
 <header class="hud hud-top">
   <a class="brand" href="#core" data-cursor="Surface"><span class="brand-name">Cerebra</span><span class="brand-sub">The living planet</span></a>
@@ -1319,6 +1374,6 @@ body.studio-on #tune{z-index:100}
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.a27cab7dec.js", 335443]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.fc58222b7c.js", 340608]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>
