@@ -714,6 +714,14 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
 .tune-pick input{position:absolute;inset:-8px;opacity:0;cursor:pointer}
 .tune-btns{display:flex;gap:8px;margin-top:6px}
 .lc-cols{display:flex;gap:6px}.lc-cols input{width:30px;height:26px}
+.layer-controls{display:grid;gap:9px}
+.layer-controls details{border:1px solid var(--line-2);padding:10px 12px}
+.layer-controls summary{display:flex;align-items:center;justify-content:space-between;min-height:34px;cursor:pointer;font:600 12px var(--f-cond);letter-spacing:.12em;text-transform:uppercase}
+.layer-controls summary::after{content:'+';font-size:18px;color:var(--val)}
+.layer-controls details[open] summary::after{content:'−'}
+.layer-controls .tune-row{grid-template-columns:74px minmax(0,1fr) 42px}
+.layer-controls .tune-row:first-of-type{margin-top:14px}
+.layer-controls input[type=color]{width:42px;height:32px;background:transparent;border:0;cursor:pointer}
 .ps-list{list-style:none;margin:10px 0 4px;padding:0;display:grid;gap:6px}
 .ps-list li{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line-2);font:500 12px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
 .ps-list li span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -741,6 +749,8 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
     background:rgba(6,8,12,.95);transform:translateY(102%)}
   .tune[data-open="true"]{transform:none}
   .tune-row{grid-template-columns:70px 1fr auto;margin-bottom:11px}
+  #tune .tune-tabs{flex-wrap:wrap}
+  #tune .tune-tabs button{flex:1 1 22%;min-height:42px}
 }
 #wtune .tune-tabs{flex-wrap:wrap}
 #wtune .tune-tabs button{flex:1 1 45%;min-height:40px}
@@ -953,6 +963,7 @@ body.studio-on #tune{z-index:100}
 
   <nav class="tune-tabs" role="tablist">
     <button type="button" role="tab" data-tab="style" aria-selected="true">Style</button>
+    <button type="button" role="tab" data-tab="layers" aria-selected="false">Layers</button>
     <button type="button" role="tab" data-tab="motion" aria-selected="false">Motion</button>
     <button type="button" role="tab" data-tab="planet" aria-selected="false">Planet</button>
     <button type="button" role="tab" data-tab="play" aria-selected="false">Play</button>
@@ -977,15 +988,6 @@ body.studio-on #tune{z-index:100}
         <button type="button" style="--c:#ffc94d" data-c="#ffc94d" aria-label="Gold"></button>
         <label class="tune-pick" aria-label="Custom colour"><input type="color" value="#b44cff" data-t-color></label>
       </div></div>
-    <p class="tune-sub">Layer colours</p>
-    <div class="tune-row"><span>Layers 0-4</span><div class="ob-cols lc-cols" data-t-layers>
-      <input type="color" value="#dfe4ea" data-l="0" aria-label="Layer 0, Nucleus" title="Layer 0, Nucleus">
-      <input type="color" value="#dfe4ea" data-l="1" aria-label="Layer 1, Memory" title="Layer 1, Memory">
-      <input type="color" value="#dfe4ea" data-l="2" aria-label="Layer 2, Flow field" title="Layer 2, Flow field">
-      <input type="color" value="#dfe4ea" data-l="3" aria-label="Layer 3, Lattice" title="Layer 3, Lattice">
-      <input type="color" value="#dfe4ea" data-l="4" aria-label="Layer 4, Perimeter" title="Layer 4, Perimeter">
-    </div></div>
-    <p class="tune-hint">Tip: open the core and click a layer name to zoom in on it.</p>
     <p class="tune-sub">Ambient dust</p><label class="tune-row"><span>Floating dots</span><input type="range" min="0" max="240" step="1" value="80" data-ambient-count><b data-out>80</b></label>
     <p class="tune-sub">Lens</p>
     <div class="tune-row"><span>Lens</span><div class="tune-seg" data-t-lens><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
@@ -994,6 +996,12 @@ body.studio-on #tune{z-index:100}
     <label class="tune-row"><span>Bloom</span><input type="range" min="0" max="1.5" step="0.02" value="0.45" data-t-bloom><b data-out>0.45</b></label>
     <p class="tune-hint">Pick a ring, the glass or the metal band on the planet to edit just that part.</p>
     <div class="tune-btns"><button type="button" class="tune-btn" data-t-random>&#9861; Randomize</button><button type="button" class="tune-reset" data-t-reset>Reset</button></div>
+  </div>
+
+  <div class="tune-pane" data-pane="layers" hidden>
+    <p class="tune-sub">Inside Cerebra · layers 0–4</p>
+    <div class="layer-controls" data-t-layers></div>
+    <p class="tune-hint">Colour, radius, density and motion are independent for each layer. Open the core and tap a layer name to zoom in.</p>
   </div>
 
 <div class="tune-pane" data-pane="life" hidden><p class="tune-sub">Life inside Cerebra</p><label class="tune-row"><span>Organisms</span><input aria-label="Organisms" type="range" min="0" max="16" step="1" data-life="count"><b data-out></b></label><div class="tune-btns life-actions"><button type="button" class="tune-btn" data-life-add aria-label="Add organism">+ Add</button><button type="button" class="tune-btn" data-life-remove aria-label="Remove one organism">− Remove</button><button type="button" class="tune-reset" data-life-clear>Clear all</button></div><label class="tune-row"><span>Organism size</span><input aria-label="Organism size" type="range" min="0.05" max="0.28" step="0.01" data-life="size"><b data-out></b></label><label class="tune-row"><span>Shape</span><select data-life="shape" aria-label="Organism shape"><option value="0">Jelly</option><option value="1">Spindle</option><option value="2">Urchin</option><option value="3">Amoeba</option></select></label><label class="tune-row"><span>Filaments</span><input aria-label="Filaments" type="range" min="0" max="24" step="1" data-life="filaments"><b data-out></b></label><label class="tune-row"><span>Inflation</span><input aria-label="Inflation" type="range" min="0" max="1.5" step="0.05" data-life="breath"><b data-out></b></label><label class="tune-row"><span>Life speed</span><input aria-label="Life speed" type="range" min="0" max="3" step="0.05" data-life="speed"><b data-out></b></label><label class="tune-row"><span>Movement</span><input aria-label="Movement" type="range" min="0" max="2" step="0.05" data-life="motion"><b data-out></b></label><label class="tune-row"><span>Behaviour</span><select data-life="behavior" aria-label="Organism behaviour"><option value="0">Wander</option><option value="1">School</option><option value="2">Orbit</option><option value="3">Curious</option></select></label><label class="tune-row"><span>Colour</span><input type="color" data-life="color" aria-label="Organism colour"></label><button type="button" class="tune-reset" data-life-reset>Reset life</button><p class="tune-hint">Each visit starts empty. Add or remove one organism, or clear them all. Appearance settings are shared. Reduced motion pauses movement.</p></div>
@@ -1301,6 +1309,6 @@ body.studio-on #tune{z-index:100}
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.73673c3452.js", 330116]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.325e5d7d52.js", 332401]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>
