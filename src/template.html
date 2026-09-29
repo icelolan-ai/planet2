@@ -907,13 +907,18 @@ body.studio-on #tune{z-index:100}
   <p class="tune-sub">Body</p>
   <label class="tune-row"><span>Size</span><input type="range" min="0.5" max="1.6" step="0.01" data-wt="size"><b data-out></b></label>
   <label class="tune-row"><span>Orbit radius</span><input type="range" min="0.85" max="1.2" step="0.01" data-wt="orbit"><b data-out></b></label>
-  <label class="tune-row"><span>Particles</span><input type="range" min="0" max="3" step="0.05" data-wt="halo"><b data-out></b></label>
-  <label class="tune-row"><span>Particle speed</span><input type="range" min="0" max="5" step="0.05" data-wt="haloSpeed"><b data-out></b></label>
   <div class="tune-row"><span>Ring</span><div class="tune-seg" data-wt-seg="ring"><button type="button" data-v="0">Off</button><button type="button" data-v="1">On</button></div></div>
   <div class="tune-row"><span>Orbit line</span><div class="tune-seg" data-wt-seg="line"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>
   </div>
   <div data-wt-pane="camera" hidden></div>
-  <div data-wt-pane="atmosphere" hidden></div>
+  <div data-wt-pane="atmosphere" hidden>
+    <p class="tune-sub">Dust around this world</p>
+    <label class="tune-row"><span>Dust amount</span><input type="range" min="0" max="3" step="0.05" data-wt="halo"><b data-out></b></label>
+    <label class="tune-row"><span>Dust drift</span><input type="range" min="0" max="5" step="0.05" data-wt="haloSpeed"><b data-out></b></label>
+    <label class="tune-row"><span>Dust spread</span><input type="range" min="0.7" max="1.7" step="0.05" data-wt="dustSpread"><b data-out></b></label>
+    <label class="tune-row"><span>Dust size</span><input type="range" min="0.5" max="2.5" step="0.05" data-wt="dustSize"><b data-out></b></label>
+    <label class="tune-row"><span>Dust colour</span><input type="color" data-wt="dustColor" aria-label="Dust colour around this world"></label>
+  </div>
   <div data-wt-pane="fx" hidden>
   <p class="tune-sub">Ripple</p>
   <div class="tune-row"><span>Ripple</span><div class="tune-seg" data-wt-seg="r_enabled"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>
@@ -1545,7 +1550,7 @@ const WorldTune = (() => {
   const fill = () => {
     const P = panel(); if (!w) return;
     P.querySelector('[data-wt-name]').textContent = w.def.name;
-    P.querySelectorAll('input[data-wt]').forEach(el => { el.value = w.tune[el.dataset.wt]; out(el); });
+    P.querySelectorAll('input[data-wt]').forEach(el => { el.value = el.type === 'color' ? (w.tune[el.dataset.wt] || w.def.accent) : w.tune[el.dataset.wt]; if (el.type !== 'color') out(el); });
     P.querySelectorAll('[data-wt-seg]').forEach(g => g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === w.tune[g.dataset.wtSeg]))));
   };
   const set = (k, v) => { if (!w) return; w.setTune(k, v); (store[w.def.id] = store[w.def.id] || {})[k] = v; save(); if (k === 'hue' || k === 'sat' || k === 'bright') syncAccent(); };
@@ -1596,7 +1601,7 @@ const WorldTune = (() => {
     document.querySelector('[data-wt-open]').addEventListener('click', () => open(true));
     P.querySelector('[data-wt-close]').addEventListener('click', () => open(false));
     P.querySelectorAll('[data-wt-tab]').forEach(t => t.addEventListener('click', () => tab(t.dataset.wtTab)));
-    P.querySelectorAll('input[data-wt]').forEach(el => el.addEventListener('input', () => { set(el.dataset.wt, +el.value); out(el); }));
+    P.querySelectorAll('input[data-wt]').forEach(el => el.addEventListener('input', () => { set(el.dataset.wt, el.type === 'color' ? el.value : +el.value); if (el.type !== 'color') out(el); }));
     P.querySelectorAll('[data-wt-seg]').forEach(g => g.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
       g.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); set(g.dataset.wtSeg, +b.dataset.v);
     })));
@@ -1612,7 +1617,8 @@ const WorldTune = (() => {
       if (!w) return;
       const R = (a, b) => a + Math.random() * (b - a);
       set('hue', Math.round(R(-180, 180))); set('sat', +R(0.6, 1.6).toFixed(2)); set('bright', +R(0.8, 1.3).toFixed(2));
-      set('spin', +R(0.3, 3).toFixed(2)); set('atmo', +R(0.6, 2).toFixed(2)); set('halo', +R(0.5, 2.5).toFixed(2));
+      set('spin', +R(0.3, 3).toFixed(2)); set('atmo', +R(0.6, 2).toFixed(2)); set('halo', +R(0.7, 2.8).toFixed(2));
+      set('dustSpread', +R(.75, 1.5).toFixed(2)); set('dustSize', +R(.7, 2).toFixed(2));
       RIPPLE_CONTROLS.forEach(c => { if (c.key !== 'ambient') set('r_' + c.key, +(R(c.min + (c.max - c.min) * 0.1, c.min + (c.max - c.min) * 0.6)).toFixed(3)); });
       fill();
     });
@@ -2921,12 +2927,14 @@ uniform float uTime, uRadius, uHover, uReveal, uPixelRatio, uMotion, uHaloT;
 uniform float uSpinA, uRippleKick, uRippleRadius, uRipplePointGlow;
 ${LENS_PARS_V}
 ${GLSL_COMMON}${GLSL_VERTEX_FN}
-uniform vec3 uInk, uAccent;
+uniform vec3 uInk, uAccent, uDustColor;
+uniform float uDustSpread, uDustSize;
 varying float vA;
 varying vec3 vCol;
+varying float vCloud;
 void main(){
   float rf = aOrbit.x;
-  float r = uRadius * mix(rf, 1.07 + aOrbit.w * 0.22, uHover * 0.6);
+  float r = uRadius * mix(rf, 1.07 + aOrbit.w * 0.22, uHover * 0.6) * uDustSpread;
   float ang = aOrbit.y + uHaloT * (0.45 / pow(rf, 1.5)) * (1.0 + uHover * 1.4);
   vec3 p = vec3(cos(ang) * r, 0.0, sin(ang) * r);
   float ci = cos(aOrbit.z), si = sin(aOrbit.z);
@@ -2939,21 +2947,24 @@ void main(){
   p += rd * abs(rH) * uRippleStrength * uRippleRadius * uRippleKick * 1.4;
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
   gl_Position = projectionMatrix * mv;
+  vCloud = step(0.94, aOrbit.w);
   vA = uReveal * (0.25 + 0.75 * aOrbit.w) * (0.5 + uHover * 0.9) * (1.0 + rE * uRipplePointGlow);
-  vCol = mix(uInk, uAccent, 0.35 + uHover * 0.55);
-  gl_PointSize = clamp((1.1 + aOrbit.w * 1.6) * uPixelRatio * (4.2 / -mv.z) * (1.0 + uHover * 0.7) * (1.0 + rE * uRipplePointGlow * 0.6), 0.6, 7.0 * uPixelRatio);
+  vCol = mix(mix(uInk, uDustColor, 0.6), uAccent, uHover * 0.45);
+  gl_PointSize = clamp(mix(1.1 + aOrbit.w * 1.6, 17.0 + aOrbit.w * 10.0, vCloud) * uDustSize * uPixelRatio * (4.2 / -mv.z) * (1.0 + uHover * 0.7) * (1.0 + rE * uRipplePointGlow * 0.6), 0.6, mix(9.0, 90.0, vCloud) * uPixelRatio);
 ${LENS_MAIN_V}
 }`;
 
 const HALO_FRAG = `
 varying float vA;
 varying vec3 vCol;
+varying float vCloud;
 ${LENS_PARS_F}
 void main(){
   vec2 q = gl_PointCoord - 0.5;
   if (length(q) > 0.5) discard;
   vec3 cov = lensCover(q, 0.05); float a = max(cov.r, max(cov.g, cov.b));
-  gl_FragColor = vec4(lensBloom(vCol, cov.g) * cov / max(a, 1e-3), a * vA * lensEnergy());
+  float glow = mix(a, pow(max(0.0, 1.0 - dot(q, q) * 4.0), 3.0) * 0.12, vCloud);
+  gl_FragColor = vec4(lensBloom(vCol, cov.g) * cov / max(a, 1e-3), glow * vA * lensEnergy());
 }`;
 
 const ATMO_VERT = `
@@ -4493,14 +4504,15 @@ class World {
     this.haloMat = additive({
       uniforms: {
         uTime: shared.uTime, uMotion: shared.uMotion, uInk: shared.uInk, uAccent: { value: rawColor(def.accent) },
-        uRadius: { value: def.radius }, uHover: { value: 0 }, uReveal: { value: 0 }, uPixelRatio: { value: 1 }, uHaloT: { value: 0 }, uSpinA: { value: 0 }
+        uRadius: { value: def.radius }, uHover: { value: 0 }, uReveal: { value: 0 }, uPixelRatio: { value: 1 }, uHaloT: { value: 0 }, uSpinA: { value: 0 },
+        uDustColor: { value: rawColor(def.accent) }, uDustSpread: { value: 1 }, uDustSize: { value: 1 }
       },
       vertexShader: HALO_VERT, fragmentShader: HALO_FRAG
     });
     this.halo = new THREE.Points(this.haloGeom, this.haloMat);
     this.halo.frustumCulled = false;
     this.axis.add(this.halo);
-    this.haloGeom.setDrawRange(0, Math.round(n / 3));
+    this.haloGeom.setDrawRange(0, Math.round(n * this.tune.halo / 3));
 
     // Optional ring, off until tuned on.
     this.ringGeom = new THREE.RingGeometry(def.radius * 1.45, def.radius * 2.15, 128, 1);
@@ -4561,7 +4573,7 @@ class World {
 
   get radius() { return this.def.radius * this.group.scale.x; }
 
-  static TUNE_DEFAULT = { hue: 0, sat: 1, bright: 1, atmo: 1, halo: 1, haloSpeed: 1, spin: 1, dir: 1, size: 1, orbit: 1, orbitSpeed: 1, ring: 0, line: 1 };
+  static TUNE_DEFAULT = { hue: 0, sat: 1, bright: 1, atmo: 1, halo: 1.8, haloSpeed: 1, dustSpread: 1, dustSize: 1, dustColor: null, spin: 1, dir: 1, size: 1, orbit: 1, orbitSpeed: 1, ring: 0, line: 1 };
   /* Colour tuning shifts the surface in the shader and every accent-derived colour here, so the page matches. */
   applyColor() {
     const t = this.tune, d = this.def;
@@ -4570,6 +4582,7 @@ class World {
     d.accent = '#' + acc.getHexString();
     this.U.uKyAccent.value.copy(acc).multiplyScalar(0.9);
     [this.atmoMat.uniforms.uColor, this.haloMat.uniforms.uAccent, this.orbitMat.uniforms.uAccent, this.ringMat.uniforms.uColor].forEach(u => u.value.copy(acc));
+    if (!t.dustColor) this.haloMat.uniforms.uDustColor.value.copy(acc);
     if (this.ripple) this.ripple.set({ color: d.accent });
   }
   /* Ripple settings are stored in the same per-world tune object with an r_ prefix. */
@@ -4585,6 +4598,9 @@ class World {
     this.tune[k] = v;
     if (k === 'hue' || k === 'sat' || k === 'bright') this.applyColor();
     if (k === 'halo') this.haloGeom.setDrawRange(0, Math.round(this.haloN * clamp(v, 0, 3) / 3));
+    if (k === 'dustSpread') this.haloMat.uniforms.uDustSpread.value = clamp(v, .7, 1.7);
+    if (k === 'dustSize') this.haloMat.uniforms.uDustSize.value = clamp(v, .5, 2.5);
+    if (k === 'dustColor') this.haloMat.uniforms.uDustColor.value.set(v || this.def.accent);
   }
 
   update(dt, t, f) {
@@ -6361,7 +6377,7 @@ class App {
     this.library = lib;
     const sizes = WORLDS.map(w => lib.bytes(w.id)), total = sizes.reduce((a, b) => a + b, 0) || 1;
     const aniso = Math.min(8, this.stage.renderer.capabilities.getMaxAnisotropy());
-    const halo = this.mobile ? 140 : 320;
+    const halo = this.mobile ? 320 : 620;
     let got = 0;
     const tick = text => progress(Math.min(1, got / total), text);
     // Downloads run in parallel; decoding and scene insertion stay in order so world indices never shift.
