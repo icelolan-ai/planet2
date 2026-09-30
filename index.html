@@ -752,10 +752,12 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
 .tune-link:hover{color:var(--val);border-color:var(--val)}
 @media (max-width:760px){
   .tune-toggle{bottom:calc(env(safe-area-inset-bottom,0px) + 100px);left:16px}
-  .tune,.tune[data-side="right"]{top:auto;left:0;right:0;width:auto;height:var(--sheet-height,68dvh);max-height:calc(100dvh - env(safe-area-inset-top,0px) - 12px);padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 76px);border:0;border-top:1px solid var(--line);
+  .tune,.tune[data-side="right"]{top:auto;left:0;right:0;width:auto;height:var(--sheet-height,68dvh);max-height:calc(100dvh - env(safe-area-inset-top,0px) - 12px);padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 76px);border:0;border-top:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;
     background:rgba(6,8,12,.95);transform:translateY(102%)}
   .tune[data-open="true"]{transform:none}
   .tune.wtune{max-height:calc(100dvh - env(safe-area-inset-top,0px) - 12px)}
+  .tune .tune-h{flex:none}
+  .tune-content{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;scrollbar-color:#ffffff50 transparent}
   .tune.sheet-dragging{transition:none;scroll-behavior:auto}
   .tune .tune-h{touch-action:none;user-select:none;cursor:grab}
   .tune.sheet-dragging .tune-h{cursor:grabbing}
@@ -763,7 +765,7 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
   .tune-grip::before{content:"";display:block;width:36px;height:4px;margin:5px auto;border-radius:5px;background:#aab7c9;box-shadow:0 0 8px #ffffff40}
   .tune[data-sheet="collapsed"]{overflow:hidden}
   .tune[data-sheet="collapsed"]>:not(.tune-h):not(.tune-grip):not(.tune-tabs){visibility:hidden;pointer-events:none}
-  #tune>.tune-tabs,#wtune>.tune-tabs{position:fixed;top:auto;bottom:0;left:0;right:0;z-index:5;margin:0;padding:4px 10px calc(env(safe-area-inset-bottom,0px) + 5px);border-top:1px solid #ffffff29;border-bottom:0;background:#10172cf5;box-shadow:0 -10px 28px #02040a99}
+  #tune>.tune-tabs,#wtune>.tune-tabs{position:absolute;top:auto;bottom:0;left:0;right:0;z-index:5;margin:0;padding:4px 10px calc(env(safe-area-inset-bottom,0px) + 5px);border-top:1px solid #ffffff29;border-bottom:0;background:#10172cf5;box-shadow:0 -10px 28px #02040a99}
   #tune>.tune-tabs button,#wtune>.tune-tabs button{min-height:48px;min-width:70px;border-bottom:0;border-top:2px solid transparent;color:#c1cce0}
   #tune>.tune-tabs button[aria-selected="true"],#wtune>.tune-tabs button[aria-selected="true"]{border-top-color:var(--val);color:#fff;background:#ffffff0c}
   .tune-row{grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;margin-bottom:18px}
@@ -980,7 +982,7 @@ body.atelier-on.wtune-open #gl{transform:none!important}
   .atelier-bar span{display:none}.atelier-bar button{padding:8px 10px;font-size:10px}
   body.atelier-on.wtune-open #wtune,body.atelier-on.tune-open #tune{height:var(--sheet-height,54dvh);max-height:calc(100dvh - env(safe-area-inset-top,0px) - 12px);padding:0 18px calc(env(safe-area-inset-bottom,0px) + 78px);border:1px solid #ffffff30;border-bottom:0;border-radius:20px 20px 0 0;background:linear-gradient(150deg,#101725f8,#070910fc 58%);box-shadow:0 -18px 55px #0009}
   body.atelier-on #wtune .tune-h,body.atelier-on #tune .tune-h{position:sticky;top:0;z-index:3;min-height:56px;padding:8px 0 7px;margin:0;border-left:0;border-bottom:1px solid #ffffff29;background:#0d121deb}
-  body.atelier-on #wtune .tune-tabs,body.atelier-on #tune .tune-tabs{position:fixed;top:auto;bottom:0;left:0;right:0;z-index:5;margin:0;padding:4px 10px calc(env(safe-area-inset-bottom,0px) + 5px);background:#10172cf5;border-top:1px solid #ffffff29;border-bottom:0}
+  body.atelier-on #wtune .tune-tabs,body.atelier-on #tune .tune-tabs{position:absolute;top:auto;bottom:0;left:0;right:0;z-index:5;margin:0;padding:4px 10px calc(env(safe-area-inset-bottom,0px) + 5px);background:#10172cf5;border-top:1px solid #ffffff29;border-bottom:0}
   body.atelier-on #wtune .tune-tabs button,body.atelier-on #tune .tune-tabs button{min-height:50px;padding:10px 11px;white-space:nowrap}
   body.atelier-on #wtune .tune-row,body.atelier-on #tune .tune-row{padding:2px 0 13px;margin-bottom:16px;border-bottom:1px solid #ffffff16}
   body.atelier-on #wtune .tune-row>span,body.atelier-on #tune .tune-row>span{font-size:12px;color:#c3ccda}
@@ -1495,6 +1497,6 @@ body.atelier-on.wtune-open #gl{transform:none!important}
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.6399fe1518.js", 370528]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.171ff2df61.js", 370838]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>

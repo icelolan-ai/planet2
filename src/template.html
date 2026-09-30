@@ -744,10 +744,12 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
 .tune-link:hover{color:var(--val);border-color:var(--val)}
 @media (max-width:760px){
   .tune-toggle{bottom:calc(env(safe-area-inset-bottom,0px) + 100px);left:16px}
-  .tune,.tune[data-side="right"]{top:auto;left:0;right:0;width:auto;height:var(--sheet-height,68dvh);max-height:calc(100dvh - env(safe-area-inset-top,0px) - 12px);padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 76px);border:0;border-top:1px solid var(--line);
+  .tune,.tune[data-side="right"]{top:auto;left:0;right:0;width:auto;height:var(--sheet-height,68dvh);max-height:calc(100dvh - env(safe-area-inset-top,0px) - 12px);padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 76px);border:0;border-top:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;
     background:rgba(6,8,12,.95);transform:translateY(102%)}
   .tune[data-open="true"]{transform:none}
   .tune.wtune{max-height:calc(100dvh - env(safe-area-inset-top,0px) - 12px)}
+  .tune .tune-h{flex:none}
+  .tune-content{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;scrollbar-color:#ffffff50 transparent}
   .tune.sheet-dragging{transition:none;scroll-behavior:auto}
   .tune .tune-h{touch-action:none;user-select:none;cursor:grab}
   .tune.sheet-dragging .tune-h{cursor:grabbing}
@@ -755,7 +757,7 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
   .tune-grip::before{content:"";display:block;width:36px;height:4px;margin:5px auto;border-radius:5px;background:#aab7c9;box-shadow:0 0 8px #ffffff40}
   .tune[data-sheet="collapsed"]{overflow:hidden}
   .tune[data-sheet="collapsed"]>:not(.tune-h):not(.tune-grip):not(.tune-tabs){visibility:hidden;pointer-events:none}
-  #tune>.tune-tabs,#wtune>.tune-tabs{position:fixed;top:auto;bottom:0;left:0;right:0;z-index:5;margin:0;padding:4px 10px calc(env(safe-area-inset-bottom,0px) + 5px);border-top:1px solid #ffffff29;border-bottom:0;background:#10172cf5;box-shadow:0 -10px 28px #02040a99}
+  #tune>.tune-tabs,#wtune>.tune-tabs{position:absolute;top:auto;bottom:0;left:0;right:0;z-index:5;margin:0;padding:4px 10px calc(env(safe-area-inset-bottom,0px) + 5px);border-top:1px solid #ffffff29;border-bottom:0;background:#10172cf5;box-shadow:0 -10px 28px #02040a99}
   #tune>.tune-tabs button,#wtune>.tune-tabs button{min-height:48px;min-width:70px;border-bottom:0;border-top:2px solid transparent;color:#c1cce0}
   #tune>.tune-tabs button[aria-selected="true"],#wtune>.tune-tabs button[aria-selected="true"]{border-top-color:var(--val);color:#fff;background:#ffffff0c}
   .tune-row{grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;margin-bottom:18px}
@@ -972,7 +974,7 @@ body.atelier-on.wtune-open #gl{transform:none!important}
   .atelier-bar span{display:none}.atelier-bar button{padding:8px 10px;font-size:10px}
   body.atelier-on.wtune-open #wtune,body.atelier-on.tune-open #tune{height:var(--sheet-height,54dvh);max-height:calc(100dvh - env(safe-area-inset-top,0px) - 12px);padding:0 18px calc(env(safe-area-inset-bottom,0px) + 78px);border:1px solid #ffffff30;border-bottom:0;border-radius:20px 20px 0 0;background:linear-gradient(150deg,#101725f8,#070910fc 58%);box-shadow:0 -18px 55px #0009}
   body.atelier-on #wtune .tune-h,body.atelier-on #tune .tune-h{position:sticky;top:0;z-index:3;min-height:56px;padding:8px 0 7px;margin:0;border-left:0;border-bottom:1px solid #ffffff29;background:#0d121deb}
-  body.atelier-on #wtune .tune-tabs,body.atelier-on #tune .tune-tabs{position:fixed;top:auto;bottom:0;left:0;right:0;z-index:5;margin:0;padding:4px 10px calc(env(safe-area-inset-bottom,0px) + 5px);background:#10172cf5;border-top:1px solid #ffffff29;border-bottom:0}
+  body.atelier-on #wtune .tune-tabs,body.atelier-on #tune .tune-tabs{position:absolute;top:auto;bottom:0;left:0;right:0;z-index:5;margin:0;padding:4px 10px calc(env(safe-area-inset-bottom,0px) + 5px);background:#10172cf5;border-top:1px solid #ffffff29;border-bottom:0}
   body.atelier-on #wtune .tune-tabs button,body.atelier-on #tune .tune-tabs button{min-height:50px;padding:10px 11px;white-space:nowrap}
   body.atelier-on #wtune .tune-row,body.atelier-on #tune .tune-row{padding:2px 0 13px;margin-bottom:16px;border-bottom:1px solid #ffffff16}
   body.atelier-on #wtune .tune-row>span,body.atelier-on #tune .tune-row>span{font-size:12px;color:#c3ccda}
@@ -1710,6 +1712,18 @@ const Settings = (() => {
   const mq = matchMedia('(max-width:760px)');
   for (const panel of [document.getElementById('tune'), document.getElementById('wtune')]) {
     const grip = panel.querySelector('.tune-grip'), header = panel.querySelector('.tune-h');
+    const originalChildren = [...panel.children];
+    const content = document.createElement('div'); content.className = 'tune-content';
+    const syncStructure = () => {
+      if (mq.matches && !content.isConnected) {
+        originalChildren.filter(el => el !== grip && el !== header && !el.classList.contains('tune-tabs')).forEach(el => content.appendChild(el));
+        panel.appendChild(content);
+      } else if (!mq.matches && content.isConnected) {
+        originalChildren.forEach(el => panel.appendChild(el));
+        content.remove();
+      }
+    };
+    syncStructure();
     const heights = () => {
       const h = innerHeight, safe = 24;
       return { collapsed: Math.min(h * .28, 104), normal: h * (document.body.classList.contains('atelier-on') ? .54 : panel.id === 'wtune' ? .48 : .68), expanded: h - safe };
@@ -1719,7 +1733,7 @@ const Settings = (() => {
       panel.style.setProperty('--sheet-height', Math.round(heights()[state]) + 'px');
       grip.setAttribute('aria-expanded', String(state !== 'collapsed'));
       grip.setAttribute('aria-label', state === 'collapsed' ? 'Expand customization panel' : 'Collapse customization panel');
-      if (state === 'collapsed') panel.scrollTop = 0;
+      if (state === 'collapsed') content.scrollTop = 0;
     };
     let drag = null, suppressClick = false;
     const start = e => {
@@ -1763,10 +1777,10 @@ const Settings = (() => {
     panel.querySelectorAll(':scope > .tune-tabs button').forEach(tab => tab.addEventListener('click', () => {
       if (!mq.matches) return;
       snap('normal');
-      panel.scrollTop = 0;
+      content.scrollTop = 0;
     }));
     new MutationObserver(() => { if (panel.dataset.open === 'true' && mq.matches) snap('normal'); }).observe(panel, { attributes:true, attributeFilter:['data-open'] });
-    addEventListener('resize', () => { if (mq.matches && panel.dataset.open === 'true' && !drag) snap(panel.dataset.sheet || 'normal'); });
+    addEventListener('resize', () => { syncStructure(); if (mq.matches && panel.dataset.open === 'true' && !drag) snap(panel.dataset.sheet || 'normal'); });
   }
 })();
 
