@@ -933,6 +933,9 @@ html.has-cursor body.atelier-on .atelier-spin:active{cursor:grabbing!important}
 .atelier-copy p{font-size:14px;line-height:1.5;color:#b2bac9;margin:0 0 18px}
 .atelier-copy button,.atelier-bar button{border:1px solid #ffffff4d;border-radius:5px;background:#10141cd9;color:#eef0f6;padding:12px 17px;font:600 12px var(--f-cond);letter-spacing:.12em;text-transform:uppercase;min-height:44px;cursor:pointer}
 .atelier-copy button{border-color:var(--a);color:var(--a)}
+.atelier-copy .atelier-actions{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.atelier-copy .atelier-studio{border-color:#72d9dd;color:#a8eff0}
+.atelier-copy button:hover,.atelier-copy button:focus-visible{background:#1c2632;outline:2px solid currentColor;outline-offset:2px}
 .atelier-copy .w>span{opacity:1}.atelier-stop.is-current .atelier-copy .w>span{animation:gateway-word .01s linear both;animation-delay:calc(var(--i) * 55ms + 230ms)}
 .atelier-stop.is-current .atelier-copy .w::after{animation:valwipe .4s cubic-bezier(.7,0,.2,1) both;animation-delay:calc(var(--i) * 55ms + 30ms)}
 .atelier-copy h2 .ch{display:inline-block;opacity:0;color:#eef0f6;transform:translateY(24px) rotate(5deg);transition:color .9s,text-shadow .9s}
@@ -6355,7 +6358,7 @@ class WorldAtelier {
     const stages = [{ name: 'Cerebra', accent: '#ff4655', kicker: 'The living planet', lede: 'A core that rebuilds itself while you watch.' }, ...WORLDS];
     this.track.innerHTML = stages.map((d, i) => `<article class="atelier-stop" style="--a:${esc(d.accent)};--val:${esc(d.accent)}" aria-label="${esc(d.name)}">
       ${i ? `<div class="atelier-spin" data-at-spin="${i}" aria-label="Drag to rotate ${esc(d.name)}" hidden></div>` : ''}
-      <div class="atelier-copy"><b>${i ? 'World ' + String(i).padStart(2, '0') : 'Core'} / ${String(stages.length).padStart(2, '0')}</b><h2 aria-label="${esc(d.name)}">${d.name.split(' ').map((word, wi) => `<span class="atelier-word">${Array.from(word).map((ch, k) => `<span class="ch" aria-hidden="true" style="--i:${wi + k}">${esc(ch)}</span>`).join('')}</span>`).join(' ')}</h2><p>${esc(d.kicker)} · ${esc(d.lede)}</p><button type="button" data-at-tune="${i}">Tune ${i ? 'this world' : 'the core'} →</button></div>
+      <div class="atelier-copy"><b>${i ? 'World ' + String(i).padStart(2, '0') : 'Core'} / ${String(stages.length).padStart(2, '0')}</b><h2 aria-label="${esc(d.name)}">${d.name.split(' ').map((word, wi) => `<span class="atelier-word">${Array.from(word).map((ch, k) => `<span class="ch" aria-hidden="true" style="--i:${wi + k}">${esc(ch)}</span>`).join('')}</span>`).join(' ')}</h2><p>${esc(d.kicker)} · ${esc(d.lede)}</p><div class="atelier-actions"><button type="button" data-at-tune="${i}">Tune ${i ? 'this world' : 'the core'} →</button><button type="button" class="atelier-studio" data-at-studio="${i}">Studio mode →</button></div></div>
     </article>`).join('');
     this.spinTargets = [...this.track.querySelectorAll('[data-at-spin]')];
     this.selectedRoute = 'atelier'; this.entering = false;
@@ -6380,6 +6383,7 @@ class WorldAtelier {
       if (+b.dataset.atTune === 0) dispatchEvent(new Event('cerebra:tune'));
       else WorldTune.open(true, 'world');
     }));
+    this.track.querySelectorAll('[data-at-studio]').forEach(b => b.addEventListener('click', () => this.openStudio(+b.dataset.atStudio)));
     this.worldDrag = null;
     this.track.addEventListener('pointerdown', e => {
       if (!this.active || this.index === 0 || e.button !== 0 || e.target.closest('[data-at-spin]')?.dataset.atSpin !== String(this.index)) return;
@@ -6451,6 +6455,18 @@ class WorldAtelier {
     if (this.index > 0) this.app.detail.index = this.index - 1;
     this.el.querySelector('[data-at-count]').textContent = `${String(this.index + 1).padStart(2, '0')} / ${String(WORLDS.length + 1).padStart(2, '0')}`;
     this.track.querySelectorAll('.atelier-stop').forEach((stop, k) => { stop.classList.toggle('is-current', k === this.index); });
+  }
+  openStudio(i) {
+    if (!this.app.studio || !this.app.worldsReady) return;
+    this.leave();
+    this.choice.hidden = true;
+    document.documentElement.classList.remove('route-lock');
+    document.querySelector('main').inert = false;
+    this.app.studio.open();
+    if (this.app.studio.active) {
+      this.app.studio.returnToAtelier = i;
+      this.app.studio.setSubject(i - 1);
+    }
   }
   leave() {
     if (!this.active) return;
@@ -6845,7 +6861,15 @@ class CoreStudio {
     LAYER_U.uStudioLayerVisible.value.fill(1);
     // Keep the visibility chosen in Tune, including the quieter starting ring count.
     scrollTo({ top: this.saved.y, behavior: 'instant' });
-    document.querySelector('.fab-btn').focus({ preventScroll: true });
+    if (this.returnToAtelier != null) {
+      const i = this.returnToAtelier; this.returnToAtelier = null;
+      document.documentElement.classList.add('route-lock');
+      document.querySelector('main').inert = true;
+      a.entry.enter();
+      a.entry.track.scrollTop = i * a.entry.track.clientHeight;
+      a.entry.progress = i;
+      a.entry.select(i);
+    } else document.querySelector('.fab-btn').focus({ preventScroll: true });
   }
   paintBackground() {
     this.bg.width = this.app.stage.width; this.bg.height = this.app.stage.height;
