@@ -905,6 +905,11 @@ html.route-lock,html.route-lock body{overflow:hidden!important;overscroll-behavi
 .atelier-track{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scroll-snap-type:y proximity;pointer-events:auto;scrollbar-width:none}
 .atelier-track::-webkit-scrollbar{display:none}
 .atelier-stop{height:100dvh;position:relative;scroll-snap-align:center;pointer-events:none}
+.atelier-spin{position:absolute;z-index:1;left:50%;top:50%;width:240px;height:240px;border-radius:50%;pointer-events:auto;touch-action:none;cursor:grab}
+.atelier-spin:active{cursor:grabbing}
+.atelier-spin[hidden]{display:none}
+html.has-cursor body.atelier-on .atelier-spin{cursor:grab!important}
+html.has-cursor body.atelier-on .atelier-spin:active{cursor:grabbing!important}
 .atelier-copy{position:absolute;left:clamp(24px,5vw,80px);top:50%;transform:translateY(-50%);width:min(460px,42vw);pointer-events:auto}
 .atelier-copy b{font:600 12px var(--f-cond);letter-spacing:.28em;color:var(--a);text-transform:uppercase}
 .atelier-copy h2{font:400 clamp(36px,4.4vw,66px)/1 var(--f-display);text-transform:uppercase;margin:12px 0}
@@ -6246,8 +6251,10 @@ class WorldAtelier {
     const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
     const stages = [{ name: 'Cerebra', accent: '#ff4655', kicker: 'The living planet', lede: 'A core that rebuilds itself while you watch.' }, ...WORLDS];
     this.track.innerHTML = stages.map((d, i) => `<article class="atelier-stop" style="--a:${esc(d.accent)};--val:${esc(d.accent)}" aria-label="${esc(d.name)}">
+      ${i ? `<div class="atelier-spin" data-at-spin="${i}" aria-label="Drag to rotate ${esc(d.name)}" hidden></div>` : ''}
       <div class="atelier-copy"><b>${i ? 'World ' + String(i).padStart(2, '0') : 'Core'} / ${String(stages.length).padStart(2, '0')}</b><h2 aria-label="${esc(d.name)}">${d.name.split(' ').map((word, wi) => `<span class="atelier-word">${Array.from(word).map((ch, k) => `<span class="ch" aria-hidden="true" style="--i:${wi + k}">${esc(ch)}</span>`).join('')}</span>`).join(' ')}</h2><p>${esc(d.kicker)} · ${esc(d.lede)}</p><button type="button" data-at-tune="${i}">Tune ${i ? 'this world' : 'the core'} →</button></div>
     </article>`).join('');
+    this.spinTargets = [...this.track.querySelectorAll('[data-at-spin]')];
     this.selectedRoute = 'atelier'; this.entering = false;
     this.backButton = document.getElementById('route-back');
     this.choice.querySelectorAll('[data-route]').forEach(card => {
@@ -6272,7 +6279,7 @@ class WorldAtelier {
     }));
     this.worldDrag = null;
     this.track.addEventListener('pointerdown', e => {
-      if (!this.active || this.index === 0 || !document.body.classList.contains('wtune-open') || e.button !== 0 || e.target.closest('button')) return;
+      if (!this.active || this.index === 0 || e.button !== 0 || e.target.closest('[data-at-spin]')?.dataset.atSpin !== String(this.index)) return;
       this.worldDrag = { id: e.pointerId, x: e.clientX, t: performance.now() };
       this.track.setPointerCapture(e.pointerId);
       this.app.orrery.worlds[this.index - 1].userVel = 0;
@@ -6401,6 +6408,20 @@ class WorldAtelier {
       w.U.uKyCenter.value.copy(w.group.position);
       w.orbitLine.visible = false;
       w.group.visible = true;
+    });
+    this.spinTargets.forEach((target, i) => {
+      const w = worlds[i];
+      if (i !== this.index - 1 || !w.group.visible) { target.hidden = true; return; }
+      w.group.updateWorldMatrix(true, false);
+      const center = w.group.getWorldPosition(new THREE.Vector3());
+      const projected = center.clone().project(cam);
+      const edge = center.add(new THREE.Vector3(w.def.radius * w.group.scale.x, 0, 0)).project(cam);
+      const diameter = Math.max(120, Math.abs(edge.x - projected.x) * this.track.clientWidth * 1.08);
+      target.style.left = `${(projected.x + 1) * 50}%`;
+      target.style.top = `${(1 - projected.y) * 50}%`;
+      target.style.width = target.style.height = `${diameter}px`;
+      target.style.transform = 'translate(-50%, -50%)';
+      target.hidden = false;
     });
     if (a.ambient) a.ambient.points.visible = false;
     a.orrery.stars.material.uniforms.uOpacity.value = .24;
