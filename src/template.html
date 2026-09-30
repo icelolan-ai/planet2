@@ -471,6 +471,8 @@ html,body{overflow-x:clip}
 }
 /* tuning clears the page so the planet has the stage */
 body.tune-open main,body.tune-open .labels,body.tune-open .backword{opacity:0!important;pointer-events:none!important;transition:opacity .5s}
+/* Label children set their own visibility every frame; hide the whole overlay by opacity. */
+body.wtune-open #labels,body.atelier-on #labels{opacity:0!important;pointer-events:none!important;transition:opacity .2s}
 /* orbit loading status, shown when the visitor reaches the orbit before its worlds have arrived */
 .orbit-wait{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);z-index:20;display:flex;align-items:center;gap:12px;padding:10px 16px;transform:translate(-50%,10px);opacity:0;pointer-events:none;
   background:rgba(8,10,16,.8);backdrop-filter:blur(8px);border:1px solid var(--line);border-left:2px solid var(--val);font:600 11.5px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;color:var(--ink);transition:opacity .4s,transform .5s var(--ease-out)}
@@ -949,6 +951,7 @@ html.has-cursor body.atelier-on,html.has-cursor body.atelier-on *{cursor:auto!im
 html.has-cursor body.atelier-on button,html.has-cursor body.atelier-on button *{cursor:pointer!important}
 body.atelier-on #wtune,body.atelier-on #tune{z-index:70;visibility:visible!important}
 body.atelier-on.wtune-open .atelier-copy,body.atelier-on.tune-open .atelier-copy{visibility:hidden;pointer-events:none}
+body.atelier-on:is(.wtune-open,.tune-open) .atelier-bar span,body.atelier-on:is(.wtune-open,.tune-open) .atelier-count{opacity:0;visibility:hidden;pointer-events:none}
 body.atelier-on.wtune-open .atelier-track,body.atelier-on.tune-open .atelier-track{overflow:hidden}
 body.atelier-on:is(.wtune-open,.tune-open) .atelier-track{touch-action:none;cursor:grab}
 body.atelier-on:is(.wtune-open,.tune-open) .atelier-track:active{cursor:grabbing}
