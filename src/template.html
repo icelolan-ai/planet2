@@ -914,11 +914,15 @@ html.route-lock,html.route-lock body{overflow:hidden!important;overscroll-behavi
 body.route-choose> :not(#gl):not(#gateway):not(script),body.atelier-on> :not(#gl):not(#atelier):not(#wtune):not(#tune):not(script){visibility:hidden!important;pointer-events:none!important}
 html.has-cursor body.route-choose,html.has-cursor body.route-choose *{cursor:auto!important}
 html.has-cursor body.route-choose .gateway-choice,html.has-cursor body.route-choose .gateway-choice *{cursor:pointer!important}
+html.has-cursor body.atelier-on,html.has-cursor body.atelier-on *{cursor:auto!important}
+html.has-cursor body.atelier-on button,html.has-cursor body.atelier-on button *{cursor:pointer!important}
 body.atelier-on #wtune,body.atelier-on #tune{z-index:70;visibility:visible!important}
 body.atelier-on.wtune-open .atelier-copy,body.atelier-on.tune-open .atelier-copy{visibility:hidden;pointer-events:none}
 body.atelier-on.wtune-open .atelier-track,body.atelier-on.tune-open .atelier-track{overflow:hidden}
 body.atelier-on:is(.wtune-open,.tune-open) .atelier-track{touch-action:none;cursor:grab}
 body.atelier-on:is(.wtune-open,.tune-open) .atelier-track:active{cursor:grabbing}
+html.has-cursor body.atelier-on:is(.wtune-open,.tune-open) .atelier-track{cursor:grab!important}
+html.has-cursor body.atelier-on:is(.wtune-open,.tune-open) .atelier-track:active{cursor:grabbing!important}
 body.atelier-on:is(.wtune-open,.tune-open) [data-at-orbit]{visibility:hidden;pointer-events:none}
 body.atelier-on.wtune-open #gl{transform:none!important}
 #route-back[hidden]{display:none!important}
