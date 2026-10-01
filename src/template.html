@@ -970,6 +970,11 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
   #studio .st-dock.is-v{overflow-y:auto;overflow-x:hidden;touch-action:pan-y;-webkit-mask:none;mask:none}
 }
 /* Movable trays */
+.st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
+.st-edge-hint[hidden]{display:none}
+.st-edge-hint[data-edge=left]{left:2px;top:8px;bottom:8px;width:4px}.st-edge-hint[data-edge=right]{right:2px;top:8px;bottom:8px;width:4px}
+.st-edge-hint[data-edge=top]{top:2px;left:8px;right:8px;height:4px}.st-edge-hint[data-edge=bottom]{bottom:2px;left:8px;right:8px;height:4px}
+@keyframes edgepulse{from{opacity:.55}to{opacity:1}}
 #studio .st-tray-lock{position:absolute;top:max(var(--st-gap),env(safe-area-inset-top));left:calc(var(--st-gap) * 2 + var(--st-rail));width:52px;height:52px;padding:0;border-radius:16px;pointer-events:auto}
 #studio .st-tray-lock[aria-pressed=false]{color:#ff8f98;border-color:#ff4655}
 .st-tray-grip{display:none}
@@ -7002,6 +7007,7 @@ class CoreStudio {
         <button type="button" class="st-btn" data-studio-gravity aria-pressed="false" aria-label="Gravity">${I('<path d="M12 4v13M6 12l6 6 6-6"/>')}<span class="st-label">Gravity</span></button>
         <button type="button" class="st-btn" data-studio-export aria-label="Save image" aria-expanded="false">${I('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>')}<span class="st-label" data-export-label>Save</span></button>
         <span class="st-sep"></span>
+        <button type="button" class="st-btn" data-studio-reset-all aria-label="Reset everything">${I('<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/>')}<span class="st-label">Reset all</span></button>
         <button type="button" class="st-btn" data-studio-tools aria-expanded="false" aria-controls="studio-tools" aria-label="Settings">${I('<path d="M4 6h16M4 12h16M4 18h16"/>')}<span class="st-label">Settings</span></button></div>
       <aside id="studio-tools" class="studio-panel st-glass" data-tray="panel" aria-label="Studio settings" hidden><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-panel-fold aria-expanded="true"><h2>Cerebra, in focus.</h2><span class="st-chev" aria-hidden="true"></span></button>
       <h3>Layers</h3><ul class="st-layers" data-studio-objects></ul><p class="studio-note" data-objects-empty>Add text, shapes or decor from the left. Drag ⋮⋮ to restack, the eye hides a layer.</p>
@@ -7102,6 +7108,16 @@ class CoreStudio {
     ctx('delete').onclick = () => { if (this.sel) this.removeItem(this.sel); };
     this.el.querySelector('[data-studio-gravity]').onclick = e => { this.gravity = !this.gravity; e.currentTarget.setAttribute('aria-pressed', String(this.gravity)); };
     this.el.querySelector('[data-studio-home]').onclick = () => this.home();
+    this.el.querySelector('[data-studio-reset-all]').onclick = () => {
+      this.items.slice().forEach(it => this.removeItem(it, true));
+      Object.keys(this.layers).forEach(k => { this.layers[k] = true; }); this.coreLayers.fill(true);
+      this.blur = 8; this.dim = 0; this.guides = true; this.el.classList.remove('hide-guides');
+      this.frozen = false; this.showSubject = true; this.fxOn = true;
+      [['[data-studio-freeze]', 'false'], ['[data-studio-show]', 'true'], ['[data-studio-fx]', 'true']].forEach(([s, v]) => this.el.querySelector(s).setAttribute('aria-pressed', v));
+      this.el.querySelector('[data-freeze-label]').textContent = 'Stop';
+      this.el.querySelectorAll('[data-studio-layer],[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', 'true'));
+      this.home(); this.applyPreset('ember'); this.paintVfx();
+    };
     this.frozen = false;
     this.el.querySelector('[data-studio-freeze]').onclick = e => { this.frozen = !this.frozen; const b = e.currentTarget; b.setAttribute('aria-pressed', String(this.frozen)); b.setAttribute('aria-label', this.frozen ? 'Resume motion' : 'Freeze motion'); b.querySelector('[data-freeze-label]').textContent = this.frozen ? 'Play' : 'Stop'; };
     this.showSubject = true;
@@ -7223,6 +7239,7 @@ class CoreStudio {
     let saved = null; try { saved = JSON.parse(localStorage.getItem('cerebra-studio-trays-' + (wide ? 'w' : 'n'))); } catch (e) {}
     const ok = saved && ['left', 'right', 'top', 'bottom'].every(k => Array.isArray(saved[k])) && Object.keys(this.trays).every(n => ['left', 'right', 'top', 'bottom'].some(k => saved[k].includes(n)));
     this.trayCfg = ok ? saved : def; this.trayWide = wide;
+    this.edgeHint = document.createElement('div'); this.edgeHint.className = 'st-edge-hint'; this.edgeHint.hidden = true; this.el.append(this.edgeHint);
     const lock = this.el.querySelector('[data-tray-lock]'), icon = on => on ? this.icons.lock : this.icons.unlock;
     this.traysLocked = true; lock.innerHTML = icon(true);
     lock.onclick = () => { this.traysLocked = !this.traysLocked; lock.innerHTML = icon(this.traysLocked); lock.setAttribute('aria-pressed', String(this.traysLocked)); lock.setAttribute('aria-label', this.traysLocked ? 'Unlock menus to move them' : 'Lock menus in place'); this.el.classList.toggle('trays-unlocked', !this.traysLocked); };
@@ -7237,13 +7254,13 @@ class CoreStudio {
       g.addEventListener('pointermove', e => {
         const d = this.trayDrag; if (!d || d.id !== e.pointerId) return;
         el.style.transform = `translate(${e.clientX - d.x0}px,${e.clientY - d.y0}px)`;
-        const tgt = this.trayTarget(name, e.clientX, e.clientY); this.layoutTrays(tgt); el.style.transform = `translate(${e.clientX - d.x0}px,${e.clientY - d.y0}px)`;
+        const tgt = this.trayTarget(name, e.clientX, e.clientY); this.layoutTrays(tgt); this.edgeHint.dataset.edge = this.trayEdge; this.edgeHint.hidden = false; el.style.transform = `translate(${e.clientX - d.x0}px,${e.clientY - d.y0}px)`;
       });
       const end = e => {
         const d = this.trayDrag; if (!d || d.id !== e.pointerId) return; this.trayDrag = null;
         const tgt = this.trayTarget(name, e.clientX, e.clientY); this.trayCfg = tgt;
         try { localStorage.setItem('cerebra-studio-trays-' + (this.trayWide ? 'w' : 'n'), JSON.stringify(tgt)); } catch (err) {}
-        el.classList.remove('is-dragging'); el.style.transform = ''; this.layoutTrays();
+        el.classList.remove('is-dragging'); el.style.transform = ''; this.edgeHint.hidden = true; this.layoutTrays();
       };
       g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
     });
@@ -7251,7 +7268,9 @@ class CoreStudio {
   // Nearest edge to the pointer, and the slot among that edge's trays (0 = against the edge).
   trayTarget(name, x, y) {
     const W = innerWidth, H = innerHeight, dist = { left: x, right: W - x, top: y, bottom: H - y };
-    const edge = Object.keys(dist).sort((a, b) => dist[a] - dist[b])[0];
+    // Corners belong to the side columns: top/bottom win only when clearly closer.
+    const score = { ...dist, top: dist.top * 2.2, bottom: dist.bottom * 2.2 }, edge = Object.keys(score).sort((a, b) => score[a] - score[b])[0];
+    this.trayEdge = edge;
     const cfg = Object.fromEntries(Object.entries(this.trayCfg).map(([k, v]) => [k, v.filter(n => n !== name)]));
     const list = cfg[edge], centre = n => { const r = this.trays[n].getBoundingClientRect(); return { left: r.left + r.width / 2, right: W - r.left - r.width / 2, top: r.top + r.height / 2, bottom: H - r.top - r.height / 2 }[edge]; };
     let idx = list.filter(n => !this.trays[n].hidden).filter(n => centre(n) < dist[edge]).length;
