@@ -938,6 +938,21 @@ body.studio-on #studio{display:block}
 .st-shape.is-locked{pointer-events:none;cursor:default}
 .st-shape.is-locked svg.st-outline{opacity:.35}
 body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.st-context){display:none}
+.st-fly{position:absolute;z-index:6;width:min(280px,calc(100vw - 16px));padding:16px;display:grid;gap:12px;pointer-events:auto}
+.st-fly[hidden]{display:none}
+.st-fly-title{font:600 12px var(--f-cond);letter-spacing:.16em;text-transform:uppercase;color:#ff8f98}
+.st-fly-note{margin:-6px 0 0;font:12px/1.45 var(--f-body);color:#97a1b3}
+.st-fly-shapes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+#studio .st-fly-shapes .st-btn{flex-direction:column;gap:4px;height:64px;padding:0;font:600 10px var(--f-cond);letter-spacing:.08em;text-transform:uppercase}
+.st-fly-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px 10px;font:13px var(--f-sans);color:#cfd6e2}
+.st-fly-row input[type=range]{grid-column:1/-1;width:100%;accent-color:#ff4655}
+.st-fly-row output{color:#ff9199;font:12px var(--f-mono)}
+.st-fly-row input[type=color]{width:44px;height:34px;padding:2px;border:1px solid #ffffff2a;border-radius:8px;background:none}
+.st-fly-check input{width:20px;height:20px;accent-color:#ff4655}
+.st-caret{position:absolute;right:6px;bottom:8px;width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);opacity:.6}
+#studio .st-fly-btn{position:relative}
+#studio .st-fly-btn[aria-expanded=true]{background:#ff465526;color:#ff8f98}
+#studio.hide-guides .st-shape:not(.st-decor):not(.is-selected) svg.st-outline{opacity:0}
 /* Movable trays */
 #studio .st-tray-lock{position:absolute;top:max(var(--st-gap),env(safe-area-inset-top));left:calc(var(--st-gap) * 2 + var(--st-rail));width:52px;height:52px;padding:0;border-radius:16px;pointer-events:auto}
 #studio .st-tray-lock[aria-pressed=false]{color:#ff8f98;border-color:#ff4655}
@@ -1672,6 +1687,6 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.b969c64231.js", 404740]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.c85bf7968d.js", 408234]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>

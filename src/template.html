@@ -930,6 +930,21 @@ body.studio-on #studio{display:block}
 .st-shape.is-locked{pointer-events:none;cursor:default}
 .st-shape.is-locked svg.st-outline{opacity:.35}
 body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.st-context){display:none}
+.st-fly{position:absolute;z-index:6;width:min(280px,calc(100vw - 16px));padding:16px;display:grid;gap:12px;pointer-events:auto}
+.st-fly[hidden]{display:none}
+.st-fly-title{font:600 12px var(--f-cond);letter-spacing:.16em;text-transform:uppercase;color:#ff8f98}
+.st-fly-note{margin:-6px 0 0;font:12px/1.45 var(--f-body);color:#97a1b3}
+.st-fly-shapes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+#studio .st-fly-shapes .st-btn{flex-direction:column;gap:4px;height:64px;padding:0;font:600 10px var(--f-cond);letter-spacing:.08em;text-transform:uppercase}
+.st-fly-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px 10px;font:13px var(--f-sans);color:#cfd6e2}
+.st-fly-row input[type=range]{grid-column:1/-1;width:100%;accent-color:#ff4655}
+.st-fly-row output{color:#ff9199;font:12px var(--f-mono)}
+.st-fly-row input[type=color]{width:44px;height:34px;padding:2px;border:1px solid #ffffff2a;border-radius:8px;background:none}
+.st-fly-check input{width:20px;height:20px;accent-color:#ff4655}
+.st-caret{position:absolute;right:6px;bottom:8px;width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);opacity:.6}
+#studio .st-fly-btn{position:relative}
+#studio .st-fly-btn[aria-expanded=true]{background:#ff465526;color:#ff8f98}
+#studio.hide-guides .st-shape:not(.st-decor):not(.is-selected) svg.st-outline{opacity:0}
 /* Movable trays */
 #studio .st-tray-lock{position:absolute;top:max(var(--st-gap),env(safe-area-inset-top));left:calc(var(--st-gap) * 2 + var(--st-rail));width:52px;height:52px;padding:0;border-radius:16px;pointer-events:auto}
 #studio .st-tray-lock[aria-pressed=false]{color:#ff8f98;border-color:#ff4655}
@@ -6925,12 +6940,20 @@ class CoreStudio {
       <button type="button" class="st-btn st-back st-glass" data-studio-exit aria-label="Exit studio">${I('<path d="M19 12H5M11 6l-6 6 6 6"/>')}</button>
       <button type="button" class="st-btn st-tray-lock st-glass" data-tray-lock aria-pressed="true" aria-label="Unlock menus to move them"></button>
       <nav class="st-rail st-glass" data-tray="add" aria-label="Add to poster"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><span class="st-rail-label">Add</span>
-        <button type="button" class="st-btn" data-studio-add="text">${this.icons.text}Text</button><button type="button" class="st-btn" data-studio-add="tri">${this.icons.tri}Triangle</button>
-        <button type="button" class="st-btn" data-studio-add="rect">${this.icons.rect}Square</button><button type="button" class="st-btn" data-studio-add="circle">${this.icons.circle}Circle</button></nav>
+        <button type="button" class="st-btn" data-studio-add="text">${this.icons.text}Text</button><button type="button" class="st-btn st-fly-btn" data-flyout="focus" aria-expanded="false">${this.icons.tri}Focus<i class="st-caret"></i></button></nav>
       <nav class="st-rail st-rail-decor st-glass" data-tray="decor" aria-label="Add decoration"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><span class="st-rail-label">Decor</span>
-        <button type="button" class="st-btn" data-studio-decor="tri">${this.icons.tri}Triangle</button><button type="button" class="st-btn" data-studio-decor="rect">${this.icons.rect}Square</button><button type="button" class="st-btn" data-studio-decor="circle">${this.icons.circle}Circle</button><span class="st-rail-sep"></span>
+        <button type="button" class="st-btn st-fly-btn" data-flyout="decor" aria-expanded="false">${this.icons.circle}Shapes<i class="st-caret"></i></button><span class="st-rail-sep"></span>
         <button type="button" class="st-btn" data-studio-undo aria-label="Undo" disabled>${I('<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>')}Undo</button><button type="button" class="st-btn" data-studio-redo aria-label="Redo" disabled>${I('<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/>')}Redo</button>
       </nav>
+      <div class="st-fly st-glass" data-fly="focus" hidden><b class="st-fly-title">Focus shape</b><p class="st-fly-note">Keeps an area sharp and blurs the rest.</p>
+        <div class="st-fly-shapes"><button type="button" class="st-btn" data-studio-add="tri">${this.icons.tri}Triangle</button><button type="button" class="st-btn" data-studio-add="rect">${this.icons.rect}Square</button><button type="button" class="st-btn" data-studio-add="circle">${this.icons.circle}Circle</button></div>
+        <label class="st-fly-row"><span>Outside blur</span><output data-fo="blur"></output><input type="range" min="0" max="30" data-fset="blur"></label>
+        <label class="st-fly-row"><span>Darken outside</span><output data-fo="dim"></output><input type="range" min="0" max="0.7" step="0.05" data-fset="dim"></label>
+        <label class="st-fly-row st-fly-check"><span>Show guide lines</span><input type="checkbox" data-fset="guides"></label></div>
+      <div class="st-fly st-glass" data-fly="decor" hidden><b class="st-fly-title">Decor shape</b><p class="st-fly-note">Solid shapes to dress the scene. Pick the colour first, or change it later.</p>
+        <div class="st-fly-shapes"><button type="button" class="st-btn" data-studio-decor="tri">${this.icons.tri}Triangle</button><button type="button" class="st-btn" data-studio-decor="rect">${this.icons.rect}Square</button><button type="button" class="st-btn" data-studio-decor="circle">${this.icons.circle}Circle</button></div>
+        <label class="st-fly-row"><span>Colour</span><input type="color" data-fset="decorFill"></label>
+        <label class="st-fly-row"><span>Opacity</span><output data-fo="decorOpacity"></output><input type="range" min="0.05" max="1" step="0.05" data-fset="decorOpacity"></label></div>
       <div class="st-context st-glass" data-studio-context hidden><span class="st-ctx-kind" data-ctx-kind></span>
         <span data-ctx-for="text"><input type="text" data-ctx-content aria-label="Text"></span>
         <span data-ctx-for="text"><select data-ctx-font aria-label="Font"><option value="display">Bebas Neue</option><option value="sans">Barlow</option><option value="cond">Barlow Condensed</option><option value="mono">Geist Mono</option><option value="valorant">Valorant</option></select></span>
@@ -7003,7 +7026,25 @@ class CoreStudio {
     this.el.querySelector('[data-studio-subject]').onchange = e => this.setSubject(+e.target.value);
     this.el.querySelectorAll('[data-studio-preset]').forEach(b => b.onclick = () => this.applyPreset(b.dataset.studioPreset));
     this.el.querySelectorAll('[data-studio-add]').forEach(b => b.onclick = () => this.addItem(b.dataset.studioAdd));
-    this.el.querySelectorAll('[data-studio-decor]').forEach(b => b.onclick = () => this.addItem(b.dataset.studioDecor, { decor: true }));
+    this.el.querySelectorAll('[data-studio-decor]').forEach(b => b.onclick = () => this.addItem(b.dataset.studioDecor, { decor: true, fill: this.decorFill, opacity: this.decorOpacity }));
+    this.dim = 0; this.guides = true; this.decorFill = '#ff3d8a'; this.decorOpacity = .85;
+    const flys = [...this.el.querySelectorAll('[data-fly]')], fmt = { blur: v => `${v}px`, dim: v => `${Math.round(v * 100)}%`, decorOpacity: v => `${Math.round(v * 100)}%` };
+    this.syncFly = () => this.el.querySelectorAll('[data-fset]').forEach(el => { const k = el.dataset.fset; if (el.type === 'checkbox') el.checked = this[k]; else el.value = this[k]; const o = el.parentNode.querySelector('output'); if (o) o.textContent = fmt[k](this[k]); });
+    this.closeFly = () => { flys.forEach(f => { f.hidden = true; }); this.el.querySelectorAll('[data-flyout]').forEach(b => b.setAttribute('aria-expanded', 'false')); };
+    this.el.querySelectorAll('[data-flyout]').forEach(b => b.onclick = e => {
+      e.stopPropagation(); const f = this.el.querySelector(`[data-fly="${b.dataset.flyout}"]`), open = f.hidden; this.closeFly(); if (!open) return;
+      this.select(null); this.syncFly(); f.hidden = false; b.setAttribute('aria-expanded', 'true');
+      const r = b.getBoundingClientRect(), W = innerWidth, H = innerHeight, fw = f.offsetWidth, fh = f.offsetHeight;
+      let x = r.right + 12, y = r.top; if (x + fw > W - 8) x = r.left - fw - 12; if (x < 8) { x = clamp(r.left + r.width / 2 - fw / 2, 8, W - fw - 8); y = r.top - fh - 12; if (y < 8) y = r.bottom + 12; }
+      f.style.left = `${x}px`; f.style.top = `${clamp(y, 8, H - fh - 8)}px`;
+    });
+    flys.forEach(f => f.querySelectorAll('[data-studio-add],[data-studio-decor]').forEach(b => b.addEventListener('click', () => this.closeFly())));
+    this.el.querySelectorAll('[data-fset]').forEach(el => {
+      const k = el.dataset.fset;
+      el.addEventListener('input', () => { this[k] = el.type === 'checkbox' ? el.checked : el.type === 'color' ? el.value : +el.value; this.syncFly(); this.el.classList.toggle('hide-guides', !this.guides); if (k === 'blur' || k === 'dim') this.updateFocus(); });
+      el.addEventListener('change', () => this.commit());
+    });
+    document.addEventListener('pointerdown', e => { if (!e.target.closest('.st-fly,[data-flyout]')) this.closeFly(); }, true);
     this.el.querySelector('[data-studio-effect]').onchange = e => { this.effect = e.target.value; this.paintVfx(); };
     this.el.querySelector('[data-studio-grid]').onchange = e => { this.grid = e.target.checked; this.paintBackground(); };
     const rangeControl = (selector, key, format, repaint) => {
@@ -7207,7 +7248,8 @@ class CoreStudio {
     // 2) top/bottom trays (horizontal) span between the side trays and stack away from their edge.
     for (const e of ['bottom', 'top']) cfg[e].filter(vis).forEach(n => {
       const el = this.trays[n]; el.classList.add('is-h'); el.classList.remove('is-v');
-      const L = Math.max(used.left, e === 'top' ? gap + (small ? 60 : 72) + gap + 56 : gap), R = used.right;
+      // On phones the side rails are short, so bottom trays run full width under them.
+      const L = small && e === 'bottom' ? gap : Math.max(used.left, e === 'top' ? gap + (small ? 60 : 72) + gap + 56 : gap), R = small && e === 'bottom' ? gap : used.right;
       const h = n === 'panel' ? (el.classList.contains('is-folded') ? null : Math.min(H * .42, 380)) : n === 'dock' ? (small ? 60 : 64) : (small ? 64 : 74);
       const span = n === 'panel' || n === 'dock';
       set(el, { [e]: used[e] + 'px', ...(span ? { left: L + 'px', right: R + 'px' } : { left: `max(${L}px, calc(50% - ${(W - L - R) / 2}px))`, right: 'auto' }), ...(h ? { height: h + 'px' } : {}) });
@@ -7353,7 +7395,7 @@ class CoreStudio {
     if (!quiet) this.commit();
   }  // Undo/redo: whole-composition snapshots (items, shape blur and the look settings).
   snapshot() {
-    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur'];
+    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides'];
     return JSON.stringify({ s: Object.fromEntries(keys.map(k => [k, this[k]])), layers: this.layers, core: this.coreLayers,
       items: this.items.map(({ el, id, ...rest }) => rest) });
   }
@@ -7376,16 +7418,16 @@ class CoreStudio {
     this.el.querySelectorAll('[data-studio-preset]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioPreset === this.preset)));
     this.el.querySelectorAll('[data-studio-layer]').forEach(b => b.setAttribute('aria-pressed', String(this.layers[b.dataset.studioLayer])));
     this.el.querySelectorAll('[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(this.coreLayers[+b.dataset.studioCore])));
-    this.updateFocus(); this.paintBackground(); this.paintVfx();
+    this.el.classList.toggle('hide-guides', this.guides === false); this.updateFocus(); this.paintBackground(); this.paintVfx();
     this.restoring = false; this.syncHist();
   }
 
   // Shapes keep their area sharp: the scene is blurred and a clipped, sharp copy sits on top. Works in Safari, unlike masked backdrop blur.
   updateFocus() {
-    const shapes = this.items.filter(i => i.kind !== 'text' && !i.decor && !i.hide), U = this.U(), on = this.active && shapes.length > 0 && this.blur > 0, W = innerWidth, H = innerHeight, gl = this.app.stage.renderer.domElement;
+    const shapes = this.items.filter(i => i.kind !== 'text' && !i.decor && !i.hide), U = this.U(), on = this.active && shapes.length > 0 && (this.blur > 0 || this.dim > 0), W = innerWidth, H = innerHeight, gl = this.app.stage.renderer.domElement;
     this.focusOn = on;
-    gl.style.filter = this.active ? `brightness(${this.light})${on ? ` blur(${this.blur}px)` : ''}` : '';
-    this.bg.style.filter = this.vfx.style.filter = on ? `blur(${this.blur}px)` : '';
+    gl.style.filter = this.active ? `brightness(${this.light * (on ? 1 - this.dim : 1)})${on ? ` blur(${this.blur}px)` : ''}` : '';
+    this.bg.style.filter = this.vfx.style.filter = on ? `blur(${this.blur}px) brightness(${1 - this.dim})` : '';
     this.fx.style.display = on ? 'block' : 'none';
     if (!on) return;
     this.fxGl.style.filter = `brightness(${this.light})`;
@@ -7412,9 +7454,9 @@ class CoreStudio {
       const g=out.getContext('2d'),sx=width/this.app.stage.width,sy=height/this.app.stage.height;
       g.drawImage(bitmap,0,0);bitmap.close();
       const U=this.U(),shapes=this.items.filter(i=>i.kind!=='text'&&!i.decor&&!i.hide);
-      if(shapes.length&&this.blur>0){
+      if(shapes.length&&(this.blur>0||this.dim>0)){
         const blurred=document.createElement('canvas');blurred.width=width;blurred.height=height;
-        const b=blurred.getContext('2d');b.filter=`blur(${this.blur*Math.max(sx,sy)}px)`;b.drawImage(out,0,0);b.filter='none';
+        const b=blurred.getContext('2d');b.filter=`blur(${this.blur*Math.max(sx,sy)}px)`;b.drawImage(out,0,0);b.filter='none';if(this.dim>0){b.fillStyle=`rgba(0,0,0,${this.dim})`;b.fillRect(0,0,width,height);}
         b.globalCompositeOperation='destination-out';b.beginPath();
         shapes.forEach(s=>{const x=s.x*width,y=s.y*height,rx=s.w*U*sx/2,ry=s.h*U*sy/2;b.moveTo(x+rx,y);
           if(s.kind==='circle')b.ellipse(x,y,rx,ry,0,0,Math.PI*2);
