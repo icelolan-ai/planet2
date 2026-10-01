@@ -829,6 +829,7 @@ body.studio-on #studio{display:block}
 .st-glass{background:#0d1018e6;border:1px solid #ffffff1f;border-radius:18px;box-shadow:0 18px 50px #0006;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 #studio .st-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;min-width:44px;padding:0 14px;border:1px solid #ffffff1f;border-radius:12px;background:#ffffff08;color:#e9edf4;cursor:pointer;transition:background .2s,border-color .2s,color .2s;white-space:nowrap}
 #studio .st-btn:hover{background:#ffffff14;border-color:#ffffff40}
+#studio [data-studio-show][aria-pressed=true] .eye-slash{display:none}#studio .st-btn[data-studio-show][aria-pressed=true]{background:#ffffff08;border-color:#ffffff1f;color:#e9edf4}#studio [data-studio-show][aria-pressed=false]{color:#ff8f98;border-color:#ff465599}
 #studio .st-btn[aria-pressed=true]{background:#ff465526;border-color:#ff4655;color:#ff8f98}
 #studio .st-btn.is-primary{background:#ff4655;border-color:#ff4655;color:#fff}
 #studio .st-btn.is-primary:hover{background:#ff5d6a}
@@ -907,8 +908,8 @@ body.studio-on #tune,body.studio-on #wtune{z-index:100;visibility:visible!import
   .st-dock,#studio.panel-closed .st-dock{left:var(--st-gap);right:var(--st-gap);justify-content:space-between;gap:4px;padding:8px}
   .st-dock .st-label{display:none}
   .st-dock .st-sep{display:none}
-  #studio .st-dock .st-btn{padding:0 10px}
-  #studio .st-dock select{max-width:120px;padding:0 8px}
+  #studio .st-dock .st-btn{flex:1 1 0;min-width:0;padding:0}
+  #studio .st-dock select{flex:0 1 92px;min-width:0;max-width:92px;padding:0 6px}
   #studio .st-rail .st-btn{height:52px}
   .st-context,#studio.panel-closed .st-context{left:var(--st-gap);right:var(--st-gap);width:auto;max-width:none}
   .st-context input[type=text]{flex:1 1 120px;width:auto}
@@ -1569,6 +1570,6 @@ body.atelier-on.wtune-open #gl{transform:none!important}
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.bd013b7738.js", 383304]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.1e59cc9b9a.js", 384066]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>
