@@ -904,6 +904,10 @@ html.route-lock,html.route-lock body{overflow:hidden!important;overscroll-behavi
 .gateway-choice:nth-child(2){background:radial-gradient(circle at 62% 50%,#26182a 0,#0d0c15 42%,#07080d 85%);clip-path:polygon(calc(var(--s) + 6%) 0%, calc(var(--s) + 3%) 11%, calc(var(--s) + 4%) 21%, calc(var(--s) + 0%) 33%, calc(var(--s) + 1%) 42%, calc(var(--s) + 2%) 47%, calc(var(--s) - 1%) 52%, calc(var(--s) - 5%) 67%, calc(var(--s) - 4%) 72%, calc(var(--s) - 2%) 76%, calc(var(--s) - 3%) 80%, calc(var(--s) - 8%) 100%, 100% 100%, 100% 0)}
 .gateway-net{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.85}
 #gateway[data-sel=atelier] .gateway-choice:nth-child(2)>.gateway-net{opacity:.35;visibility:visible}
+.gateway-back{position:absolute;top:calc(clamp(24px,5vw,80px) + 30px);left:clamp(24px,5vw,80px);min-height:40px;padding:8px 12px;border:1px solid #ffffff55;background:#05070acc;color:#edf0f7;font:600 11px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;cursor:pointer;z-index:3;opacity:0;visibility:hidden;transition:opacity .3s,visibility 0s .3s}
+.gateway-back:hover{border-color:#ff4655;color:#ff4655}.gateway-back:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.gateway-choice:nth-child(2) .gateway-back{left:calc(var(--s) + 6%)}
+#gateway[data-sel=atelier] .gateway-choice:first-child .gateway-back,#gateway[data-sel=orbit] .gateway-choice:nth-child(2) .gateway-back{opacity:1;visibility:visible;transition:opacity .4s .5s,visibility 0s}
 .gateway-edge{position:absolute;top:0;bottom:0;left:calc(var(--s) - 50vw);width:100vw;height:100%;pointer-events:none;z-index:2;overflow:visible}
 .gateway-edge polyline{fill:none;stroke:#ff4655b3;stroke-width:1.2;vector-effect:non-scaling-stroke}
 .gateway-edge.m{display:none}
@@ -981,6 +985,8 @@ body.atelier-on.wtune-open #gl{transform:none!important}
 #route-back[hidden]{display:none!important}
 #route-back{position:fixed;z-index:18;top:calc(env(safe-area-inset-top,0px) + 74px);left:var(--pad);min-height:44px;padding:10px 14px;border:1px solid #ffffff63;background:#0b0d13e8;color:#eef0f6;font:600 11px var(--f-cond);letter-spacing:.15em;text-transform:uppercase}
 @media(max-width:760px){
+  .gateway-back{top:calc(env(safe-area-inset-top,0px) + 42px);left:22px}
+  .gateway-choice:nth-child(2) .gateway-back{left:22px;top:calc(var(--s) + 50px)}
   #gateway{--s:50%}#gateway[data-sel=atelier]{--s:84%}#gateway[data-sel=orbit]{--s:15%}
   .gateway-choice{clip-path:polygon(0 0, 0 calc(var(--s) + 3%), 0% calc(var(--s) + 3.0%), 11% calc(var(--s) + 1.5%), 21% calc(var(--s) + 2.0%), 33% calc(var(--s) + 0.0%), 42% calc(var(--s) + 0.5%), 47% calc(var(--s) + 1.0%), 52% calc(var(--s) - 0.5%), 67% calc(var(--s) - 2.5%), 72% calc(var(--s) - 2.0%), 76% calc(var(--s) - 1.0%), 80% calc(var(--s) - 1.5%), 100% calc(var(--s) - 4.0%), 100% 0)}
   .gateway-choice:nth-child(2){clip-path:polygon(0% calc(var(--s) + 3.0%), 11% calc(var(--s) + 1.5%), 21% calc(var(--s) + 2.0%), 33% calc(var(--s) + 0.0%), 42% calc(var(--s) + 0.5%), 47% calc(var(--s) + 1.0%), 52% calc(var(--s) - 0.5%), 67% calc(var(--s) - 2.5%), 72% calc(var(--s) - 2.0%), 76% calc(var(--s) - 1.0%), 80% calc(var(--s) - 1.5%), 100% calc(var(--s) - 4.0%), 100% 100%, 0 100%, 0 calc(var(--s) + 3%))}
@@ -1040,8 +1046,8 @@ body.atelier-on.wtune-open #gl{transform:none!important}
 </div>
 
 <section id="gateway" aria-label="Choose your experience" data-sel="none" hidden>
-  <article class="gateway-choice" data-route="atelier" tabindex="0" aria-label="Select world atelier"><span class="gateway-mark">01 / Create</span><span class="gateway-orb" aria-hidden="true"></span><div class="gateway-copy"><strong data-split>Shape a world</strong><small>Choose Cerebra or a planet, bring it closer, and tune its colour, atmosphere and motion.</small><button type="button" class="gateway-enter" data-enter="atelier">Enter world atelier →</button></div></article>
-  <article class="gateway-choice" data-route="orbit" tabindex="0" aria-label="Select solar system"><canvas class="gateway-net" aria-hidden="true"></canvas><span class="gateway-mark">02 / Explore</span><span class="gateway-orb" aria-hidden="true"></span><div class="gateway-copy"><strong data-split>Explore the system</strong><small>Travel through Cerebra and its seven worlds in the original journey.</small><button type="button" class="gateway-enter" data-enter="orbit">Enter the solar system →</button></div></article>
+  <article class="gateway-choice" data-route="atelier" tabindex="0" aria-label="Select world atelier"><span class="gateway-mark">01 / Create</span><button type="button" class="gateway-back" data-gateway-back>← Back</button><span class="gateway-orb" aria-hidden="true"></span><div class="gateway-copy"><strong data-split>Shape a world</strong><small>Choose Cerebra or a planet, bring it closer, and tune its colour, atmosphere and motion.</small><button type="button" class="gateway-enter" data-enter="atelier">Enter world atelier →</button></div></article>
+  <article class="gateway-choice" data-route="orbit" tabindex="0" aria-label="Select solar system"><canvas class="gateway-net" aria-hidden="true"></canvas><span class="gateway-mark">02 / Explore</span><button type="button" class="gateway-back" data-gateway-back>← Back</button><span class="gateway-orb" aria-hidden="true"></span><div class="gateway-copy"><strong data-split>Explore the system</strong><small>Travel through Cerebra and its seven worlds in the original journey.</small><button type="button" class="gateway-enter" data-enter="orbit">Enter the solar system →</button></div></article>
   <svg class="gateway-edge" viewBox="-50 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="6,0 3,11 4,21 0,33 1,42 2,47 -1,52 -5,67 -4,72 -2,76 -3,80 -8,100"/></svg><svg class="gateway-edge m" viewBox="0 -50 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,3.0 11,1.5 21,2.0 33,0.0 42,0.5 47,1.0 52,-0.5 67,-2.5 72,-2.0 76,-1.0 80,-1.5 100,-4.0"/></svg>
   <span class="gateway-status" role="status" data-route-status hidden></span>
 </section>
@@ -6438,7 +6444,8 @@ class WorldAtelier {
     this.backButton = document.getElementById('route-back');
     this.choice.querySelectorAll('[data-route]').forEach(card => {
       const button = card.querySelector('[data-enter]');
-      card.addEventListener('click', e => { if (!e.target.closest('[data-enter]')) this.selectRoute(card.dataset.route); });
+      card.addEventListener('click', e => { if (!e.target.closest('[data-enter],[data-gateway-back]')) this.selectRoute(card.dataset.route); });
+      card.querySelector('[data-gateway-back]').addEventListener('click', () => { this.selectRoute('none'); button.focus({ preventScroll: true }); });
       card.addEventListener('keydown', e => {
         if (e.target !== card || !['Enter', ' '].includes(e.key)) return;
         e.preventDefault(); this.selectRoute(card.dataset.route);
