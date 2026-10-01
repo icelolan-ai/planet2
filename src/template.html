@@ -588,8 +588,8 @@ body.is-exploring .fab,body.tune-open .fab,body.wtune-open .fab,body.obuild-open
 /* orbit builder */
 .tune.obuild{z-index:9}
 body.obuild-open main,body.obuild-open .labels,body.obuild-open .worldword{opacity:0!important;pointer-events:none!important;transition:opacity .5s}
-.ob-pal{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:0 0 14px}
-.ob-pal button{display:grid;justify-items:center;gap:6px;padding:12px 2px 10px;border:1px solid var(--line-2);font:600 9.5px var(--f-cond);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.ob-pal{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:0 0 14px}
+.ob-pal button{display:grid;justify-items:center;gap:6px;padding:12px 2px 10px;border:1px solid var(--line-2);font:600 9.5px var(--f-cond);letter-spacing:.06em;min-width:0;overflow-wrap:anywhere;text-transform:uppercase;color:var(--ink-2);touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
 .ob-pal button i{font-style:normal;font-size:18px;line-height:1;color:var(--val)}
 .ob-pal button:hover{border-color:var(--val);color:var(--ink)}
 .ob-pal button[aria-pressed="true"]{border-color:var(--val);background:rgba(255,70,85,.12);color:var(--ink)}
@@ -1015,6 +1015,9 @@ html.has-cursor body.atelier-on:is(.wtune-open,.tune-open) .atelier-track:active
 body.atelier-on:is(.wtune-open,.tune-open) [data-at-orbit]{visibility:hidden;pointer-events:none}
 body.atelier-on.wtune-open #gl{transform:none!important}
 #route-back[hidden]{display:none!important}
+@media(min-width:761px){body.obuild-open #route-back{left:calc(min(420px,100vw) + 24px)}}
+body.ob-picked .ob-cancel{display:block}
+body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #route-back{position:fixed;z-index:18;top:calc(env(safe-area-inset-top,0px) + 74px);left:var(--pad);min-height:44px;padding:10px 14px;border:1px solid #ffffff63;background:#0b0d13e8;color:#eef0f6;font:600 11px var(--f-cond);letter-spacing:.15em;text-transform:uppercase}
 @media(max-width:760px){
   .gateway-back{top:calc(env(safe-area-inset-top,0px) + 42px);left:22px}
@@ -1122,6 +1125,7 @@ body.atelier-on.wtune-open #gl{transform:none!important}
   </div>
   <p class="tune-sub">In orbit</p>
   <ul class="ob-list" data-ob-list></ul>
+  <button type="button" class="tune-reset" data-ob-save>Save orbit image (PNG)</button>
   <button type="button" class="tune-reset" data-ob-clear>Clear all</button>
 </aside>
 <aside class="tune wtune" id="wtune" aria-label="Tune this world" data-open="false">
@@ -1504,7 +1508,7 @@ const OrbitBuilder = (() => {
   const open = on => {
     const P = panel(); if (!P) return;
     P.dataset.open = String(on); document.body.classList.toggle('obuild-open', on);
-    if (on) list(); else { if (C) C.showPreview(null); if (armed) arm(armed); }
+    if (on) list(); else { if (C) C.showPreview(null); if (armed) arm(armed); pick(null); }
   };
   const pctOf = el => el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%');
   const rowFor = it => {
@@ -1610,6 +1614,11 @@ const OrbitBuilder = (() => {
           // is now under the finger (a world's Land button). Swallow that one click.
           const eat = ev => { ev.stopPropagation(); ev.preventDefault(); };
           addEventListener('click', eat, { capture: true, once: true }); setTimeout(() => removeEventListener('click', eat, true), 450);
+          if (picked) {
+            const it = C.add(d.type, picked.r, picked.a); picked.a += 0.7;
+            if (app.sound) app.sound.tone(880, 0.12, 0.05, 1.5);
+            list(it.id); refreshPicker(); C.showPreview(picked.r, true); return;
+          }
           arm(d.type); return;
         }
         if (!s) return;
@@ -1624,11 +1633,19 @@ const OrbitBuilder = (() => {
   /* Click-to-place: the armed item follows the pointer over the orbital plane, the nearest orbit line lights up,
      and a click drops it exactly there. */
   let armed = null;   // nothing is placed until an item is picked
+  let picked = null;  // an orbit line tapped first; palette items then go straight onto it
+  const hintIdle = 'Tap an orbit line to select it, or pick an item below and then tap a line.';
+  const pick = s => {
+    picked = s; document.body.classList.toggle('ob-picked', !!s);
+    if (C) C.showPreview(s ? s.r : null, true);
+    const hint = panel() && panel().querySelector('[data-ob-hint]');
+    if (hint && !armed) hint.textContent = s ? `Orbit at ${s.r.toFixed(1)} u selected. Tap an item below to add it here.` : hintIdle;
+  };
   const arm = type => {
     armed = armed === type ? null : type;   // tapping the picked item again puts it down
     document.body.classList.toggle('ob-armed', !!armed);
     const hint = panel().querySelector('[data-ob-hint]');
-    if (hint) hint.textContent = armed ? `Now tap an orbit line to place the ${CREATION_TYPES[armed].label.toLowerCase()}.` : 'Pick an item below first, then tap an orbit line to place it.';
+    if (hint) hint.textContent = armed ? `Now tap an orbit line to place the ${CREATION_TYPES[armed].label.toLowerCase()}.` : picked ? `Orbit at ${picked.r.toFixed(1)} u selected. Tap an item below to add it here.` : hintIdle;
     panel().querySelectorAll('[data-ob-add]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.obAdd === armed)));
   };
   const aim = (x, y) => {
@@ -1642,7 +1659,7 @@ const OrbitBuilder = (() => {
   const wirePlace = () => {
     let downAt = null;
     addEventListener('pointermove', e => {
-      if (!onScene(e)) { if (isOpen()) C.showPreview(null); return; }
+      if (!onScene(e)) { if (isOpen()) C.showPreview(picked ? picked.r : null, true); return; }
       const s = aim(e.clientX, e.clientY);
       C.showPreview(s ? s.r : null, s && (s.snapped || armed === 'orbit'));
     }, { passive: true });
@@ -1653,6 +1670,22 @@ const OrbitBuilder = (() => {
       const s = aim(e.clientX, e.clientY); C.showPreview(s ? s.r : null, s && (s.snapped || armed === 'orbit'));   // touch has no hover: light the line on contact
     }, true);
     addEventListener('click', e => { if (onScene(e)) e.stopPropagation(); }, true);
+    // Not armed: a tap near an orbit line selects (and lights) that line.
+    const onIdle = e => isOpen() && !armed && !panel().contains(e.target) && !(e.target.closest && e.target.closest('.hud,.rail,.fab,.picker,.ob-ghost,button,a,input,#route-back'));
+    let idleDown = null;
+    addEventListener('pointerdown', e => { idleDown = onIdle(e) ? [e.clientX, e.clientY] : null; }, true);
+    addEventListener('pointerup', e => {
+      if (!idleDown || !onIdle(e)) { idleDown = null; return; }
+      const moved = Math.hypot(e.clientX - idleDown[0], e.clientY - idleDown[1]) > 8; idleDown = null; if (moved) return;
+      const cv = document.getElementById('gl'), p = cv && PlanetBody.camera && C.planePoint(e.clientX, e.clientY, PlanetBody.camera, cv.getBoundingClientRect());
+      const r = p && Math.hypot(p.x, p.z), sn = r && r >= 2.5 && r <= 34 ? C.snap(r) : null;
+      if (sn && sn.snapped) {
+        pick({ r: sn.r, a: Math.atan2(p.z, p.x) });
+        if (app.sound) app.sound.tone(660, 0.08, 0.04, 1.2);
+        const eat = ev => { ev.stopPropagation(); ev.preventDefault(); };
+        addEventListener('click', eat, { capture: true, once: true }); setTimeout(() => removeEventListener('click', eat, true), 450);
+      } else if (picked) pick(null);
+    }, true);
     // Phones: while an item is picked the page must not scroll under the finger (that cancels the touch),
     // and a finger can slide to aim, then lift to place.
     addEventListener('touchmove', e => { if (armed && isOpen() && !panel().contains(e.target)) e.preventDefault(); }, { passive: false });
@@ -1675,7 +1708,20 @@ const OrbitBuilder = (() => {
     app = a; C = a.orrery.creations;
     const P = panel(); if (!P) return;
     P.querySelector('[data-ob-close]').addEventListener('click', () => open(false));
-    P.querySelector('[data-ob-cancel]').addEventListener('click', () => { if (armed) arm(armed); });
+    P.querySelector('[data-ob-cancel]').addEventListener('click', () => { if (armed) arm(armed); else pick(null); });
+    P.querySelector('[data-ob-hint]').textContent = hintIdle;
+    P.querySelector('[data-ob-save]').addEventListener('click', async e => {
+      const b = e.currentTarget; if (b.disabled || app.cap) return; b.disabled = true; const label = b.textContent; b.textContent = 'Rendering…';
+      const prev = C.preview.visible; C.preview.visible = false;
+      try {
+        const { blob } = await app.capture({ type: 'image/png', scale: 2, transparent: false });
+        if (!blob) throw Error('capture failed');
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `cerebra-orbit-${Date.now()}.png`;
+        document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        b.textContent = label;
+      } catch (err) { console.error(err); b.textContent = 'Save failed'; setTimeout(() => { b.textContent = label; }, 2500); }
+      finally { C.preview.visible = prev && !!picked; b.disabled = false; }
+    });
     P.querySelector('[data-ob-clear]').addEventListener('click', () => { C.clear(); list(); refreshPicker(); });
     ['wheel', 'touchmove'].forEach(t => P.addEventListener(t, e => e.stopPropagation(), { passive: true }));
     addEventListener('keydown', e => { if (e.key === 'Escape' && isOpen()) open(false); });
