@@ -970,7 +970,7 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 #studio.st-typing .st-context{top:calc(max(var(--st-gap),env(safe-area-inset-top)) + 64px);bottom:auto}
 #studio.st-typing :is(.st-dock,.studio-panel){visibility:hidden}
 @media(max-width:1180px){.st-dock .st-label{display:none}#studio .st-dock .st-btn{padding:0 12px}}
-body.studio-on #tune,body.studio-on #wtune{z-index:100;visibility:visible!important}
+body.studio-on #tune,body.studio-on #wtune{z-index:120!important;visibility:visible!important;isolation:isolate}
 @media(max-width:900px){
   #studio{--st-gap:12px;--st-rail:60px;--st-dock:60px}
   .studio-panel{left:var(--st-gap);right:var(--st-gap);width:auto;top:auto;max-height:58dvh;bottom:calc(max(var(--st-gap),env(safe-area-inset-bottom)) + var(--st-dock) + 10px)}
@@ -6973,6 +6973,7 @@ class CoreStudio {
         <span class="st-sep"></span>
         <button type="button" class="st-btn" data-studio-fx aria-pressed="true" aria-label="Colour effect on Cerebra">${I('<circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/>')}<span class="st-label">Effect</span></button>
         <button type="button" class="st-btn" data-studio-show aria-pressed="true" aria-label="Hide subject">${I('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/>')}<span class="st-label" data-show-label>Subject</span></button>
+        <button type="button" class="st-btn" data-studio-freeze aria-pressed="false" aria-label="Freeze motion">${I('<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>')}<span class="st-label" data-freeze-label>Stop</span></button>
         <button type="button" class="st-btn" data-studio-home aria-label="Recenter">${I('<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>')}<span class="st-label">Recenter</span></button>
         <button type="button" class="st-btn" data-studio-gravity aria-pressed="false" aria-label="Gravity">${I('<path d="M12 4v13M6 12l6 6 6-6"/>')}<span class="st-label">Gravity</span></button>
         <button type="button" class="st-btn" data-studio-export aria-label="Save image" aria-expanded="false">${I('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>')}<span class="st-label" data-export-label>Save</span></button>
@@ -7077,6 +7078,8 @@ class CoreStudio {
     ctx('delete').onclick = () => { if (this.sel) this.removeItem(this.sel); };
     this.el.querySelector('[data-studio-gravity]').onclick = e => { this.gravity = !this.gravity; e.currentTarget.setAttribute('aria-pressed', String(this.gravity)); };
     this.el.querySelector('[data-studio-home]').onclick = () => this.home();
+    this.frozen = false;
+    this.el.querySelector('[data-studio-freeze]').onclick = e => { this.frozen = !this.frozen; const b = e.currentTarget; b.setAttribute('aria-pressed', String(this.frozen)); b.setAttribute('aria-label', this.frozen ? 'Resume motion' : 'Freeze motion'); b.querySelector('[data-freeze-label]').textContent = this.frozen ? 'Play' : 'Stop'; };
     this.showSubject = true;
     // The colour split ghost suits the glassy core only; worlds never get it.
     this.fxOn = true; this.fxLive = () => this.fxOn && this.subject < 0;
@@ -7598,6 +7601,7 @@ class CoreStudio {
     const a = this.app;
     if (this.pending && !a.detail.busy && a.fly.t < .001) { this.pending = false; this.open(); }
     if (!this.active) return false;
+    if (this.frozen) dt = 0;
     if (a.ambient) a.ambient.points.visible = false;
     a.G = 0; a.updateLens(dt); a.pointer.update(dt); a.simTime += dt * (a.reduced ? .25 : 1); a.intro = 1;
     const cam = a.rig.camera, tune = this.subject < 0 ? document.getElementById('tune') : document.getElementById('wtune'), tuning = tune.dataset.open === 'true';
