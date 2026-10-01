@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-visual">
 <title>Cerebra — a living planet and its worlds</title>
 <meta name="description" content="Cerebra is a living planet with a mind of its own, holding seven worlds in orbit. Every thought on the page is computed live in your browser.">
 <meta name="theme-color" content="#05070a">
@@ -894,6 +894,10 @@ body.studio-on #studio{display:block}
 .st-shape.is-locked{pointer-events:none;cursor:default}
 .st-shape.is-locked svg.st-outline{opacity:.35}
 body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.st-context){display:none}
+/* Touch keyboards: keep the field at the top so iOS never slides the page (planet and menus) up while typing. */
+#studio.st-typing .st-context{top:calc(max(var(--st-gap),env(safe-area-inset-top)) + 64px);bottom:auto}
+#studio.st-typing :is(.st-dock,.studio-panel){visibility:hidden}
+@media(max-width:1180px){.st-dock .st-label{display:none}#studio .st-dock .st-btn{padding:0 12px}}
 body.studio-on.tune-open #studio,body.studio-on.wtune-open #studio{z-index:110}
 body.studio-on #tune,body.studio-on #wtune{z-index:100;visibility:visible!important}
 @media(max-width:900px){
@@ -6889,6 +6893,9 @@ class CoreStudio {
     document.body.append(this.bg, this.fx, this.vfx, this.el);
     this.panel = this.el.querySelector('.studio-panel'); this.stage = this.el.querySelector('[data-studio-stage]'); this.ctx = this.el.querySelector('[data-studio-context]');
     this.items = []; this.itemId = 0; this.sel = null;
+    const typing = e => e.target.matches && (e.target.matches('input[type=text],textarea') || e.target.isContentEditable);
+    this.el.addEventListener('focusin', e => { if (typing(e) && matchMedia('(pointer: coarse)').matches) this.el.classList.add('st-typing'); });
+    this.el.addEventListener('focusout', e => { if (typing(e)) { this.el.classList.remove('st-typing'); requestAnimationFrame(() => scrollTo(0, 0)); } });
     this.panel.querySelectorAll('h3').forEach((heading, index) => {
       const section = document.createElement('details');
       section.className = 'studio-section';
@@ -6932,6 +6939,8 @@ class CoreStudio {
     this.el.querySelector('[data-studio-export]').onclick = () => this.exportPoster();
     const ctx = k => this.ctx.querySelector(`[data-ctx-${k}]`), withText = f => e => { const it = this.sel; if (it && it.kind === 'text') { f(it, e.target); it.edited = true; this.place(it); } };
     ctx('content').oninput = withText((it, el) => { it.content = el.value; it.el.textContent = el.value; });
+    ctx('content').addEventListener('pointerdown', () => { if (matchMedia('(pointer: coarse)').matches) this.el.classList.add('st-typing'); });
+    ctx('content').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
     ctx('font').onchange = withText((it, el) => { it.font = el.value; });
     ctx('size').oninput = withText((it, el) => { it.size = +el.value; el.nextElementSibling.textContent = `${it.size}`; });
     ctx('color').oninput = withText((it, el) => { it.color = el.value; });
@@ -7084,6 +7093,7 @@ class CoreStudio {
     return it;
   }
   editText(it) {
+    if (matchMedia('(pointer: coarse)').matches) { const f = this.ctx.querySelector('[data-ctx-content]'); this.el.classList.add('st-typing'); setTimeout(() => { f.focus({ preventScroll: true }); f.setSelectionRange(f.value.length, f.value.length); }, 80); return; }
     const el = it.el; el.contentEditable = 'true'; el.focus();
     const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r);
   }
