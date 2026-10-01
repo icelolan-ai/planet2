@@ -803,7 +803,7 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
 @media (prefers-reduced-motion:reduce){.w::after{display:none}.is-active .w>span{transition-delay:0s}.is-active .title{animation:none}}
 /* Studio is a separate, reversible view of the same core and tuning state. */
 html.studio-lock,html.studio-lock body{overflow:hidden!important;overscroll-behavior:none}
-body.studio-on> :not(#gl):not(#studio):not(#studio-bg):not(#studio-fx):not(#studio-vfx):not(#tune):not(#wtune):not(script),body.studio-on> :not(#gl):not(#studio):not(#studio-bg):not(#studio-fx):not(#studio-vfx):not(#tune):not(#wtune):not(script) *{visibility:hidden!important;pointer-events:none!important}
+body.studio-on> :not(#gl):not(#net-bg):not(#studio):not(#studio-bg):not(#studio-fx):not(#studio-vfx):not(#tune):not(#wtune):not(script),body.studio-on> :not(#gl):not(#net-bg):not(#studio):not(#studio-bg):not(#studio-fx):not(#studio-vfx):not(#tune):not(#wtune):not(script) *{visibility:hidden!important;pointer-events:none!important}
 body.studio-on #gl{transform:none!important;touch-action:none;pointer-events:auto;cursor:grab}
 body.studio-on #gl:active{cursor:grabbing}
 #studio-bg{position:fixed;inset:0;z-index:0;pointer-events:none;display:none}
@@ -965,10 +965,22 @@ html.has-cursor body.atelier-on .atelier-spin:active{cursor:grabbing!important}
 @keyframes atelier-letter{0%{opacity:0;transform:translateY(24px) rotate(5deg);color:#ff4655;text-shadow:0 0 20px #ff4655}45%{opacity:1;color:#ff4655;text-shadow:0 0 20px #ff4655}100%{opacity:1;transform:none;color:#eef0f6;text-shadow:none}}
 .atelier-stop.is-current .atelier-copy b,.atelier-stop.is-current .atelier-copy p,.atelier-stop.is-current .atelier-copy button{animation:atelier-appear .7s var(--ease-out) both;animation-delay:.38s}
 @keyframes atelier-appear{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:none}}
+#net-bg{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;display:none}
+#net-bg.on{display:block}
+.net-panel{position:absolute;top:calc(env(safe-area-inset-top,0px) + 74px);right:clamp(16px,4vw,64px);width:min(300px,calc(100vw - 32px));padding:16px;background:#0e1119f2;border:1px solid #ffffff30;border-radius:14px;pointer-events:auto;color:#eef0f6;font:13px var(--f-mono);z-index:5}
+.net-panel[hidden]{display:none}
+.atelier-bar-r{display:flex;gap:8px}
+#studio .net-ctl{display:grid;grid-template-columns:1fr auto;gap:4px 10px;margin:4px 0 12px}#studio .net-ctl input[type=range]{grid-column:1/-1;min-height:28px}#studio .net-ctl input[type=color],#studio .net-ctl input[type=checkbox]{min-height:0}
+.net-ctl{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;margin:0 0 12px;font:12px var(--f-mono);color:#d7dce6}
+.net-ctl input[type=range]{grid-column:1/-1;width:100%;accent-color:#ff4655}
+.net-ctl input[type=color]{width:44px;height:30px;border:1px solid #ffffff30;background:none;padding:0}
+.net-ctl input[type=checkbox]{width:20px;height:20px;accent-color:#ff4655}
+.net-ctl output{color:#9aa3b5}
+.atelier-net-btn[aria-expanded=true]{border-color:#ff4655!important;color:#ff4655!important}
 .atelier-bar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 18px);left:clamp(16px,4vw,64px);right:clamp(16px,4vw,64px);display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:auto}
 .atelier-bar span{font:500 12px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;color:#c3cad8}
 .atelier-count{position:absolute;right:clamp(16px,4vw,64px);bottom:24px;font:12px var(--f-mono);color:#bac3d2}
-body.route-choose> :not(#gl):not(#gateway):not(script),body.atelier-on> :not(#gl):not(#atelier):not(#wtune):not(#tune):not(script){visibility:hidden!important;pointer-events:none!important}
+body.route-choose> :not(#gl):not(#net-bg):not(#gateway):not(script),body.atelier-on> :not(#gl):not(#net-bg):not(#atelier):not(#wtune):not(#tune):not(script){visibility:hidden!important;pointer-events:none!important}
 html.has-cursor body.route-choose,html.has-cursor body.route-choose *{cursor:auto!important}
 html.has-cursor body.route-choose .gateway-choice,html.has-cursor body.route-choose .gateway-choice *{cursor:pointer!important}
 html.has-cursor body.atelier-on,html.has-cursor body.atelier-on *{cursor:auto!important}
@@ -1054,7 +1066,8 @@ body.atelier-on.wtune-open #gl{transform:none!important}
 </section>
 <section id="atelier" aria-label="World atelier" hidden>
   <div class="atelier-track" data-at-track></div>
-  <div class="atelier-bar"><button type="button" data-at-back>← Choose mode</button><span>World atelier · scroll to choose</span><button type="button" data-at-orbit>Explore system →</button></div>
+  <div class="atelier-bar"><button type="button" data-at-back>← Choose mode</button><span>World atelier · scroll to choose</span><div class="atelier-bar-r"><button type="button" class="atelier-net-btn" data-net-toggle aria-expanded="false" aria-controls="at-net">Network</button> <button type="button" data-at-orbit>Explore system →</button></div></div>
+  <div class="net-panel" id="at-net" aria-label="Network backdrop" hidden></div>
   <span class="atelier-count" data-at-count>01 / 08</span>
 </section>
 <button type="button" id="route-back" hidden>← Choose mode</button>
@@ -6383,40 +6396,62 @@ class Organisms {
   dispose(){this.app.core.orient.remove(this.group);this.body.geometry.dispose();this.bodyMat.dispose();this.linesGeom.dispose();this.linesMat.dispose();}
 }
 
-/** Drifting, twinkling constellation behind each side of the chooser; runs only while the chooser is open. */
+/** Shared settings for the drifting network: the chooser uses fixed looks, the atelier and studio backdrop follow these. */
+const NET = (() => {
+  const def = { on: true, color: '#ff2832', density: 90, link: 130, speed: 1, opacity: .45 };
+  let s = def; try { s = { ...def, ...JSON.parse(localStorage.getItem('cerebra-net') || '{}') }; } catch (e) {}
+  const subs = new Set();
+  const rows = [['on', 'Show network', 'checkbox'], ['color', 'Colour', 'color'], ['density', 'Points', 'range', 20, 200, 1, v => v], ['link', 'Link length', 'range', 40, 260, 5, v => v + ' px'],
+    ['speed', 'Speed', 'range', 0, 3, .05, v => (+v).toFixed(2) + '×'], ['opacity', 'Opacity', 'range', .05, 1, .05, v => Math.round(v * 100) + '%']];
+  return {
+    get: () => s, sub: f => subs.add(f),
+    set(k, v) { s = { ...s, [k]: v }; try { localStorage.setItem('cerebra-net', JSON.stringify(s)); } catch (e) {}
+      document.querySelectorAll(`[data-net="${k}"]`).forEach(el => { if (el.type === 'checkbox') el.checked = v; else if (el.value != v) el.value = v; const o = el.parentNode.querySelector('output'); if (o) o.textContent = rows.find(r => r[0] === k)[6](v); });
+      subs.forEach(f => f(k)); },
+    html: () => rows.map(([k, label, type, min, max, step, fmt]) => type === 'range'
+      ? `<label class="net-ctl"><span>${label}</span><output>${fmt(s[k])}</output><input type="range" min="${min}" max="${max}" step="${step}" value="${s[k]}" data-net="${k}"></label>`
+      : `<label class="net-ctl"><span>${label}</span><input type="${type}" data-net="${k}" ${type === 'checkbox' ? (s[k] ? 'checked' : '') : `value="${s[k]}"`}></label>`).join(''),
+    bind(root) { root.querySelectorAll('[data-net]').forEach(el => el.addEventListener('input', () => { const k = el.dataset.net; this.set(k, el.type === 'checkbox' ? el.checked : el.type === 'color' ? el.value : +el.value); })); },
+    rgb(hex) { const n = parseInt(hex.slice(1), 16); return `${n >> 16},${n >> 8 & 255},${n & 255}`; }
+  };
+})();
+/** Drifting, twinkling constellation; each instance animates only while its view is open. */
 class GatewayNet {
-  constructor(canvas, rgb, hub) {
-    this.c = canvas; this.x = canvas.getContext('2d'); this.raf = 0; this.nodes = []; this.rgb = rgb; this.hub = hub;
-    this.tick = this.tick.bind(this);
-    const host = document.getElementById('gateway');
-    new MutationObserver(() => host.hidden ? this.stop() : this.start()).observe(host, { attributes: true, attributeFilter: ['hidden'] });
+  constructor(canvas, rgb, hub, opts) {
+    this.c = canvas; this.x = canvas.getContext('2d'); this.raf = 0; this.nodes = []; this.rgb = rgb; this.hub = hub; this.opts = opts || (() => ({}));
+    this.tick = this.tick.bind(this); this.clock = 0; this.prev = 0;
     addEventListener('resize', () => { if (this.raf) this.resize(); });
-    if (!host.hidden) this.start();
+  }
+  watch(target, active, attrs) {
+    const sync = () => active() ? this.start() : this.stop();
+    new MutationObserver(sync).observe(target, { attributes: true, attributeFilter: attrs }); sync(); return sync;
   }
   resize() {
     const d = Math.min(devicePixelRatio || 1, 2), w = this.c.clientWidth, h = this.c.clientHeight;
     this.c.width = w * d; this.c.height = h * d; this.x.setTransform(d, 0, 0, d, 0, 0); this.w = w; this.h = h;
-    const n = Math.round(Math.min(150, Math.max(60, w * h / 9000))), mob = w < 761, hb = this.hub(mob), cx = w * hb[0], cy = h * hb[1], m = Math.min(w, h);
+    const o = this.opts(), n = o.density || Math.round(Math.min(150, Math.max(60, w * h / 9000))), mob = w < 761, hb = this.hub(mob), cx = w * hb[0], cy = h * hb[1], m = Math.min(w, h);
     this.nodes = Array.from({ length: n }, (_, i) => {
       const hub = i < n * .2, a = Math.random() * Math.PI * 2, r = hub ? Math.random() * m * .06 : Math.sqrt(Math.random()) * Math.max(w, h) * .45;
       const bx = cx + Math.cos(a) * r * 1.2, by = cy + Math.sin(a) * r;
       return { bx, by, x: bx, y: by, p: Math.random() * 6.28, s: .35 + Math.random() * .7, amp: hub ? 10 : 24 + Math.random() * 34, tw: 1.5 + Math.random() * 3, flash: 0 };
     });
-    this.cx = cx; this.cy = cy; this.link = Math.max(80, m * .16);
+    this.cx = cx; this.cy = cy; this.link = o.link || Math.max(80, m * .16);
   }
-  start() { if (this.raf) return; this.resize(); this.raf = requestAnimationFrame(this.tick); }
-  stop() { cancelAnimationFrame(this.raf); this.raf = 0; }
+  start() { if (this.raf) return; this.resize(); this.prev = 0; this.raf = requestAnimationFrame(this.tick); }
+  stop() { cancelAnimationFrame(this.raf); this.raf = 0; if (this.w) this.x.clearRect(0, 0, this.w, this.h); }
   tick(now) {
     this.raf = requestAnimationFrame(this.tick);
     if (!this.c.clientWidth) return;
-    const g = this.x, still = matchMedia('(prefers-reduced-motion: reduce)').matches, t = still ? 0 : now / 1000, L = this.link, L2 = L * L, c = this.rgb;
+    if (this.w !== this.c.clientWidth || this.h !== this.c.clientHeight) this.resize();
+    const o = this.opts(), sp = o.speed ?? 1, dt = this.prev ? Math.min(.1, (now - this.prev) / 1000) : 0; this.prev = now; this.clock += dt * sp;
+    const g = this.x, still = matchMedia('(prefers-reduced-motion: reduce)').matches, t = still ? 0 : this.clock, L = this.link, L2 = L * L, c = o.rgb || this.rgb;
     const rot = t * .025, cs = Math.cos(rot), sn = Math.sin(rot);
     g.clearRect(0, 0, this.w, this.h);
     for (const n of this.nodes) {
       const dx = n.bx - this.cx, dy = n.by - this.cy;
       n.x = this.cx + dx * cs - dy * sn + Math.sin(t * n.s + n.p) * n.amp;
       n.y = this.cy + dx * sn + dy * cs + Math.cos(t * n.s * .8 + n.p * 1.3) * n.amp;
-      if (!still && Math.random() < .004) n.flash = 1;
+      if (!still && sp > 0 && Math.random() < .004 * Math.min(sp, 2)) n.flash = 1;
       n.flash *= .94;
     }
     g.lineWidth = .8;
@@ -6442,6 +6477,21 @@ class GatewayNet {
     }
   }
 }
+/** The network as a backdrop behind the world in the atelier and studio, driven by NET settings. */
+function netBackdrop() {
+  const c = document.createElement('canvas'); c.id = 'net-bg'; c.setAttribute('aria-hidden', 'true');
+  const gl = document.getElementById('gl'); gl.parentNode.insertBefore(c, gl);
+  const net = new GatewayNet(c, '255,40,50', m => m ? [.5, .3] : [.72, .3], () => { const s = NET.get(); return { density: s.density, link: s.link, speed: s.speed, rgb: NET.rgb(s.color) }; });
+  const b = document.body, active = () => NET.get().on && (b.classList.contains('atelier-on') || b.classList.contains('studio-on'));
+  const sync = net.watch(b, active, ['class']);
+  const look = () => { c.classList.toggle('on', active()); c.style.opacity = NET.get().opacity; };
+  new MutationObserver(look).observe(b, { attributes: true, attributeFilter: ['class'] }); look();
+  NET.sub(k => { if (k === 'density' || k === 'link') { if (net.raf) net.resize(); } sync(); look(); });
+  const at = document.getElementById('at-net'), btn = document.querySelector('[data-net-toggle]');
+  at.innerHTML = NET.html();
+  btn.addEventListener('click', () => { at.hidden = !at.hidden; btn.setAttribute('aria-expanded', String(!at.hidden)); });
+  document.querySelectorAll('.net-host, #at-net').forEach(h => NET.bind(h));
+}
 /** A second route with its own scroll and camera; it borrows the seven world models without duplicating assets. */
 class WorldAtelier {
   constructor(app) {
@@ -6456,7 +6506,7 @@ class WorldAtelier {
     </article>`).join('');
     this.spinTargets = [...this.track.querySelectorAll('[data-at-spin]')];
     this.selectedRoute = 'atelier'; this.entering = false; const nets = this.choice.querySelectorAll('.gateway-net');
-    new GatewayNet(nets[0], '120,160,255', m => m ? [.3, .2] : [.22, .3]); new GatewayNet(nets[1], '255,40,50', m => m ? [.72, .74] : [.8, .26]);
+    [new GatewayNet(nets[0], '120,160,255', m => m ? [.3, .2] : [.22, .3]), new GatewayNet(nets[1], '255,40,50', m => m ? [.72, .74] : [.8, .26])].forEach(n => n.watch(this.choice, () => !this.choice.hidden, ['hidden']));
     this.backButton = document.getElementById('route-back');
     this.choice.querySelectorAll('[data-route]').forEach(card => {
       const button = card.querySelector('[data-enter]');
@@ -6672,6 +6722,7 @@ class CoreStudio {
       <h3>Background</h3><select data-studio-background aria-label="Studio background"><option value="space">Space</option><option value="white">White</option><option value="studio">Studio light</option><option value="model">Model workspace</option><option value="solid">Solid colour</option><option value="gradient">Gradient</option></select>
       <div class="studio-two"><label class="studio-control">Colour A<input type="color" data-studio-bg-a value="#111727"></label><label class="studio-control">Colour B<input type="color" data-studio-bg-b value="#274052"></label></div>
       <label class="studio-control"><span>Gradient angle</span><input type="range" min="0" max="360" value="115" data-studio-angle><output>115°</output></label><label class="studio-control"><span>Grid</span><input type="checkbox" data-studio-grid checked></label>
+      <h3>Network backdrop</h3><div class="net-host">${NET.html()}</div>
       <h3>Focus / blur outside</h3><div class="studio-picker" role="group" aria-label="Focus shape"><button type="button" data-focus-shape="off">Off</button><button type="button" data-focus-shape="circle">Circle</button><button type="button" data-focus-shape="triangle">Triangle</button><button type="button" data-focus-shape="rect">Square</button></div><p class="studio-note">Choose a shape, then drag over the image to select the sharp area.</p>
       <label class="studio-control"><span>Outside blur</span><input type="range" min="0" max="30" value="8" data-studio-blur><output>8 px</output></label>
       <h3>Colour effects</h3><select data-studio-effect aria-label="Colour effect"><option value="off">Off</option><option value="chromatic">Chromatic aberration</option><option value="rgb">RGB split</option><option value="color">Color split</option><option value="vhs">VHS effect</option><option value="glitch">Glitch art</option></select><label class="studio-control"><span>Strength</span><input type="range" min="0" max="20" value="5" data-studio-effect-amount><output>5</output></label>
@@ -7230,7 +7281,7 @@ class App {
     WorldTune.wire(this);
     OrbitBuilder.wire(this); Fab.wire(this); Settings.wire(this);
     this.organisms = new Organisms(this);
-    this.studio = new CoreStudio(this);
+    this.studio = new CoreStudio(this); netBackdrop();
     this.orrery.environment = new OrbitEnvironment(this);
     this.ambient = new AmbientDots(this);
   }
