@@ -825,11 +825,13 @@ body.studio-on #studio{display:block}
 #studio .st-btn:hover{background:#ffffff14;border-color:#ffffff40}
 #studio [data-studio-show][aria-pressed=true] .eye-slash{display:none}#studio .st-btn[data-studio-show][aria-pressed=true]{background:#ffffff08;border-color:#ffffff1f;color:#e9edf4}#studio [data-studio-show][aria-pressed=false]{color:#ff8f98;border-color:#ff465599}
 #studio .st-btn[aria-pressed=true]{background:#ff465526;border-color:#ff4655;color:#ff8f98}
+#studio .st-btn:disabled{opacity:.35;cursor:default}
 #studio .st-btn.is-primary{background:#ff4655;border-color:#ff4655;color:#fff}
 #studio .st-btn.is-primary:hover{background:#ff5d6a}
 .st-back{position:absolute;top:max(var(--st-gap),env(safe-area-inset-top));left:var(--st-gap);width:var(--st-rail);height:52px;pointer-events:auto}
 #studio .st-back{border-radius:16px}
 .st-rail{position:absolute;left:var(--st-gap);top:calc(max(var(--st-gap),env(safe-area-inset-top)) + 64px);width:var(--st-rail);display:flex;flex-direction:column;gap:6px;padding:8px;pointer-events:auto}
+.st-rail-sep{height:1px;background:#ffffff1f;margin:4px 6px}
 .st-rail-label{font:600 10px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;color:#8d96a8;text-align:center;padding:4px 0 2px}
 #studio .st-rail .st-btn{flex-direction:column;gap:4px;height:58px;padding:6px 0;border-color:transparent;background:transparent;font:600 10px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;color:#c9d0dc}
 #studio .st-rail .st-btn:hover{background:#ffffff12;color:#fff}
@@ -6861,7 +6863,9 @@ class CoreStudio {
       <button type="button" class="st-btn st-back st-glass" data-studio-exit aria-label="Exit studio">${I('<path d="M19 12H5M11 6l-6 6 6 6"/>')}</button>
       <nav class="st-rail st-glass" aria-label="Add to poster"><span class="st-rail-label">Add</span>
         <button type="button" class="st-btn" data-studio-add="text">${this.icons.text}Text</button><button type="button" class="st-btn" data-studio-add="tri">${this.icons.tri}Triangle</button>
-        <button type="button" class="st-btn" data-studio-add="rect">${this.icons.rect}Square</button><button type="button" class="st-btn" data-studio-add="circle">${this.icons.circle}Circle</button></nav>
+        <button type="button" class="st-btn" data-studio-add="rect">${this.icons.rect}Square</button><button type="button" class="st-btn" data-studio-add="circle">${this.icons.circle}Circle</button><span class="st-rail-sep"></span>
+        <button type="button" class="st-btn" data-studio-undo aria-label="Undo" disabled>${I('<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>')}Undo</button><button type="button" class="st-btn" data-studio-redo aria-label="Redo" disabled>${I('<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/>')}Redo</button>
+      </nav>
       <div class="st-context st-glass" data-studio-context hidden><span class="st-ctx-kind" data-ctx-kind></span>
         <span data-ctx-for="text"><input type="text" data-ctx-content aria-label="Text"></span>
         <span data-ctx-for="text"><select data-ctx-font aria-label="Font"><option value="display">Bebas Neue</option><option value="sans">Barlow</option><option value="cond">Barlow Condensed</option><option value="mono">Geist Mono</option><option value="valorant">Valorant</option></select></span>
@@ -6990,7 +6994,21 @@ class CoreStudio {
       e.preventDefault(); e.stopImmediatePropagation(); if (this.sel) this.select(null); else if (!this.panel.hidden) this.tools(false); else this.close();
     }, { signal, capture: true });
     addEventListener('resize', () => { if (this.active) { this.paintBackground(); this.items.forEach(it => this.place(it)); this.updateFocus(); } }, { signal });
+    this.hist = []; this.hi = -1; this.restoring = false;
     this.applyPreset('ember');
+    this.undoBtn = this.el.querySelector('[data-studio-undo]'); this.redoBtn = this.el.querySelector('[data-studio-redo]');
+    this.undoBtn.onclick = () => this.undo(); this.redoBtn.onclick = () => this.redo();
+    this.hist = []; this.hi = -1; this.commit();
+    // Settings changes are history steps too (committed when a control is let go).
+    this.panel.addEventListener('change', e => { if (!e.target.closest('.net-host')) this.commit(); });
+    this.panel.addEventListener('click', e => { if (e.target.closest('.studio-layer')) this.commit(); });
+    ['size', 'color', 'blur'].forEach(k => this.ctx.querySelector(`[data-ctx-${k}]`).addEventListener('change', () => this.commit()));
+    this.ctx.querySelector('[data-ctx-font]').addEventListener('change', () => this.commit());
+    this.ctx.querySelector('[data-ctx-content]').addEventListener('change', () => this.commit());
+    addEventListener('keydown', e => {
+      if (!this.active || !(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z' || e.target.closest('input,textarea,[contenteditable=true]')) return;
+      e.preventDefault(); e.shiftKey ? this.redo() : this.undo();
+    });
   }
   tools(on) { this.panel.hidden = !on; this.el.classList.toggle('panel-closed', !on); this.el.querySelector('[data-studio-tools]').setAttribute('aria-expanded', String(on)); }
   home() { this.x = this.y = this.vx = this.vy = 0; this.app.core.planet.resetView(); }
@@ -7022,7 +7040,7 @@ class CoreStudio {
     const values={'[data-studio-background]':p.background,'[data-studio-bg-a]':p.a,'[data-studio-bg-b]':p.b,'[data-studio-angle]':p.angle,'[data-studio-grid]':p.grid,
       '[data-studio-light]':p.light,'[data-studio-light-x]':p.lightX,'[data-studio-shadow]':p.shadow,'[data-studio-shadow-soft]':p.soft,'[data-studio-effect]':p.effect,'[data-studio-effect-amount]':p.amount};
     Object.entries(values).forEach(([selector,value])=>{const el=this.el.querySelector(selector);if(el.type==='checkbox')el.checked=value;else el.value=value;if(el.type==='range')el.dispatchEvent(new Event('input'));});
-    this.presetTexts(name, p.ink);
+    this.presetTexts(name, p.ink); this.commit();
     this.updateFocus(); this.paintBackground(); this.paintVfx();
   }
   // Poster words are ordinary text items: tap to edit, drag to move. A preset only lays them out.
@@ -7081,14 +7099,15 @@ class CoreStudio {
       const d = this.itemDrag; if (!d || d.id !== e.pointerId || d.it !== it) return;
       this.itemDrag = null;
       if (kind === 'text' && !d.moved && d.wasSel && e.type === 'pointerup') this.editText(it);
+      if (d.moved) this.commit();
     };
     el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
     if (kind === 'text') {
       el.addEventListener('keydown', e => { if (e.key === 'Enter' && !el.isContentEditable) { e.preventDefault(); this.select(it); this.editText(it); } });
       el.addEventListener('input', () => { it.content = el.innerText; it.edited = true; this.ctx.querySelector('[data-ctx-content]').value = it.content; });
-      el.addEventListener('blur', () => { if (el.isContentEditable) { el.contentEditable = 'false'; it.content = el.innerText; } });
+      el.addEventListener('blur', () => { if (el.isContentEditable) { el.contentEditable = 'false'; it.content = el.innerText; this.commit(); } });
     }
-    if (!o.silent) this.select(it);
+    if (!o.silent) { this.select(it); this.commit(); }
     if (kind !== 'text') this.updateFocus();
     return it;
   }
@@ -7123,12 +7142,41 @@ class CoreStudio {
     const lock = c.querySelector('[data-ctx-lock]');
     lock.innerHTML = `${it.locked ? this.icons.lock : this.icons.unlock}<span>${it.locked ? 'Locked' : 'Lock'}</span>`; lock.setAttribute('aria-pressed', String(it.locked));
   }
-  lockItem(it, on) { it.locked = on; this.place(it); this.select(it); }
+  lockItem(it, on) { it.locked = on; this.place(it); this.select(it); this.commit(); }
   removeItem(it, quiet) {
     it.el.remove(); this.items = this.items.filter(i => i !== it);
     if (this.sel === it) this.select(null);
     if (!quiet || it.kind !== 'text') this.updateFocus();
+    if (!quiet) this.commit();
+  }  // Undo/redo: whole-composition snapshots (items, shape blur and the look settings).
+  snapshot() {
+    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur'];
+    return JSON.stringify({ s: Object.fromEntries(keys.map(k => [k, this[k]])), layers: this.layers, core: this.coreLayers,
+      items: this.items.map(({ el, id, ...rest }) => rest) });
   }
+  commit() {
+    if (this.restoring || !this.hist) return;
+    const s = this.snapshot(); if (this.hist[this.hi] === s) return;
+    this.hist = this.hist.slice(0, this.hi + 1); this.hist.push(s); if (this.hist.length > 80) this.hist.shift(); this.hi = this.hist.length - 1; this.syncHist();
+  }
+  syncHist() { if (!this.undoBtn) return; this.undoBtn.disabled = this.hi <= 0; this.redoBtn.disabled = this.hi >= this.hist.length - 1; }
+  undo() { if (this.hi > 0) { this.hi--; this.restore(this.hist[this.hi]); } }
+  redo() { if (this.hi < this.hist.length - 1) { this.hi++; this.restore(this.hist[this.hi]); } }
+  restore(json) {
+    const d = JSON.parse(json); this.restoring = true;
+    this.select(null); this.items.slice().forEach(it => this.removeItem(it, true));
+    Object.assign(this, d.s); Object.assign(this.layers, d.layers); d.core.forEach((v, i) => { this.coreLayers[i] = v; });
+    d.items.forEach(o => this.addItem(o.kind, { ...o, silent: true }));
+    const v = { '[data-studio-background]': this.background, '[data-studio-bg-a]': this.bgA, '[data-studio-bg-b]': this.bgB, '[data-studio-angle]': this.angle, '[data-studio-grid]': this.grid,
+      '[data-studio-light]': this.light, '[data-studio-light-x]': this.lightX, '[data-studio-shadow]': this.shadow, '[data-studio-shadow-soft]': this.shadowSoft, '[data-studio-effect]': this.effect, '[data-studio-effect-amount]': this.effectAmount };
+    Object.entries(v).forEach(([sel, val]) => { const el = this.el.querySelector(sel); if (el.type === 'checkbox') el.checked = val; else el.value = val; if (el.type === 'range') el.dispatchEvent(new Event('input')); });
+    this.el.querySelectorAll('[data-studio-preset]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioPreset === this.preset)));
+    this.el.querySelectorAll('[data-studio-layer]').forEach(b => b.setAttribute('aria-pressed', String(this.layers[b.dataset.studioLayer])));
+    this.el.querySelectorAll('[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(this.coreLayers[+b.dataset.studioCore])));
+    this.updateFocus(); this.paintBackground(); this.paintVfx();
+    this.restoring = false; this.syncHist();
+  }
+
   // Shapes keep their area sharp: the scene is blurred and a clipped, sharp copy sits on top. Works in Safari, unlike masked backdrop blur.
   updateFocus() {
     const shapes = this.items.filter(i => i.kind !== 'text'), on = this.active && shapes.length > 0 && this.blur > 0, W = innerWidth, H = innerHeight, gl = this.app.stage.renderer.domElement;
