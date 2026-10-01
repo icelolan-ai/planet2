@@ -865,6 +865,10 @@ body.studio-on #studio{display:block}
 .st-context input[type=range]{width:110px;accent-color:#ff4655}
 .st-context input[type=color]{width:40px;height:40px;padding:3px;border:1px solid #ffffff2a;border-radius:10px;background:none}
 .st-context output{min-width:34px;color:#ff9199;font:12px var(--f-mono)}
+.st-save{position:absolute;right:calc(var(--st-gap) * 2 + var(--st-panel));bottom:calc(max(var(--st-gap),env(safe-area-inset-bottom)) + var(--st-dock) + 12px);display:flex;align-items:center;gap:12px;padding:10px 12px;pointer-events:auto;flex-wrap:wrap}
+#studio.panel-closed .st-save{right:var(--st-gap)}
+.st-save label{display:flex;align-items:center;gap:8px;font:600 11px var(--f-cond);letter-spacing:.1em;text-transform:uppercase;color:#aab3c4}
+#studio .st-save select{min-height:40px;padding:0 10px;border:1px solid #ffffff2a;border-radius:10px;background:#141822;color:#fff}
 .st-ctx-kind{font:600 11px var(--f-cond);letter-spacing:.16em;text-transform:uppercase;color:#ff8f98;padding:0 6px}
 .studio-panel{position:absolute;right:var(--st-gap);top:max(var(--st-gap),env(safe-area-inset-top));bottom:max(var(--st-gap),env(safe-area-inset-bottom));width:var(--st-panel);overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding:22px 22px 26px;pointer-events:auto}
 .studio-panel[hidden]{display:none}
@@ -894,7 +898,7 @@ body.studio-on #studio{display:block}
 .studio-preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 #studio .studio-preset{min-height:78px;display:flex;align-items:flex-end;padding:10px 12px;text-align:left;background:linear-gradient(135deg,var(--p1),var(--p2));border:1px solid #ffffff30;border-radius:12px;color:#fff;font:600 11px var(--f-cond);text-transform:uppercase;letter-spacing:.12em;cursor:pointer;text-shadow:0 1px 6px #0008}
 #studio .studio-preset[aria-pressed=true]{border:2px solid #ff4655;box-shadow:0 0 0 3px #ff465533}
-.studio-stage{position:absolute;inset:0;z-index:0;pointer-events:none}
+.studio-stage{position:absolute;inset:0;z-index:0;pointer-events:none;transition:transform .35s cubic-bezier(.3,.7,.2,1)}
 .st-item{position:absolute;pointer-events:auto;touch-action:none}
 .st-text{transform:translate(var(--ax,-50%),-50%);white-space:pre;cursor:grab;padding:4px 6px;line-height:1.02;border-radius:4px;outline:1px dashed transparent;outline-offset:2px;text-shadow:0 2px 14px #0004}
 .st-text:hover{outline-color:#ffffff40}
@@ -918,7 +922,6 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 #studio.st-typing .st-context{top:calc(max(var(--st-gap),env(safe-area-inset-top)) + 64px);bottom:auto}
 #studio.st-typing :is(.st-dock,.studio-panel){visibility:hidden}
 @media(max-width:1180px){.st-dock .st-label{display:none}#studio .st-dock .st-btn{padding:0 12px}}
-body.studio-on.tune-open #studio,body.studio-on.wtune-open #studio{z-index:110}
 body.studio-on #tune,body.studio-on #wtune{z-index:100;visibility:visible!important}
 @media(max-width:900px){
   #studio{--st-gap:12px;--st-rail:60px;--st-dock:60px}
@@ -933,6 +936,7 @@ body.studio-on #tune,body.studio-on #wtune{z-index:100;visibility:visible!import
   .st-context,#studio.panel-closed .st-context{left:var(--st-gap);right:var(--st-gap);width:auto;max-width:none}
   .st-context input[type=text]{flex:1 1 120px;width:auto}
   .st-context input[type=range]{width:90px}
+  .st-save,#studio.panel-closed .st-save{left:var(--st-gap);right:var(--st-gap);justify-content:center}
   #studio:has(.studio-panel:not([hidden])) .st-context{display:none}
 }
 @media(max-width:900px) and (max-height:520px){
@@ -6900,6 +6904,10 @@ class CoreStudio {
         <span data-ctx-for="decor"><input type="color" data-ctx-fill aria-label="Shape colour"></span><label data-ctx-for="decor">Opacity<input type="range" min="0.05" max="1" step="0.05" data-ctx-opacity><output></output></label>
         <label data-ctx-for="shape">Outside blur<input type="range" min="0" max="30" data-ctx-blur><output></output></label>
         <button type="button" class="st-btn" data-ctx-lock></button><button type="button" class="st-btn" data-ctx-delete aria-label="Delete">${this.icons.trash}</button></div>
+      <div class="st-save st-glass" data-studio-save hidden><span class="st-ctx-kind">Save image</span>
+        <label>Format<select data-save-type><option value="image/png">PNG</option><option value="image/jpeg">JPG</option><option value="image/webp">WebP</option></select></label>
+        <label>Size<select data-save-scale><option value="1">1× screen</option><option value="2" selected>2× (sharp)</option><option value="3">3× (print)</option></select></label>
+        <button type="button" class="st-btn is-primary" data-save-go>Download</button></div>
       <div class="st-dock st-glass" role="toolbar" aria-label="Studio">
         <select data-studio-subject aria-label="Object in studio"><option value="-1">Cerebra</option>${WORLDS.map((d,i) => `<option value="${i}">${d.name}</option>`).join('')}</select>
         <button type="button" class="st-btn is-primary" data-studio-tune>${I('<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>')}<span class="st-label" data-tune-label>Tune core</span></button>
@@ -6908,7 +6916,7 @@ class CoreStudio {
         <button type="button" class="st-btn" data-studio-show aria-pressed="true" aria-label="Hide subject">${I('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/>')}<span class="st-label" data-show-label>Subject</span></button>
         <button type="button" class="st-btn" data-studio-home aria-label="Recenter">${I('<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>')}<span class="st-label">Recenter</span></button>
         <button type="button" class="st-btn" data-studio-gravity aria-pressed="false" aria-label="Gravity">${I('<path d="M12 4v13M6 12l6 6 6-6"/>')}<span class="st-label">Gravity</span></button>
-        <button type="button" class="st-btn" data-studio-export aria-label="Save poster PNG">${I('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>')}<span class="st-label" data-export-label>Save PNG</span></button>
+        <button type="button" class="st-btn" data-studio-export aria-label="Save image" aria-expanded="false">${I('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>')}<span class="st-label" data-export-label>Save</span></button>
         <span class="st-sep"></span>
         <button type="button" class="st-btn" data-studio-tools aria-expanded="false" aria-controls="studio-tools" aria-label="Settings">${I('<path d="M4 6h16M4 12h16M4 18h16"/>')}<span class="st-label">Settings</span></button></div>
       <aside id="studio-tools" class="studio-panel st-glass" aria-label="Studio settings" hidden><h2>Cerebra, in focus.</h2>
@@ -6970,7 +6978,9 @@ class CoreStudio {
     rangeControl('[data-studio-shadow-soft]', 'shadowSoft', v => `${Math.round(v*100)}%`, () => this.paintBackground());
     this.el.querySelector('[data-studio-bg-a]').oninput = e => { this.bgA = e.target.value; this.paintBackground(); };
     this.el.querySelector('[data-studio-bg-b]').oninput = e => { this.bgB = e.target.value; this.paintBackground(); };
-    this.el.querySelector('[data-studio-export]').onclick = () => this.exportPoster();
+    const saveMenu = this.el.querySelector('[data-studio-save]'), saveBtn = this.el.querySelector('[data-studio-export]');
+    saveBtn.onclick = () => { saveMenu.hidden = !saveMenu.hidden; saveBtn.setAttribute('aria-expanded', String(!saveMenu.hidden)); if (!saveMenu.hidden) this.select(null); };
+    this.el.querySelector('[data-save-go]').onclick = () => { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); this.exportPoster(saveMenu.querySelector('[data-save-type]').value, +saveMenu.querySelector('[data-save-scale]').value); };
     const ctx = k => this.ctx.querySelector(`[data-ctx-${k}]`), withText = f => e => { const it = this.sel; if (it && it.kind === 'text') { f(it, e.target); it.edited = true; this.place(it); } };
     ctx('content').oninput = withText((it, el) => { it.content = el.value; it.el.textContent = el.value; this.renderLayers(); });
     ctx('content').addEventListener('pointerdown', () => { if (matchMedia('(pointer: coarse)').matches) this.el.classList.add('st-typing'); });
@@ -7098,6 +7108,7 @@ class CoreStudio {
     }[name];
     layout.filter(([role]) => W >= 600 || role !== 'tech').forEach(([role, align, x, y, k = 1]) => this.addItem('text', { ...T[role], role, align, x, y, size: Math.round(T[role].size * k), color: ink, silent: true }));
   }
+  compCentre() { const W = innerWidth, H = innerHeight; return W > 900 ? { x: (W - 188) / 2, y: (H - 96) / 2 } : { x: W / 2 + 36, y: H / 2 - 40 }; }
   // Shape sizes are in units of the screen's short side, which never changes with rotation or the on-screen keyboard.
   U() { return Math.min(screen.width, screen.height) || Math.min(innerWidth, innerHeight); }
   addItem(kind, o = {}) {
@@ -7266,7 +7277,7 @@ class CoreStudio {
     if (!on) return;
     this.fxGl.style.filter = `brightness(${this.light})`;
     const d = shapes.map(s => {
-      const w = s.w * U, h = s.h * U, x = s.x * W - w / 2, y = s.y * H - h / 2, f = n => n.toFixed(1);
+      const sh = this.shift || { x: 0, y: 0 }, w = s.w * U, h = s.h * U, x = s.x * W - w / 2 + sh.x, y = s.y * H - h / 2 + sh.y, f = n => n.toFixed(1);
       if (s.kind === 'circle') return `M${f(x)} ${f(y + h / 2)}A${f(w / 2)} ${f(h / 2)} 0 1 0 ${f(x + w)} ${f(y + h / 2)}A${f(w / 2)} ${f(h / 2)} 0 1 0 ${f(x)} ${f(y + h / 2)}Z`;
       if (s.kind === 'tri') return `M${f(x + w / 2)} ${f(y)}L${f(x + w)} ${f(y + h)}L${f(x)} ${f(y + h)}Z`;
       return `M${f(x)} ${f(y)}H${f(x + w)}V${f(y + h)}H${f(x)}Z`;
@@ -7278,11 +7289,11 @@ class CoreStudio {
     const c = this.fxBg; if (c.width !== this.bg.width || c.height !== this.bg.height) { c.width = this.bg.width; c.height = this.bg.height; }
     const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(this.bg, 0, 0);
   }
-  async exportPoster() {
+  async exportPoster(type = 'image/png', scale = 2) {
     if (!this.active || this.exporting || this.app.cap) return;
     const button=this.el.querySelector('[data-studio-export]'),label=button.querySelector('[data-export-label]');this.exporting=true;button.disabled=true;label.textContent='Rendering…';if(this.sel)this.select(null);
     try {
-      const {blob,width,height}=await this.app.capture({type:'image/png',scale:2,transparent:false});
+      const {blob,width,height}=await this.app.capture({type:'image/png',scale,transparent:false});
       if(!blob)throw Error('Canvas capture failed');
       const bitmap=await createImageBitmap(blob), out=document.createElement('canvas');out.width=width;out.height=height;
       const g=out.getContext('2d'),sx=width/this.app.stage.width,sy=height/this.app.stage.height;
@@ -7314,9 +7325,13 @@ class CoreStudio {
         const x=i.x*width,y=i.y*height,rx=i.w*U*sx/2,ry=i.h*U*sy/2;g.save();g.globalAlpha=i.opacity;g.fillStyle=i.fill;g.beginPath();
         if(i.kind==='circle')g.ellipse(x,y,rx,ry,0,0,Math.PI*2);else if(i.kind==='tri'){g.moveTo(x,y-ry);g.lineTo(x+rx,y+ry);g.lineTo(x-rx,y+ry);g.closePath();}else g.rect(x-rx,y-ry,rx*2,ry*2);
         g.fill();g.restore();});
-      const final=await new Promise(resolve=>out.toBlob(resolve,'image/png'));
+      // Crop to the poster: the band under the side menus is not part of the composition.
+      let fin=out;
+      if(innerWidth>900){const c0=this.compCentre(),sh=this.shift||{x:0,y:0},cx=(c0.x+sh.x)*sx,half=Math.min(cx,width-cx);
+        fin=document.createElement('canvas');fin.width=Math.round(half*2);fin.height=height;fin.getContext('2d').drawImage(out,Math.round(cx-half),0,fin.width,height,0,0,fin.width,height);}
+      const final=await new Promise(resolve=>fin.toBlob(resolve,type,.93));
       if(!final)throw Error('PNG encoding failed');
-      const link=document.createElement('a');link.href=URL.createObjectURL(final);link.download=`cerebra-${this.preset}-${width}x${height}.png`;
+      const link=document.createElement('a');link.href=URL.createObjectURL(final);link.download=`cerebra-${this.preset}-${fin.width}x${fin.height}.${{'image/jpeg':'jpg','image/webp':'webp'}[type]||'png'}`;
       document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(link.href),4000);
     }catch(err){console.error('Studio export failed',err);label.textContent='Export failed';setTimeout(()=>label.textContent='Save PNG',2500);}
     finally{this.exporting=false;button.disabled=false;if(label.textContent==='Rendering…')label.textContent='Save PNG';}
@@ -7432,17 +7447,18 @@ class CoreStudio {
     a.G = 0; a.updateLens(dt); a.pointer.update(dt); a.simTime += dt * (a.reduced ? .25 : 1); a.intro = 1;
     const cam = a.rig.camera, tune = this.subject < 0 ? document.getElementById('tune') : document.getElementById('wtune'), tuning = tune.dataset.open === 'true';
     const portrait = a.stage.width < 760, hh = a.rig.halfHeight, hw = a.rig.halfWidth;
-    let x = 0, y = 0, scale = portrait ? .55 : .88;
+    // The poster has one fixed composition centre; panels never move the planet relative to its text and shapes.
+    // When a tune panel covers part of the screen, the whole poster (planet, text, shapes) slides together.
+    const W = a.stage.width, H = a.stage.height, wide = W > 900, scale = wide ? .72 : .55;
+    const c0 = this.compCentre(), cc = { x: c0.x, y: c0.y };
     if (tuning) {
-      if (portrait) { const sheet = tune.getBoundingClientRect().height / a.stage.height; y = sheet * hh; scale = Math.min(.55, (1 - sheet) * 1.25); }
-      else { x = (tune.dataset.side === 'right' ? -1 : 1) * tune.getBoundingClientRect().width / a.stage.width * hw; scale = .78; }
-    } else if (a.stage.width > 900) {
-      // Centre the subject in the space between the left rail, the right panel and the dock.
-      const W = a.stage.width, left = 184, right = this.panel.hidden ? 16 : 372, bottom = 96;
-      x = ((left - right) / 2) / W * 2 * hw; y = (bottom / 2) / a.stage.height * 2 * hh; scale = this.panel.hidden ? .82 : .72;
-    } else if (!this.panel.hidden) {
-      const sheet = (this.panel.getBoundingClientRect().height + 80) / a.stage.height; y = sheet * hh; scale = Math.min(.5, (1 - sheet) * 1.2);
-    } else { x = 36 / a.stage.width * 2 * hw; y = 40 / a.stage.height * 2 * hh; }
+      const r = tune.getBoundingClientRect();
+      if (wide || !portrait) { const left = tune.dataset.side === 'right' ? 16 : r.right + 16, right = tune.dataset.side === 'right' ? W - r.left + 16 : 16; cc.x = (left + W - right) / 2; }
+      else cc.y = Math.max(110, (H - r.height) / 2 + 10);
+    } else if (!wide && !this.panel.hidden) cc.y = Math.max(110, (H - this.panel.getBoundingClientRect().height - 80) / 2 + 10);
+    const sx = Math.round(cc.x - c0.x), sy = Math.round(cc.y - c0.y);
+    if (!this.shift || this.shift.x !== sx || this.shift.y !== sy) { this.shift = { x: sx, y: sy }; this.stage.style.transform = sx || sy ? `translate(${sx}px,${sy}px)` : ''; this.updateFocus(); }
+    const x = (cc.x - W / 2) / W * 2 * hw, y = (H / 2 - cc.y) / H * 2 * hh;
     if (a.reduced || tuning) this.vx = this.vy = 0;
     if (!this.drag && !a.reduced && !tuning) {
       if (this.gravity) this.vy -= dt * 1.8;
