@@ -902,9 +902,10 @@ html.route-lock,html.route-lock body{overflow:hidden!important;overscroll-behavi
 #gateway[data-sel=atelier]{--s:86%}#gateway[data-sel=orbit]{--s:13%}
 .gateway-choice{position:absolute;inset:0;min-width:0;background:radial-gradient(circle at 30% 38%,#1c2438 0,#090d17 38%,#05070a 80%);text-align:left;cursor:pointer;outline:0;clip-path:polygon(0 0, calc(var(--s) + 6%) 0%, calc(var(--s) + 3%) 11%, calc(var(--s) + 4%) 21%, calc(var(--s) + 0%) 33%, calc(var(--s) + 1%) 42%, calc(var(--s) + 2%) 47%, calc(var(--s) - 1%) 52%, calc(var(--s) - 5%) 67%, calc(var(--s) - 4%) 72%, calc(var(--s) - 2%) 76%, calc(var(--s) - 3%) 80%, calc(var(--s) - 8%) 100%, 0 100%)}
 .gateway-choice:nth-child(2){background:radial-gradient(circle at 62% 50%,#26182a 0,#0d0c15 42%,#07080d 85%);clip-path:polygon(calc(var(--s) + 6%) 0%, calc(var(--s) + 3%) 11%, calc(var(--s) + 4%) 21%, calc(var(--s) + 0%) 33%, calc(var(--s) + 1%) 42%, calc(var(--s) + 2%) 47%, calc(var(--s) - 1%) 52%, calc(var(--s) - 5%) 67%, calc(var(--s) - 4%) 72%, calc(var(--s) - 2%) 76%, calc(var(--s) - 3%) 80%, calc(var(--s) - 8%) 100%, 100% 100%, 100% 0)}
-.gateway-net{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.85}
-#gateway[data-sel=atelier] .gateway-choice:nth-child(2)>.gateway-net,#gateway[data-sel=orbit] .gateway-choice:first-child>.gateway-net{opacity:.35;visibility:visible}
-.gateway-choice:first-child .gateway-net{opacity:.6}
+.gateway-net{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.7;transition:opacity .6s}
+#gateway[data-sel=orbit] .gateway-choice:nth-child(2)>.gateway-net,#gateway[data-sel=atelier] .gateway-choice:first-child>.gateway-net{opacity:.9}
+#gateway[data-sel=atelier] .gateway-choice:nth-child(2)>.gateway-net,#gateway[data-sel=orbit] .gateway-choice:first-child>.gateway-net{opacity:.3;visibility:visible}
+
 .gateway-back{position:absolute;top:calc(clamp(24px,5vw,80px) + 30px);left:clamp(24px,5vw,80px);min-height:40px;padding:8px 12px;border:1px solid #ffffff55;background:#05070acc;color:#edf0f7;font:600 11px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;cursor:pointer;z-index:3;opacity:0;visibility:hidden;transition:opacity .3s,visibility 0s .3s}
 .gateway-back:hover{border-color:#ff4655;color:#ff4655}.gateway-back:focus-visible{outline:2px solid #fff;outline-offset:3px}
 .gateway-choice:nth-child(2) .gateway-back{left:calc(var(--s) + 6%)}
@@ -915,8 +916,8 @@ html.route-lock,html.route-lock body{overflow:hidden!important;overscroll-behavi
 .gateway-mark,.gateway-orb,.gateway-copy,.gateway-copy>*{transition:opacity .5s,visibility 0s,left .9s cubic-bezier(.65,0,.2,1),top .9s cubic-bezier(.65,0,.2,1),width .9s cubic-bezier(.65,0,.2,1),transform .9s cubic-bezier(.65,0,.2,1)}
 .gateway-mark{position:absolute;top:clamp(24px,5vw,80px);left:clamp(24px,5vw,80px);font:600 12px var(--f-cond);letter-spacing:.3em;text-transform:uppercase;color:#ff4655}
 .gateway-choice:nth-child(2) .gateway-mark{left:calc(var(--s) + 6%)}
-.gateway-orb{position:absolute;left:calc(var(--s) * .5);top:40%;width:min(30vw,46vh);aspect-ratio:1;border:1px solid #ffffff69;border-radius:50%;transform:translate(-50%,-50%);box-shadow:inset -30px -15px 65px #6899ff26,0 0 80px #688aff25;pointer-events:none}
-.gateway-choice:nth-child(2) .gateway-orb{left:calc(var(--s) + 14%);top:50%;width:min(40vw,80vh);box-shadow:0 0 0 25px #ffffff06,0 0 0 80px #ffffff04,inset -18px -12px 60px #ff465540}
+.gateway-orb{position:absolute;left:calc(var(--s) * .5);top:40%;width:min(30vw,46vh);aspect-ratio:1;border:1px solid #ffffff69;border-radius:50%;transform:translate(-50%,-50%);box-shadow:inset -30px -15px 65px #6899ff26,0 0 80px #688aff25;pointer-events:none;background:radial-gradient(circle at 38% 34%,#18203acc,#090c16d9 72%)}
+.gateway-choice:nth-child(2) .gateway-orb{background:radial-gradient(circle at 40% 36%,#25172ad0,#0c0a12de 72%);left:calc(var(--s) + 14%);top:50%;width:min(40vw,80vh);box-shadow:0 0 0 25px #ffffff06,0 0 0 80px #ffffff04,inset -18px -12px 60px #ff465540}
 .gateway-copy{position:absolute;left:clamp(24px,5vw,80px);bottom:clamp(28px,8vh,90px);width:min(34ch,calc(var(--s) - 12%));display:flex;flex-direction:column;gap:18px}
 .gateway-choice:nth-child(2) .gateway-copy{left:83%;bottom:auto;top:50%;width:15%;transform:translateY(-50%);gap:14px}
 .gateway-choice strong{font:400 clamp(30px,4vw,64px)/1 var(--f-display);letter-spacing:.03em;text-transform:uppercase;max-width:12ch}
@@ -6415,27 +6416,33 @@ const NET = (() => {
     rgb(hex) { const n = parseInt(hex.slice(1), 16); return `${n >> 16},${n >> 8 & 255},${n & 255}`; }
   };
 })();
-/** Drifting, twinkling constellation; each instance animates only while its view is open. */
+/** Drifting, twinkling constellation anchored to a point (an orb or the viewport centre); animates only while its view is open. */
 class GatewayNet {
-  constructor(canvas, rgb, hub, opts) {
-    this.c = canvas; this.x = canvas.getContext('2d'); this.raf = 0; this.nodes = []; this.rgb = rgb; this.hub = hub; this.opts = opts || (() => ({}));
-    this.tick = this.tick.bind(this); this.clock = 0; this.prev = 0;
-    addEventListener('resize', () => { if (this.raf) this.resize(); });
+  constructor(canvas, rgb, anchor, opts) {
+    this.c = canvas; this.x = canvas.getContext('2d'); this.raf = 0; this.nodes = []; this.edges = []; this.rgb = rgb; this.anchor = anchor; this.opts = opts || (() => ({}));
+    this.tick = this.tick.bind(this); this.clock = 0; this.prev = 0; this.key = '';
   }
   watch(target, active, attrs) {
     const sync = () => active() ? this.start() : this.stop();
     new MutationObserver(sync).observe(target, { attributes: true, attributeFilter: attrs }); sync(); return sync;
   }
+  // Nodes live in orb units (1 = orb radius), spaced apart so links never bunch into knots.
+  seed() {
+    const o = this.opts(), n = o.density || 70, min = 2.4 / Math.sqrt(n), pts = [];
+    for (let tries = 0; pts.length < n && tries < n * 60; tries++) {
+      const a = Math.random() * 6.283, r = 2.3 * Math.sqrt(Math.random()), u = Math.cos(a) * r * 1.15, v = Math.sin(a) * r;
+      if (pts.every(q => (q.u - u) ** 2 + (q.v - v) ** 2 > min * min)) pts.push({ u, v, p: Math.random() * 6.28, s: .3 + Math.random() * .5, amp: .04 + Math.random() * .06, tw: 1.2 + Math.random() * 2.5, flash: 0 });
+    }
+    const L = (o.linkUnits || .62) * (1 + 0 * min), seen = new Set(), edges = [];
+    pts.forEach((a, i) => {
+      pts.map((b, j) => [j, (a.u - b.u) ** 2 + (a.v - b.v) ** 2]).filter(([j, d]) => j !== i && d < L * L).sort((x, y) => x[1] - y[1]).slice(0, 3)
+        .forEach(([j]) => { const k = i < j ? i + ',' + j : j + ',' + i; if (!seen.has(k)) { seen.add(k); edges.push([Math.min(i, j), Math.max(i, j)]); } });
+    });
+    this.nodes = pts; this.edges = edges; this.L = L;
+  }
   resize() {
     const d = Math.min(devicePixelRatio || 1, 2), w = this.c.clientWidth, h = this.c.clientHeight;
     this.c.width = w * d; this.c.height = h * d; this.x.setTransform(d, 0, 0, d, 0, 0); this.w = w; this.h = h;
-    const o = this.opts(), n = o.density || Math.round(Math.min(150, Math.max(60, w * h / 9000))), mob = w < 761, hb = this.hub(mob), cx = w * hb[0], cy = h * hb[1], m = Math.min(w, h);
-    this.nodes = Array.from({ length: n }, (_, i) => {
-      const hub = i < n * .2, a = Math.random() * Math.PI * 2, r = hub ? Math.random() * m * .06 : Math.sqrt(Math.random()) * Math.max(w, h) * .45;
-      const bx = cx + Math.cos(a) * r * 1.2, by = cy + Math.sin(a) * r;
-      return { bx, by, x: bx, y: by, p: Math.random() * 6.28, s: .35 + Math.random() * .7, amp: hub ? 10 : 24 + Math.random() * 34, tw: 1.5 + Math.random() * 3, flash: 0 };
-    });
-    this.cx = cx; this.cy = cy; this.link = o.link || Math.max(80, m * .16);
   }
   start() { if (this.raf) return; this.resize(); this.prev = 0; this.raf = requestAnimationFrame(this.tick); }
   stop() { cancelAnimationFrame(this.raf); this.raf = 0; if (this.w) this.x.clearRect(0, 0, this.w, this.h); }
@@ -6443,36 +6450,35 @@ class GatewayNet {
     this.raf = requestAnimationFrame(this.tick);
     if (!this.c.clientWidth) return;
     if (this.w !== this.c.clientWidth || this.h !== this.c.clientHeight) this.resize();
-    const o = this.opts(), sp = o.speed ?? 1, dt = this.prev ? Math.min(.1, (now - this.prev) / 1000) : 0; this.prev = now; this.clock += dt * sp;
-    const g = this.x, still = matchMedia('(prefers-reduced-motion: reduce)').matches, t = still ? 0 : this.clock, L = this.link, L2 = L * L, c = o.rgb || this.rgb;
-    const rot = t * .025, cs = Math.cos(rot), sn = Math.sin(rot);
+    const o = this.opts(), key = (o.density || 70) + '/' + (o.linkUnits || .62);
+    if (key !== this.key) { this.key = key; this.seed(); }
+    const sp = o.speed ?? 1, dt = this.prev ? Math.min(.1, (now - this.prev) / 1000) : 0; this.prev = now; this.clock += dt * sp;
+    const g = this.x, still = matchMedia('(prefers-reduced-motion: reduce)').matches, t = still ? 0 : this.clock, c = o.rgb || this.rgb;
+    const A = this.anchor(this.w, this.h), R = A.r, rot = t * .03, cs = Math.cos(rot), sn = Math.sin(rot);
     g.clearRect(0, 0, this.w, this.h);
     for (const n of this.nodes) {
-      const dx = n.bx - this.cx, dy = n.by - this.cy;
-      n.x = this.cx + dx * cs - dy * sn + Math.sin(t * n.s + n.p) * n.amp;
-      n.y = this.cy + dx * sn + dy * cs + Math.cos(t * n.s * .8 + n.p * 1.3) * n.amp;
-      if (!still && sp > 0 && Math.random() < .004 * Math.min(sp, 2)) n.flash = 1;
+      const u = n.u + Math.sin(t * n.s + n.p) * n.amp, v = n.v + Math.cos(t * n.s * .8 + n.p * 1.3) * n.amp;
+      n.x = A.x + (u * cs - v * sn) * R; n.y = A.y + (u * sn + v * cs) * R;
+      if (!still && sp > 0 && Math.random() < .003 * Math.min(sp, 2)) n.flash = 1;
       n.flash *= .94;
     }
-    g.lineWidth = .8;
-    for (let i = 0; i < this.nodes.length; i++) {
-      const a = this.nodes[i];
-      for (let j = i + 1; j < this.nodes.length; j++) {
-        const b = this.nodes[j], dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy;
-        if (d2 > L2) continue;
-        const pulse = .55 + .45 * Math.sin(t * 1.6 + a.p + b.p);
-        g.strokeStyle = `rgba(${c},${(1 - Math.sqrt(d2) / L) * (.35 + .5 * pulse + .6 * Math.max(a.flash, b.flash))})`;
-        g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
-      }
+    const Lpx = this.L * R * 1.25;
+    g.lineWidth = .9;
+    for (const [i, j] of this.edges) {
+      const a = this.nodes[i], b = this.nodes[j], d = Math.hypot(a.x - b.x, a.y - b.y), f = Math.max(0, 1 - d / Lpx);
+      if (!f) continue;
+      const pulse = .55 + .45 * Math.sin(t * 1.4 + a.p + b.p);
+      g.strokeStyle = `rgba(${c},${f * (.45 + .45 * pulse + .5 * Math.max(a.flash, b.flash))})`;
+      g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
     }
     for (const n of this.nodes) {
-      const tw = .5 + .5 * Math.sin(t * n.tw + n.p * 3), r = 1 + tw * .8 + n.flash * 2.5;
-      if (n.flash > .05 || tw > .92) {
+      const tw = .5 + .5 * Math.sin(t * n.tw + n.p * 3), r = .9 + tw * .7 + n.flash * 2.2;
+      if (n.flash > .05) {
         const glow = g.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 6);
-        glow.addColorStop(0, `rgba(${c},${.5 * Math.max(n.flash, tw - .9)})`); glow.addColorStop(1, `rgba(${c},0)`);
+        glow.addColorStop(0, `rgba(${c},${.5 * n.flash})`); glow.addColorStop(1, `rgba(${c},0)`);
         g.fillStyle = glow; g.fillRect(n.x - r * 6, n.y - r * 6, r * 12, r * 12);
       }
-      g.fillStyle = `rgba(255,${200 + tw * 55 | 0},${200 + tw * 55 | 0},${.35 + tw * .55 + n.flash * .3})`;
+      g.fillStyle = `rgba(255,${200 + tw * 55 | 0},${200 + tw * 55 | 0},${.3 + tw * .5 + n.flash * .3})`;
       g.beginPath(); g.arc(n.x, n.y, r, 0, 6.283); g.fill();
     }
   }
@@ -6481,12 +6487,12 @@ class GatewayNet {
 function netBackdrop() {
   const c = document.createElement('canvas'); c.id = 'net-bg'; c.setAttribute('aria-hidden', 'true');
   const gl = document.getElementById('gl'); gl.parentNode.insertBefore(c, gl);
-  const net = new GatewayNet(c, '255,40,50', m => m ? [.5, .3] : [.72, .3], () => { const s = NET.get(); return { density: s.density, link: s.link, speed: s.speed, rgb: NET.rgb(s.color) }; });
+  const net = new GatewayNet(c, '255,40,50', (w, h) => ({ x: w / 2, y: h / 2, r: Math.max(w, h) * .26 }), () => { const s = NET.get(), r = Math.max(innerWidth, innerHeight) * .26; return { density: s.density, linkUnits: s.link / r, speed: s.speed, rgb: NET.rgb(s.color) }; });
   const b = document.body, active = () => NET.get().on && (b.classList.contains('atelier-on') || b.classList.contains('studio-on'));
   const sync = net.watch(b, active, ['class']);
   const look = () => { c.classList.toggle('on', active()); c.style.opacity = NET.get().opacity; };
   new MutationObserver(look).observe(b, { attributes: true, attributeFilter: ['class'] }); look();
-  NET.sub(k => { if (k === 'density' || k === 'link') { if (net.raf) net.resize(); } sync(); look(); });
+  NET.sub(() => { sync(); look(); });
   const at = document.getElementById('at-net'), btn = document.querySelector('[data-net-toggle]');
   at.innerHTML = NET.html();
   btn.addEventListener('click', () => { at.hidden = !at.hidden; btn.setAttribute('aria-expanded', String(!at.hidden)); });
@@ -6506,7 +6512,10 @@ class WorldAtelier {
     </article>`).join('');
     this.spinTargets = [...this.track.querySelectorAll('[data-at-spin]')];
     this.selectedRoute = 'atelier'; this.entering = false; const nets = this.choice.querySelectorAll('.gateway-net');
-    [new GatewayNet(nets[0], '120,160,255', m => m ? [.3, .2] : [.22, .3]), new GatewayNet(nets[1], '255,40,50', m => m ? [.72, .74] : [.8, .26])].forEach(n => n.watch(this.choice, () => !this.choice.hidden, ['hidden']));
+    [...nets].map((cv, i) => {
+      const orb = cv.parentNode.querySelector('.gateway-orb');
+      return new GatewayNet(cv, i ? '255,40,50' : '120,160,255', () => { const a = orb.getBoundingClientRect(), b = cv.getBoundingClientRect(); return { x: a.left + a.width / 2 - b.left, y: a.top + a.height / 2 - b.top, r: Math.max(40, a.width / 2) }; }, () => ({ density: i ? 70 : 55 }));
+    }).forEach(n => n.watch(this.choice, () => !this.choice.hidden, ['hidden']));
     this.backButton = document.getElementById('route-back');
     this.choice.querySelectorAll('[data-route]').forEach(card => {
       const button = card.querySelector('[data-enter]');
