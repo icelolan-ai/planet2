@@ -808,91 +808,104 @@ body.studio-on #gl{transform:none!important;touch-action:none;pointer-events:aut
 body.studio-on #gl:active{cursor:grabbing}
 #studio-bg{position:fixed;inset:0;z-index:0;pointer-events:none;display:none}
 body.studio-on #studio-bg{display:block}
-#studio-fx,#studio-vfx{position:fixed;inset:0;pointer-events:none;display:none}
-#studio-fx{z-index:32;backdrop-filter:blur(var(--focus-blur,0px));-webkit-backdrop-filter:blur(var(--focus-blur,0px));-webkit-mask-size:100% 100%;mask-size:100% 100%}
+#studio-fx,#studio-vfx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;display:none}
 #studio-vfx{z-index:38}
-body.studio-on #studio-fx,body.studio-on #studio-vfx{display:block}
-#studio{position:fixed;inset:0;z-index:90;pointer-events:none;display:none;color:#eef0f6;font:13px var(--f-mono)}
+body.studio-on #studio-vfx{display:block}
+#studio-fx{z-index:32}#studio-fx canvas{position:absolute;inset:0;width:100%;height:100%}
+#studio{position:fixed;inset:0;z-index:90;pointer-events:none;display:none;color:#eef0f6;font:13px var(--f-sans);--st-gap:16px;--st-rail:72px;--st-panel:340px;--st-dock:64px}
+#studio *,#studio *::before,#studio *::after{box-sizing:border-box}
 body.studio-on #studio{display:block}
-#studio button,#studio select,#studio input{font:inherit;min-height:44px}
-#studio button,#studio select{border:1px solid #ffffff24;border-radius:9px;background:#181c24;color:#eef0f6;padding:8px 13px;cursor:pointer}
-#studio button:hover{border-color:#ff4655}
-#studio :focus-visible{outline:2px solid #ff6571;outline-offset:3px}
-.studio-bar{position:absolute;top:max(16px,env(safe-area-inset-top));left:20px;right:20px;display:flex;justify-content:space-between;gap:8px;pointer-events:auto}
-.studio-actions{display:flex;gap:8px}
-#studio [data-studio-tune]{background:#ff4655;border-color:#ff4655;color:#fff}
-.studio-panel{position:absolute;right:20px;top:80px;width:min(344px,calc(100vw - 40px));max-height:calc(100dvh - 106px);overflow:auto;overscroll-behavior:contain;padding:18px;background:#0e1119f2;border:1px solid #ffffff30;border-radius:14px;pointer-events:auto;box-shadow:0 14px 60px #0004}
+#studio button,#studio select,#studio input{font:inherit}
+#studio :focus-visible{outline:2px solid #ff6571;outline-offset:2px}
+#studio svg.st-i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.st-glass{background:#0d1018e6;border:1px solid #ffffff1f;border-radius:18px;box-shadow:0 18px 50px #0006;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+#studio .st-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;min-width:44px;padding:0 14px;border:1px solid #ffffff1f;border-radius:12px;background:#ffffff08;color:#e9edf4;cursor:pointer;transition:background .2s,border-color .2s,color .2s;white-space:nowrap}
+#studio .st-btn:hover{background:#ffffff14;border-color:#ffffff40}
+#studio .st-btn[aria-pressed=true]{background:#ff465526;border-color:#ff4655;color:#ff8f98}
+#studio .st-btn.is-primary{background:#ff4655;border-color:#ff4655;color:#fff}
+#studio .st-btn.is-primary:hover{background:#ff5d6a}
+.st-back{position:absolute;top:max(var(--st-gap),env(safe-area-inset-top));left:var(--st-gap);width:var(--st-rail);height:52px;pointer-events:auto}
+#studio .st-back{border-radius:16px}
+.st-rail{position:absolute;left:var(--st-gap);top:calc(max(var(--st-gap),env(safe-area-inset-top)) + 64px);width:var(--st-rail);display:flex;flex-direction:column;gap:6px;padding:8px;pointer-events:auto}
+.st-rail-label{font:600 10px var(--f-cond);letter-spacing:.18em;text-transform:uppercase;color:#8d96a8;text-align:center;padding:4px 0 2px}
+#studio .st-rail .st-btn{flex-direction:column;gap:4px;height:58px;padding:6px 0;border-color:transparent;background:transparent;font:600 10px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;color:#c9d0dc}
+#studio .st-rail .st-btn:hover{background:#ffffff12;color:#fff}
+.st-dock{position:absolute;bottom:max(var(--st-gap),env(safe-area-inset-bottom));left:calc(var(--st-gap) * 2 + var(--st-rail));right:calc(var(--st-gap) * 2 + var(--st-panel));height:var(--st-dock);display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 10px;pointer-events:auto}
+#studio.panel-closed .st-dock,#studio.panel-closed .st-context{right:var(--st-gap)}#studio.panel-closed .st-context{max-width:calc(100% - var(--st-rail) - 3 * var(--st-gap))}
+#studio .st-dock select{min-height:44px;max-width:180px;padding:0 12px;border:1px solid #ffffff1f;border-radius:12px;background:#ffffff08;color:#e9edf4}
+.st-dock .st-sep{width:1px;height:28px;background:#ffffff1f;margin:0 4px}
+.st-context{position:absolute;left:calc(var(--st-gap) * 2 + var(--st-rail));right:calc(var(--st-gap) * 2 + var(--st-panel));width:fit-content;max-width:calc(100% - var(--st-rail) - var(--st-panel) - 4 * var(--st-gap));margin:0 auto;bottom:calc(max(var(--st-gap),env(safe-area-inset-bottom)) + var(--st-dock) + 12px);display:flex;align-items:center;gap:10px;padding:8px 10px;pointer-events:auto;flex-wrap:wrap;justify-content:center}
+.st-context[hidden],.st-context [hidden]{display:none!important}
+.st-context input[type=text]{min-height:40px;width:180px;padding:0 12px;border:1px solid #ffffff2a;border-radius:10px;background:#ffffff0a;color:#fff}
+#studio .st-context select{min-height:40px;padding:0 10px;border:1px solid #ffffff2a;border-radius:10px;background:#141822;color:#fff}
+.st-context label{display:flex;align-items:center;gap:8px;font:600 11px var(--f-cond);letter-spacing:.1em;text-transform:uppercase;color:#aab3c4}
+.st-context input[type=range]{width:110px;accent-color:#ff4655}
+.st-context input[type=color]{width:40px;height:40px;padding:3px;border:1px solid #ffffff2a;border-radius:10px;background:none}
+.st-context output{min-width:34px;color:#ff9199;font:12px var(--f-mono)}
+.st-ctx-kind{font:600 11px var(--f-cond);letter-spacing:.16em;text-transform:uppercase;color:#ff8f98;padding:0 6px}
+.studio-panel{position:absolute;right:var(--st-gap);top:max(var(--st-gap),env(safe-area-inset-top));bottom:max(var(--st-gap),env(safe-area-inset-bottom));width:var(--st-panel);overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding:22px 22px 26px;pointer-events:auto}
 .studio-panel[hidden]{display:none}
-.studio-panel h2{font:600 17px/1.3 var(--f-cond);letter-spacing:.04em;margin:0 0 14px}
-.studio-section{border-top:1px solid #ffffff26;padding:3px 0 5px}
-.studio-section:last-child{border-bottom:1px solid #ffffff26}
-.studio-section summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;cursor:pointer;list-style:none;font:600 13px/1.25 var(--f-cond);letter-spacing:.08em;text-transform:uppercase;color:#e1e6ef}
+.studio-panel h2{font:600 18px/1.3 var(--f-cond);letter-spacing:.04em;margin:0 0 18px}
+.studio-section{border-top:1px solid #ffffff17;padding:4px 0}
+.studio-section summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:50px;cursor:pointer;list-style:none;font:600 12px/1.25 var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:#dfe4ec}
 .studio-section summary::-webkit-details-marker{display:none}
-.studio-section summary::after{content:'+';flex:none;color:#ff6571;font:20px var(--f-sans)}
-.studio-section[open] summary::after{content:'−'}
-.studio-section summary:focus-visible{outline:2px solid #ff6571;outline-offset:-2px}
-.studio-section[open]{padding-bottom:14px}
-.studio-panel label{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.studio-panel select{width:100%;min-width:0}
-.studio-layer{display:flex;width:100%;align-items:center;justify-content:space-between;margin:5px 0;text-align:left}
+.studio-section summary::after{content:'';width:8px;height:8px;border-right:1.5px solid #ff6571;border-bottom:1.5px solid #ff6571;transform:rotate(45deg);transition:transform .25s;margin-right:4px}
+.studio-section[open] summary::after{transform:rotate(-135deg)}
+.studio-section[open]{padding-bottom:18px}
+.studio-panel select{width:100%;min-height:44px;padding:0 12px;border:1px solid #ffffff1f;border-radius:12px;background:#141822;color:#eef0f6}
+.studio-layers{display:grid;gap:6px}
+#studio .studio-layer{display:flex;width:100%;align-items:center;justify-content:space-between;min-height:44px;padding:0 14px;border:1px solid #ffffff14;border-radius:12px;background:#ffffff06;color:#e2e7ef;text-align:left;cursor:pointer}
 .studio-eye{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6}
 .studio-layer[aria-pressed="false"]{opacity:.45}
 .studio-layer[aria-pressed="true"] .eye-slash{display:none}
-.studio-note{font:12px/1.5 var(--f-body);color:#aab3c4;margin:12px 0 0}
+.studio-note{font:12px/1.5 var(--f-body);color:#97a1b3;margin:12px 0 0}
 .studio-panel input[type=range]{width:100%;min-width:0;accent-color:#ff4655}
-.studio-panel input[type=color]{width:44px;height:36px;border:1px solid #ffffff50;background:transparent;padding:2px}
-.studio-panel input[type=text],.studio-panel textarea{min-width:0;width:100%;padding:8px;background:#10141d;color:#eef0f6;border:1px solid #ffffff45;border-radius:5px;font:inherit}
-.studio-panel textarea{resize:vertical;min-height:50px}
-.studio-panel .studio-control{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;margin:14px 0}
-.studio-panel .studio-control span{font:13px/1.3 var(--f-cond);color:#d5dbe6;letter-spacing:.03em}
+.studio-panel input[type=color]{width:100%;height:40px;border:1px solid #ffffff2a;border-radius:10px;background:transparent;padding:3px}
+.studio-panel .studio-control{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 12px;margin:16px 0}
+.studio-panel .studio-control span{font:13px/1.3 var(--f-sans);color:#cfd6e2}
 .studio-panel .studio-control input[type=range]{grid-column:1/-1;grid-row:2}
-.studio-panel .studio-control output{grid-column:2;grid-row:1;min-width:32px;text-align:right;color:#ff9199}
-.studio-panel .studio-control input[type=checkbox],.studio-panel .studio-control input[type=color]{grid-column:2;grid-row:1}
-.studio-panel .studio-two{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.studio-panel .studio-two label{display:grid;gap:4px}
-.studio-panel .studio-two input[type=color]{width:100%}
-.studio-preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-#studio .studio-preset{min-height:66px;display:flex;align-items:flex-end;text-align:left;background:linear-gradient(135deg,var(--p1),var(--p2));border:1px solid #ffffff55;color:#fff;font:600 12px var(--f-cond);text-transform:uppercase;letter-spacing:.1em}
-#studio .studio-preset[aria-pressed=true]{border:2px solid #ff4655;box-shadow:0 0 0 2px #ff465533}
-.studio-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
-#studio .studio-picker button{min-width:0;padding:7px 6px;font-size:12px}
-#studio .studio-picker button[aria-pressed=true]{border-color:#ff4655;color:#ff4655}
-.studio-types{display:flex;gap:6px;flex-wrap:wrap}
-.studio-typing{position:absolute;z-index:2;left:50%;top:14%;transform:translate(-50%,-50%);min-width:10ch;max-width:70vw;white-space:pre-wrap;cursor:move;pointer-events:auto;outline:1px dashed transparent;padding:4px;line-height:1.05;text-shadow:0 2px 12px #0005}
-.studio-typing.is-selected,.studio-typing:focus-visible{outline-color:#ff4655}
-.studio-typing[contenteditable=true]{cursor:text}
-.studio-poster{position:absolute;inset:0;z-index:1;pointer-events:none;font-family:var(--f-sans);color:var(--poster-ink,#f2f4f7)}
-.studio-poster::before{content:"";position:absolute;inset:4% 5%;border:1px solid currentColor;opacity:.22}
-.studio-poster .sp-kicker{position:absolute;left:7%;top:7%;font:600 clamp(10px,1vw,14px) var(--f-cond);letter-spacing:.3em;text-transform:uppercase}
-.studio-poster .sp-title{position:absolute;left:7%;bottom:9%;max-width:72%;font:400 clamp(38px,8vw,135px)/.85 var(--f-display);letter-spacing:-.035em;text-transform:uppercase}
-.studio-poster .sp-index{position:absolute;right:7%;bottom:9%;font:300 clamp(26px,5vw,84px) var(--f-sans)}
-.studio-poster .sp-tech{position:absolute;right:7%;top:7%;font:500 11px var(--f-mono);letter-spacing:.12em;text-align:right;text-transform:uppercase}
-.studio-poster .sp-orbits{position:absolute;width:min(52vw,580px);aspect-ratio:1;left:50%;top:44%;transform:translate(-50%,-50%);border:1px solid currentColor;border-radius:50%;opacity:.33}
-.studio-poster .sp-orbits::before,.studio-poster .sp-orbits::after{content:"";position:absolute;inset:16%;border:1px solid currentColor;border-radius:50%;transform:rotate(-24deg) scaleX(.62)}
-.studio-poster .sp-orbits::after{inset:-16%;transform:rotate(45deg) scaleX(.66)}
-.studio-poster[data-preset=ember]{--poster-ink:#e4e7ed}.studio-poster[data-preset=ember] .sp-title{font-size:clamp(38px,6vw,92px);bottom:7%}.studio-poster[data-preset=ember] .sp-orbits{border-radius:0;left:50%;top:45%;width:34%;aspect-ratio:.9;opacity:.55}.studio-poster[data-preset=ember] .sp-orbits::before,.studio-poster[data-preset=ember] .sp-orbits::after{display:none}
-.studio-poster[data-preset=monolith]{--poster-ink:#0b0e12}.studio-poster[data-preset=monolith] .sp-title{top:10%;bottom:auto;max-width:88%;font-weight:600;font-size:clamp(50px,10vw,150px)}.studio-poster[data-preset=monolith] .sp-orbits{opacity:.12}
-.studio-poster[data-preset=blueprint]{--poster-ink:#0d111c}.studio-poster[data-preset=blueprint] .sp-title{bottom:4%;font-weight:600}.studio-poster[data-preset=blueprint] .sp-orbits{width:min(70vw,800px);opacity:.65}
-.studio-poster[data-preset=infinity]{--poster-ink:#e7f2f1}.studio-poster[data-preset=infinity] .sp-title{left:7%;bottom:42%;font-size:clamp(34px,5vw,70px);max-width:27%}.studio-poster[data-preset=infinity] .sp-orbits{border-radius:0;border:0;border-top:1px solid #51c8c1;transform:translate(-50%,-50%) rotate(-28deg);opacity:.7}
-.studio-focus-outline{position:absolute;z-index:1;border:1px solid #f5f7fa;box-shadow:0 0 0 1px #1118;pointer-events:none;display:none}
-.studio-focus-outline::before,.studio-focus-outline::after{content:"";position:absolute;width:8px;height:8px;background:#fff;left:-5px;top:-5px;box-shadow:0 0 0 1px #111}
-.studio-focus-outline::after{left:auto;right:-5px;top:auto;bottom:-5px}
-body.studio-on.studio-selecting #gl{cursor:crosshair}
-.studio-home{width:100%;margin-top:8px}
-body.studio-on.tune-open .studio-panel{display:none}
-body.studio-on.wtune-open .studio-panel{display:none}
-body.studio-on.tune-open #studio{z-index:110}
-body.studio-on.wtune-open #studio{z-index:110}
+.studio-panel .studio-control output{grid-column:2;grid-row:1;text-align:right;color:#ff9199;font:12px var(--f-mono)}
+.studio-panel .studio-control input[type=checkbox]{grid-column:2;grid-row:1;width:20px;height:20px;accent-color:#ff4655}
+.studio-panel .studio-two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.studio-panel .studio-two label{display:grid;gap:6px;font:12px var(--f-sans);color:#aab3c4}
+.studio-preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#studio .studio-preset{min-height:78px;display:flex;align-items:flex-end;padding:10px 12px;text-align:left;background:linear-gradient(135deg,var(--p1),var(--p2));border:1px solid #ffffff30;border-radius:12px;color:#fff;font:600 11px var(--f-cond);text-transform:uppercase;letter-spacing:.12em;cursor:pointer;text-shadow:0 1px 6px #0008}
+#studio .studio-preset[aria-pressed=true]{border:2px solid #ff4655;box-shadow:0 0 0 3px #ff465533}
+.studio-stage{position:absolute;inset:0;z-index:0;pointer-events:none}
+.st-item{position:absolute;pointer-events:auto;touch-action:none}
+.st-text{transform:translate(var(--ax,-50%),-50%);white-space:pre;cursor:grab;padding:4px 6px;line-height:1.02;border-radius:4px;outline:1px dashed transparent;outline-offset:2px;text-shadow:0 2px 14px #0004}
+.st-text:hover{outline-color:#ffffff40}
+.st-text.is-selected{outline:1px solid #ff4655}
+.st-text[contenteditable=true]{cursor:text;outline:1px solid #fff;background:#0005}
+.st-text.is-locked{cursor:default}
+.st-shape{cursor:grab;color:#fff}
+.st-shape svg.st-outline{position:absolute;inset:0;width:100%;height:100%;overflow:visible;fill:#ffffff08;stroke:currentColor;stroke-width:1.2;vector-effect:non-scaling-stroke;stroke-dasharray:5 4;filter:drop-shadow(0 0 2px #0009)}
+.st-shape svg.st-outline *{vector-effect:non-scaling-stroke}
+.st-shape.is-selected{color:#ff6571}
+.st-shape.is-selected svg.st-outline{stroke-dasharray:none}
+.st-handle{position:absolute;right:-11px;bottom:-11px;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid #ff4655;cursor:nwse-resize;display:none}
+.st-shape.is-selected:not(.is-locked) .st-handle{display:block}
+#studio .st-lock{position:absolute;top:-16px;right:-16px;width:32px;height:32px;min-height:0;min-width:0;padding:0;border-radius:50%;border:1px solid #ffffff40;background:#0d1018e6;color:#fff;display:none;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto}
+#studio .st-lock svg.st-i{width:16px;height:16px}
+#studio .st-shape.is-selected .st-lock,#studio .st-shape.is-locked .st-lock{display:flex}
+.st-shape.is-locked{pointer-events:none;cursor:default}
+.st-shape.is-locked svg.st-outline{opacity:.35}
+body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.st-context){display:none}
+body.studio-on.tune-open #studio,body.studio-on.wtune-open #studio{z-index:110}
 body.studio-on #tune,body.studio-on #wtune{z-index:100;visibility:visible!important}
-@media(max-width:760px){
-  .studio-bar{left:12px;right:12px;gap:5px}
-  #studio button{padding:8px 7px;font-size:11px}
-  .studio-actions{gap:5px}
-  .studio-panel{right:12px;left:12px;width:auto;top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);transform:none;max-height:calc(100dvh - 90px);padding:16px}
-  .studio-layers{display:grid;grid-template-columns:1fr 1fr;gap:0 6px}
-  .studio-poster .sp-title{font-size:clamp(31px,11vw,60px);max-width:86%}
-  .studio-poster .sp-index{bottom:4%;font-size:28px}.studio-poster .sp-tech{font-size:8px}
-  .studio-typing{max-width:80vw}
+@media(max-width:900px){
+  #studio{--st-gap:12px;--st-rail:60px;--st-dock:60px}
+  .studio-panel{left:var(--st-gap);right:var(--st-gap);width:auto;top:auto;max-height:58dvh;bottom:calc(max(var(--st-gap),env(safe-area-inset-bottom)) + var(--st-dock) + 10px)}
+  .st-dock,#studio.panel-closed .st-dock{left:var(--st-gap);right:var(--st-gap);justify-content:space-between;gap:4px;padding:8px}
+  .st-dock .st-label{display:none}
+  .st-dock .st-sep{display:none}
+  #studio .st-dock .st-btn{padding:0 10px}
+  #studio .st-dock select{max-width:120px;padding:0 8px}
+  #studio .st-rail .st-btn{height:52px}
+  .st-context,#studio.panel-closed .st-context{left:var(--st-gap);right:var(--st-gap);width:auto;max-width:none}
+  .st-context input[type=text]{flex:1 1 120px;width:auto}
+  .st-context input[type=range]{width:90px}
+  #studio:has(.studio-panel:not([hidden])) .st-context{display:none}
 }
 /* The post-loader choice and the independent, scroll-driven world atelier. */
 html.route-lock,html.route-lock body{overflow:hidden!important;overscroll-behavior:none}
@@ -6744,9 +6757,9 @@ class CoreStudio {
     this.app = app; this.active = false; this.pending = false;
     this.background = 'space'; this.gravity = false; this.subject = -1; this.preset = 'ember';
     this.bgA = '#111727'; this.bgB = '#274052'; this.angle = 115; this.grid = true;
-    this.focusShape = 'off'; this.focus = { x: .5, y: .49, w: .34, h: .4 }; this.blur = 8;
+    this.blur = 8;
     this.effect = 'off'; this.effectAmount = 5; this.light = 1; this.lightX=4; this.shadow = .65; this.shadowSoft = .6;
-    this.texts = []; this.selectedText = null; this.textId = 0; this.maskDirty = true;this.sun=new THREE.Vector3(4,2,7);
+    this.sun=new THREE.Vector3(4,2,7);
     this.layers = { shells: true, rings: true, bands: true, particles: true, comets: true, energy: true, dust: true, glass: true, life: true };
     this.coreLayers = [true, true, true, true, true];
     this.x = 0; this.y = 0; this.vx = 0; this.vy = 0; this.drag = null;
@@ -6756,30 +6769,49 @@ class CoreStudio {
     this.el = document.createElement('section'); this.el.id = 'studio'; this.el.setAttribute('aria-label', 'Cerebra studio');
     const eye = '<svg class="studio-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg>';
     const names = { shells: 'Shells', rings: 'Rings', bands: 'Metal bands', particles: 'Inner particles', comets: 'Comets', energy: 'Energy lines', dust: 'Dust', glass: 'Glass' };
-    this.el.innerHTML = `<div class="studio-poster" data-preset="ember" aria-hidden="true"><div class="sp-kicker">Cerebra / study 01</div><div class="sp-tech">Live composition<br>World atelier</div><div class="sp-orbits"></div><div class="sp-title">Cerebra</div><div class="sp-index">001</div></div><div class="studio-focus-outline" aria-hidden="true"></div>
-      <div class="studio-bar"><button type="button" data-studio-exit>← Exit studio</button><div class="studio-actions"><button type="button" data-studio-tune>Tune core</button><button type="button" data-studio-tools aria-expanded="false" aria-controls="studio-tools">Studio tools</button></div></div>
-      <aside id="studio-tools" class="studio-panel" aria-label="Studio tools" hidden><h2>Your core, in focus.</h2>
-      <h3>Poster presets</h3><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-preset="ember" style="--p1:#0c1625;--p2:#d26448">Ember dossier</button><button type="button" class="studio-preset" data-studio-preset="monolith" style="--p1:#e0e4e3;--p2:#666e72">Monolith</button><button type="button" class="studio-preset" data-studio-preset="blueprint" style="--p1:#f4f5f3;--p2:#becbd2">Orbital grid</button><button type="button" class="studio-preset" data-studio-preset="infinity" style="--p1:#05090b;--p2:#72b4b4">Infinity noir</button></div>
-      <h3>Subject</h3><select data-studio-subject aria-label="Object in studio"><option value="-1">Cerebra</option>${WORLDS.map((d,i) => `<option value="${i}">${d.name}</option>`).join('')}</select>
+    const I = d => `<svg class="st-i" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+    this.icons = { text: I('<path d="M5 6h14M12 6v13"/>'), tri: I('<path d="M12 4l9 16H3z"/>'), rect: I('<rect x="4" y="4" width="16" height="16" rx="1"/>'), circle: I('<circle cx="12" cy="12" r="8.5"/>'),
+      lock: I('<rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'), unlock: I('<rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 7.6-1.8"/>'),
+      trash: I('<path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/>') };
+    this.fxBg = document.createElement('canvas'); this.fxGl = document.createElement('canvas'); this.fx.append(this.fxBg, this.fxGl);
+    this.el.innerHTML = `<div class="studio-stage" data-studio-stage></div>
+      <button type="button" class="st-btn st-back st-glass" data-studio-exit aria-label="Exit studio">${I('<path d="M19 12H5M11 6l-6 6 6 6"/>')}</button>
+      <nav class="st-rail st-glass" aria-label="Add to poster"><span class="st-rail-label">Add</span>
+        <button type="button" class="st-btn" data-studio-add="text">${this.icons.text}Text</button><button type="button" class="st-btn" data-studio-add="tri">${this.icons.tri}Triangle</button>
+        <button type="button" class="st-btn" data-studio-add="rect">${this.icons.rect}Square</button><button type="button" class="st-btn" data-studio-add="circle">${this.icons.circle}Circle</button></nav>
+      <div class="st-context st-glass" data-studio-context hidden><span class="st-ctx-kind" data-ctx-kind></span>
+        <span data-ctx-for="text"><input type="text" data-ctx-content aria-label="Text"></span>
+        <span data-ctx-for="text"><select data-ctx-font aria-label="Font"><option value="display">Bebas Neue</option><option value="sans">Barlow</option><option value="cond">Barlow Condensed</option><option value="mono">Geist Mono</option><option value="valorant">Valorant</option></select></span>
+        <label data-ctx-for="text">Size<input type="range" min="10" max="220" data-ctx-size><output></output></label>
+        <span data-ctx-for="text"><input type="color" data-ctx-color aria-label="Text colour"></span>
+        <label data-ctx-for="shape">Outside blur<input type="range" min="0" max="30" data-ctx-blur><output></output></label>
+        <button type="button" class="st-btn" data-ctx-lock></button><button type="button" class="st-btn" data-ctx-delete aria-label="Delete">${this.icons.trash}</button></div>
+      <div class="st-dock st-glass" role="toolbar" aria-label="Studio">
+        <select data-studio-subject aria-label="Object in studio"><option value="-1">Cerebra</option>${WORLDS.map((d,i) => `<option value="${i}">${d.name}</option>`).join('')}</select>
+        <button type="button" class="st-btn is-primary" data-studio-tune>${I('<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>')}<span class="st-label" data-tune-label>Tune core</span></button>
+        <span class="st-sep"></span>
+        <button type="button" class="st-btn" data-studio-home aria-label="Recenter">${I('<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>')}<span class="st-label">Recenter</span></button>
+        <button type="button" class="st-btn" data-studio-gravity aria-pressed="false" aria-label="Gravity">${I('<path d="M12 4v13M6 12l6 6 6-6"/>')}<span class="st-label">Gravity</span></button>
+        <button type="button" class="st-btn" data-studio-export aria-label="Save poster PNG">${I('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>')}<span class="st-label" data-export-label>Save PNG</span></button>
+        <span class="st-sep"></span>
+        <button type="button" class="st-btn" data-studio-tools aria-expanded="false" aria-controls="studio-tools" aria-label="Settings">${I('<path d="M4 6h16M4 12h16M4 18h16"/>')}<span class="st-label">Settings</span></button></div>
+      <aside id="studio-tools" class="studio-panel st-glass" aria-label="Studio settings" hidden><h2>Cerebra, in focus.</h2>
+      <h3>Poster presets</h3><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-preset="ember" style="--p1:#0c1625;--p2:#d26448">Ember dossier</button><button type="button" class="studio-preset" data-studio-preset="monolith" style="--p1:#e0e4e3;--p2:#666e72">Monolith</button><button type="button" class="studio-preset" data-studio-preset="blueprint" style="--p1:#f4f5f3;--p2:#becbd2">Orbital grid</button><button type="button" class="studio-preset" data-studio-preset="infinity" style="--p1:#05090b;--p2:#72b4b4">Infinity noir</button></div><p class="studio-note">Tap any poster text to edit it, drag to move it. Add shapes from the left to keep an area sharp and blur the rest.</p>
       <h3>Background</h3><select data-studio-background aria-label="Studio background"><option value="space">Space</option><option value="white">White</option><option value="studio">Studio light</option><option value="model">Model workspace</option><option value="solid">Solid colour</option><option value="gradient">Gradient</option></select>
-      <div class="studio-two"><label class="studio-control">Colour A<input type="color" data-studio-bg-a value="#111727"></label><label class="studio-control">Colour B<input type="color" data-studio-bg-b value="#274052"></label></div>
+      <div class="studio-two"><label>Colour A<input type="color" data-studio-bg-a value="#111727"></label><label>Colour B<input type="color" data-studio-bg-b value="#274052"></label></div>
       <label class="studio-control"><span>Gradient angle</span><input type="range" min="0" max="360" value="115" data-studio-angle><output>115°</output></label><label class="studio-control"><span>Grid</span><input type="checkbox" data-studio-grid checked></label>
-      <h3>Network backdrop</h3><div class="net-host">${NET.html()}</div>
-      <h3>Focus / blur outside</h3><div class="studio-picker" role="group" aria-label="Focus shape"><button type="button" data-focus-shape="off">Off</button><button type="button" data-focus-shape="circle">Circle</button><button type="button" data-focus-shape="triangle">Triangle</button><button type="button" data-focus-shape="rect">Square</button></div><p class="studio-note">Choose a shape, then drag over the image to select the sharp area.</p>
-      <label class="studio-control"><span>Outside blur</span><input type="range" min="0" max="30" value="8" data-studio-blur><output>8 px</output></label>
       <h3>Colour effects</h3><select data-studio-effect aria-label="Colour effect"><option value="off">Off</option><option value="chromatic">Chromatic aberration</option><option value="rgb">RGB split</option><option value="color">Color split</option><option value="vhs">VHS effect</option><option value="glitch">Glitch art</option></select><label class="studio-control"><span>Strength</span><input type="range" min="0" max="20" value="5" data-studio-effect-amount><output>5</output></label>
       <h3>Light &amp; floor shadow</h3><label class="studio-control"><span>Key light</span><input type="range" min="0.4" max="1.8" step="0.05" value="1" data-studio-light><output>1.00×</output></label><label class="studio-control"><span>Light direction</span><input type="range" min="-6" max="6" step="0.25" value="4" data-studio-light-x><output>4</output></label><label class="studio-control"><span>Shadow</span><input type="range" min="0" max="1" step="0.05" value="0.65" data-studio-shadow><output>65%</output></label><label class="studio-control"><span>Softness</span><input type="range" min="0" max="1" step="0.05" value="0.6" data-studio-shadow-soft><output>60%</output></label>
-      <h3>Typography</h3><div class="studio-types"><button type="button" data-studio-add-text>+ Add text</button><button type="button" data-studio-delete-text>Remove selected</button></div><textarea data-studio-text aria-label="Selected text" placeholder="Choose a text layer to edit"></textarea><select data-studio-font aria-label="Web font"><option value="display">Bebas Neue</option><option value="sans">Barlow</option><option value="cond">Barlow Condensed</option><option value="mono">Geist Mono</option><option value="valorant">Valorant</option></select><label class="studio-control"><span>Font size</span><input type="range" min="12" max="180" value="48" data-studio-font-size><output>48 px</output></label><label class="studio-control"><span>Text colour</span><input type="color" data-studio-text-color value="#ffffff"></label><button type="button" class="studio-home" data-studio-export>Save poster PNG</button>
+      <h3>Network backdrop</h3><div class="net-host">${NET.html()}</div>
       <h3>Layers</h3><div class="studio-layers">${Object.keys(names).map(k => `<button type="button" class="studio-layer" data-studio-layer="${k}" aria-pressed="true" aria-label="Show ${names[k]}"><span>${names[k]}</span>${eye}</button>`).join('')}</div>
-      <h3>Inside the core</h3><div class="studio-layers">${LAYER_NAMES.map((name, i) => `<button type="button" class="studio-layer" data-studio-core="${i}" aria-pressed="true" aria-label="Hide ${name}"><span>${name}</span>${eye}</button>`).join('')}<button type="button" class="studio-layer" data-studio-layer="life" aria-pressed="true" aria-label="Hide organisms"><span>Organisms</span>${eye}</button></div>
-      <h3>Motion</h3><label>Gravity<input type="checkbox" data-studio-gravity></label><button type="button" class="studio-home" data-studio-home>Recenter</button>
-      <p class="studio-note">Drag the subject to reposition it. Text uses the site's local web fonts.</p></aside>`;
+      <h3>Inside the core</h3><div class="studio-layers">${LAYER_NAMES.map((name, i) => `<button type="button" class="studio-layer" data-studio-core="${i}" aria-pressed="true" aria-label="Hide ${name}"><span>${name}</span>${eye}</button>`).join('')}<button type="button" class="studio-layer" data-studio-layer="life" aria-pressed="true" aria-label="Hide organisms"><span>Organisms</span>${eye}</button></div></aside>`;
     document.body.append(this.bg, this.fx, this.vfx, this.el);
-    this.panel = this.el.querySelector('.studio-panel');
+    this.panel = this.el.querySelector('.studio-panel'); this.stage = this.el.querySelector('[data-studio-stage]'); this.ctx = this.el.querySelector('[data-studio-context]');
+    this.items = []; this.itemId = 0; this.sel = null;
     this.panel.querySelectorAll('h3').forEach((heading, index) => {
       const section = document.createElement('details');
       section.className = 'studio-section';
-      section.open = index < 2;
+      section.open = index < 1;
       const summary = document.createElement('summary');
       summary.textContent = heading.textContent;
       section.append(summary);
@@ -6794,14 +6826,14 @@ class CoreStudio {
       } else this.tools(this.panel.hidden);
     };
     this.el.querySelector('[data-studio-tune]').onclick = () => {
-      this.tools(false);
+      if (innerWidth <= 900) this.tools(false);
       if (this.subject < 0) dispatchEvent(new Event('cerebra:tune'));
       else { app.detail.index = this.subject; WorldTune.open(true, 'world'); }
     };
     this.el.querySelector('[data-studio-background]').onchange = e => { this.background = e.target.value; this.paintBackground(); };
     this.el.querySelector('[data-studio-subject]').onchange = e => this.setSubject(+e.target.value);
     this.el.querySelectorAll('[data-studio-preset]').forEach(b => b.onclick = () => this.applyPreset(b.dataset.studioPreset));
-    this.el.querySelectorAll('[data-focus-shape]').forEach(b => b.onclick = () => { this.focusShape = b.dataset.focusShape; this.updateFocus(); });
+    this.el.querySelectorAll('[data-studio-add]').forEach(b => b.onclick = () => this.addItem(b.dataset.studioAdd));
     this.el.querySelector('[data-studio-effect]').onchange = e => { this.effect = e.target.value; this.paintVfx(); };
     this.el.querySelector('[data-studio-grid]').onchange = e => { this.grid = e.target.checked; this.paintBackground(); };
     const rangeControl = (selector, key, format, repaint) => {
@@ -6809,7 +6841,6 @@ class CoreStudio {
       el.oninput = () => { this[key] = +el.value; el.nextElementSibling.textContent = format(this[key]); if (repaint) repaint(); };
     };
     rangeControl('[data-studio-angle]', 'angle', v => `${v}°`, () => this.paintBackground());
-    rangeControl('[data-studio-blur]', 'blur', v => `${v} px`, () => this.updateFocus());
     rangeControl('[data-studio-effect-amount]', 'effectAmount', v => String(v), () => this.paintVfx());
     rangeControl('[data-studio-light]', 'light', v => `${v.toFixed(2)}×`, () => this.paintBackground());
     rangeControl('[data-studio-light-x]', 'lightX', v => String(v), () => this.paintBackground());
@@ -6817,36 +6848,29 @@ class CoreStudio {
     rangeControl('[data-studio-shadow-soft]', 'shadowSoft', v => `${Math.round(v*100)}%`, () => this.paintBackground());
     this.el.querySelector('[data-studio-bg-a]').oninput = e => { this.bgA = e.target.value; this.paintBackground(); };
     this.el.querySelector('[data-studio-bg-b]').oninput = e => { this.bgB = e.target.value; this.paintBackground(); };
-    this.el.querySelector('[data-studio-add-text]').onclick = () => this.addText();
-    this.el.querySelector('[data-studio-delete-text]').onclick = () => this.removeText();
     this.el.querySelector('[data-studio-export]').onclick = () => this.exportPoster();
-    this.el.querySelector('[data-studio-text]').oninput = e => { if (this.selectedText) { this.selectedText.content=e.target.value; this.selectedText.el.textContent=e.target.value; } };
-    this.el.querySelector('[data-studio-font]').onchange = e => { if (this.selectedText) { this.selectedText.font = e.target.value; this.styleText(this.selectedText); } };
-    this.el.querySelector('[data-studio-font-size]').oninput = e => { if (this.selectedText) { this.selectedText.size = +e.target.value; this.styleText(this.selectedText); } e.target.nextElementSibling.textContent = `${e.target.value} px`; };
-    this.el.querySelector('[data-studio-text-color]').oninput = e => { if (this.selectedText) { this.selectedText.color = e.target.value; this.styleText(this.selectedText); } };
-    this.el.querySelector('[data-studio-gravity]').onchange = e => { this.gravity = e.target.checked; };
+    const ctx = k => this.ctx.querySelector(`[data-ctx-${k}]`), withText = f => e => { const it = this.sel; if (it && it.kind === 'text') { f(it, e.target); it.edited = true; this.place(it); } };
+    ctx('content').oninput = withText((it, el) => { it.content = el.value; it.el.textContent = el.value; });
+    ctx('font').onchange = withText((it, el) => { it.font = el.value; });
+    ctx('size').oninput = withText((it, el) => { it.size = +el.value; el.nextElementSibling.textContent = `${it.size}`; });
+    ctx('color').oninput = withText((it, el) => { it.color = el.value; });
+    ctx('blur').oninput = e => { this.blur = +e.target.value; e.target.nextElementSibling.textContent = `${this.blur}px`; this.updateFocus(); };
+    ctx('lock').onclick = () => { if (this.sel) this.lockItem(this.sel, !this.sel.locked); };
+    ctx('delete').onclick = () => { if (this.sel) this.removeItem(this.sel); };
+    this.el.querySelector('[data-studio-gravity]').onclick = e => { this.gravity = !this.gravity; e.currentTarget.setAttribute('aria-pressed', String(this.gravity)); };
     this.el.querySelector('[data-studio-home]').onclick = () => this.home();
     this.el.querySelectorAll('[data-studio-layer]').forEach(b => b.onclick = () => { const k = b.dataset.studioLayer; this.layers[k] = !this.layers[k]; b.setAttribute('aria-pressed', String(this.layers[k])); });
     this.el.querySelectorAll('[data-studio-core]').forEach(b => b.onclick = () => { const i = +b.dataset.studioCore; this.coreLayers[i] = !this.coreLayers[i]; b.setAttribute('aria-pressed', String(this.coreLayers[i])); b.setAttribute('aria-label', `${this.coreLayers[i] ? 'Hide' : 'Show'} ${LAYER_NAMES[i]}`); });
     const signal = app.ac.signal, canvas = app.stage.renderer.domElement;
     canvas.addEventListener('pointerdown', e => {
       if (!this.active || document.body.classList.contains('tune-open') || this.drag || e.button !== 0) return;
-      if (this.focusShape !== 'off' && !document.body.classList.contains('wtune-open')) {
-        e.preventDefault(); canvas.setPointerCapture(e.pointerId);
-        const p = this.point(e); this.focusDrag = { id: e.pointerId, x: p.x, y: p.y };
-        this.focus = { x:p.x, y:p.y, w:.01, h:.01 }; this.updateFocus(); return;
-      }
+      this.select(null);
       if (this.subject < 0 && !app.hitCore(e.clientX, e.clientY)) return;
       e.preventDefault(); canvas.setPointerCapture(e.pointerId);
       this.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
       this.vx = this.vy = 0;
     }, { signal });
     canvas.addEventListener('pointermove', e => {
-      if (this.focusDrag && this.focusDrag.id === e.pointerId) {
-        const p = this.point(e), d = this.focusDrag;
-        this.focus = { x:(p.x+d.x)/2, y:(p.y+d.y)/2, w:Math.max(.04,Math.abs(p.x-d.x)), h:Math.max(.04,Math.abs(p.y-d.y)) };
-        this.updateFocus(); return;
-      }
       const d = this.drag; if (!d || d.id !== e.pointerId) return;
       const now = performance.now(), dt = Math.max(.008, (now - d.t) / 1000);
       const sx = 2 * app.rig.halfWidth / app.stage.width, sy = 2 * app.rig.halfHeight / app.stage.height;
@@ -6855,7 +6879,6 @@ class CoreStudio {
       d.x = e.clientX; d.y = e.clientY; d.t = now;
     }, { signal });
     const release = (e, cancel = false) => {
-      if (this.focusDrag && e.pointerId === this.focusDrag.id) { this.focusDrag = null; if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId); return; }
       if (!this.drag || e.pointerId !== this.drag.id) return;
       if (cancel || app.reduced || performance.now() - this.drag.t > 120) this.vx = this.vy = 0;
       this.drag = null;
@@ -6867,12 +6890,13 @@ class CoreStudio {
     addEventListener('blur', () => { this.drag = null; this.vx = this.vy = 0; }, { signal });
     addEventListener('keydown', e => {
       if (!this.active || e.key !== 'Escape' || document.body.classList.contains('tune-open')) return;
-      e.preventDefault(); e.stopImmediatePropagation(); if (!this.panel.hidden) this.tools(false); else this.close();
+      if (document.activeElement && document.activeElement.isContentEditable) return;
+      e.preventDefault(); e.stopImmediatePropagation(); if (this.sel) this.select(null); else if (!this.panel.hidden) this.tools(false); else this.close();
     }, { signal, capture: true });
-    addEventListener('resize', () => { if (this.active) { this.paintBackground(); this.updateFocus(); } }, { signal });
+    addEventListener('resize', () => { if (this.active) { this.paintBackground(); this.items.forEach(it => this.place(it)); this.updateFocus(); } }, { signal });
     this.applyPreset('ember');
   }
-  tools(on) { if (on) this.home(); this.panel.hidden = !on; this.el.querySelector('[data-studio-tools]').setAttribute('aria-expanded', String(on)); }
+  tools(on) { this.panel.hidden = !on; this.el.classList.toggle('panel-closed', !on); this.el.querySelector('[data-studio-tools]').setAttribute('aria-expanded', String(on)); }
   home() { this.x = this.y = this.vx = this.vy = 0; this.app.core.planet.resetView(); }
   point(e) { const r = this.app.stage.renderer.domElement.getBoundingClientRect(); return { x:clamp((e.clientX-r.left)/r.width,0,1), y:clamp((e.clientY-r.top)/r.height,0,1) }; }
   setSubject(index) {
@@ -6881,114 +6905,191 @@ class CoreStudio {
     this.app.detail.index = Math.max(0,this.subject);
     const name = this.subject < 0 ? 'Cerebra' : this.app.orrery.worlds[this.subject].def.name;
     this.el.querySelector('[data-studio-subject]').value = String(this.subject);
-    this.el.querySelector('[data-studio-tune]').textContent = this.subject < 0 ? 'Tune core' : 'Tune world';
-    this.el.querySelector('.sp-title').textContent = name;
-    this.el.querySelector('.sp-index').textContent = String(this.subject+2).padStart(3,'0');
-    this.el.querySelector('.sp-kicker').textContent = `${name} / studio study`;
+    this.el.querySelector('[data-tune-label]').textContent = this.subject < 0 ? 'Tune core' : 'Tune world';
+    const roles = { title: name, index: String(this.subject + 2).padStart(3, '0'), kicker: `${name} / studio study` };
+    this.items.forEach(it => { if (it.role in roles && !it.edited) { it.content = roles[it.role]; it.el.textContent = it.content; } });
     this.panel.querySelector('h2').textContent = `${name}, in focus.`;
     this.paintBackground();
   }
   applyPreset(name) {
     const presets = {
-      ember:{background:'gradient',a:'#111726',b:'#7b3c33',angle:120,grid:true,focus:'rect',blur:7,light:1.25,lightX:4,shadow:.8,soft:.55,effect:'chromatic',amount:4},
-      monolith:{background:'gradient',a:'#d9dddc',b:'#879096',angle:150,grid:false,focus:'off',blur:0,light:1.35,lightX:-2,shadow:.72,soft:.45,effect:'off',amount:0},
-      blueprint:{background:'gradient',a:'#f7f8f6',b:'#dae1e6',angle:75,grid:true,focus:'circle',blur:3,light:1.15,lightX:3,shadow:.5,soft:.7,effect:'off',amount:0},
-      infinity:{background:'gradient',a:'#050809',b:'#20292a',angle:145,grid:false,focus:'triangle',blur:5,light:1.2,lightX:-4,shadow:.75,soft:.8,effect:'rgb',amount:5}
+      ember:{background:'gradient',a:'#111726',b:'#7b3c33',angle:120,grid:true,light:1.25,lightX:4,shadow:.8,soft:.55,effect:'chromatic',amount:4,ink:'#e9ecf2'},
+      monolith:{background:'gradient',a:'#d9dddc',b:'#879096',angle:150,grid:false,light:1.35,lightX:-2,shadow:.72,soft:.45,effect:'off',amount:0,ink:'#0b0e12'},
+      blueprint:{background:'gradient',a:'#f7f8f6',b:'#dae1e6',angle:75,grid:true,light:1.15,lightX:3,shadow:.5,soft:.7,effect:'off',amount:0,ink:'#0d111c'},
+      infinity:{background:'gradient',a:'#050809',b:'#20292a',angle:145,grid:false,light:1.2,lightX:-4,shadow:.75,soft:.8,effect:'rgb',amount:5,ink:'#e7f2f1'}
     };
     const p = presets[name]; if (!p) return;
     this.preset=name; this.background=p.background; this.bgA=p.a; this.bgB=p.b; this.angle=p.angle; this.grid=p.grid;
-    this.focusShape=p.focus; this.blur=p.blur; this.light=p.light;this.lightX=p.lightX; this.shadow=p.shadow; this.shadowSoft=p.soft; this.effect=p.effect; this.effectAmount=p.amount;
-    this.el.querySelector('.studio-poster').dataset.preset=name;
+    this.light=p.light;this.lightX=p.lightX; this.shadow=p.shadow; this.shadowSoft=p.soft; this.effect=p.effect; this.effectAmount=p.amount;
     this.el.querySelectorAll('[data-studio-preset]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.studioPreset===name)));
     const values={'[data-studio-background]':p.background,'[data-studio-bg-a]':p.a,'[data-studio-bg-b]':p.b,'[data-studio-angle]':p.angle,'[data-studio-grid]':p.grid,
-      '[data-studio-blur]':p.blur,'[data-studio-light]':p.light,'[data-studio-light-x]':p.lightX,'[data-studio-shadow]':p.shadow,'[data-studio-shadow-soft]':p.soft,'[data-studio-effect]':p.effect,'[data-studio-effect-amount]':p.amount};
+      '[data-studio-light]':p.light,'[data-studio-light-x]':p.lightX,'[data-studio-shadow]':p.shadow,'[data-studio-shadow-soft]':p.soft,'[data-studio-effect]':p.effect,'[data-studio-effect-amount]':p.amount};
     Object.entries(values).forEach(([selector,value])=>{const el=this.el.querySelector(selector);if(el.type==='checkbox')el.checked=value;else el.value=value;if(el.type==='range')el.dispatchEvent(new Event('input'));});
+    this.presetTexts(name, p.ink);
     this.updateFocus(); this.paintBackground(); this.paintVfx();
   }
+  // Poster words are ordinary text items: tap to edit, drag to move. A preset only lays them out.
+  presetTexts(name, ink) {
+    this.items.filter(it => it.role).forEach(it => this.removeItem(it, true));
+    const W = innerWidth, wide = W > 900, L = ((wide ? 104 : 84) + 8) / W, R = (W - (wide ? 380 : 24)) / W;
+    const big = Math.round(clamp(W * .07, 38, 112)), mid = Math.round(clamp(W * .04, 24, 64));
+    const sub = this.subject < 0 ? 'Cerebra' : this.app.orrery.worlds[this.subject].def.name, idx = String(this.subject + 2).padStart(3, '0');
+    const T = {
+      kicker: { content: `${sub} / studio study`, font: 'cond', size: 13, weight: 600, ls: .3, upper: true },
+      tech: { content: 'Live composition\nWorld atelier', font: 'mono', size: 11, weight: 500, ls: .14, upper: true },
+      title: { content: sub, font: 'display', size: big, upper: true },
+      index: { content: idx, font: 'sans', size: mid, weight: 300 }
+    };
+    const top = wide ? .1 : .19, low = wide ? .8 : .78;
+    const layout = {
+      ember: [['kicker', 'l', L, top], ['tech', 'r', R, top], ['title', 'l', L, low], ['index', 'r', R, low + .02]],
+      monolith: [['title', 'l', L, top + .08, 1.2], ['kicker', 'l', L, top + .2], ['index', 'r', R, low + .02]],
+      blueprint: [['kicker', 'l', L, top], ['index', 'r', R, top], ['title', 'l', L, low]],
+      infinity: [['kicker', 'l', L, top], ['tech', 'r', R, top], ['title', 'l', L, .5, .7], ['index', 'r', R, low + .02]]
+    }[name];
+    layout.filter(([role]) => W >= 600 || role !== 'tech').forEach(([role, align, x, y, k = 1]) => this.addItem('text', { ...T[role], role, align, x, y, size: Math.round(T[role].size * k), color: ink, silent: true }));
+  }
+  addItem(kind, o = {}) {
+    const W = innerWidth, H = innerHeight, side = .2;
+    const it = { id: ++this.itemId, kind, x: .5, y: .45, w: side * Math.min(1, H / W), h: side * Math.min(1, W / H), locked: false,
+      content: 'Your text', font: 'display', size: Math.round(clamp(W * .05, 32, 72)), color: '#ffffff', weight: 400, ls: 0, upper: false, align: 'c', role: null, ...o };
+    if (kind !== 'text') { const s = Math.min(W, H) * .32; it.w = o.w ?? s / W; it.h = o.h ?? s / H; }
+    const el = document.createElement('div'); it.el = el;
+    if (kind === 'text') { el.className = 'st-item st-text'; el.tabIndex = 0; el.textContent = it.content; el.setAttribute('aria-label', 'Poster text, tap to edit'); }
+    else {
+      el.className = 'st-item st-shape';
+      const outline = kind === 'tri' ? '<path d="M50 0L100 100H0Z"/>' : kind === 'circle' ? '<ellipse cx="50" cy="50" rx="50" ry="50"/>' : '<rect width="100" height="100"/>';
+      el.innerHTML = `<svg class="st-outline" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${outline}</svg><span class="st-handle" aria-hidden="true"></span><button type="button" class="st-lock"></button>`;
+      el.querySelector('.st-lock').addEventListener('click', e => { e.stopPropagation(); this.lockItem(it, !it.locked); });
+    }
+    this.stage.append(el); this.items.push(it); this.place(it);
+    el.addEventListener('pointerdown', e => {
+      if (e.button !== 0 || e.target.closest('.st-lock') || el.isContentEditable) return;
+      e.stopPropagation(); e.preventDefault();
+      const wasSel = this.sel === it; this.select(it);
+      if (it.locked && kind !== 'text') return;
+      el.setPointerCapture(e.pointerId);
+      this.itemDrag = { it, id: e.pointerId, x: e.clientX, y: e.clientY, ox: it.x, oy: it.y, ow: it.w, oh: it.h, resize: !!e.target.closest('.st-handle'), moved: false, wasSel };
+    });
+    el.addEventListener('pointermove', e => {
+      const d = this.itemDrag; if (!d || d.id !== e.pointerId || d.it !== it) return;
+      const dx = (e.clientX - d.x) / innerWidth, dy = (e.clientY - d.y) / innerHeight;
+      if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 4) return;
+      d.moved = true; if (it.locked) return;
+      if (d.resize) { it.w = Math.max(.04, d.ow + dx); it.h = Math.max(.04, d.oh + dy); it.x = d.ox - d.ow / 2 + it.w / 2; it.y = d.oy - d.oh / 2 + it.h / 2; }
+      else { it.x = clamp(d.ox + dx, 0, 1); it.y = clamp(d.oy + dy, 0, 1); }
+      this.place(it); if (kind !== 'text') this.updateFocus();
+    });
+    const end = e => {
+      const d = this.itemDrag; if (!d || d.id !== e.pointerId || d.it !== it) return;
+      this.itemDrag = null;
+      if (kind === 'text' && !d.moved && d.wasSel && e.type === 'pointerup') this.editText(it);
+    };
+    el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+    if (kind === 'text') {
+      el.addEventListener('keydown', e => { if (e.key === 'Enter' && !el.isContentEditable) { e.preventDefault(); this.select(it); this.editText(it); } });
+      el.addEventListener('input', () => { it.content = el.innerText; it.edited = true; this.ctx.querySelector('[data-ctx-content]').value = it.content; });
+      el.addEventListener('blur', () => { if (el.isContentEditable) { el.contentEditable = 'false'; it.content = el.innerText; } });
+    }
+    if (!o.silent) this.select(it);
+    if (kind !== 'text') this.updateFocus();
+    return it;
+  }
+  editText(it) {
+    const el = it.el; el.contentEditable = 'true'; el.focus();
+    const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+  place(it) {
+    const el = it.el, W = innerWidth, H = innerHeight;
+    el.classList.toggle('is-locked', it.locked);
+    if (it.kind === 'text') {
+      const family = { display: '"Bebas Neue",var(--f-display)', sans: 'var(--f-sans)', cond: 'var(--f-cond)', mono: 'var(--f-num)', valorant: '"Valorant",var(--f-display)' };
+      Object.assign(el.style, { left: `${it.x * 100}%`, top: `${it.y * 100}%`, fontFamily: family[it.font], fontSize: `${it.size}px`, color: it.color, fontWeight: it.weight, letterSpacing: `${it.ls}em`, textTransform: it.upper ? 'uppercase' : 'none', textAlign: { l: 'left', c: 'center', r: 'right' }[it.align] });
+      el.style.setProperty('--ax', { l: '0%', c: '-50%', r: '-100%' }[it.align]);
+    } else Object.assign(el.style, { left: `${(it.x - it.w / 2) * W}px`, top: `${(it.y - it.h / 2) * H}px`, width: `${it.w * W}px`, height: `${it.h * H}px` });
+    const lock = el.querySelector('.st-lock');
+    if (lock) { lock.innerHTML = it.locked ? this.icons.lock : this.icons.unlock; lock.setAttribute('aria-label', it.locked ? 'Unlock shape' : 'Lock shape in place'); }
+  }
+  select(it) {
+    if (this.sel && this.sel !== it && this.sel.el.isContentEditable) this.sel.el.blur();
+    this.sel = it; this.items.forEach(i => i.el.classList.toggle('is-selected', i === it));
+    const c = this.ctx; c.hidden = !it; if (!it) return;
+    const text = it.kind === 'text';
+    c.querySelectorAll('[data-ctx-for]').forEach(n => { n.hidden = n.dataset.ctxFor !== (text ? 'text' : 'shape'); });
+    c.querySelector('[data-ctx-kind]').textContent = text ? 'Text' : { tri: 'Triangle', rect: 'Square', circle: 'Circle' }[it.kind];
+    if (text) {
+      c.querySelector('[data-ctx-content]').value = it.content; c.querySelector('[data-ctx-font]').value = it.font;
+      c.querySelector('[data-ctx-size]').value = it.size; c.querySelector('[data-ctx-size]').nextElementSibling.textContent = `${it.size}`;
+      c.querySelector('[data-ctx-color]').value = it.color;
+    } else { c.querySelector('[data-ctx-blur]').value = this.blur; c.querySelector('[data-ctx-blur]').nextElementSibling.textContent = `${this.blur}px`; }
+    const lock = c.querySelector('[data-ctx-lock]');
+    lock.innerHTML = `${it.locked ? this.icons.lock : this.icons.unlock}<span>${it.locked ? 'Locked' : 'Lock'}</span>`; lock.setAttribute('aria-pressed', String(it.locked));
+  }
+  lockItem(it, on) { it.locked = on; this.place(it); this.select(it); }
+  removeItem(it, quiet) {
+    it.el.remove(); this.items = this.items.filter(i => i !== it);
+    if (this.sel === it) this.select(null);
+    if (!quiet || it.kind !== 'text') this.updateFocus();
+  }
+  // Shapes keep their area sharp: the scene is blurred and a clipped, sharp copy sits on top. Works in Safari, unlike masked backdrop blur.
   updateFocus() {
-    const on=this.focusShape!=='off', el=this.el.querySelector('.studio-focus-outline'), w=this.app.stage.width, h=this.app.stage.height;
-    this.el.querySelectorAll('[data-focus-shape]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.focusShape===this.focusShape)));
-    document.body.classList.toggle('studio-selecting',this.active&&on);
-    el.style.display=on?'block':'none'; this.fx.style.display=this.active&&on?'block':'none';
-    if(!on)return;
-    const f=this.focus,x=(f.x-f.w/2)*w,y=(f.y-f.h/2)*h,bw=f.w*w,bh=f.h*h;
-    el.style.cssText=`display:block;left:${x}px;top:${y}px;width:${bw}px;height:${bh}px;border-radius:${this.focusShape==='circle'?'50%':'0'}`;
-    el.innerHTML=this.focusShape==='triangle'?'<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M50 1L99 99H1Z" fill="#ffffff12" stroke="#ffffff" stroke-width="1"/></svg>':'';
-    if(this.focusShape==='triangle')el.style.border='0';
-    const cut=this.focusShape==='circle'?`<ellipse cx="${f.x*w}" cy="${f.y*h}" rx="${bw/2}" ry="${bh/2}" fill="black"/>`:this.focusShape==='triangle'?`<polygon points="${f.x*w},${y} ${x+bw},${y+bh} ${x},${y+bh}" fill="black"/>`:`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="black"/>`;
-    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><mask id="m"><rect width="100%" height="100%" fill="white"/>${cut}</mask><rect width="100%" height="100%" fill="white" mask="url(#m)"/></svg>`;
-    const url=`url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
-    this.fx.style.maskImage=url;this.fx.style.webkitMaskImage=url;this.fx.style.setProperty('--focus-blur',`${this.blur}px`);
+    const shapes = this.items.filter(i => i.kind !== 'text'), on = this.active && shapes.length > 0 && this.blur > 0, W = innerWidth, H = innerHeight, gl = this.app.stage.renderer.domElement;
+    this.focusOn = on;
+    gl.style.filter = this.active ? `brightness(${this.light})${on ? ` blur(${this.blur}px)` : ''}` : '';
+    this.bg.style.filter = this.vfx.style.filter = on ? `blur(${this.blur}px)` : '';
+    this.fx.style.display = on ? 'block' : 'none';
+    if (!on) return;
+    this.fxGl.style.filter = `brightness(${this.light})`;
+    const d = shapes.map(s => {
+      const x = (s.x - s.w / 2) * W, y = (s.y - s.h / 2) * H, w = s.w * W, h = s.h * H, f = n => n.toFixed(1);
+      if (s.kind === 'circle') return `M${f(x)} ${f(y + h / 2)}A${f(w / 2)} ${f(h / 2)} 0 1 0 ${f(x + w)} ${f(y + h / 2)}A${f(w / 2)} ${f(h / 2)} 0 1 0 ${f(x)} ${f(y + h / 2)}Z`;
+      if (s.kind === 'tri') return `M${f(x + w / 2)} ${f(y)}L${f(x + w)} ${f(y + h)}L${f(x)} ${f(y + h)}Z`;
+      return `M${f(x)} ${f(y)}H${f(x + w)}V${f(y + h)}H${f(x)}Z`;
+    }).join('');
+    this.fx.style.clipPath = this.fx.style.webkitClipPath = `path('${d}')`;
+    this.copySharpBg();
   }
-  addText() {
-    const item={id:++this.textId,content:'Your text',x:.5,y:.16,font:'display',size:48,color:'#ffffff'};
-    const el=document.createElement('div');el.className='studio-typing';el.tabIndex=0;el.textContent=item.content;item.el=el;
-    this.el.append(el);this.texts.push(item);this.styleText(item);this.selectText(item);
-    el.addEventListener('click',()=>this.selectText(item));
-    el.addEventListener('dblclick',()=>{el.contentEditable='true';el.focus();});
-    el.addEventListener('input',()=>{item.content=el.textContent;this.el.querySelector('[data-studio-text]').value=item.content;});
-    el.addEventListener('blur',()=>{item.content=el.textContent;el.contentEditable='false';});
-    let drag=null;
-    el.addEventListener('pointerdown',e=>{if(el.isContentEditable)return;e.stopPropagation();el.setPointerCapture(e.pointerId);drag={id:e.pointerId,x:e.clientX,y:e.clientY,px:item.x,py:item.y};this.selectText(item);});
-    el.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;item.x=clamp(drag.px+(e.clientX-drag.x)/innerWidth,.05,.95);item.y=clamp(drag.py+(e.clientY-drag.y)/innerHeight,.05,.95);this.styleText(item);});
-    el.addEventListener('pointerup',()=>drag=null);el.addEventListener('pointercancel',()=>drag=null);
+  copySharpBg() {
+    const c = this.fxBg; if (c.width !== this.bg.width || c.height !== this.bg.height) { c.width = this.bg.width; c.height = this.bg.height; }
+    const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(this.bg, 0, 0);
   }
-  selectText(item) {
-    this.selectedText=item;this.texts.forEach(t=>t.el.classList.toggle('is-selected',t===item));
-    this.el.querySelector('[data-studio-text]').value=item.content;
-    this.el.querySelector('[data-studio-font]').value=item.font;
-    this.el.querySelector('[data-studio-font-size]').value=item.size;
-    this.el.querySelector('[data-studio-font-size]').nextElementSibling.textContent=`${item.size} px`;
-    this.el.querySelector('[data-studio-text-color]').value=item.color;
-  }
-  styleText(item) {
-    const family={display:'"Bebas Neue",var(--f-display)',sans:'var(--f-sans)',cond:'var(--f-cond)',mono:'var(--f-num)',valorant:'"Valorant",var(--f-display)'};
-    Object.assign(item.el.style,{left:`${item.x*100}%`,top:`${item.y*100}%`,fontFamily:family[item.font],fontSize:`${item.size}px`,color:item.color});
-  }
-  removeText() {if(!this.selectedText)return;this.selectedText.el.remove();this.texts=this.texts.filter(t=>t!==this.selectedText);this.selectedText=null;this.el.querySelector('[data-studio-text]').value='';}
   async exportPoster() {
     if (!this.active || this.exporting || this.app.cap) return;
-    const button=this.el.querySelector('[data-studio-export]');this.exporting=true;button.disabled=true;button.textContent='Rendering…';
+    const button=this.el.querySelector('[data-studio-export]'),label=button.querySelector('[data-export-label]');this.exporting=true;button.disabled=true;label.textContent='Rendering…';if(this.sel)this.select(null);
     try {
       const {blob,width,height}=await this.app.capture({type:'image/png',scale:2,transparent:false});
       if(!blob)throw Error('Canvas capture failed');
       const bitmap=await createImageBitmap(blob), out=document.createElement('canvas');out.width=width;out.height=height;
       const g=out.getContext('2d'),sx=width/this.app.stage.width,sy=height/this.app.stage.height;
       g.drawImage(bitmap,0,0);bitmap.close();
-      if(this.focusShape!=='off'&&this.blur>0){
+      const shapes=this.items.filter(i=>i.kind!=='text');
+      if(shapes.length&&this.blur>0){
         const blurred=document.createElement('canvas');blurred.width=width;blurred.height=height;
         const b=blurred.getContext('2d');b.filter=`blur(${this.blur*Math.max(sx,sy)}px)`;b.drawImage(out,0,0);b.filter='none';
         b.globalCompositeOperation='destination-out';b.beginPath();
-        const f=this.focus,x=f.x*width,y=f.y*height,rx=f.w*width/2,ry=f.h*height/2;
-        if(this.focusShape==='circle')b.ellipse(x,y,rx,ry,0,0,Math.PI*2);
-        else if(this.focusShape==='triangle'){b.moveTo(x,y-ry);b.lineTo(x+rx,y+ry);b.lineTo(x-rx,y+ry);b.closePath();}
-        else b.rect(x-rx,y-ry,rx*2,ry*2);
+        shapes.forEach(s=>{const x=s.x*width,y=s.y*height,rx=s.w*width/2,ry=s.h*height/2;b.moveTo(x+rx,y);
+          if(s.kind==='circle')b.ellipse(x,y,rx,ry,0,0,Math.PI*2);
+          else if(s.kind==='tri'){b.moveTo(x,y-ry);b.lineTo(x+rx,y+ry);b.lineTo(x-rx,y+ry);b.closePath();}
+          else b.rect(x-rx,y-ry,rx*2,ry*2);});
         b.fill();b.globalCompositeOperation='source-over';g.drawImage(blurred,0,0);
       }
       if(this.effect!=='off'&&this.effectAmount>0)g.drawImage(this.vfx,0,0,width,height);
-      const poster=this.el.querySelector('.studio-poster'),ink=getComputedStyle(poster).color;
-      g.save();g.strokeStyle=ink;g.globalAlpha=.22;g.lineWidth=Math.max(1,sx);g.strokeRect(width*.05,height*.04,width*.9,height*.92);g.restore();
-      const orbit=poster.querySelector('.sp-orbits'),box=orbit.getBoundingClientRect();
-      g.save();g.strokeStyle=ink;g.globalAlpha=.32;g.lineWidth=Math.max(1,sx);
-      const ox=(box.left+box.width/2)*sx,oy=(box.top+box.height/2)*sy;
-      g.beginPath();g.ellipse(ox,oy,box.width*sx/2,box.height*sy/2,0,0,Math.PI*2);g.stroke();
-      if(this.preset==='blueprint'||this.preset==='monolith'){g.beginPath();g.ellipse(ox,oy,box.width*sx*.28,box.height*sy*.4,-.45,0,Math.PI*2);g.stroke();}
-      g.restore();
       const drawText=(el)=>{
         const style=getComputedStyle(el),r=el.getBoundingClientRect();if(!r.width||!r.height)return;
         g.save();g.fillStyle=style.color;g.globalAlpha=+style.opacity||1;g.font=`${style.fontWeight} ${parseFloat(style.fontSize)*sy}px ${style.fontFamily}`;
-        g.textBaseline='top';const lines=el.textContent.split(/\n/);let yy=r.top*sy;
-        for(const line of lines){g.fillText(line,r.left*sx,yy,Math.max(1,r.width*sx));yy+=parseFloat(style.lineHeight)*sy||parseFloat(style.fontSize)*sy*1.1;}
+        if('letterSpacing' in g)g.letterSpacing=`${(parseFloat(style.letterSpacing)||0)*sx}px`;
+        g.textBaseline='top';const upper=style.textTransform==='uppercase',pad=parseFloat(style.paddingLeft)||0,lines=el.innerText.split(/\n/);let yy=(r.top+(parseFloat(style.paddingTop)||0))*sy;
+        for(const raw of lines){const line=upper?raw.toUpperCase():raw;g.textAlign=style.textAlign==='right'?'right':style.textAlign==='center'?'center':'left';
+          const xx=g.textAlign==='right'?(r.right-pad)*sx:g.textAlign==='center'?(r.left+r.width/2)*sx:(r.left+pad)*sx;g.fillText(line,xx,yy);yy+=(parseFloat(style.lineHeight)||parseFloat(style.fontSize)*1.05)*sy;}
         g.restore();
       };
-      poster.querySelectorAll('.sp-kicker,.sp-title,.sp-index,.sp-tech').forEach(drawText);
-      this.texts.forEach(t=>drawText(t.el));
+      this.items.filter(i=>i.kind==='text').forEach(i=>drawText(i.el));
       const final=await new Promise(resolve=>out.toBlob(resolve,'image/png'));
       if(!final)throw Error('PNG encoding failed');
       const link=document.createElement('a');link.href=URL.createObjectURL(final);link.download=`cerebra-${this.preset}-${width}x${height}.png`;
       document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(link.href),4000);
-    }catch(err){console.error('Studio export failed',err);button.textContent='Export failed';setTimeout(()=>button.textContent='Save poster PNG',2500);}
-    finally{this.exporting=false;button.disabled=false;if(button.textContent==='Rendering…')button.textContent='Save poster PNG';}
+    }catch(err){console.error('Studio export failed',err);label.textContent='Export failed';setTimeout(()=>label.textContent='Save PNG',2500);}
+    finally{this.exporting=false;button.disabled=false;if(label.textContent==='Rendering…')label.textContent='Save PNG';}
   }
   paintVfx(now=performance.now()) {
     const c=this.vfx, w=this.app.stage.width, h=this.app.stage.height;
@@ -7024,14 +7125,14 @@ class CoreStudio {
     if (this.active || this.pending || !a.worldsReady) return;
     if (a.detail.busy) return;
     if (a.detail.open) { this.pending = true; a.closeWorld(); return; }
-    this.active = true; this.home(); this.tools(false);
+    this.active = true; this.home(); this.tools(innerWidth > 900);
     this.coreLayers.fill(true); this.el.querySelectorAll('[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', 'true'));
     OrbitBuilder.open(false); WorldTune.open(false);
     document.querySelector('[data-tune-close]').click();
     this.saved = { y: scrollY, inert: [], visibility: new Map(), background: document.body.style.backgroundColor };
     this.ringVisibility=new Map(a.core.planet.runners.map(r=>[r,r.pivot.visible]));this.ringsWasOn=true;
     // Keep hidden page controls out of keyboard and accessibility navigation, too.
-    [...document.body.children].forEach(el => { if (![this.bg, this.fx, this.vfx, this.el, document.getElementById('gl'), document.getElementById('tune'), document.getElementById('wtune')].includes(el) && el.tagName !== 'SCRIPT') { this.saved.inert.push([el, el.inert]); el.inert = true; } });
+    [...document.body.children].forEach(el => { if (![this.bg, this.fx, this.vfx, this.el, document.getElementById('gl'), document.getElementById('net-bg'), document.getElementById('tune'), document.getElementById('wtune')].includes(el) && el.tagName !== 'SCRIPT') { this.saved.inert.push([el, el.inert]); el.inert = true; } });
     a.stage.scene.traverse(o => this.saved.visibility.set(o, o.visible));
     document.documentElement.classList.add('studio-lock'); document.body.classList.add('studio-on');
     this.paintBackground(); this.updateFocus(); this.el.querySelector('[data-studio-exit]').focus();
@@ -7039,7 +7140,7 @@ class CoreStudio {
   close() {
     if (!this.active) { this.pending = false; return; }
     const a = this.app; this.active = false; this.drag = null;
-    WorldTune.open(false); document.body.classList.remove('studio-selecting'); this.fx.style.display='none';this.vfx.getContext('2d').clearRect(0,0,this.vfx.width,this.vfx.height);
+    WorldTune.open(false); this.select(null); this.fx.style.display='none'; this.bg.style.filter='';this.vfx.getContext('2d').clearRect(0,0,this.vfx.width,this.vfx.height);
     document.querySelector('[data-tune-close]').click();
     document.documentElement.classList.remove('studio-lock'); document.body.classList.remove('studio-on');
     document.body.style.backgroundColor = this.saved.background;
@@ -7064,7 +7165,7 @@ class CoreStudio {
     this.bg.width = this.app.stage.width; this.bg.height = this.app.stage.height;
     this.paint(this.bg.getContext('2d'), this.bg.width, this.bg.height);
     document.body.style.backgroundColor = this.background === 'white' ? '#ffffff' : '#05070a';
-    this.app.stage.renderer.domElement.style.filter=`brightness(${this.light})`;
+    this.updateFocus();
   }
   paint(g, w, h) {
     const mode = this.background;
@@ -7105,12 +7206,15 @@ class CoreStudio {
     if (tuning) {
       if (portrait) { const sheet = tune.getBoundingClientRect().height / a.stage.height; y = sheet * hh; scale = Math.min(.55, (1 - sheet) * 1.25); }
       else { x = (tune.dataset.side === 'right' ? -1 : 1) * tune.getBoundingClientRect().width / a.stage.width * hw; scale = .78; }
+    } else if (a.stage.width > 900) {
+      // Centre the subject in the space between the left rail, the right panel and the dock.
+      const W = a.stage.width, left = 104, right = this.panel.hidden ? 16 : 372, bottom = 96;
+      x = ((left - right) / 2) / W * 2 * hw; y = (bottom / 2) / a.stage.height * 2 * hh; scale = this.panel.hidden ? .82 : .72;
     } else if (!this.panel.hidden) {
-      if (portrait) { const sheet = this.panel.getBoundingClientRect().height / a.stage.height; y = sheet * hh; scale = Math.min(.55, (1 - sheet) * 1.25); }
-      else x = -.25 * hw;
-    }
-    if (a.reduced || tuning || !this.panel.hidden) this.vx = this.vy = 0;
-    if (!this.drag && !a.reduced && !tuning && this.panel.hidden) {
+      const sheet = (this.panel.getBoundingClientRect().height + 80) / a.stage.height; y = sheet * hh; scale = Math.min(.5, (1 - sheet) * 1.2);
+    } else { x = 36 / a.stage.width * 2 * hw; y = 40 / a.stage.height * 2 * hh; }
+    if (a.reduced || tuning) this.vx = this.vy = 0;
+    if (!this.drag && !a.reduced && !tuning) {
       if (this.gravity) this.vy -= dt * 1.8;
       this.x += this.vx * dt; this.y += this.vy * dt;
       const friction = Math.exp(-dt * .65); this.vx *= friction; this.vy *= friction;
@@ -7153,6 +7257,7 @@ class CoreStudio {
       w.atmoMat.uniforms.uLight.value.copy(this.sun).sub(w.group.position).normalize();
     }
     a.stage.scene.updateMatrixWorld(); a.stage.render(cam);
+    if (this.focusOn) { const src = a.stage.renderer.domElement, c = this.fxGl; if (c.width !== src.width || c.height !== src.height) { c.width = src.width; c.height = src.height; } const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(src, 0, 0); }
     if(this.shadow>0&&Math.abs(this.x-(this.lastShadowX||0))>.02){this.lastShadowX=this.x;this.paintBackground();}
     this.paintVfx();
     if (a.cap) a.captureStep();
