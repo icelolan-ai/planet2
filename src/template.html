@@ -820,7 +820,7 @@ body.studio-on #studio{display:block}
 #studio svg.st-i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .st-glass{background:#0d1018f2;border:1px solid #ffffff1f;border-radius:18px;box-shadow:0 18px 50px #0006}
 @media(pointer:fine){.st-glass{background:#0d1018e6;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}}
-@media(pointer:coarse){*{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
+@media(pointer:coarse){:not(.st-glass):not(.st-fly){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
 #studio .st-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;min-width:44px;padding:0 14px;border:1px solid #ffffff1f;border-radius:12px;background:#ffffff08;color:#e9edf4;cursor:pointer;transition:background .2s,border-color .2s,color .2s;white-space:nowrap}
 #studio .st-btn:hover{background:#ffffff14;border-color:#ffffff40}
 #studio .st-rail.st-rail-decor{left:calc(var(--st-gap) * 1.5 + var(--st-rail))}
@@ -945,6 +945,23 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 #studio .st-fly-btn{position:relative}
 #studio .st-fly-btn[aria-expanded=true]{background:#ff465526;color:#ff8f98}
 #studio.hide-guides .st-shape:not(.st-decor):not(.is-selected) svg.st-outline{opacity:0}
+/* Glass, soft-UI look (rounded, frosted, inner highlight) */
+#studio .st-glass,#studio .st-fly{background:linear-gradient(150deg,#2b303ccc,#14171ed9);border:1px solid #ffffff1c;border-radius:26px;box-shadow:inset 1px 1px 0 #ffffff1a,inset -1px -1px 0 #0000004d,0 22px 50px #0008;backdrop-filter:blur(18px) saturate(1.35);-webkit-backdrop-filter:blur(18px) saturate(1.35)}
+#studio .st-btn{border-radius:16px;background:linear-gradient(150deg,#ffffff10,#ffffff04);border-color:#ffffff14;box-shadow:inset 1px 1px 0 #ffffff12,0 4px 12px #0004}
+#studio .st-btn.is-primary,#studio .st-btn[aria-pressed=true]{background:linear-gradient(150deg,#ff6b78,#e8364a);border-color:transparent;color:#fff;box-shadow:0 0 22px #ff465566,inset 1px 1px 0 #ffffff40}
+#studio .st-btn[data-studio-show][aria-pressed=true],#studio .st-btn[data-studio-fx][aria-pressed=true],#studio .st-tray-lock[aria-pressed=true]{background:linear-gradient(150deg,#ffffff10,#ffffff04);color:#e9edf4;box-shadow:inset 1px 1px 0 #ffffff12}
+#studio select,#studio input[type=text]{border-radius:14px!important}
+.st-layer,#studio .studio-layer,#studio .studio-preset{border-radius:16px!important}
+/* Touch: the dock is a swipeable tray with labelled buttons */
+@media(pointer:coarse){
+  #studio .st-dock{overflow-x:auto;overflow-y:hidden;justify-content:flex-start!important;gap:8px!important;padding:8px 12px!important;scroll-snap-type:x proximity;scrollbar-width:none;touch-action:pan-x;-webkit-mask:linear-gradient(90deg,#000 88%,transparent);mask:linear-gradient(90deg,#000 88%,transparent)}
+  #studio .st-dock::-webkit-scrollbar{display:none}
+  #studio .st-dock .st-btn{flex:0 0 auto!important;flex-direction:column;gap:4px;min-width:68px;height:62px;padding:0 8px!important;font:600 10px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;scroll-snap-align:start}
+  #studio .st-dock .st-label{display:inline!important}
+  #studio .st-dock select{flex:0 0 116px!important;max-width:116px!important;height:62px;padding:0 12px!important}
+  #studio .st-dock .st-dock-fold{min-width:40px}
+  #studio .st-dock.is-v{overflow-y:auto;overflow-x:hidden;touch-action:pan-y;-webkit-mask:none;mask:none}
+}
 /* Movable trays */
 #studio .st-tray-lock{position:absolute;top:max(var(--st-gap),env(safe-area-inset-top));left:calc(var(--st-gap) * 2 + var(--st-rail));width:52px;height:52px;padding:0;border-radius:16px;pointer-events:auto}
 #studio .st-tray-lock[aria-pressed=false]{color:#ff8f98;border-color:#ff4655}
@@ -7253,7 +7270,7 @@ class CoreStudio {
       const el = this.trays[n]; el.classList.add('is-h'); el.classList.remove('is-v');
       // On phones the side rails are short, so bottom trays run full width under them.
       const L = small && e === 'bottom' ? gap : Math.max(used.left, e === 'top' ? gap + (small ? 60 : 72) + gap + 56 : gap), R = small && e === 'bottom' ? gap : used.right;
-      const h = n === 'panel' ? (el.classList.contains('is-folded') ? null : Math.min(H * .42, 380)) : n === 'dock' ? (small ? 60 : 64) : (small ? 64 : 74);
+      const h = n === 'panel' ? (el.classList.contains('is-folded') ? null : Math.min(H * .42, 380)) : n === 'dock' ? (matchMedia('(pointer: coarse)').matches ? 80 : small ? 60 : 64) : (small ? 64 : 74);
       const span = n === 'panel' || n === 'dock';
       set(el, { [e]: used[e] + 'px', ...(span ? { left: L + 'px', right: R + 'px' } : { left: `max(${L}px, calc(50% - ${(W - L - R) / 2}px))`, right: 'auto' }), ...(h ? { height: h + 'px' } : {}) });
       if (!span) { el.style.left = L + (W - L - R - el.offsetWidth) / 2 + 'px'; }
@@ -7591,9 +7608,9 @@ class CoreStudio {
     }
     if(this.light>0){const cx=w*(.5+this.lightX*.035),cy=h*.32,r=Math.max(w,h)*.6;const glow=g.createRadialGradient(cx,cy,0,cx,cy,r);glow.addColorStop(0,`rgba(255,255,255,${Math.max(0,this.light-0.35)*.13})`);glow.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=glow;g.fillRect(0,0,w,h);}
     if(this.shadow>0&&this.showSubject!==false){
-      const x=w*.5+(this.x/(2*this.app.rig.halfWidth))*w-this.lightX*w*.018,y=h*.77;
+      const P=this.planetPx||{x:innerWidth/2,y:innerHeight/2,r:Math.min(innerWidth,innerHeight)*.25},k=w/innerWidth,x=(P.x-this.lightX*P.r*.06)*k,y=(P.y+P.r*1.18)*k;
       g.save();g.translate(x,y);g.scale(1,.22+this.shadowSoft*.15);
-      const r=w*(.11+this.shadowSoft*.08),shade=g.createRadialGradient(0,0,0,0,0,r);
+      const r=P.r*k*(.85+this.shadowSoft*.5),shade=g.createRadialGradient(0,0,0,0,0,r);
       shade.addColorStop(0,`rgba(0,0,0,${this.shadow*.65})`);shade.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=shade;g.beginPath();g.arc(0,0,r,0,Math.PI*2);g.fill();g.restore();
     }
   }
@@ -7608,7 +7625,7 @@ class CoreStudio {
     const portrait = a.stage.width < 760, hh = a.rig.halfHeight, hw = a.rig.halfWidth;
     // The poster has one fixed composition centre; panels never move the planet relative to its text and shapes.
     // When a tune panel covers part of the screen, the whole poster (planet, text, shapes) slides together.
-    const W = a.stage.width, H = a.stage.height, wide = W > 900, scale = wide ? .72 : .55;
+    const W = a.stage.width, H = a.stage.height, wide = W > 900, scale = wide ? (H > W ? .55 : .72) : .55;
     const c0 = this.compCentre(), cc = { x: c0.x, y: c0.y };
     if (tuning) {
       const r = tune.getBoundingClientRect();
@@ -7626,6 +7643,7 @@ class CoreStudio {
     }
     const r = 1.6 * scale * (this.subject < 0 ? a.core.planet.zoom : 1);
     const maxX = Math.max(0, hw - r - .1), maxY = Math.max(0, hh - r - .3);
+    this.planetR = r; this.planetBase = { x, y };
     if (Math.abs(this.x + x) > maxX) { this.x = clamp(this.x + x, -maxX, maxX) - x; this.vx *= -.55; }
     if (Math.abs(this.y + y) > maxY) { this.y = clamp(this.y + y, -maxY, maxY) - y; this.vy *= -.48; if (Math.abs(this.vy) < .15) this.vy = 0; }
     cam.position.set(0, 0, a.rig.baseZ); cam.lookAt(0, 0, 0); cam.fov = 32; cam.updateProjectionMatrix(); cam.updateMatrixWorld();
@@ -7664,7 +7682,8 @@ class CoreStudio {
     if (!this.showSubject) { c.group.visible = false; if (a.organisms) a.organisms.group.visible = false; a.orrery.worlds.forEach(w => { w.group.visible = false; }); }
     a.stage.scene.updateMatrixWorld(); a.stage.render(cam);
     if (this.focusOn) { const src = a.stage.renderer.domElement, c = this.fxGl; if (c.width !== src.width || c.height !== src.height) { c.width = src.width; c.height = src.height; } const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(src, 0, 0); }
-    if(this.shadow>0&&Math.abs(this.x-(this.lastShadowX||0))>.02){this.lastShadowX=this.x;this.paintBackground();}
+    { const Wp = a.stage.width, Hp = a.stage.height, px = { x: ((this.planetBase.x + this.x) / (2 * hw) + .5) * Wp, y: (.5 - (this.planetBase.y + this.y) / (2 * hh)) * Hp, r: this.planetR / (2 * hw) * Wp }, o = this.planetPx;
+      if (!o || Math.abs(o.x - px.x) > 1.5 || Math.abs(o.y - px.y) > 1.5 || Math.abs(o.r - px.r) > 1.5) { this.planetPx = px; if (this.shadow > 0) this.paintBackground(); } }
     this.paintVfx();
     if (a.cap) a.captureStep();
     return true;
