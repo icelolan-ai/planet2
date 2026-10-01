@@ -821,6 +821,7 @@ body.studio-on #studio{display:block}
 .st-glass{background:#0d1018e6;border:1px solid #ffffff1f;border-radius:18px;box-shadow:0 18px 50px #0006;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 #studio .st-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;min-width:44px;padding:0 14px;border:1px solid #ffffff1f;border-radius:12px;background:#ffffff08;color:#e9edf4;cursor:pointer;transition:background .2s,border-color .2s,color .2s;white-space:nowrap}
 #studio .st-btn:hover{background:#ffffff14;border-color:#ffffff40}
+#studio [data-studio-show][aria-pressed=true] .eye-slash{display:none}#studio .st-btn[data-studio-show][aria-pressed=true]{background:#ffffff08;border-color:#ffffff1f;color:#e9edf4}#studio [data-studio-show][aria-pressed=false]{color:#ff8f98;border-color:#ff465599}
 #studio .st-btn[aria-pressed=true]{background:#ff465526;border-color:#ff4655;color:#ff8f98}
 #studio .st-btn.is-primary{background:#ff4655;border-color:#ff4655;color:#fff}
 #studio .st-btn.is-primary:hover{background:#ff5d6a}
@@ -899,8 +900,8 @@ body.studio-on #tune,body.studio-on #wtune{z-index:100;visibility:visible!import
   .st-dock,#studio.panel-closed .st-dock{left:var(--st-gap);right:var(--st-gap);justify-content:space-between;gap:4px;padding:8px}
   .st-dock .st-label{display:none}
   .st-dock .st-sep{display:none}
-  #studio .st-dock .st-btn{padding:0 10px}
-  #studio .st-dock select{max-width:120px;padding:0 8px}
+  #studio .st-dock .st-btn{flex:1 1 0;min-width:0;padding:0}
+  #studio .st-dock select{flex:0 1 92px;min-width:0;max-width:92px;padding:0 6px}
   #studio .st-rail .st-btn{height:52px}
   .st-context,#studio.panel-closed .st-context{left:var(--st-gap);right:var(--st-gap);width:auto;max-width:none}
   .st-context input[type=text]{flex:1 1 120px;width:auto}
@@ -6416,14 +6417,14 @@ class Organisms {
 
 /** Shared settings for the drifting network: the chooser uses fixed looks, the atelier and studio backdrop follow these. */
 const NET = (() => {
-  const def = { on: true, color: '#ff2832', density: 90, link: 130, speed: 1, opacity: .45 };
-  let s = def; try { s = { ...def, ...JSON.parse(localStorage.getItem('cerebra-net') || '{}') }; } catch (e) {}
+  const def = { on: false, color: '#ff2832', density: 90, link: 130, speed: 1, opacity: .45 };
+  let s = def; try { s = { ...def, ...JSON.parse(localStorage.getItem('cerebra-net-v2') || '{}') }; } catch (e) {}
   const subs = new Set();
   const rows = [['on', 'Show network', 'checkbox'], ['color', 'Colour', 'color'], ['density', 'Points', 'range', 20, 200, 1, v => v], ['link', 'Link length', 'range', 40, 260, 5, v => v + ' px'],
     ['speed', 'Speed', 'range', 0, 3, .05, v => (+v).toFixed(2) + '×'], ['opacity', 'Opacity', 'range', .05, 1, .05, v => Math.round(v * 100) + '%']];
   return {
     get: () => s, sub: f => subs.add(f),
-    set(k, v) { s = { ...s, [k]: v }; try { localStorage.setItem('cerebra-net', JSON.stringify(s)); } catch (e) {}
+    set(k, v) { s = { ...s, [k]: v }; try { localStorage.setItem('cerebra-net-v2', JSON.stringify(s)); } catch (e) {}
       document.querySelectorAll(`[data-net="${k}"]`).forEach(el => { if (el.type === 'checkbox') el.checked = v; else if (el.value != v) el.value = v; const o = el.parentNode.querySelector('output'); if (o) o.textContent = rows.find(r => r[0] === k)[6](v); });
       subs.forEach(f => f(k)); },
     html: () => rows.map(([k, label, type, min, max, step, fmt]) => type === 'range'
@@ -6790,6 +6791,7 @@ class CoreStudio {
         <select data-studio-subject aria-label="Object in studio"><option value="-1">Cerebra</option>${WORLDS.map((d,i) => `<option value="${i}">${d.name}</option>`).join('')}</select>
         <button type="button" class="st-btn is-primary" data-studio-tune>${I('<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>')}<span class="st-label" data-tune-label>Tune core</span></button>
         <span class="st-sep"></span>
+        <button type="button" class="st-btn" data-studio-show aria-pressed="true" aria-label="Hide subject">${I('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/>')}<span class="st-label" data-show-label>Subject</span></button>
         <button type="button" class="st-btn" data-studio-home aria-label="Recenter">${I('<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>')}<span class="st-label">Recenter</span></button>
         <button type="button" class="st-btn" data-studio-gravity aria-pressed="false" aria-label="Gravity">${I('<path d="M12 4v13M6 12l6 6 6-6"/>')}<span class="st-label">Gravity</span></button>
         <button type="button" class="st-btn" data-studio-export aria-label="Save poster PNG">${I('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>')}<span class="st-label" data-export-label>Save PNG</span></button>
@@ -6859,6 +6861,8 @@ class CoreStudio {
     ctx('delete').onclick = () => { if (this.sel) this.removeItem(this.sel); };
     this.el.querySelector('[data-studio-gravity]').onclick = e => { this.gravity = !this.gravity; e.currentTarget.setAttribute('aria-pressed', String(this.gravity)); };
     this.el.querySelector('[data-studio-home]').onclick = () => this.home();
+    this.showSubject = true;
+    this.el.querySelector('[data-studio-show]').onclick = e => { this.showSubject = !this.showSubject; const b = e.currentTarget; b.setAttribute('aria-pressed', String(this.showSubject)); b.setAttribute('aria-label', this.showSubject ? 'Hide subject' : 'Show subject'); this.paintBackground(); };
     this.el.querySelectorAll('[data-studio-layer]').forEach(b => b.onclick = () => { const k = b.dataset.studioLayer; this.layers[k] = !this.layers[k]; b.setAttribute('aria-pressed', String(this.layers[k])); });
     this.el.querySelectorAll('[data-studio-core]').forEach(b => b.onclick = () => { const i = +b.dataset.studioCore; this.coreLayers[i] = !this.coreLayers[i]; b.setAttribute('aria-pressed', String(this.coreLayers[i])); b.setAttribute('aria-label', `${this.coreLayers[i] ? 'Hide' : 'Show'} ${LAYER_NAMES[i]}`); });
     const signal = app.ac.signal, canvas = app.stage.renderer.domElement;
@@ -7187,7 +7191,7 @@ class CoreStudio {
       for (let y = 0; y <= h; y += step) { g.moveTo(0, y); g.lineTo(w, y); } g.stroke();
     }
     if(this.light>0){const cx=w*(.5+this.lightX*.035),cy=h*.32,r=Math.max(w,h)*.6;const glow=g.createRadialGradient(cx,cy,0,cx,cy,r);glow.addColorStop(0,`rgba(255,255,255,${Math.max(0,this.light-0.35)*.13})`);glow.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=glow;g.fillRect(0,0,w,h);}
-    if(this.shadow>0){
+    if(this.shadow>0&&this.showSubject!==false){
       const x=w*.5+(this.x/(2*this.app.rig.halfWidth))*w-this.lightX*w*.018,y=h*.77;
       g.save();g.translate(x,y);g.scale(1,.22+this.shadowSoft*.15);
       const r=w*(.11+this.shadowSoft*.08),shade=g.createRadialGradient(0,0,0,0,0,r);
@@ -7256,6 +7260,7 @@ class CoreStudio {
       w.orbitLine.visible=false;w.U.uKyCenter.value.copy(w.group.position);
       w.atmoMat.uniforms.uLight.value.copy(this.sun).sub(w.group.position).normalize();
     }
+    if (!this.showSubject) { c.group.visible = false; if (a.organisms) a.organisms.group.visible = false; a.orrery.worlds.forEach(w => { w.group.visible = false; }); }
     a.stage.scene.updateMatrixWorld(); a.stage.render(cam);
     if (this.focusOn) { const src = a.stage.renderer.domElement, c = this.fxGl; if (c.width !== src.width || c.height !== src.height) { c.width = src.width; c.height = src.height; } const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(src, 0, 0); }
     if(this.shadow>0&&Math.abs(this.x-(this.lastShadowX||0))>.02){this.lastShadowX=this.x;this.paintBackground();}
