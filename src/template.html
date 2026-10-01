@@ -938,6 +938,27 @@ html.route-lock,html.route-lock body{overflow:hidden!important;overscroll-behavi
 .gateway-choice:nth-child(2) .gateway-mark{left:calc(var(--s) + 6%)}
 .gateway-orb{position:absolute;left:calc(var(--s) * .5);top:40%;width:min(30vw,46vh);aspect-ratio:1;border:1px solid #ffffff69;border-radius:50%;transform:translate(-50%,-50%);box-shadow:inset -30px -15px 65px #6899ff26,0 0 80px #688aff25;pointer-events:none;background:radial-gradient(circle at 38% 34%,#18203acc,#090c16d9 72%)}
 .gateway-choice:nth-child(2) .gateway-orb{background:radial-gradient(circle at 40% 36%,#25172ad0,#0c0a12de 72%);left:calc(var(--s) + 14%);top:50%;width:min(40vw,80vh);box-shadow:0 0 0 25px #ffffff06,0 0 0 80px #ffffff04,inset -18px -12px 60px #ff465540}
+/* Shape a world: synthwave poster palette — navy to magenta to peach, a glowing planet arc, a giant gradient letter and spaced type. */
+.gw-a{background:radial-gradient(ellipse 70% 55% at 40% 38%,#ff2f8e33,transparent 70%),radial-gradient(ellipse 80% 40% at 30% 92%,#7b2cbf55,transparent 70%),linear-gradient(170deg,#0a1235 0%,#1a1446 34%,#3b1257 62%,#5a1a5e 82%,#2a1146 100%)}
+.gw-a .gateway-orb{border:0;background:radial-gradient(circle at 70% 26%,#ffb04a 0,#ff5a6e 18%,#e8227f 38%,#9b1a72 62%,#3a1250 86%,#2a114600 100%);box-shadow:0 0 70px #ff3d8a66,0 0 160px #ff3d8a2e,inset -18px 10px 40px #ffb04a55,inset 30px -30px 60px #1a0f3acc}
+.gw-a .gateway-mark{color:#ff5fa8}
+.gw-a .gateway-copy{z-index:3}.gw-a .gateway-copy strong{color:#fff;text-shadow:0 4px 30px #ff3d8a66}.gw-a .gateway-orb{z-index:1}.gw-a .gateway-mark,.gw-a .gateway-back{z-index:3}
+.gw-a .gateway-copy small{color:#d9c7ef}
+.gw-a .gateway-enter{border-color:#ff4f9a;color:#ff7ab6;background:#ff3d8a14}
+.gw-a .gateway-enter:hover{background:linear-gradient(90deg,#ff3d8a,#ff9a5a);color:#160a26;border-color:transparent}
+.gw-deco{position:absolute;left:0;top:0;bottom:0;width:calc(var(--s) - 6%);overflow:hidden;pointer-events:none;transition:opacity .5s}
+.gw-letter{position:absolute;right:6%;bottom:-8%;font:400 min(88vh,60vw)/.8 var(--f-display);background:linear-gradient(180deg,#e8227f00 0%,#e8227fb3 30%,#ff5a7a 62%,#ffae7a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;opacity:.38;mix-blend-mode:screen}
+.gw-words{position:absolute;z-index:2;left:12%;right:12%;top:12%;margin:0;display:grid;gap:clamp(18px,4.5vh,46px);font:500 clamp(11px,1.1vw,16px)/1 var(--f-sans);letter-spacing:.9em;color:#a9d8ff;text-align:center;white-space:pre}
+.gw-words .dim{opacity:.35}
+.gw-bar{position:absolute;display:block}
+.gw-bar-p{left:0;top:30%;width:28%;height:clamp(14px,2.2vh,24px);background:linear-gradient(90deg,#ff3d8a00,#ff3d8a 70%,#ff2f7a)}
+.gw-bar-c{right:10%;bottom:14%;width:clamp(14px,1.6vw,22px);height:18%;background:linear-gradient(180deg,#2fc8ff00,#2fc8ff 60%,#4ad8ff)}
+.gw-side{position:absolute;top:50%;font:600 11px var(--f-sans);letter-spacing:.32em;text-transform:uppercase;color:#e9e3f7cc;white-space:nowrap}
+.gw-side-l{left:clamp(14px,2vw,30px);transform:translate(-50%,-50%) rotate(-90deg) translateY(50%);transform-origin:center}
+.gw-side-r{right:clamp(14px,2vw,30px);transform:translate(50%,-50%) rotate(90deg) translateY(50%)}
+.gw-num{position:absolute;right:clamp(24px,5vw,80px);top:clamp(20px,4.6vw,74px);font:700 clamp(18px,1.8vw,28px) var(--f-sans);letter-spacing:.06em;color:#fff}
+#gateway[data-sel=orbit] .gw-deco{opacity:0}
+#gateway[data-sel=atelier] .gw-letter{opacity:.5}
 .gateway-copy{position:absolute;left:clamp(24px,5vw,80px);bottom:clamp(28px,8vh,90px);width:min(34ch,calc(var(--s) - 12%));display:flex;flex-direction:column;gap:18px}
 .gateway-choice:nth-child(2) .gateway-copy{left:83%;bottom:auto;top:50%;width:15%;transform:translateY(-50%);gap:14px}
 .gateway-choice strong{font:400 clamp(30px,4vw,64px)/1 var(--f-display);letter-spacing:.03em;text-transform:uppercase;max-width:12ch}
@@ -1031,6 +1052,13 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
   .gateway-mark{top:calc(env(safe-area-inset-top,0px) + 18px);left:22px}
   .gateway-choice:nth-child(2) .gateway-mark{left:22px;top:calc(var(--s) + 26px)}
   .gateway-orb{left:72%;top:calc(var(--s) * .38);width:min(36vw,22vh)}
+  .gw-deco{width:100%;height:var(--s);bottom:auto}
+  .gw-letter{font-size:min(48vh,90vw);left:auto;right:4%;bottom:-4%}
+  .gw-words{top:auto;bottom:calc(100% - var(--s) * .62);left:6%;right:40%;letter-spacing:.6em;font-size:10px;gap:12px;display:none}
+  .gw-side{display:none}
+  .gw-bar-p{top:auto;bottom:calc(var(--s) * .08);width:34%}
+  .gw-bar-c{right:8%;bottom:auto;top:calc(var(--s) * .5);height:14%}
+  .gw-num{top:calc(env(safe-area-inset-top,0px) + 14px);right:22px;font-size:16px}
   .gateway-copy{left:22px;bottom:auto;top:calc(var(--s) - 28px);transform:translateY(-100%);width:calc(100% - 44px);gap:10px}
   .gateway-choice:nth-child(2) .gateway-orb{left:66%;top:calc(var(--s) + 26%);width:min(78vw,40vh)}
   .gateway-choice:nth-child(2) .gateway-copy{left:22px;top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);width:40%;transform:none}
@@ -1083,7 +1111,7 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 </div>
 
 <section id="gateway" aria-label="Choose your experience" data-sel="none" hidden>
-  <article class="gateway-choice" data-route="atelier" tabindex="0" aria-label="Select world atelier"><canvas class="gateway-net" aria-hidden="true"></canvas><span class="gateway-mark">01 / Create</span><button type="button" class="gateway-back" data-gateway-back>← Back</button><span class="gateway-orb" aria-hidden="true"></span><div class="gateway-copy"><strong data-split>Shape a world</strong><small>Choose Cerebra or a planet, bring it closer, and tune its colour, atmosphere and motion.</small><button type="button" class="gateway-enter" data-enter="atelier">Enter world atelier →</button></div></article>
+  <article class="gateway-choice gw-a" data-route="atelier" tabindex="0" aria-label="Select world atelier"><canvas class="gateway-net" aria-hidden="true"></canvas><div class="gw-deco" aria-hidden="true"><b class="gw-letter">S</b><p class="gw-words"><span>S H A P E</span><span>A</span><span class="dim">W O R L D</span><span>T U N E</span><span class="dim">I T</span></p><span class="gw-bar gw-bar-p"></span><span class="gw-bar gw-bar-c"></span><span class="gw-side gw-side-l">Cerebra · world atelier</span><span class="gw-num">001</span></div><span class="gateway-mark">01 / Create</span><button type="button" class="gateway-back" data-gateway-back>← Back</button><span class="gateway-orb" aria-hidden="true"></span><div class="gateway-copy"><strong data-split>Shape a world</strong><small>Choose Cerebra or a planet, bring it closer, and tune its colour, atmosphere and motion.</small><button type="button" class="gateway-enter" data-enter="atelier">Enter world atelier →</button></div></article>
   <article class="gateway-choice" data-route="orbit" tabindex="0" aria-label="Select solar system"><canvas class="gateway-net" aria-hidden="true"></canvas><span class="gateway-mark">02 / Explore</span><button type="button" class="gateway-back" data-gateway-back>← Back</button><span class="gateway-orb" aria-hidden="true"></span><div class="gateway-copy"><strong data-split>Explore the system</strong><small>Travel through Cerebra and its seven worlds in the original journey.</small><button type="button" class="gateway-enter" data-enter="orbit">Enter the solar system →</button></div></article>
   <svg class="gateway-edge" viewBox="-50 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="6,0 3,11 4,21 0,33 1,42 2,47 -1,52 -5,67 -4,72 -2,76 -3,80 -8,100"/></svg><svg class="gateway-edge m" viewBox="0 -50 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,3.0 11,1.5 21,2.0 33,0.0 42,0.5 47,1.0 52,-0.5 67,-2.5 72,-2.0 76,-1.0 80,-1.5 100,-4.0"/></svg>
   <span class="gateway-status" role="status" data-route-status hidden></span>
@@ -6588,7 +6616,7 @@ class WorldAtelier {
     this.selectedRoute = 'atelier'; this.entering = false; const nets = this.choice.querySelectorAll('.gateway-net');
     const netList = [...nets].map((cv, i) => {
       const orb = cv.parentNode.querySelector('.gateway-orb');
-      return new GatewayNet(cv, i ? '255,40,50' : '120,160,255', () => { const a = orb.getBoundingClientRect(), b = cv.getBoundingClientRect(); return { x: a.left + a.width / 2 - b.left, y: a.top + a.height / 2 - b.top, r: Math.max(40, a.width / 2) }; }, () => ({ density: i ? 70 : 55 }));
+      return new GatewayNet(cv, i ? '255,40,50' : '255,120,190', () => { const a = orb.getBoundingClientRect(), b = cv.getBoundingClientRect(); return { x: a.left + a.width / 2 - b.left, y: a.top + a.height / 2 - b.top, r: Math.max(40, a.width / 2) }; }, () => ({ density: i ? 70 : 55 }));
     });
     netList.forEach(n => n.watch(this.choice, () => !this.choice.hidden, ['hidden']));
     this.choice.querySelectorAll('[data-route]').forEach((card, i) => card.addEventListener('pointerdown', e => {
