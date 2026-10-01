@@ -7265,13 +7265,20 @@ class CoreStudio {
     const set = (el, o) => { Object.assign(el.style, { left: 'auto', right: 'auto', top: 'auto', bottom: 'auto', width: '', height: '', maxHeight: '', ...o }); };
     // 1) side trays (vertical) take full height; measure their widths.
     const used = { left: gap, right: gap, top: gap, bottom: gap };
-    for (const e of vert) cfg[e].filter(vis).forEach(n => {
-      const el = this.trays[n]; el.classList.add('is-v'); el.classList.remove('is-h');
-      const w = n === 'panel' ? Math.min(340, W - 2 * gap - 140) : n === 'dock' ? (small ? 60 : 64) : (small ? 60 : 72);
-      const isPanel = n === 'panel', folded = el.classList.contains('is-folded');
-      set(el, { [e]: used[e] + 'px', top: (e === 'left' ? top0 : gap) + 'px', width: w + 'px', ...(isPanel && !folded ? { bottom: gap + 'px' } : { maxHeight: `calc(100% - ${(e === 'left' ? top0 : gap) + gap}px)` }) });
-      used[e] += w + gap;
-    });
+    // Side trays stack top-to-bottom in one column; the settings panel takes whatever height is left.
+    for (const e of vert) {
+      const list = cfg[e].filter(vis); if (!list.length) continue;
+      let y = e === 'left' ? top0 : gap, colW = 0;
+      const widthOf = n => n === 'panel' ? Math.min(340, W - 2 * gap - 140) : n === 'dock' ? (small ? 60 : 64) : (small ? 60 : 72);
+      list.forEach((n, i) => {
+        const el = this.trays[n]; el.classList.add('is-v'); el.classList.remove('is-h');
+        const w = widthOf(n), folded = el.classList.contains('is-folded'), last = i === list.length - 1;
+        set(el, { [e]: used[e] + 'px', top: y + 'px', width: w + 'px', ...(n === 'panel' && !folded && last ? { bottom: gap + 'px' } : { maxHeight: `${Math.max(120, H - y - gap)}px` }) });
+        if (n === 'panel' && !folded && !last) el.style.height = Math.max(160, (H - y) * .5) + 'px';
+        y += el.offsetHeight + gap; colW = Math.max(colW, w);
+      });
+      used[e] += colW + gap;
+    }
     // 2) top/bottom trays (horizontal) span between the side trays and stack away from their edge.
     for (const e of ['bottom', 'top']) cfg[e].filter(vis).forEach(n => {
       const el = this.trays[n]; el.classList.add('is-h'); el.classList.remove('is-v');
@@ -7282,7 +7289,8 @@ class CoreStudio {
       set(el, { [e]: used[e] + 'px', ...(span ? { left: L + 'px', right: R + 'px' } : { left: `max(${L}px, calc(50% - ${(W - L - R) / 2}px))`, right: 'auto' }), ...(h ? { height: h + 'px' } : {}) });
       if (!span) { el.style.left = L + (W - L - R - el.offsetWidth) / 2 + 'px'; }
       if (n === 'dock') el.classList.toggle('is-compact', W - L - R < 900);
-      if (folded) { el.style.width = 'auto'; el.style.height = ''; el.style.left = (n === 'dock' ? (W - el.offsetWidth) / 2 : W - R - el.offsetWidth) + 'px'; }
+      // A folded tray keeps its own side: the dock tucks to the right, the panel stays where it was.
+      if (folded) { el.style.width = 'auto'; el.style.height = ''; el.style.left = (n === 'dock' ? W - R - el.offsetWidth : L) + 'px'; }
       used[e] += (h || el.offsetHeight) + gap;
     });
     this.el.style.setProperty('--lay-l', used.left + 'px'); this.el.style.setProperty('--lay-r', used.right + 'px');
