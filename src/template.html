@@ -818,7 +818,9 @@ body.studio-on #studio{display:block}
 #studio button,#studio select,#studio input{font:inherit}
 #studio :focus-visible{outline:2px solid #ff6571;outline-offset:2px}
 #studio svg.st-i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.st-glass{background:#0d1018e6;border:1px solid #ffffff1f;border-radius:18px;box-shadow:0 18px 50px #0006;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.st-glass{background:#0d1018f2;border:1px solid #ffffff1f;border-radius:18px;box-shadow:0 18px 50px #0006}
+@media(pointer:fine){.st-glass{background:#0d1018e6;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}}
+@media(pointer:coarse){*{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
 #studio .st-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;min-width:44px;padding:0 14px;border:1px solid #ffffff1f;border-radius:12px;background:#ffffff08;color:#e9edf4;cursor:pointer;transition:background .2s,border-color .2s,color .2s;white-space:nowrap}
 #studio .st-btn:hover{background:#ffffff14;border-color:#ffffff40}
 #studio [data-studio-show][aria-pressed=true] .eye-slash{display:none}#studio .st-btn[data-studio-show][aria-pressed=true]{background:#ffffff08;border-color:#ffffff1f;color:#e9edf4}#studio [data-studio-show][aria-pressed=false]{color:#ff8f98;border-color:#ff465599}
@@ -6505,7 +6507,7 @@ class GatewayNet {
     this.nodes = pts; this.edges = edges; this.L = L;
   }
   resize() {
-    const d = Math.min(devicePixelRatio || 1, 2), w = this.c.clientWidth, h = this.c.clientHeight;
+    const d = Math.min(devicePixelRatio || 1, matchMedia('(pointer: coarse)').matches ? 1 : 1.5), w = this.c.clientWidth, h = this.c.clientHeight;
     this.c.width = w * d; this.c.height = h * d; this.x.setTransform(d, 0, 0, d, 0, 0); this.w = w; this.h = h;
   }
   wave(x, y) { this.waves.push({ x, y, t: performance.now() }); }
@@ -6744,6 +6746,8 @@ class WorldAtelier {
     this.selectRoute('orbit'); this.choice.querySelector('[data-enter="orbit"]').focus({ preventScroll: true });
   }
   update(dt) {
+    // The chooser is opaque: skip the 3D scene entirely while it is up, so its own canvases stay smooth.
+    if (!this.choice.hidden) return true;
     if (!this.active) return false;
     const a = this.app, worlds = a.orrery.worlds, h = this.track.clientHeight || innerHeight;
     const target = clamp(this.track.scrollTop / h, 0, worlds.length);
@@ -7397,7 +7401,7 @@ class App {
 
     const m = this.mobile;
     const count = m ? 3500 : 7000;
-    this.stage = new Stage($('#gl'), m ? 1.5 : 1.75);
+    this.stage = new Stage($('#gl'), m ? 1.25 : matchMedia('(pointer: coarse)').matches ? 1.5 : 1.75);
     this.rig = new CameraRig(32);
     PlanetBody.camera = this.rig.camera;
     this.shared = createSharedUniforms();
@@ -8042,6 +8046,7 @@ class App {
     dt = Math.min(dt, 0.05);
     this.clock += dt;
     this.fps = damp(this.fps, 1 / rawDt, 2, dt);
+    if ((this.entry && this.entry.active) || (this.studio && this.studio.active)) this.adaptQuality(dt);
     if (this.entry && this.entry.update(dt)) return;
     if (this.studio && this.studio.update(dt)) return;
     if (this.explorer && this.explorer.own(dt)) return;
