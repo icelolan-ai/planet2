@@ -813,7 +813,7 @@ body.studio-on #studio-bg{display:block}
 body.studio-on #studio-vfx{display:block}
 #studio-fx{z-index:32}#studio-fx canvas{position:absolute;inset:0;width:100%;height:100%}
 #studio{position:fixed;inset:0;z-index:90;pointer-events:none;display:none;color:#eef0f6;font:13px var(--f-sans);--st-gap:16px;--st-rail:72px;--st-panel:340px;--st-dock:64px}
-#studio *,#studio *::before,#studio *::after{box-sizing:border-box}
+#studio *,#studio *::before,#studio *::after{box-sizing:border-box}#studio [hidden]{display:none!important}
 body.studio-on #studio{display:block}
 #studio button,#studio select,#studio input{font:inherit}
 #studio :focus-visible{outline:2px solid #ff6571;outline-offset:2px}
@@ -6837,6 +6837,7 @@ class CoreStudio {
         <select data-studio-subject aria-label="Object in studio"><option value="-1">Cerebra</option>${WORLDS.map((d,i) => `<option value="${i}">${d.name}</option>`).join('')}</select>
         <button type="button" class="st-btn is-primary" data-studio-tune>${I('<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>')}<span class="st-label" data-tune-label>Tune core</span></button>
         <span class="st-sep"></span>
+        <button type="button" class="st-btn" data-studio-fx aria-pressed="true" aria-label="Colour effect on Cerebra">${I('<circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/>')}<span class="st-label">Effect</span></button>
         <button type="button" class="st-btn" data-studio-show aria-pressed="true" aria-label="Hide subject">${I('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/>')}<span class="st-label" data-show-label>Subject</span></button>
         <button type="button" class="st-btn" data-studio-home aria-label="Recenter">${I('<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>')}<span class="st-label">Recenter</span></button>
         <button type="button" class="st-btn" data-studio-gravity aria-pressed="false" aria-label="Gravity">${I('<path d="M12 4v13M6 12l6 6 6-6"/>')}<span class="st-label">Gravity</span></button>
@@ -6908,6 +6909,10 @@ class CoreStudio {
     this.el.querySelector('[data-studio-gravity]').onclick = e => { this.gravity = !this.gravity; e.currentTarget.setAttribute('aria-pressed', String(this.gravity)); };
     this.el.querySelector('[data-studio-home]').onclick = () => this.home();
     this.showSubject = true;
+    // The colour split ghost suits the glassy core only; worlds never get it.
+    this.fxOn = true; this.fxLive = () => this.fxOn && this.subject < 0;
+    this.fxSection = this.el.querySelector('[data-studio-effect]').closest('details');
+    this.el.querySelector('[data-studio-fx]').onclick = e => { this.fxOn = !this.fxOn; e.currentTarget.setAttribute('aria-pressed', String(this.fxOn)); this.paintVfx(); };
     this.el.querySelector('[data-studio-show]').onclick = e => { this.showSubject = !this.showSubject; const b = e.currentTarget; b.setAttribute('aria-pressed', String(this.showSubject)); b.setAttribute('aria-label', this.showSubject ? 'Hide subject' : 'Show subject'); this.paintBackground(); };
     this.el.querySelectorAll('[data-studio-layer]').forEach(b => b.onclick = () => { const k = b.dataset.studioLayer; this.layers[k] = !this.layers[k]; b.setAttribute('aria-pressed', String(this.layers[k])); });
     this.el.querySelectorAll('[data-studio-core]').forEach(b => b.onclick = () => { const i = +b.dataset.studioCore; this.coreLayers[i] = !this.coreLayers[i]; b.setAttribute('aria-pressed', String(this.coreLayers[i])); b.setAttribute('aria-label', `${this.coreLayers[i] ? 'Hide' : 'Show'} ${LAYER_NAMES[i]}`); });
@@ -6956,6 +6961,7 @@ class CoreStudio {
     const name = this.subject < 0 ? 'Cerebra' : this.app.orrery.worlds[this.subject].def.name;
     this.el.querySelector('[data-studio-subject]').value = String(this.subject);
     this.el.querySelector('[data-tune-label]').textContent = this.subject < 0 ? 'Tune core' : 'Tune world';
+    this.el.querySelector('[data-studio-fx]').hidden = this.subject >= 0; this.fxSection.hidden = this.subject >= 0; this.lastVfx = 0; this.paintVfx();
     const roles = { title: name, index: String(this.subject + 2).padStart(3, '0'), kicker: `${name} / studio study` };
     this.items.forEach(it => { if (it.role in roles && !it.edited) { it.content = roles[it.role]; it.el.textContent = it.content; } });
     this.panel.querySelector('h2').textContent = `${name}, in focus.`;
@@ -7123,7 +7129,7 @@ class CoreStudio {
           else b.rect(x-rx,y-ry,rx*2,ry*2);});
         b.fill();b.globalCompositeOperation='source-over';g.drawImage(blurred,0,0);
       }
-      if(this.effect!=='off'&&this.effectAmount>0)g.drawImage(this.vfx,0,0,width,height);
+      if(this.fxLive()&&this.effect!=='off'&&this.effectAmount>0)g.drawImage(this.vfx,0,0,width,height);
       const drawText=(el)=>{
         const style=getComputedStyle(el),r=el.getBoundingClientRect();if(!r.width||!r.height)return;
         g.save();g.fillStyle=style.color;g.globalAlpha=+style.opacity||1;g.font=`${style.fontWeight} ${parseFloat(style.fontSize)*sy}px ${style.fontFamily}`;
@@ -7145,7 +7151,7 @@ class CoreStudio {
     const c=this.vfx, w=this.app.stage.width, h=this.app.stage.height;
     if(c.width!==Math.ceil(w/2)||c.height!==Math.ceil(h/2)){c.width=Math.ceil(w/2);c.height=Math.ceil(h/2);}
     const g=c.getContext('2d');
-    if(!this.active||this.effect==='off'||this.effectAmount<=0){g.clearRect(0,0,c.width,c.height);return;}
+    if(!this.active||!this.fxLive()||this.effect==='off'||this.effectAmount<=0){g.clearRect(0,0,c.width,c.height);return;}
     if(now-(this.lastVfx||0)<70)return;
     g.clearRect(0,0,c.width,c.height);
     this.lastVfx=now;
