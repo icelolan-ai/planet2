@@ -831,6 +831,24 @@ body.studio-on #studio{display:block}
 @media(pointer:coarse){*{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
 #studio .st-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;min-width:44px;padding:0 14px;border:1px solid #ffffff1f;border-radius:12px;background:#ffffff08;color:#e9edf4;cursor:pointer;transition:background .2s,border-color .2s,color .2s;white-space:nowrap}
 #studio .st-btn:hover{background:#ffffff14;border-color:#ffffff40}
+#studio .st-rail.st-rail-decor{left:calc(var(--st-gap) * 1.5 + var(--st-rail))}
+.st-decor{color:#ff3d8a}
+#studio .st-decor svg.st-outline{fill:currentColor;fill-opacity:var(--op,.85);stroke:none;filter:none}
+#studio .st-decor.is-selected svg.st-outline{stroke:#fff;stroke-width:1.5;stroke-dasharray:5 4}
+.st-layers{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.st-layer{display:flex;align-items:center;gap:10px;min-height:46px;padding:0 6px 0 4px;border:1px solid #ffffff14;border-radius:12px;background:#ffffff06;cursor:pointer;transition:transform .15s;position:relative}
+.st-layer.is-sel{border-color:#ff4655;background:#ff465514}
+.st-layer.is-drag{transition:none;z-index:2;background:#1b2030;box-shadow:0 8px 24px #0008}
+.st-layer.is-hidden .st-lname,.st-layer.is-hidden .st-sw{opacity:.35}
+.st-grip{width:28px;height:44px;display:grid;place-items:center;color:#7d8699;cursor:grab;touch-action:none;letter-spacing:-2px;user-select:none}
+.st-sw{width:26px;height:26px;display:grid;place-items:center;font:700 14px var(--f-display);font-style:normal;border-radius:6px;background:#ffffff0d}
+.st-sw svg.st-i{width:16px;height:16px}
+.st-sw.is-fill svg.st-i{fill:currentColor}
+.st-lname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:13px var(--f-sans);color:#dfe4ec}
+.st-lk svg.st-i{width:14px;height:14px;color:#ff8f98}
+#studio .st-eye{width:40px;height:40px;min-height:0;display:grid;place-items:center;border:0;background:none;color:#cfd6e2;cursor:pointer}
+#studio .st-eye[aria-pressed=true] .eye-slash{display:none}
+#studio .st-reset{width:100%;margin-top:22px}
 #studio [data-studio-show][aria-pressed=true] .eye-slash{display:none}#studio .st-btn[data-studio-show][aria-pressed=true]{background:#ffffff08;border-color:#ffffff1f;color:#e9edf4}#studio [data-studio-show][aria-pressed=false]{color:#ff8f98;border-color:#ff465599}
 #studio .st-btn[aria-pressed=true]{background:#ff465526;border-color:#ff4655;color:#ff8f98}
 #studio .st-btn:disabled{opacity:.35;cursor:default}
@@ -919,10 +937,16 @@ body.studio-on #tune,body.studio-on #wtune{z-index:100;visibility:visible!import
   #studio .st-dock .st-btn{flex:1 1 0;min-width:0;padding:0}
   #studio .st-dock select{flex:0 1 92px;min-width:0;max-width:92px;padding:0 6px}
   #studio .st-rail .st-btn{height:52px}
+  #studio .st-rail.st-rail-decor{left:var(--st-gap);top:auto;bottom:calc(max(var(--st-gap),env(safe-area-inset-bottom)) + var(--st-dock) + 12px)}
   .st-context,#studio.panel-closed .st-context{left:var(--st-gap);right:var(--st-gap);width:auto;max-width:none}
   .st-context input[type=text]{flex:1 1 120px;width:auto}
   .st-context input[type=range]{width:90px}
   #studio:has(.studio-panel:not([hidden])) .st-context{display:none}
+}
+@media(max-width:900px) and (max-height:520px){
+  #studio .st-rail.st-rail-decor{left:calc(var(--st-gap) * 1.5 + var(--st-rail));top:calc(max(var(--st-gap),env(safe-area-inset-top)) + 64px);bottom:auto}
+  #studio .st-rail .st-btn{height:40px;font-size:0;gap:0}
+  .st-rail-label{display:none}
 }
 /* The post-loader choice and the independent, scroll-driven world atelier. */
 html.route-lock,html.route-lock body{overflow:hidden!important;overscroll-behavior:none}
@@ -1610,6 +1634,6 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.27cee8f41c.js", 391394]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.c232f7167b.js", 397091]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>
