@@ -590,7 +590,7 @@ body.is-exploring .fab,body.tune-open .fab,body.wtune-open .fab,body.obuild-open
 /* orbit builder */
 .tune.obuild{z-index:9}
 body.obuild-open main,body.obuild-open .labels,body.obuild-open .worldword{opacity:0!important;pointer-events:none!important;transition:opacity .5s}
-.ob-pal{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:0 0 14px}
+.ob-pal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 14px}
 .ob-pal button{display:grid;justify-items:center;gap:6px;padding:12px 2px 10px;border:1px solid var(--line-2);font:600 9.5px var(--f-cond);letter-spacing:.06em;min-width:0;overflow-wrap:anywhere;text-transform:uppercase;color:var(--ink-2);touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
 .ob-pal button i{font-style:normal;font-size:18px;line-height:1;color:var(--val)}
 .ob-pal button:hover{border-color:var(--val);color:var(--ink)}
@@ -1749,6 +1749,7 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
     <button type="button" data-ob-add="orbit"><i>&#9711;</i>Orbit</button>
     <button type="button" data-ob-add="belt"><i>&#8942;</i>Particles</button>
     <button type="button" data-ob-add="cloud"><i>&#9729;</i>Dust cloud</button>
+    <button type="button" data-ob-add="pattern"><i>&#10023;</i>Pattern</button>
   </div>
   <p class="tune-sub">In orbit</p>
   <ul class="ob-list" data-ob-list></ul>
@@ -2187,6 +2188,14 @@ const OrbitBuilder = (() => {
       <label class="tune-row"><span>Tail</span><input type="range" min="0.4" max="2.2" step="0.05" value="${P.size}" data-k="size"><b data-out>${P.size.toFixed(2)}</b></label>
       <label class="tune-row"><span>Stretch</span><input type="range" min="0.2" max="0.85" step="0.01" value="${P.ecc}" data-k="ecc"><b data-out>${P.ecc.toFixed(2)}</b></label>`;
     else if (it.type === 'orbit') body = `<div class="tune-row"><span>Colour</span><div class="ob-cols"><input type="color" value="${P.color}" data-k="color"></div></div>`;
+    else if (it.type === 'pattern') body = `
+      <div class="tune-row"><span>Colours</span><div class="ob-cols"><input type="color" value="${P.color}" data-k="color"><input type="color" value="${P.color2}" data-k="color2"></div></div>
+      <label class="tune-row"><span>Ellipses</span><input type="range" min="3" max="80" step="1" value="${P.count}" data-k="count"><b data-out>${P.count.toFixed(0)}</b></label>
+      <label class="tune-row"><span>Squash</span><input type="range" min="0.15" max="1" step="0.01" value="${P.squash}" data-k="squash"><b data-out>${P.squash.toFixed(2)}</b></label>
+      <label class="tune-row"><span>Tilt</span><input type="range" min="0" max="90" step="1" value="${P.tilt}" data-k="tilt"><b data-out>${P.tilt.toFixed(0)}</b></label>
+      <label class="tune-row"><span>Fan</span><input type="range" min="0" max="360" step="5" value="${P.fan}" data-k="fan"><b data-out>${P.fan.toFixed(0)}</b></label>
+      <label class="tune-row"><span>Glow</span><input type="range" min="0" max="1" step="0.05" value="${P.glow}" data-k="glow"><b data-out>${P.glow.toFixed(2)}</b></label>
+      <label class="tune-row"><span>Spin</span><input type="range" min="-0.6" max="0.6" step="0.02" value="${P.spin}" data-k="spin"><b data-out>${P.spin.toFixed(2)}</b></label>`;
     else body = `
       <div class="tune-row"><span>Colour</span><div class="ob-cols"><input type="color" value="${P.color}" data-k="color"></div></div>
       <label class="tune-row"><span>Amount</span><input type="range" min="0.2" max="3" step="0.05" value="${P.amount}" data-k="amount"><b data-out>${P.amount.toFixed(2)}</b></label>
@@ -2210,7 +2219,7 @@ const OrbitBuilder = (() => {
       };
       li.querySelectorAll('input[data-k]').forEach(el => {
         const k = el.dataset.k;
-        if (el.type === 'range') el.addEventListener('input', () => { pctOf(el); el.parentElement.querySelector('[data-out]').textContent = (+el.value).toFixed(2); });
+        if (el.type === 'range') el.addEventListener('input', () => { pctOf(el); el.parentElement.querySelector('[data-out]').textContent = (+el.value).toFixed(+el.step % 1 ? 2 : 0); });
         el.addEventListener(el.type === 'text' ? 'input' : 'change', () => commit(k, el.type === 'range' ? +el.value : el.value, el.type !== 'text'));
       });
       li.querySelectorAll('[data-seg]').forEach(g => g.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
@@ -2245,7 +2254,7 @@ const OrbitBuilder = (() => {
       const cv = document.getElementById('gl'); if (!cv || !PlanetBody.camera) return null;
       const p = C.planePoint(x, y, PlanetBody.camera, cv.getBoundingClientRect()); if (!p) return null;
       const r = Math.hypot(p.x, p.z); if (r < 2.5 || r > 34) return null;
-      const s = drag.type === 'orbit' ? { r, snapped: false } : C.snap(r);
+      const s = drag.type === 'orbit' || drag.type === 'pattern' ? { r, snapped: false } : C.snap(r);
       return { r: s.r, snapped: s.snapped, a: Math.atan2(p.z, p.x) };
     };
     P.querySelectorAll('[data-ob-add]').forEach(b => {
@@ -2313,7 +2322,7 @@ const OrbitBuilder = (() => {
     const cv = document.getElementById('gl'); if (!cv || !PlanetBody.camera) return null;
     const p = C.planePoint(x, y, PlanetBody.camera, cv.getBoundingClientRect()); if (!p) return null;
     const r = Math.hypot(p.x, p.z); if (r < 2.5 || r > 34) return null;
-    const sn = armed === 'orbit' ? { r, snapped: false } : C.snap(r);
+    const sn = armed === 'orbit' || armed === 'pattern' ? { r, snapped: false } : C.snap(r);
     return { r: sn.r, snapped: sn.snapped, a: Math.atan2(p.z, p.x) };
   };
   const onScene = e => isOpen() && !!armed && !panel().contains(e.target) && !(e.target.closest && e.target.closest('.hud,.rail,.fab,.picker,.ob-ghost,button,a,input'));
@@ -2322,13 +2331,13 @@ const OrbitBuilder = (() => {
     addEventListener('pointermove', e => {
       if (!onScene(e)) { if (isOpen()) C.showPreview(picked ? picked.r : null, true); return; }
       const s = aim(e.clientX, e.clientY);
-      C.showPreview(s ? s.r : null, s && (s.snapped || armed === 'orbit'));
+      C.showPreview(s ? s.r : null, s && (s.snapped || armed === 'orbit' || armed === 'pattern'));
     }, { passive: true });
     // Swallow scene clicks while building so they place things instead of poking the core or a world.
     addEventListener('pointerdown', e => {
       if (!onScene(e)) return;
       downAt = [e.clientX, e.clientY]; e.stopPropagation();
-      const s = aim(e.clientX, e.clientY); C.showPreview(s ? s.r : null, s && (s.snapped || armed === 'orbit'));   // touch has no hover: light the line on contact
+      const s = aim(e.clientX, e.clientY); C.showPreview(s ? s.r : null, s && (s.snapped || armed === 'orbit' || armed === 'pattern'));   // touch has no hover: light the line on contact
     }, true);
     addEventListener('click', e => { if (onScene(e)) e.stopPropagation(); }, true);
     // Not armed: a tap near an orbit line selects (and lights) that line.
@@ -5927,7 +5936,8 @@ const CREATION_TYPES = {
   comet: { label: 'Comet', icon: '&#10022;', color: '#bfefff' },
   orbit: { label: 'Orbit line', icon: '&#9711;', color: '#dfe4ea' },
   belt: { label: 'Particle belt', icon: '&#8942;', color: '#ffc94d' },
-  cloud: { label: 'Dust cloud', icon: '&#9729;', color: '#b48cff' }
+  cloud: { label: 'Dust cloud', icon: '&#9729;', color: '#b48cff' },
+  pattern: { label: 'Orbit pattern', icon: '&#10023;', color: '#ff4655' }
 };
 const PLANET_NAMES = ['Vesper', 'Oriel', 'Nyx', 'Halcyon', 'Ember', 'Solace', 'Cinder', 'Lumen', 'Morrow', 'Quill', 'Rune', 'Thalia'];
 
@@ -5990,7 +6000,8 @@ class Creations {
       comet: { color: '#bfefff', size: 1, ecc: 0.62 },
       orbit: { color: '#dfe4ea' },
       belt: { color: '#ffc94d', amount: 1, width: 1.2 },
-      cloud: { color: '#b48cff', amount: 1, spread: 2.2 }
+      cloud: { color: '#b48cff', amount: 1, spread: 2.2 },
+      pattern: { color: '#ff4655', color2: '#35c9ff', count: 24, squash: .55, tilt: 62, fan: 150, glow: .6, spin: .08 }
     }[type];
   }
   pointMat(color, soft) {
@@ -6006,6 +6017,20 @@ class Creations {
       const g = circleGeometry(1, 360), m = new THREE.LineDashedMaterial({ color: P.color, dashSize: 0.01, gapSize: 0.008, transparent: true, opacity: 0, depthWrite: false });
       const line = new THREE.Line(g, m); line.computeLineDistances(); line.rotation.x = Math.PI / 2; line.scale.setScalar(it.r);
       root.add(line); track(g, m); it.line = line; it.baseOpacity = 0.45;
+    } else if (it.type === 'pattern') {
+      // N tilted ellipses fanned around the centre, colour blended A->B, drawn additive; two faint enlarged copies give the glow.
+      const n = Math.max(2, Math.round(P.count)), seg = 160, pos = new Float32Array(n * seg * 6), col = new Float32Array(n * seg * 6), c1 = new THREE.Color(P.color), c2 = new THREE.Color(P.color2), tc = new THREE.Color();
+      const tilt = P.tilt * Math.PI / 180, fan = P.fan * Math.PI / 180, ct = Math.cos(tilt), st = Math.sin(tilt);
+      for (let i = 0; i < n; i++) {
+        const f = i / (n - 1), ang = (f - 0.5) * fan, ca = Math.cos(ang), sa = Math.sin(ang); tc.copy(c1).lerp(c2, f);
+        for (let s = 0; s < seg; s++) for (let e = 0; e < 2; e++) {
+          const t = (s + e) / seg * Math.PI * 2, px = Math.cos(t), pz = Math.sin(t) * P.squash, py = -pz * st, z1 = pz * ct, o = ((i * seg + s) * 2 + e) * 3;
+          pos[o] = px * ca + z1 * sa; pos[o + 1] = py; pos[o + 2] = -px * sa + z1 * ca; col[o] = tc.r; col[o + 1] = tc.g; col[o + 2] = tc.b;
+        }
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      [1, 1.012, 1.03].forEach(sc => { const m = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }); const l = new THREE.LineSegments(g, m); l.scale.setScalar(it.r * sc); l.frustumCulled = false; root.add(l); it.mats.push(m); });
+      it.geoms.push(g);
     } else if (it.type === 'belt') {
       const n = Math.round(900 * P.amount), orb = new Float32Array(n * 4);
       for (let i = 0; i < n; i++) orb.set([(Math.random() - 0.5) * P.width, Math.random() * 6.283, (Math.random() - 0.5) * 0.25, 0.8 + Math.random() * 1.8], i * 4);
@@ -6091,6 +6116,7 @@ class Creations {
       it.mats.forEach(m => { if (m.uniforms && m.uniforms.uPixelRatio) m.uniforms.uPixelRatio.value = f.pixelRatio; });
       const k = Math.min(1, it.t * 1.5), fade = on * smootherstep(k);
       if (it.type === 'orbit') { it.mats[0].opacity = fade * it.baseOpacity * f.orbitVis; }
+      else if (it.type === 'pattern') { const PP = it.params; it.mats[0].opacity = fade * 0.8; it.mats[1].opacity = fade * PP.glow * 0.4; it.mats[2].opacity = fade * PP.glow * 0.2; it.root.rotation.y = it.a0 + t * PP.spin; }
       else if (it.type === 'belt') { const u = it.mats[0].uniforms; u.uTime.value = t; u.uOpacity.value = fade * 0.9; }
       else if (it.type === 'cloud' || it.type === 'planet') {
         const a = it.a0 + t * KEPLER / Math.pow(it.r, 1.5);
