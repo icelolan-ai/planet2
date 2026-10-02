@@ -1294,6 +1294,7 @@ html,body{touch-action:pan-x pan-y}
 #studio .st-chip.st-wide{width:100%;margin-top:6px}
 @media(max-width:480px){body #studio .st-dock:not(.is-v) .st-label{display:none!important}body #studio .st-dock:not(.is-v) .is-sel .st-label,body #studio .st-dock:not(.is-v) .is-sel>.st-label{display:inline!important}body #studio .st-dock>.st-btn:not(.st-dock-fold),body #studio .st-group>.st-btn{min-width:0!important;overflow:hidden}body #studio .st-dock select{flex:0 0 58px!important;max-width:58px!important}}
 @media(max-width:480px){body #studio .st-dock>[data-studio-tune]:not(.is-sel){flex:1 1 0!important;min-width:0!important;max-width:44px!important;width:auto!important;padding:0 2px!important}body #studio .st-dock>.st-btn:not(.st-dock-fold):not(.is-sel),body #studio .st-dock>.st-group:not(:has(.is-sel))>.st-btn{max-width:44px}}
+.pc-sw{display:flex;flex-wrap:wrap;gap:8px}.pc-sw button{width:34px;height:34px;border-radius:50%;border:2px solid #ffffff55;background:var(--c);padding:0;cursor:pointer;box-shadow:0 2px 8px #0006}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -1713,6 +1714,14 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
         <button type="button" data-v="ice" style="--c1:#7fe9ff;--c2:#4f8dff">Ice</button>
         <button type="button" data-v="toxic" style="--c1:#9dff4c;--c2:#2fd08a">Toxic</button>
       </div></div>
+    <p class="tune-sub">Paint everything</p>
+    <div class="tune-row"><span>Colouring</span><div class="tune-seg" data-t-pmode><button type="button" data-v="original" aria-pressed="true">Original</button><button type="button" data-v="solid" aria-pressed="false">One colour</button><button type="button" data-v="gradient" aria-pressed="false">Gradient</button></div></div>
+    <label class="tune-row"><span>Colour A</span><input type="color" data-t-pa value="#ff4655" aria-label="Colour A"></label>
+    <label class="tune-row"><span>Colour B</span><input type="color" data-t-pb value="#8b5cf6" aria-label="Colour B"></label>
+    <div class="tune-row tall"><span>Quick colours</span><div class="tune-grid pc-sw" data-t-psw><button type="button" style="--c:#14161c" data-pc="#14161c" aria-label="Black"></button><button type="button" style="--c:#ff3344" data-pc="#ff3344" aria-label="Red"></button><button type="button" style="--c:#8b5cf6" data-pc="#8b5cf6" aria-label="Violet"></button><button type="button" style="--c:#3b82f6" data-pc="#3b82f6" aria-label="Blue"></button><button type="button" style="--c:#22d3a0" data-pc="#22d3a0" aria-label="Mint"></button><button type="button" style="--c:#ffb347" data-pc="#ffb347" aria-label="Amber"></button><button type="button" style="--c:#ffffff" data-pc="#ffffff" aria-label="White"></button></div></div>
+    <div class="tune-row tall"><span>Gradients</span><div class="tune-grid themes" data-t-pgr><button type="button" data-pg="#ff4655|#8b5cf6" style="--c1:#ff4655;--c2:#8b5cf6">Crimson-Violet</button><button type="button" data-pg="#3b82f6|#ef3b6f" style="--c1:#3b82f6;--c2:#ef3b6f">Blue-Rose</button><button type="button" data-pg="#14161c|#8b5cf6" style="--c1:#14161c;--c2:#8b5cf6">Ink-Violet</button><button type="button" data-pg="#ffb347|#ff3344" style="--c1:#ffb347;--c2:#ff3344">Fire</button><button type="button" data-pg="#22d3a0|#3b82f6" style="--c1:#22d3a0;--c2:#3b82f6">Aurora</button><button type="button" data-pg="#f5f5f7|#6b7280" style="--c1:#f5f5f7;--c2:#6b7280">Mono</button></div></div>
+    <div class="tune-row"><span>Blend</span><div class="tune-seg" data-t-pink><button type="button" data-v="auto" aria-pressed="true">Auto</button><button type="button" data-v="glow" aria-pressed="false">Glow</button><button type="button" data-v="ink" aria-pressed="false">Ink</button></div></div>
+    <p class="tune-hint">Auto draws dark ink on light studio backgrounds so nothing disappears.</p>
     <div class="tune-row"><span>Neon</span>
       <div class="tune-sw" role="group" aria-label="Neon colour" data-t-sw>
         <button type="button" style="--c:#b44cff" data-c="#b44cff" aria-label="Neon purple"></button>
@@ -2600,6 +2609,17 @@ const WorldTune = (() => {
     const dir = seg('[data-t-dir]', v => call('setDirection', v));
     const band = seg('[data-t-band]', v => call('setBand', !!v, null));
     const inner = seg('[data-t-inner]', v => call('setInner', !!v));
+    const pcfg = { mode: 'original', a: '#ff4655', b: '#8b5cf6', ink: 'auto' };
+    const pmodeBtns = qa('[data-t-pmode] button'), pinkBtns = qa('[data-t-pink] button'), pa = q('[data-t-pa]'), pb = q('[data-t-pb]');
+    const pushPaint = () => { const b = body(); if (!b) return; b.paint = { ...pcfg }; b.applyPaint(true); save(); };
+    const showPaint = () => { pmodeBtns.forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === pcfg.mode))); pinkBtns.forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === pcfg.ink))); pa.value = pcfg.a; pb.value = pcfg.b; pb.closest('.tune-row').hidden = pcfg.mode !== 'gradient'; pa.closest('.tune-row').hidden = pcfg.mode === 'original'; };
+    pmodeBtns.forEach(x => x.addEventListener('click', () => { pcfg.mode = x.dataset.v; showPaint(); pushPaint(); }));
+    pinkBtns.forEach(x => x.addEventListener('click', () => { pcfg.ink = x.dataset.v; showPaint(); pushPaint(); }));
+    pa.addEventListener('input', () => { pcfg.a = pa.value; if (pcfg.mode === 'original') pcfg.mode = 'solid'; showPaint(); pushPaint(); });
+    pb.addEventListener('input', () => { pcfg.b = pb.value; showPaint(); pushPaint(); });
+    qa('[data-t-psw] button').forEach(x => x.addEventListener('click', () => { pcfg.a = x.dataset.pc; pcfg.mode = 'solid'; showPaint(); pushPaint(); }));
+    qa('[data-t-pgr] button').forEach(x => x.addEventListener('click', () => { [pcfg.a, pcfg.b] = x.dataset.pg.split('|'); pcfg.mode = 'gradient'; showPaint(); pushPaint(); }));
+    showPaint();
     const shellSel = k => q(`[data-t-shape-${k}]`);
     ['outer', 'inner', 'nucleus'].forEach(k => shellSel(k).addEventListener('change', e => { const b = body(); if (!b) return; b.setShell(k, e.target.value); if (k === 'inner') inner.set(e.target.value === 'off' ? 0 : 1); save(); }));
     const ptr = seg('[data-t-ptr]', v => call('setPointer', v, null));
@@ -2787,7 +2807,7 @@ const WorldTune = (() => {
       return { density: b.density, structure: LAYER_U.uStructure.value, speed: b.speed, dir: b.dir, shape: b.shape, neon: hex(b.uNeon.value), theme: b.theme || 'nebula',
         rings: b.ringCount, layers: LAYER_U.uLayerCol.value.map(c => '#' + c.getHexString()), layerVisible: [...LAYER_U.uLayerVisible.value], layerValues: Object.fromEntries(Object.entries(layerKey).map(([k, u]) => [k, [...LAYER_U[u].value]])), comets: b.cometState(), bands: b.bandCount, swarm: b.swarmAmt, swsize: b.swarmMat.uniforms.uSize.value, swcolor: hex(b.swarmMat.uniforms.uColor.value), band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
         clarity: +clar.value, rim: +rim.value, inner: b.inner.show, haze: b.hazeDensity, frate: b.uFlareRate.value, famt: b.uFlareAmt.value, fcolor: '#' + b.uFlareColor.value.getHexString(),
-        ptr: b.ptrMode, ptrs: b.ptrStrength, shells: { ...b.shellKind },
+        ptr: b.ptrMode, ptrs: b.ptrStrength, shells: { ...b.shellKind }, paint: { ...pcfg },
         lens: LENS_U.uLensOn.value, aberr: LENS_U.uLensAberr.value, blur: LENS_U.uLensBlur.value, bloom: LENS_U.uLensBloom.value };
     }
     function save() { const s = snapshot(); if (s) try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {} }
@@ -2811,6 +2831,7 @@ const WorldTune = (() => {
       if (s.swarm != null) { b.setSwarm(s.swarm, s.swsize, s.swcolor); setRange(swarm, s.swarm, pct); setRange(swsize, s.swsize, times); swarmC.set(s.swcolor); }
       b.setGlass(s.clarity, s.rim); setRange(clar, s.clarity, times); setRange(rim, s.rim, v => v.toFixed(2));
       b.setInner(s.inner); inner.set(s.inner ? 1 : 0);
+      if (s.paint) { Object.assign(pcfg, s.paint); showPaint(); b.paint = { ...pcfg }; b.applyPaint(true); }
       if (s.shells) ['outer', 'inner', 'nucleus'].forEach(k => { if (s.shells[k]) { b.setShell(k, s.shells[k]); shellSel(k).value = s.shells[k]; } });
       b.setHaze(s.haze); setRange(haze, s.haze, pct);
       b.setFlare(s.frate, s.famt); if (s.fcolor) { b.setFlareColor(s.fcolor); flareC.set(s.fcolor); } setRange(frate, s.frate, times); setRange(famt, s.famt, times);
@@ -4316,6 +4337,7 @@ class PlanetBody {
     this.inner = glass(0.64, 0.4, 'Inner sphere');
     this.nucleus = glass(0.3, 0.5, 'Nucleus'); this.nucleus.show = false; this.nucleus.alpha = 0.8;
     this.shells = [this.outer, this.inner, this.nucleus]; this.shellKind = { outer: 'sphere', inner: 'sphere', nucleus: 'off' };
+    this.paint = { mode: 'original', a: '#ff4655', b: '#8b5cf6', ink: 'auto' };
 
     this.blockMat = new THREE.ShaderMaterial({
       uniforms: { uColor: { value: new THREE.Color('#c9ccd6') }, uHiColor: this.uHiColor, uOpacity: { value: 0 }, uHi: { value: 0 } },
@@ -4603,6 +4625,37 @@ class PlanetBody {
     const h = this.hazeBase;
     this.hazeGeom.setDrawRange(0, Math.round(h.puffs * Math.min(1, this.hazeDensity)) + Math.round(h.motes * this.hazeDensity));
   }
+  /* Paint everything: one colour or a gradient across every ring, layer, shell, particle and band. Ink mode draws with normal blending so dark colours show on light backgrounds. */
+  lightBg() { const st = window.__cerebra && window.__cerebra.studio; return !!(st && st.active && st.isLightBg && st.isLightBg()); }
+  paintAll(mode, a, b) { this.paint = { mode, a, b }; this.applyPaint(true); }
+  applyPaint(force) {
+    const P = this.paint || (this.paint = { mode: 'original', a: '#ff4655', b: '#8b5cf6', ink: 'auto' }), light = this.lightBg();
+    const ink = P.ink === 'ink' || (P.ink === 'auto' && light);
+    let mode = P.mode, a = P.a, b = P.b;
+    if (mode === 'original' && ink && light) { mode = 'solid'; a = '#14161c'; }
+    const key = mode + a + b + ink; if (!force && key === this._paintKey) return; this._paintKey = key;
+    if (!this._bak) this._bak = { layers: LAYER_U.uLayerCol.value.map(c => c.clone()), comet: this.cometMat.uniforms.uColor.value.clone(), swarm: this.swarmMat.uniforms.uColor.value.clone(), flare: this.uFlareColor.value.clone(), hi: this.uHiColor.value.clone() };
+    if (mode === 'original') {
+      if (this._painted) { this._painted = false;
+      this.setTheme(this.theme || 'nebula');
+      LAYER_U.uLayerCol.value.forEach((c, i) => c.copy(this._bak.layers[i]));
+      this.cometMat.uniforms.uColor.value.copy(this._bak.comet); this.swarmMat.uniforms.uColor.value.copy(this._bak.swarm); this.uFlareColor.value.copy(this._bak.flare); this.uHiColor.value.copy(this._bak.hi); }
+    } else {
+      this._painted = true;
+      const A = new THREE.Color(a), B = new THREE.Color(mode === 'gradient' ? b : a), at = t => A.clone().lerp(B, t), hx = c => '#' + c.getHexString();
+      this.setNeon(hx(at(0))); this.setMetal(hx(at(.5))); this.hazeMat.uniforms.uBlue.value.copy(at(1));
+      this.outer.mat.uniforms.uColor.value.copy(at(1)); this.inner.mat.uniforms.uColor.value.copy(at(.5)); this.nucleus.mat.uniforms.uColor.value.copy(at(0));
+      this.uTint.value.copy(at(.5)); this.uTintAmt.value = 1;
+      const n = this.runners.length || 1;
+      this.runners.forEach((rn, i) => { rn.common.uTint.value.copy(at(i / Math.max(1, n - 1))); rn.common.uTintAmt.value = 1; rn.tinted = true; });
+      LAYER_U.uLayerCol.value.forEach((c, i) => c.copy(at(i / 4)));
+      this.cometMat.uniforms.uColor.value.copy(at(1)); this.swarmMat.uniforms.uColor.value.copy(at(.5)); this.uFlareColor.value.copy(at(0)); this.uHiColor.value.copy(at(1));
+    }
+    this.setBlend(ink);
+  }
+  setBlend(ink) {
+    this.group.traverse(o => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach(m => { if (m.userData.b0 == null) m.userData.b0 = m.blending; if (m.userData.b0 !== THREE.AdditiveBlending) return; const nb = ink ? THREE.NormalBlending : THREE.AdditiveBlending; if (m.blending !== nb) { m.blending = nb; m.needsUpdate = true; } }); });
+  }
   setNeon(hex) { this.uNeon.value.set(hex); }
   setFlareColor(hex) { this.uFlareColor.value.set(hex); }
   setSpeed(s) { this.speed = clamp(s, 0, 4); }
@@ -4801,6 +4854,7 @@ class PlanetBody {
     this.uPtr.value.copy(f.pointer);
     this.uPtrAmt.value = damp1(this.uPtrAmt.value, this.ptrMode * this.ptrStrength, 6);
 
+    if (this.paint && (this.paint.mode !== 'original' || this.paint.ink !== 'glow' || this._paintKey)) this.applyPaint(false);
     // Highlights ease in and out.
     const hiOf = it => (it === this.selected ? 1 : it === this.hover ? 0.6 : 0);
     this.shells.forEach(it => {
@@ -8422,6 +8476,10 @@ class CoreStudio {
       this.commit();
     };
     pad.addEventListener('pointerup', finish); pad.addEventListener('pointercancel', finish);
+  }
+  isLightBg() {
+    const lum = h => { const m = /^#?([0-9a-f]{6})$/i.exec(h || ''); if (!m) return 0; const n = parseInt(m[1], 16); return (.2126 * (n >> 16) + .7152 * ((n >> 8) & 255) + .0722 * (n & 255)) / 255; };
+    const m = this.background; if (m === 'white') return true; if (m === 'solid' || m === 'points') return lum(this.bgA) > .62; if (m === 'gradient') return (lum(this.bgA) + lum(this.bgB)) / 2 > .62; return false;
   }
   paintGuides() {
     const c = this.guideCv; if (!c) return; const D = this.drawSet, W = innerWidth, H = innerHeight, d = Math.min(devicePixelRatio || 1, 2);
