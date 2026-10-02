@@ -7985,7 +7985,7 @@ class CoreStudio {
     ctx('font').onchange = withText((it, el) => { it.font = el.value; });
     ctx('size').oninput = withText((it, el) => { it.size = +el.value; el.nextElementSibling.textContent = `${it.size}`; });
     ctx('color').oninput = withText((it, el) => { it.color = el.value; });
-    ctx('fill').oninput = e => { const it = this.sel; if (it && it.decor) { it.fill = e.target.value; this.place(it); this.renderLayers(); } };
+    ctx('fill').oninput = e => { const it = this.sel; if (it && it.decor) { it.fill = e.target.value; if (it.st && !it.st.fillOn) it.st.lineColor = it.fill; this.place(it); this.renderLayers(); } };
     ctx('opacity').oninput = e => { const it = this.sel; if (it && it.decor) { it.opacity = +e.target.value; e.target.nextElementSibling.textContent = `${Math.round(it.opacity * 100)}%`; this.place(it); } };
     ['fill', 'opacity'].forEach(k => ctx(k).addEventListener('change', () => this.commit()));
     ctx('blur').oninput = e => { this.blur = +e.target.value; e.target.nextElementSibling.textContent = `${this.blur}px`; this.updateFocus(); };
@@ -8265,7 +8265,7 @@ class CoreStudio {
     if (kind !== 'text') {
       it.w = o.w ?? .32; it.h = o.h ?? .32; if (kind === 'stroke') { it.w0 = o.w0 ?? it.w; it.h0 = o.h0 ?? it.h; }
       if (it.decor) { it.fill = o.fill ?? '#ff3d8a'; it.opacity = o.opacity ?? .85; }
-      it.st = { fillOn: !!it.decor, lineOn: !it.decor && false, lineColor: '#ffffff', lineW: 2, dash: 'solid', pattern: 'none', ...(o.st || {}) };
+      it.st = { fillOn: false, lineOn: !!it.decor, lineColor: it.decor ? (it.fill || '#ffffff') : '#ffffff', lineW: 3, dash: 'solid', pattern: 'none', ...(o.st || {}) };
     }
     const el = document.createElement('div'); it.el = el;
     if (kind === 'text') { el.className = 'st-item st-text'; el.tabIndex = 0; el.textContent = it.content; el.setAttribute('aria-label', 'Poster text, tap to edit'); }
