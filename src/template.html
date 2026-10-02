@@ -7808,6 +7808,7 @@ class WorldAtelier {
 /* Visual kit: procedural overlays for the studio. One draw() serves the screen and the saved poster, seeded so every redraw looks identical. */
 const mulberry32 = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const KIT_ANIM = new WeakMap();
+const KIT_TEX = new WeakMap();
 const kitEsc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const KIT_MAX = { rows: 12, hud: 64, rings: 40, radial: 400, arc: 12, label: 120, ticks: 720, dots: 6000, bars: 200, tracks: 16 };
 const KIT_FONTS = { display: '"Bebas Neue","Oswald",Impact,sans-serif', sans: '"Barlow",system-ui,sans-serif', cond: '"Barlow Condensed","Barlow",sans-serif', mono: '"Geist Mono",ui-monospace,Menlo,monospace', valorant: '"Valorant","Bebas Neue",sans-serif' };
@@ -7890,6 +7891,45 @@ const KIT = {
           g.beginPath(); g.moveTo(cx, cy + dir * px * .6); g.lineTo(cx, cy + dir * px * 1.8); g.stroke(); g.fillStyle = it.fill; g.textBaseline = up ? 'bottom' : 'top'; g.fillText(kitFit(g, lab.toUpperCase(), sx * 1.6), cx, cy + dir * px * 2.1);
           if (val) { g.globalAlpha = a0 * .7; g.textBaseline = up ? 'bottom' : 'top'; g.font = kitFont({ ...p, weight: '400' }, px * .8); g.fillText(kitFit(g, val, sx * 1.6), cx, cy + dir * (px * 2.1 + px * 1.1)); g.globalAlpha = a0; g.font = kitFont(p, px); } });
       }
+    },
+  },
+  texture: {
+    label: 'Texture', cover: true, blend: 'overlay', thumbK: .6,
+    defaults: { type: 'paper', amount: .5, scale: 1, count: 60, folds: 60, c2: '#000000', reach: .45 },
+    ui: [{ k: 'type', t: 'select', label: 'Texture', opts: [['paper', 'Paper grain'], ['grain', 'Film grain'], ['crumple', 'Crumpled paper'], ['scratches', 'Scratches'], ['vignette', 'Vignette']] },
+      { k: 'amount', t: 'range', label: 'Strength', min: .05, max: 1, step: .05, pct: 1 },
+      { k: 'scale', t: 'range', label: 'Grain size', min: .5, max: 6, step: .25, when: ['type', ['grain', 'paper']] },
+      { k: 'folds', t: 'range', label: 'Folds', min: 8, max: 200, step: 1, when: ['type', 'crumple'] }, { k: 'count', t: 'range', label: 'Scratches', min: 5, max: 300, step: 1, when: ['type', 'scratches'] },
+      { k: 'reach', t: 'range', label: 'Clear centre', min: 0, max: .9, step: .05, pct: 1, when: ['type', 'vignette'] }, { k: 'c2', t: 'color', label: 'Shade colour', when: ['type', ['vignette', 'crumple']] }],
+    draw(g, it, x, y, w, h, k) {
+      const p = it.p, W = Math.max(1, Math.round(w)), H = Math.max(1, Math.round(h)), a0 = g.globalAlpha;
+      if (p.type === 'vignette') { const R = Math.hypot(w, h) / 2, gr = g.createRadialGradient(x + w / 2, y + h / 2, R * p.reach * .9, x + w / 2, y + h / 2, R * 1.02); const c = p.c2; gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, c); g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip(); g.globalAlpha = a0 * p.amount; g.fillStyle = gr; g.fillRect(x, y, w, h); g.restore(); return; }
+      const key = JSON.stringify([p, it.seed, it.fill, W, H, k]); let c = KIT_TEX.get(it);
+      if (!c || c.key !== key) {
+        const oc = document.createElement('canvas'); oc.width = W; oc.height = H; const o = oc.getContext('2d'), r = mulberry32(it.seed), am = p.amount, bs = Math.max(1, Math.round(p.scale * k));
+        const noise = (sz, a) => { const cw = Math.ceil(W / sz), ch = Math.ceil(H / sz), t = document.createElement('canvas'); t.width = cw; t.height = ch; const tg = t.getContext('2d'), im = tg.createImageData(cw, ch), d = im.data;
+          for (let i = 0; i < cw * ch; i++) { const v = r(), q = i * 4, lite = v > .5; d[q] = d[q + 1] = d[q + 2] = lite ? 255 : 0; d[q + 3] = Math.abs(v - .5) * 2 * 255 * a; }
+          tg.putImageData(im, 0, 0); o.imageSmoothingEnabled = sz < 2; o.drawImage(t, 0, 0, cw * sz, ch * sz); };
+        if (p.type === 'grain') noise(bs, am);
+        else if (p.type === 'paper') {
+          o.save(); for (let i = 0; i < 14; i++) { const cx = r() * W, cy = r() * H, rr = (.15 + r() * .35) * Math.max(W, H), gr = o.createRadialGradient(cx, cy, 0, cx, cy, rr); gr.addColorStop(0, `rgba(${r() < .5 ? '255,255,255' : '0,0,0'},${.1 * am})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); o.fillStyle = gr; o.fillRect(0, 0, W, H); } o.restore();
+          noise(bs, am * .55); o.lineCap = 'round'; const nf = Math.min(1800, Math.round(W * H / 2600));
+          for (let i = 0; i < nf; i++) { const sx = r() * W, sy = r() * H, a = r() * Math.PI * 2, L = (6 + r() * 26) * k, bend = (r() - .5) * L; o.strokeStyle = r() < .55 ? `rgba(255,255,255,${.16 * am})` : `rgba(0,0,0,${.14 * am})`; o.lineWidth = Math.max(.5, (.5 + r() * .6) * k); o.beginPath(); o.moveTo(sx, sy); o.quadraticCurveTo(sx + Math.cos(a) * L / 2 - Math.sin(a) * bend, sy + Math.sin(a) * L / 2 + Math.cos(a) * bend, sx + Math.cos(a) * L, sy + Math.sin(a) * L); o.stroke(); }
+        } else if (p.type === 'crumple') {
+          const n = Math.max(2, Math.round(Math.sqrt(p.folds * W / H))), m = Math.max(2, Math.round(p.folds / n)), pts = [];
+          for (let j = 0; j <= m; j++) { pts.push([]); for (let i = 0; i <= n; i++) pts[j].push([i / n * W + (i && i < n ? (r() - .5) * W / n * .9 : 0), j / m * H + (j && j < m ? (r() - .5) * H / m * .9 : 0)]); }
+          const tri = (a, b2, c2, light) => { o.beginPath(); o.moveTo(a[0], a[1]); o.lineTo(b2[0], b2[1]); o.lineTo(c2[0], c2[1]); o.closePath(); o.fillStyle = light ? `rgba(255,255,255,${r() * .32 * am})` : `rgba(0,0,0,${r() * .32 * am})`; o.fill(); };
+          for (let j = 0; j < m; j++) for (let i = 0; i < n; i++) { const a = pts[j][i], b2 = pts[j][i + 1], c2 = pts[j + 1][i + 1], d = pts[j + 1][i]; if (r() < .5) { tri(a, b2, c2, r() < .5); tri(a, c2, d, r() < .5); } else { tri(a, b2, d, r() < .5); tri(b2, c2, d, r() < .5); } }
+          o.lineWidth = Math.max(.6, k * .8); o.strokeStyle = `rgba(0,0,0,${.28 * am})`; o.beginPath(); for (let j = 0; j <= m; j++) for (let i = 0; i <= n; i++) { const a = pts[j][i]; if (i < n && r() < .6) { o.moveTo(a[0], a[1]); o.lineTo(pts[j][i + 1][0], pts[j][i + 1][1]); } if (j < m && r() < .6) { o.moveTo(a[0], a[1]); o.lineTo(pts[j + 1][i][0], pts[j + 1][i][1]); } } o.stroke();
+        } else {
+          const n = Math.min(300, p.count | 0), base = r() * Math.PI; o.lineCap = 'round';
+          for (let i = 0; i < n; i++) { const sx = r() * W, sy = r() * H, a = base + (r() < .7 ? (r() - .5) * .35 : r() * Math.PI), L = (.05 + Math.pow(r(), 2.2) * .7) * Math.max(W, H), bend = (r() - .5) * L * .08;
+            o.strokeStyle = it.fill; o.globalAlpha = (.12 + r() * .55) * am; o.lineWidth = Math.max(.5, (.4 + r() * .9) * k); o.beginPath(); o.moveTo(sx, sy); o.quadraticCurveTo(sx + Math.cos(a) * L / 2 - Math.sin(a) * bend, sy + Math.sin(a) * L / 2 + Math.cos(a) * bend, sx + Math.cos(a) * L, sy + Math.sin(a) * L); o.stroke(); }
+          o.globalAlpha = 1;
+        }
+        c = { key, cv: oc }; KIT_TEX.set(it, c);
+      }
+      g.drawImage(c.cv, x, y, w, h);
     },
   },
   hud: {
@@ -8806,7 +8846,7 @@ class CoreStudio {
     if (kind !== 'text') {
       it.w = o.w ?? .32; it.h = o.h ?? .32; if (kind === 'stroke') { it.w0 = o.w0 ?? it.w; it.h0 = o.h0 ?? it.h; }
       if (it.decor) { it.fill = o.fill ?? '#ff3d8a'; it.opacity = o.opacity ?? .85; }
-      if (kind === 'kit') { it.decor = true; it.kit = KIT[o.kit] ? o.kit : 'rings'; it.p = { ...KIT[it.kit].defaults, ...(o.p || {}) }; it.seed = o.seed ?? (Math.random() * 1e9 | 0); it.fill = o.fill ?? '#e8ecf5'; it.opacity = o.opacity ?? 1; it.w = o.w ?? KIT[it.kit].size?.[0] ?? .38; it.h = o.h ?? KIT[it.kit].size?.[1] ?? .38; }
+      if (kind === 'kit') { it.decor = true; it.kit = KIT[o.kit] ? o.kit : 'rings'; it.p = { ...KIT[it.kit].defaults, ...(o.p || {}) }; it.seed = o.seed ?? (Math.random() * 1e9 | 0); it.fill = o.fill ?? '#e8ecf5'; it.opacity = o.opacity ?? 1; if (KIT[it.kit].blend) it.blend = o.blend ?? KIT[it.kit].blend; it.w = o.w ?? (KIT[it.kit].cover ? (innerWidth + 4) / this.U() : KIT[it.kit].size?.[0] ?? .38); it.h = o.h ?? (KIT[it.kit].cover ? (innerHeight + 4) / this.U() : KIT[it.kit].size?.[1] ?? .38); if (KIT[it.kit].cover) { it.x = o.x ?? .5; it.y = o.y ?? .5; } }
       it.st = { fillOn: false, lineOn: !!it.decor, lineColor: it.decor ? (it.fill || '#ffffff') : '#ffffff', lineW: 3, dash: 'solid', pattern: 'none', ...(o.st || {}) };
     }
     const el = document.createElement('div'); it.el = el;
