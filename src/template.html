@@ -1333,6 +1333,23 @@ html,body{touch-action:pan-x pan-y}
 .st-item.is-selected{z-index:6}
 .st-handle::after{content:"";position:absolute;inset:-14px;border-radius:50%}
 @media(pointer:coarse){.st-handle{width:28px;height:28px;right:-14px;bottom:-14px}}
+/* Layer menu */
+.st-layer .st-eye,.st-ghead .st-eye{width:32px!important;min-width:32px!important;height:34px!important;padding:0!important}
+.st-layer{gap:4px!important}
+.st-layer .st-ldel{display:none}
+.st-layer .st-lname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.st-lmenu{position:fixed;z-index:200;padding:8px;border-radius:22px;max-height:min(70vh,560px);overflow-y:auto;display:flex;flex-direction:column;gap:2px;pointer-events:auto}
+.st-lmenu[hidden]{display:none}
+.st-lm-i{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:42px;padding:0 14px;border:0;border-radius:12px;background:transparent;color:#eef0f6;font:500 15px var(--f-sans);text-align:left;cursor:pointer}
+.st-lm-i:hover{background:#ffffff1a}.st-lm-i:disabled{opacity:.35;cursor:default}
+.st-lm-i i{font:600 10px var(--f-cond);font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:#c9a8ff}
+.st-lm-i.is-on{background:var(--cyg);color:#fff}.st-lm-i.is-on i{color:#fff}
+.st-lm-h{display:flex;align-items:center;gap:10px;padding:2px 6px 8px;border-bottom:1px solid #ffffff22;margin-bottom:4px}
+.st-lm-h button{border:0;background:#ffffff18;color:#fff;border-radius:10px;min-height:34px;padding:0 10px;font:600 12px var(--f-sans)}
+.st-lm-h b{font:600 12px var(--f-cond);letter-spacing:.12em;text-transform:uppercase;color:#d9ccff}
+.st-mask-note{display:none;font:600 11px var(--f-cond);letter-spacing:.06em;text-transform:uppercase;color:#33e0a0;text-align:center}
+#studio .st-assist.is-mask .st-mask-note{display:block}
+.st-item.is-ref{outline:1px dashed #ffffff55}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -7940,7 +7957,7 @@ class CoreStudio {
       el.addEventListener('change', () => this.commit());
     });
     document.addEventListener('pointerdown', e => { if (!e.target.closest('.st-fly,[data-flyout]')) this.closeFly(); }, true);
-    this.initDraw(); this.initRotate();
+    this.initDraw(); this.initRotate(); this.initLayerMenu();
     ['[data-t-aberr]', '[data-t-blur]', '[data-t-bloom]', '[data-t-speed]', '[data-t-zoom]', '[data-t-density]', '[data-t-thick]', '[data-t-rim]', '[data-t-haze]', '[data-t-frate]', '[data-t-famt]', '[data-t-ptrs]', '[data-t-gain]', '[data-studio-light]', '[data-studio-light-x]', '[data-studio-shadow]', '[data-studio-shadow-soft]', '[data-studio-angle]', '[data-studio-blur]', '[data-studio-effect-amount]'].forEach(s => this.knobify(document.querySelector(s)));
     document.querySelectorAll('#tune,#wtune,#obuild').forEach(el => this.dialDeck(el, '.tune-row', true));
     this.el.querySelectorAll('.studio-panel').forEach(el => this.dialDeck(el, '.studio-control', false));
@@ -8327,7 +8344,7 @@ class CoreStudio {
       Object.assign(el.style, { left: `${it.x * 100}%`, top: `${it.y * 100}%`, fontFamily: family[it.font], fontSize: `${it.size}px`, color: it.color, fontWeight: it.weight, letterSpacing: `${it.ls}em`, textTransform: it.upper ? 'uppercase' : 'none', textAlign: { l: 'left', c: 'center', r: 'right' }[it.align] });
       el.style.setProperty('--ax', { l: '0%', c: '-50%', r: '-100%' }[it.align]);
     } else { const U = this.U(); Object.assign(el.style, { left: `${it.x * W - it.w * U / 2}px`, top: `${it.y * H - it.h * U / 2}px`, width: `${it.w * U}px`, height: `${it.h * U}px` }); if (it.decor) { el.style.color = it.fill; el.style.setProperty('--op', it.opacity); } this.drawShapeSvg(it, it.w * U, it.h * U); }
-    el.hidden = !!this.isHid(it); el.style.opacity = it.alpha ?? 1; el.style.setProperty('--rot', (it.rot || 0) + 'deg'); if (it === this.sel) this.updateRotHandle();
+    el.hidden = !!this.isHid(it); el.style.opacity = (it.alpha ?? 1) * (it.ref ? .45 : 1); el.style.mixBlendMode = it.blend && it.blend !== 'normal' ? it.blend : ''; el.style.pointerEvents = it.ref ? 'none' : ''; el.classList.toggle('is-ref', !!it.ref); el.style.setProperty('--rot', (it.rot || 0) + 'deg'); if (it === this.sel) this.updateRotHandle();
     const lock = el.querySelector('.st-lock');
     if (lock) { lock.innerHTML = it.locked ? this.icons.lock : this.icons.unlock; lock.setAttribute('aria-label', it.locked ? 'Unlock shape' : 'Lock shape in place'); }
   }
@@ -8401,11 +8418,20 @@ class CoreStudio {
   }
   shapeD(kind, w, h, it) { if (kind === 'stroke') return this.strokeD(it, w, h); return kind === 'circle' ? `M0 ${h / 2}A${w / 2} ${h / 2} 0 1 0 ${w} ${h / 2}A${w / 2} ${h / 2} 0 1 0 0 ${h / 2}Z` : kind === 'tri' ? `M${w / 2} 0L${w} ${h}L0 ${h}Z` : `M0 0H${w}V${h}H0Z`; }
   dashArr(s) { const w = s.lineW; return s.dash === 'dashed' ? [w * 4, w * 3] : s.dash === 'dotted' ? [0.01, w * 2.2] : []; }
+  maskSvg(it, w, h) {
+    if (!it.mask || !it.mask.on) return '';
+    return `<mask id="mk${it.id}" maskUnits="userSpaceOnUse" x="0" y="0" width="${w}" height="${h}"><rect width="${w}" height="${h}" fill="#fff"/>${(it.mask.strokes || []).map(m => `<path d="${this.maskD(m.pts, w, h)}" fill="none" stroke="${m.mode === 'hide' ? '#000' : '#fff'}" stroke-width="${m.size}" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}</mask>`;
+  }
+  maskD(pts, w, h, x = 0, y = 0) { if (!pts.length) return ''; if (pts.length === 1) return `M${x + pts[0][0] * w} ${y + pts[0][1] * h}l0.01 0`; return 'M' + pts.map(q => `${x + q[0] * w} ${y + q[1] * h}`).join('L'); }
   drawShapeSvg(it, w, h) {
     const svg = it.el.querySelector('svg.st-outline'); if (!svg) return;
+    const mk = this.maskSvg(it, w, h), wrapO = mk ? `<g mask="url(#mk${it.id})">` : '', wrapC = mk ? '</g>' : '';
     if (it.kind === 'stroke' && it.strokes) {
       svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-      svg.innerHTML = it.strokes.map(st => `<path d="${this.strokeD(it, w, h, 0, 0, st.pts)}" fill="none" stroke="${st.color}" stroke-width="${st.size}" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${this.dashArr({ lineW: st.size, dash: st.dash }).join(' ')}" opacity="${st.opacity}"/>`).join('') + `<path class="st-guide" d="${this.strokeD(it, w, h)}"/>`;
+      const sp = st => `<path d="${this.strokeD(it, w, h, 0, 0, st.pts)}" fill="none" stroke="${st.color}" stroke-width="${st.size}" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${this.dashArr({ lineW: st.size, dash: st.dash }).join(' ')}" opacity="${st.opacity}"/>`;
+      const base = it.strokes.filter(x => !x.clip), clip = it.strokes.filter(x => x.clip);
+      const am = clip.length ? `<mask id="al${it.id}" maskUnits="userSpaceOnUse" x="0" y="0" width="${w}" height="${h}">${base.map(st => `<path d="${this.strokeD(it, w, h, 0, 0, st.pts)}" fill="none" stroke="#fff" stroke-width="${st.size}" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}</mask>` : '';
+      svg.innerHTML = `<defs>${mk}${am}</defs>${wrapO}${base.map(sp).join('')}${clip.length ? `<g mask="url(#al${it.id})">${clip.map(sp).join('')}</g>` : ''}${wrapC}<path class="st-guide" d="${this.strokeD(it, w, h)}"/>`;
       return;
     }
     const s = it.st, d = this.shapeD(it.kind, w, h, it), id = 'p' + it.id, col = it.decor ? it.fill : s.lineColor;
@@ -8415,17 +8441,32 @@ class CoreStudio {
     const patt = pat ? `<path d="${d}" fill="url(#${id})" opacity="${it.decor ? it.opacity : 1}"/>` : '';
     const line = s.lineOn ? `<path d="${d}" fill="none" stroke="${col}" stroke-width="${s.lineW}" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${this.dashArr(s).join(' ')}" opacity="${it.decor ? it.opacity : 1}"/>` : '';
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-    svg.innerHTML = `<defs>${pat}</defs>${fill}${patt}${line}<path class="st-guide" d="${d}"/>`;
+    svg.innerHTML = `<defs>${pat}${mk}</defs>${wrapO}${fill}${patt}${line}${wrapC}<path class="st-guide" d="${d}"/>`;
   }
   // Canvas version for exports; x/y/w/h in output pixels.
+  blendOp(it) { const b = it.blend || 'normal'; return b === 'normal' ? 'source-over' : b === 'plus-lighter' ? 'lighter' : b; }
   drawShapeCanvas(g, it, x, y, w, h, k) {
-    if (!it.rot) return this.drawShapeCanvas0(g, it, x, y, w, h, k);
-    const cx = x + w / 2, cy = y + h / 2; g.save(); g.translate(cx, cy); g.rotate(it.rot * Math.PI / 180); g.translate(-cx, -cy); this.drawShapeCanvas0(g, it, x, y, w, h, k); g.restore();
+    const rot = (c, fn) => { if (!it.rot) return fn(c); const cx = x + w / 2, cy = y + h / 2; c.save(); c.translate(cx, cy); c.rotate(it.rot * Math.PI / 180); c.translate(-cx, -cy); fn(c); c.restore(); };
+    if (it.mask && it.mask.on) {
+      const W = g.canvas.width, H = g.canvas.height, t = document.createElement('canvas'); t.width = W; t.height = H; const tg = t.getContext('2d');
+      rot(tg, c => this.drawShapeCanvas0(c, it, x, y, w, h, k));
+      const m = document.createElement('canvas'); m.width = W; m.height = H; const mg = m.getContext('2d');
+      rot(mg, c => { c.fillStyle = '#fff'; c.fillRect(x - w, y - h, w * 3, h * 3); c.lineCap = 'round'; c.lineJoin = 'round'; (it.mask.strokes || []).forEach(q => { c.globalCompositeOperation = q.mode === 'hide' ? 'destination-out' : 'source-over'; c.strokeStyle = '#fff'; c.lineWidth = q.size * k; c.stroke(new Path2D(this.maskD(q.pts, w, h, x, y))); }); });
+      tg.globalCompositeOperation = 'destination-in'; tg.drawImage(m, 0, 0);
+      g.save(); g.globalCompositeOperation = this.blendOp(it); g.drawImage(t, 0, 0); g.restore(); return;
+    }
+    g.save(); g.globalCompositeOperation = this.blendOp(it); rot(g, c => this.drawShapeCanvas0(c, it, x, y, w, h, k)); g.restore();
   }
   drawShapeCanvas0(g, it, x, y, w, h, k) {
     if (it.kind === 'stroke' && it.strokes) {
       g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
-      it.strokes.forEach(st => { g.globalAlpha = st.opacity * (it.alpha ?? 1); g.strokeStyle = st.color; g.lineWidth = st.size * k; g.setLineDash(this.dashArr({ lineW: st.size, dash: st.dash }).map(v => v * k)); g.stroke(new Path2D(this.strokeD(it, w, h, x, y, st.pts))); });
+      const one = (c, st) => { c.globalAlpha = st.opacity * (it.alpha ?? 1); c.strokeStyle = st.color; c.lineWidth = st.size * k; c.setLineDash(this.dashArr({ lineW: st.size, dash: st.dash }).map(v => v * k)); c.stroke(new Path2D(this.strokeD(it, w, h, x, y, st.pts))); };
+      const base = it.strokes.filter(q => !q.clip), clip = it.strokes.filter(q => q.clip); base.forEach(st => one(g, st));
+      if (clip.length) {
+        const W = g.canvas.width, H = g.canvas.height, t = document.createElement('canvas'); t.width = W; t.height = H; const tg = t.getContext('2d'); tg.lineCap = 'round'; tg.lineJoin = 'round'; clip.forEach(st => one(tg, st));
+        const m = document.createElement('canvas'); m.width = W; m.height = H; const mg = m.getContext('2d'); mg.lineCap = 'round'; mg.lineJoin = 'round'; mg.strokeStyle = '#fff'; base.forEach(st => { mg.lineWidth = st.size * k; mg.stroke(new Path2D(this.strokeD(it, w, h, x, y, st.pts))); });
+        tg.globalCompositeOperation = 'destination-in'; tg.drawImage(m, 0, 0); g.globalAlpha = 1; g.setLineDash([]); g.drawImage(t, 0, 0);
+      }
       g.restore(); return;
     }
     const s = it.st, path = this.shapePath(it.kind, w, h, x, y, it), col = it.decor ? it.fill : s.lineColor, a = (it.decor ? it.opacity : 1) * (it.alpha ?? 1);
@@ -8500,7 +8541,7 @@ class CoreStudio {
     // Visible drawing-assist bar (Procreate style): guide type + snap toggle, shown while the pencil is active.
     const bar = document.createElement('div'); bar.className = 'st-assist st-glass';
     const bs = (k, label) => `<label class="st-assist-sl"><span>${label}</span><b data-bo="${k}"></b><input type="range" data-bset="${k}"></label>`;
-    bar.innerHTML = '<div class="st-assist-r0"><div class="st-assist-seg" role="group" aria-label="Tool"><button type="button" data-atool="pen" class="is-on">Pen</button><button type="button" data-atool="erase">Eraser</button></div><label class="st-assist-sl st-esize"><span>Eraser size</span><b data-bo="esize"></b><input type="range" min="6" max="90" step="2" data-eset></label><button type="button" class="st-assist-new" data-anew>+ New layer</button></div><div class="st-assist-r1"><span class="st-assist-t">Drawing Guides</span><div class="st-assist-seg" role="group" aria-label="Guide"><button type="button" data-ag="none">Off</button><button type="button" data-ag="grid">2D Grid</button><button type="button" data-ag="iso">Isometric</button></div><button type="button" class="st-assist-sw" data-asnap role="switch" aria-checked="false"><span>Assisted drawing</span><i></i></button><button type="button" class="st-assist-x" data-adone aria-label="Done drawing">Done</button></div><div class="st-assist-r2">' + bs('gopacity', 'Opacity') + bs('gthick', 'Thickness') + bs('gap', 'Grid size') + '</div>';
+    bar.innerHTML = '<div class="st-mask-note" data-mask-note></div><div class="st-assist-r0"><div class="st-assist-seg" role="group" aria-label="Tool"><button type="button" data-atool="pen" class="is-on">Pen</button><button type="button" data-atool="erase">Eraser</button></div><label class="st-assist-sl st-esize"><span>Eraser size</span><b data-bo="esize"></b><input type="range" min="6" max="90" step="2" data-eset></label><button type="button" class="st-assist-new" data-anew>+ New layer</button></div><div class="st-assist-r1"><span class="st-assist-t">Drawing Guides</span><div class="st-assist-seg" role="group" aria-label="Guide"><button type="button" data-ag="none">Off</button><button type="button" data-ag="grid">2D Grid</button><button type="button" data-ag="iso">Isometric</button></div><button type="button" class="st-assist-sw" data-asnap role="switch" aria-checked="false"><span>Assisted drawing</span><i></i></button><button type="button" class="st-assist-x" data-adone aria-label="Done drawing">Done</button></div><div class="st-assist-r2">' + bs('gopacity', 'Opacity') + bs('gthick', 'Thickness') + bs('gap', 'Grid size') + '</div>';
     this.el.append(bar);
     const poke = (k, v) => { const el = fly.querySelector(`[data-dset="${k}"]`); if (!el) return; if (el.type === 'checkbox') el.checked = v; else el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
     const syncBar = () => {
@@ -8524,7 +8565,7 @@ class CoreStudio {
     bar.querySelector('[data-adone]').addEventListener('click', () => { this.setDrawing(false); this.closeFly(); });
     fly.addEventListener('input', syncBar); syncBar(); this.syncAssistBar = syncBar;
     const btn = this.el.querySelector('[data-studio-draw]');
-    this.setDrawing = on => { this.drawing = on; pad.hidden = !on; this.el.classList.toggle('is-drawing', on); btn.setAttribute('aria-pressed', String(on)); if (on) { this.select(null); this.paintGuides(); this.syncAssistBar && this.syncAssistBar(); } };
+    this.setDrawing = on => { if (!on) { this.maskEdit = null; this.syncMaskBar && this.syncMaskBar(); } this.drawing = on; pad.hidden = !on; this.el.classList.toggle('is-drawing', on); btn.setAttribute('aria-pressed', String(on)); if (on) { this.select(null); this.paintGuides(); this.syncAssistBar && this.syncAssistBar(); } };
     btn.addEventListener('click', () => { if (this.drawing) { this.setDrawing(false); this.closeFly(); } else { this.setDrawing(true); sync(); } });
     this.el.querySelector('[data-draw-done]').onclick = () => { this.setDrawing(false); this.closeFly(); };
     let cur = null;
@@ -8611,11 +8652,12 @@ class CoreStudio {
       const U = this.U(), W = innerWidth, H = innerHeight, sh = this.shift || { x: 0, y: 0 }, D = this.drawSet, pad = Math.max(12, D.size);
       const sk = { color: D.color, size: D.size, opacity: D.opacity, dash: D.dash };
       const t = this.items.find(i => i.kind === 'stroke' && i.drawCur && !i.locked && !i.rot);
+      if (t && t.alphaLock && t.strokes.length) sk.clip = true;
       const all = [{ ...sk, abs: P }];
       if (t) { const k = t.w / t.w0 * U, kh = t.h / t.h0 * U, left = t.x * W + sh.x - t.w * U / 2, top = t.y * H + sh.y - t.h * U / 2; all.unshift(...t.strokes.map(o => ({ ...o, abs: o.pts.map(([u, v]) => [left + u * k, top + v * kh]) }))); }
       const xs = all.flatMap(a => a.abs.map(q => q[0])), ys = all.flatMap(a => a.abs.map(q => q[1])), pd = Math.max(pad, ...all.map(a => a.size));
       const x0 = Math.min(...xs) - pd, y0 = Math.min(...ys) - pd, x1 = Math.max(...xs) + pd, y1 = Math.max(...ys) + pd, w0 = (x1 - x0) / U, h0 = (y1 - y0) / U;
-      const strokes = all.map(a => ({ color: a.color, size: a.size, opacity: a.opacity, dash: a.dash, pts: a.abs.map(q => [+((q[0] - x0) / U).toFixed(4), +((q[1] - y0) / U).toFixed(4)]) }));
+      const strokes = all.map(a => ({ color: a.color, size: a.size, opacity: a.opacity, dash: a.dash, ...(a.clip ? { clip: true } : {}), pts: a.abs.map(q => [+((q[0] - x0) / U).toFixed(4), +((q[1] - y0) / U).toFixed(4)]) }));
       const geo = { x: ((x0 + x1) / 2 - sh.x) / W, y: ((y0 + y1) / 2 - sh.y) / H, w: w0, h: h0, w0, h0 };
       if (t) { Object.assign(t, geo, { strokes }); this.place(t); this.renderLayers(); }
       else this.addItem('stroke', { decor: true, ...geo, strokes, fill: D.color, opacity: 1, drawCur: true, st: { fillOn: false, lineOn: true, lineW: D.size, dash: D.dash, pattern: 'none', lineColor: D.color }, silent: true });
@@ -8737,7 +8779,7 @@ class CoreStudio {
     this.paintVfx();
   }
   fxName(it) { return it.fxType === 'colour' ? `Effect · ${({ chromatic: 'Chromatic', rgb: 'RGB split', color: 'Colour split', vhs: 'VHS', glitch: 'Glitch' })[this.effect] || 'Colour'}` : it.fxType === 'grain' ? 'Film grain' : 'Network'; }
-  label(it) { return it.kind === 'fx' ? this.fxName(it) : it.kind === 'text' ? 'Text' : it.kind === 'stroke' ? 'Drawing' : (it.decor ? '' : 'Focus ') + { tri: 'triangle', rect: 'square', circle: 'circle' }[it.kind]; }
+  label(it) { if (it.name) return it.name; return it.kind === 'fx' ? this.fxName(it) : it.kind === 'text' ? 'Text' : it.kind === 'stroke' ? 'Drawing' : (it.decor ? '' : 'Focus ') + { tri: 'triangle', rect: 'square', circle: 'circle' }[it.kind]; }
   // Photoshop-style layer list: top of the list is the front. Drag ⋮⋮ to restack, the eye hides, a tap selects.
   renderLayers() {
     const ul = this.el.querySelector('[data-studio-objects]'); if (!ul || this.dragLayer) return;
@@ -8748,9 +8790,9 @@ class CoreStudio {
     const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const row = (it, inGroup) => {
       const sw = it.kind === 'fx' ? `<i class="st-sw is-fx">${{ colour: '◐', grain: '▒', network: '⌘' }[it.fxType]}</i>` : it.kind === 'text' ? `<i class="st-sw" style="color:${it.color}">T</i>` : `<i class="st-sw ${it.decor ? 'is-fill' : ''}" style="color:${it.decor ? it.fill : '#fff'}">${this.icons[it.kind]}</i>`;
-      const name = it.kind === 'text' ? esc((it.content || '').split('\n')[0].slice(0, 24) || 'Text') : this.label(it);
+      const name = it.name ? esc(it.name) : it.kind === 'text' ? esc((it.content || '').split('\n')[0].slice(0, 24) || 'Text') : this.label(it);
       const lk = it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-llock${it.locked ? ' is-on' : ''}" aria-pressed="${!!it.locked}" aria-label="${it.locked ? 'Unlock' : 'Lock'} layer">${it.locked ? this.icons.lock : this.icons.unlock}</button>`;
-      return `<li class="st-layer${inGroup ? ' in-group' : ''}${it === this.sel ? ' is-sel' : ''}${it.hide ? ' is-hidden' : ''}${this.isHid(it) && !it.hide ? ' is-ghidden' : ''}" data-layer="${this.items.indexOf(it)}"><span class="st-grip" aria-label="Drag to restack or into a group">⋮⋮</span>${sw}<span class="st-lname">${name}</span>${lk}${it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-ldup" aria-label="Duplicate layer"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg></button>`}<button type="button" class="st-eye" data-leye aria-pressed="${!it.hide}" aria-label="${it.hide ? 'Show' : 'Hide'} layer">${eye}</button><button type="button" class="st-eye st-ldel" aria-label="Delete layer">${this.icons.trash}</button>${it === this.sel ? `<label class="st-lop">Opacity<input type="range" min="0" max="1" step="0.05" value="${it.alpha ?? 1}" aria-label="Layer opacity"><output>${Math.round((it.alpha ?? 1) * 100)}%</output></label>` : ''}</li>`;
+      return `<li class="st-layer${inGroup ? ' in-group' : ''}${it === this.sel ? ' is-sel' : ''}${it.hide ? ' is-hidden' : ''}${this.isHid(it) && !it.hide ? ' is-ghidden' : ''}" data-layer="${this.items.indexOf(it)}"><span class="st-grip" aria-label="Drag to restack or into a group">⋮⋮</span>${sw}<span class="st-lname">${name}</span>${lk}${it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-lmore" aria-haspopup="menu" aria-label="Layer options"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>`}<button type="button" class="st-eye" data-leye aria-pressed="${!it.hide}" aria-label="${it.hide ? 'Show' : 'Hide'} layer">${eye}</button><button type="button" class="st-eye st-ldel" aria-label="Delete layer">${this.icons.trash}</button>${it === this.sel ? `<label class="st-lop">Opacity<input type="range" min="0" max="1" step="0.05" value="${it.alpha ?? 1}" aria-label="Layer opacity"><output>${Math.round((it.alpha ?? 1) * 100)}%</output></label>` : ''}</li>`;
     };
     const head = g => { const m = this.items.filter(i => i.group === g.id), allLocked = m.length && m.every(i => i.locked); return `<li class="st-ghead${g.hide ? ' is-hidden' : ''}" data-gid="${g.id}"><button type="button" class="st-eye st-gtog" aria-expanded="${!g.collapsed}" aria-label="${g.collapsed ? 'Expand' : 'Collapse'} group"><span class="st-chev${g.collapsed ? ' is-closed' : ''}" aria-hidden="true"></span></button>${folder}<span class="st-lname st-gname" data-gname>${esc(g.name)}</span><span class="st-gcount">${m.length}</span><button type="button" class="st-eye st-glock${allLocked ? ' is-on' : ''}" aria-pressed="${!!allLocked}" aria-label="Lock group">${allLocked ? this.icons.lock : this.icons.unlock}</button><button type="button" class="st-eye st-geye" aria-pressed="${!g.hide}" aria-label="${g.hide ? 'Show' : 'Hide'} group">${eye}</button><button type="button" class="st-eye st-gdel" aria-label="Ungroup">${this.icons.trash}</button></li>`; };
     const seen = new Set(), out = [];
@@ -8775,11 +8817,12 @@ class CoreStudio {
     ul.querySelectorAll('.st-layer').forEach(li => {
       const it = this.items[+li.dataset.layer];
       li.querySelector('.st-ldel').addEventListener('click', () => this.removeItem(it));
-      const dp = li.querySelector('.st-ldup'); if (dp) dp.addEventListener('click', () => this.dupItem(it));
+      const mo = li.querySelector('.st-lmore'); if (mo) mo.addEventListener('click', e => { e.stopPropagation(); this.openLayerMenu(it, li); });
+      li.addEventListener('contextmenu', e => { if (it.kind !== 'fx') { e.preventDefault(); this.openLayerMenu(it, li); } });
       const lk = li.querySelector('.st-llock'); if (lk) lk.addEventListener('click', () => this.lockItem(it, !it.locked));
       const op = li.querySelector('.st-lop input');
       if (op) { op.addEventListener('input', () => { it.alpha = +op.value; op.nextElementSibling.textContent = `${Math.round(it.alpha * 100)}%`; this.place(it); }); op.addEventListener('change', () => this.commit()); }
-      li.addEventListener('click', e => { if (e.target.closest('.st-eye,.st-grip,.st-lop')) return; if (!this.isHid(it)) this.select(it); });
+      li.addEventListener('click', e => { if (e.target.closest('.st-eye,.st-grip,.st-lop,.st-gedit')) return; if (!this.isHid(it)) this.select(it); });
       li.querySelector('[data-leye]').addEventListener('click', () => { it.hide = !it.hide; if (it.hide && this.sel === it) this.select(null); this.place(it); this.updateFocus(); this.renderLayers(); this.commit(); });
       const grip = li.querySelector('.st-grip');
       grip.addEventListener('pointerdown', e => {
@@ -8828,6 +8871,87 @@ class CoreStudio {
     if (k !== j + 1) { this.items.splice(k, 1); this.items.splice(j + 1, 0, n); this.items.forEach(i => this.stage.append(i.el)); }
     this.place(n); this.updateFocus(); this.select(n); this.commit(); return n;
   }
+  // ---- Layer menu (Procreate style): Rename, Select, Copy, Fill, Clear, Alpha Lock, Mask, Drawing Assist, Invert, Reference, Blend ----
+  initLayerMenu() {
+    const m = this.lmenu = document.createElement('div'); m.className = 'st-lmenu st-glass'; m.hidden = true; m.setAttribute('role', 'menu'); this.el.append(m);
+    document.addEventListener('pointerdown', e => { if (!m.hidden && !e.target.closest('.st-lmenu,.st-lmore')) this.closeLayerMenu(); }, true);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') this.closeLayerMenu(); });
+    const pad = this.drawPad, ink = this.ink;
+    // Mask editing: pen hides, eraser reveals (strokes live in the layer's own 0..1 space).
+    let cur = null;
+    const local = (it, x, y) => { const W = innerWidth, H = innerHeight, sh = this.shift || { x: 0, y: 0 }, U = this.U(), cx = it.x * W + sh.x, cy = it.y * H + sh.y, a = -(it.rot || 0) * Math.PI / 180, dx = x - cx, dy = y - cy, rx = dx * Math.cos(a) - dy * Math.sin(a), ry = dx * Math.sin(a) + dy * Math.cos(a); return [+(rx / (it.w * U) + .5).toFixed(4), +(ry / (it.h * U) + .5).toFixed(4)]; };
+    pad.addEventListener('pointerdown', e => {
+      if (!this.maskEdit || e.button !== 0) return; e.preventDefault(); e.stopImmediatePropagation(); pad.setPointerCapture(e.pointerId);
+      const it = this.maskEdit, hide = this.drawTool !== 'erase', size = hide ? this.drawSet.size * 3 : this.drawSet.esize;
+      cur = { id: e.pointerId, it, mode: hide ? 'hide' : 'show', size, pts: [local(it, e.clientX, e.clientY)], scr: [[e.clientX, e.clientY]] };
+      ink.setAttribute('stroke', hide ? '#ff3355' : '#33e0a0'); ink.setAttribute('stroke-width', size); ink.setAttribute('opacity', .6); ink.setAttribute('stroke-dasharray', ''); ink.setAttribute('d', `M${e.clientX} ${e.clientY}l0.01 0`);
+    }, true);
+    pad.addEventListener('pointermove', e => { if (!cur || e.pointerId !== cur.id) return; e.stopImmediatePropagation(); cur.pts.push(local(cur.it, e.clientX, e.clientY)); cur.scr.push([e.clientX, e.clientY]); ink.setAttribute('d', 'M' + cur.scr.map(q => q.join(' ')).join('L')); }, true);
+    const fin = e => { if (!cur || e.pointerId !== cur.id) return; e.stopImmediatePropagation(); const c = cur; cur = null; ink.setAttribute('d', ''); const mk = c.it.mask; if (!mk) return; mk.strokes.push({ mode: c.mode, size: c.size, pts: c.pts }); this.place(c.it); this.commit(); };
+    pad.addEventListener('pointerup', fin, true); pad.addEventListener('pointercancel', fin, true);
+  }
+  closeLayerMenu() { if (!this.lmenu) return; this.lmenu.hidden = true; this.lmenuIt = null; }
+  openLayerMenu(it, li, view = 'main') {
+    const m = this.lmenu; if (!m || it.kind === 'fx') return; this.lmenuIt = it; m.hidden = false; m.innerHTML = '';
+    const BL = [["normal", "Normal"], ["multiply", "Multiply"], ["darken", "Darken"], ["color-burn", "Color Burn"], ["lighten", "Lighten"], ["screen", "Screen"], ["color-dodge", "Color Dodge"], ["plus-lighter", "Add"], ["overlay", "Overlay"], ["soft-light", "Soft Light"], ["hard-light", "Hard Light"], ["difference", "Difference"], ["exclusion", "Exclusion"], ["hue", "Hue"], ["saturation", "Saturation"], ["color", "Color"], ["luminosity", "Luminosity"]];
+    const item = (label, fn, o = {}) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'st-lm-i' + (o.on ? ' is-on' : ''); b.setAttribute('role', 'menuitem'); b.disabled = !!o.off; b.innerHTML = `<span>${label}</span>${o.tag ? `<i>${o.tag}</i>` : ''}`; b.onclick = () => { fn(); if (!o.keep) this.closeLayerMenu(); }; m.append(b); };
+    if (view === 'blend') {
+      const h = document.createElement('div'); h.className = 'st-lm-h'; h.innerHTML = '<button type="button">‹ Back</button><b>Blend mode</b>'; h.firstChild.onclick = () => this.openLayerMenu(it, li); m.append(h);
+      BL.forEach(([v, n]) => item(n, () => { it.blend = v === 'normal' ? null : v; this.place(it); this.commit(); this.renderLayers(); }, { on: (it.blend || 'normal') === v }));
+    } else {
+      const strokeish = it.kind === 'stroke', maskable = it.kind !== 'text';
+      item('Rename', () => this.renameLayer(it));
+      item('Select', () => { this.select(it); });
+      item('Copy', () => this.dupItem(it));
+      item('Fill Layer', () => this.fillLayer(it), { tag: 'current colour' });
+      item('Clear', () => this.clearLayer(it));
+      item('Alpha Lock', () => { it.alphaLock = !it.alphaLock; if (it.alphaLock) this.armDrawOn(it); this.commit(); this.renderLayers(); }, { on: !!it.alphaLock, off: !strokeish, tag: strokeish ? (it.alphaLock ? 'on' : '') : 'drawings' });
+      item(it.mask && it.mask.on ? 'Edit Mask' : 'Mask', () => this.editMask(it), { off: !maskable, tag: it.mask && it.mask.on ? 'on' : '' });
+      if (it.mask && it.mask.on) item('Delete Mask', () => { it.mask = null; if (this.maskEdit === it) this.setDrawing(false); this.place(it); this.commit(); });
+      item('Drawing Assist', () => { it.assist = !it.assist; if (it.assist) this.armAssist(it); this.commit(); this.renderLayers(); }, { on: !!it.assist, off: !strokeish, tag: strokeish ? (it.assist ? 'on' : '') : 'drawings' });
+      item('Invert', () => this.invertLayer(it));
+      item('Reference', () => { it.ref = !it.ref; if (it.ref && this.sel === it) this.select(null); this.place(it); this.updateFocus(); this.commit(); this.renderLayers(); }, { on: !!it.ref, tag: it.ref ? 'on' : '' });
+      item('Delete', () => this.removeItem(it));
+      item('Blend mode', () => this.openLayerMenu(it, li, 'blend'), { keep: true, tag: (BL.find(b => b[0] === (it.blend || 'normal')) || [0, 'Normal'])[1] + ' ›' });
+    }
+    const r = li.getBoundingClientRect(), mw = 230; m.style.width = mw + 'px'; m.style.left = '0px'; m.style.top = '0px';
+    const mh = m.offsetHeight; let left = r.left - mw - 10; if (left < 8) left = Math.min(innerWidth - mw - 8, r.right + 10);
+    m.style.left = left + 'px'; m.style.top = Math.max(8, Math.min(innerHeight - mh - 8, r.top - 8)) + 'px';
+  }
+  renameLayer(it) {
+    const li = this.el.querySelector(`.st-layer[data-layer="${this.items.indexOf(it)}"] .st-lname`); if (!li) return;
+    const inp = document.createElement('input'); inp.type = 'text'; inp.className = 'st-gedit'; inp.maxLength = 28; inp.value = it.name || (it.kind === 'text' ? (it.content || '').split('\n')[0] : this.label(it)); li.replaceWith(inp);
+    setTimeout(() => { inp.focus(); inp.select(); }, 30);
+    const done = () => { const v = inp.value.trim(); it.name = v || null; this.renderLayers(); this.commit(); };
+    inp.addEventListener('blur', done); inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); if (e.key === 'Escape') { inp.value = ''; inp.blur(); } e.stopPropagation(); });
+  }
+  armDrawOn(it) { this.items.forEach(i => { i.drawCur = i === it; }); this.setTool && this.setTool('move'); if (!this.drawing) this.setDrawing(true); if (this.setDrawTool) this.setDrawTool('pen'); }
+  armAssist(it) { if (this.drawSet.guide === 'none') { this.drawSet.guide = 'grid'; } this.drawSet.assist = true; this.armDrawOn(it); this.paintGuides(); this.syncAssistBar && this.syncAssistBar(); try { localStorage.setItem('cerebra-studio-pencil', JSON.stringify(this.drawSet)); } catch (e) {} }
+  fillLayer(it) {
+    const c = this.drawSet.color;
+    if (it.kind === 'text') it.color = c;
+    else if (it.kind === 'stroke') (it.strokes || []).forEach(st => { st.color = c; });
+    else { it.fill = c; it.st.fillOn = true; it.decor = true; it.opacity = it.opacity ?? 1; }
+    this.place(it); this.renderLayers(); this.updateFocus(); this.commit();
+  }
+  clearLayer(it) {
+    if (it.kind === 'stroke') { it.strokes = []; if (it.mask) it.mask.strokes = []; }
+    else if (it.kind === 'text') { it.content = ''; it.el.textContent = ''; }
+    else { it.st.fillOn = false; it.st.pattern = 'none'; it.st.lineOn = false; }
+    this.place(it); this.renderLayers(); this.updateFocus(); this.commit();
+  }
+  invertLayer(it) {
+    const inv = h => { const m = /^#?([0-9a-f]{6})$/i.exec(h || ''); if (!m) return h; const n = 0xffffff - parseInt(m[1], 16); return '#' + n.toString(16).padStart(6, '0'); };
+    if (it.kind === 'text') it.color = inv(it.color);
+    else if (it.kind === 'stroke') (it.strokes || []).forEach(st => { st.color = inv(st.color); });
+    else { if (it.fill) it.fill = inv(it.fill); if (it.st) it.st.lineColor = inv(it.st.lineColor); }
+    this.place(it); this.renderLayers(); this.commit();
+  }
+  editMask(it) {
+    if (!it.mask || !it.mask.on) it.mask = { on: true, strokes: [] };
+    this.maskEdit = it; this.place(it); if (!this.drawing) this.setDrawing(true); this.setDrawTool && this.setDrawTool('pen'); this.syncMaskBar(); this.commit();
+  }
+  syncMaskBar() { const b = this.el.querySelector('.st-assist'); if (b) b.classList.toggle('is-mask', !!this.maskEdit); const n = this.el.querySelector('[data-mask-note]'); if (n) n.textContent = this.maskEdit ? `Mask: Pen hides · Eraser reveals (${this.maskEdit.name || this.label(this.maskEdit)})` : ''; }
   addGroup() {
     const g = { id: Date.now() + Math.floor(Math.random() * 1000), name: `Group ${this.groups.length + 1}`, hide: false, collapsed: false };
     this.groups.push(g); if (this.sel && this.sel.kind !== 'fx') this.sel.group = g.id; this.renderLayers(); this.commit();
@@ -8901,7 +9025,7 @@ class CoreStudio {
       const bitmap=await createImageBitmap(blob), out=document.createElement('canvas');out.width=width;out.height=height;
       const g=out.getContext('2d'),sx=width/this.app.stage.width,sy=height/this.app.stage.height;
       g.drawImage(bitmap,0,0);bitmap.close();
-      const U=this.U(),shapes=this.items.filter(i=>i.kind!=='text'&&i.kind!=='fx'&&!i.decor&&!this.isHid(i));
+      const U=this.U(),shapes=this.items.filter(i=>i.kind!=='text'&&i.kind!=='fx'&&!i.decor&&!i.ref&&!this.isHid(i));
       if(shapes.length&&(this.blur>0||this.dim>0)){
         const blurred=document.createElement('canvas');blurred.width=width;blurred.height=height;
         const b=blurred.getContext('2d');b.drawImage(softBlur(out,this.blur*Math.max(sx,sy)),0,0);if(this.dim>0){b.fillStyle=`rgba(0,0,0,${this.dim})`;b.fillRect(0,0,width,height);}
@@ -8922,8 +9046,8 @@ class CoreStudio {
         g.restore();
       };
       this.items.filter(i=>!this.isHid(i)).forEach(i=>{
-        if(i.kind==='fx')return;
-        if(i.kind==='text'){drawText(i.el,i.rot);return;}
+        if(i.kind==='fx'||i.ref)return;
+        if(i.kind==='text'){g.save();g.globalCompositeOperation=this.blendOp(i);drawText(i.el,i.rot);g.restore();return;}
         const U2=this.U()*sx,ww=i.w*U2,hh=i.h*U2*(sy/sx);this.drawShapeCanvas(g,i,i.x*width-ww/2,i.y*height-hh/2,ww,hh,sx);});
       // Crop to the poster: the band under the side menus is not part of the composition.
       let fin=out;
