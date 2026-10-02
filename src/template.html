@@ -825,7 +825,7 @@ body.studio-on #studio{display:block}
 #studio svg.st-i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .st-glass{background:#0d1018f2;border:1px solid #ffffff1f;border-radius:18px;box-shadow:0 18px 50px #0006}
 @media(pointer:fine){.st-glass{background:#0d1018e6;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}}
-@media(pointer:coarse){:not(.st-glass):not(.st-fly){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
+@media(pointer:coarse){:not(.st-glass):not(.st-fly):not(.st-glassbox){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
 #studio .st-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;min-width:44px;padding:0 14px;border:1px solid #ffffff1f;border-radius:12px;background:#ffffff08;color:#e9edf4;cursor:pointer;transition:background .2s,border-color .2s,color .2s;white-space:nowrap}
 #studio .st-btn:hover{background:#ffffff14;border-color:#ffffff40}
 #studio .st-rail.st-rail-decor{left:calc(var(--st-gap) * 1.5 + var(--st-rail))}
@@ -1680,6 +1680,7 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .st-fly select,#studio .st-fly input[type=text]{max-width:100%;min-width:0;text-overflow:ellipsis}
 #studio .st-fly .st-fly-row>span{overflow-wrap:anywhere}
 #studio .st-fly [hidden]{display:none!important}
+#studio .st-glassbox{position:absolute;pointer-events:none}
 </style>
 </head>
 <body class="is-loading">
@@ -7808,15 +7809,89 @@ class WorldAtelier {
 const mulberry32 = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const KIT_ANIM = new WeakMap();
 const kitEsc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const KIT_MAX = { hud: 64, rings: 40, radial: 400, arc: 12, label: 120, ticks: 720, dots: 6000, bars: 200, tracks: 16 };
+const KIT_MAX = { rows: 12, hud: 64, rings: 40, radial: 400, arc: 12, label: 120, ticks: 720, dots: 6000, bars: 200, tracks: 16 };
 const KIT_FONTS = { display: '"Bebas Neue","Oswald",Impact,sans-serif', sans: '"Barlow",system-ui,sans-serif', cond: '"Barlow Condensed","Barlow",sans-serif', mono: '"Geist Mono",ui-monospace,Menlo,monospace', valorant: '"Valorant","Bebas Neue",sans-serif' };
 const KIT_FONT_OPTS = [['mono', 'Geist Mono'], ['sans', 'Barlow'], ['cond', 'Barlow Condensed'], ['display', 'Bebas Neue'], ['valorant', 'Valorant']];
 const KIT_WEIGHTS = [['400', 'Regular'], ['500', 'Medium'], ['700', 'Bold']];
 const kitFont = (p, px) => `${p.weight || 500} ${px}px ${KIT_FONTS[p.font] || KIT_FONTS.sans}`;
 // Canvas text needs the web font loaded first; resolves true when something had to be waited for.
 const kitFontWait = it => { const f = it.p && it.p.font ? kitFont(it.p, 16) : null; return f && document.fonts && !document.fonts.check(f) ? document.fonts.load(f).then(() => true, () => false) : Promise.resolve(false); };
+const kitRR = (g, x, y, w, h, r) => { r = Math.max(0, Math.min(r, w / 2, h / 2)); g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else { g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); } };
+// "Label: 40", "Label | 40" or "Label<tab>40" per line -> [label, value]
+const kitRows = t => String(t).split('\n').map(l => l.trim()).filter(Boolean).slice(0, KIT_MAX.rows).map(l => { const m = l.match(/^(.*?)\s*(?:[:|\t])\s*(.*)$/); return m ? [m[1], m[2]] : [l, '']; });
+const kitNum = v => { const n = parseFloat(String(v).replace(/[^0-9.\-]/g, '')); return isFinite(n) ? n : 0; };
+const kitFit = (g, t, max) => { while (t.length > 1 && g.measureText(t).width > max) t = t.slice(0, -1); return t; };
+const GLASS = {
+  geom(p, w, h) { const L = p.pointer === 'none' ? 0 : Math.min(w, h) * p.pointLen; let x = 0, y = 0, bw = w, bh = h; if (p.pointer === 'left') { x = L; bw = w - L; } else if (p.pointer === 'right') bw = w - L; else if (p.pointer === 'top') { y = L; bh = h - L; } else if (p.pointer === 'bottom') bh = h - L; return { x, y, w: bw, h: bh, r: Math.min(bw, bh) * p.radius }; },
+};
 const KIT_DASH = [['solid', 'Solid'], ['dashed', 'Dashed'], ['dotted', 'Dotted'], ['mixed', 'Mixed']];
 const KIT = {
+  glassLabel: {
+    label: 'Glass label', defaults: { title: 'ORBITAL DATA', sub: 'Frosted panel · live feed', font: 'mono', weight: '500', size: 15, radius: .16, blur: 14, tint: .14, border: .45, brackets: true, pointer: 'none', pointLen: .22, dot: true, lw: 1.2 }, thumbK: .6, noShuffle: true, glass: true, geom: GLASS.geom, size: [.4, .18],
+    ui: [{ k: 'title', t: 'text', label: 'Title' }, { k: 'sub', t: 'text', label: 'Subtitle' }, { k: 'font', t: 'select', label: 'Font', opts: KIT_FONT_OPTS }, { k: 'weight', t: 'select', label: 'Weight', opts: KIT_WEIGHTS }, { k: 'size', t: 'range', label: 'Text size', min: 8, max: 60, step: 1, unit: 'px' },
+      { k: 'blur', t: 'range', label: 'Frost blur', min: 0, max: 40, step: 1, unit: 'px' }, { k: 'tint', t: 'range', label: 'Glass tint', min: 0, max: .8, step: .02, pct: 1 }, { k: 'border', t: 'range', label: 'Edge line', min: 0, max: 1, step: .05, pct: 1 }, { k: 'radius', t: 'range', label: 'Corner radius', min: 0, max: .5, step: .02, pct: 1 },
+      { k: 'brackets', t: 'check', label: 'Corner brackets' }, { k: 'pointer', t: 'select', label: 'Pointer line', opts: [['none', 'None'], ['left', 'Left'], ['right', 'Right'], ['top', 'Top'], ['bottom', 'Bottom']] }, { k: 'pointLen', t: 'range', label: 'Pointer length', min: .1, max: .5, step: .02, pct: 1, when: ['pointer', ['left', 'right', 'top', 'bottom']] }, { k: 'dot', t: 'check', label: 'End dot', when: ['pointer', ['left', 'right', 'top', 'bottom']] }],
+    draw(g, it, x, y, w, h, k) {
+      const p = it.p, b = GLASS.geom(p, w, h), bx = x + b.x, by = y + b.y, lw = Math.max(.6, p.lw * k), a0 = g.globalAlpha, px = p.size * k;
+      kitRR(g, bx + lw / 2, by + lw / 2, b.w - lw, b.h - lw, b.r); g.globalAlpha = a0 * p.tint; g.fillStyle = '#ffffff'; g.fill();
+      g.globalAlpha = a0 * p.border; g.strokeStyle = it.fill; g.lineWidth = lw; g.stroke(); g.globalAlpha = a0;
+      g.strokeStyle = g.fillStyle = it.fill; g.lineCap = 'butt';
+      if (p.brackets) { const a = Math.min(b.w, b.h) * .16, m = lw * 3 + Math.min(b.w, b.h) * .04; g.lineWidth = lw; g.beginPath();
+        [[1, 1], [-1, 1], [-1, -1], [1, -1]].forEach(([sx, sy]) => { const cx = sx > 0 ? bx + m : bx + b.w - m, cy = sy > 0 ? by + m : by + b.h - m; g.moveTo(cx, cy + sy * a); g.lineTo(cx, cy); g.lineTo(cx + sx * a, cy); }); g.stroke(); }
+      const pad = Math.min(b.w, b.h) * .16 + px * .3; g.textBaseline = 'alphabetic'; g.textAlign = 'left';
+      const sub = String(p.sub || ''), room = b.w - pad * 2;
+      g.font = kitFont(p, px * 1.25); g.fillText(kitFit(g, String(p.title || ''), room), bx + pad, by + b.h / 2 + (sub ? -px * .1 : px * .4));
+      if (sub) { g.globalAlpha = a0 * .7; g.font = kitFont({ ...p, weight: '400' }, px * .8); g.fillText(kitFit(g, sub, room), bx + pad, by + b.h / 2 + px * 1.15); g.globalAlpha = a0; }
+      if (p.pointer !== 'none') {
+        const ex = p.pointer === 'left' ? x + lw : p.pointer === 'right' ? x + w - lw : bx + b.w / 2, ey = p.pointer === 'top' ? y + lw : p.pointer === 'bottom' ? y + h - lw : by + b.h / 2;
+        const sx0 = p.pointer === 'left' ? bx : p.pointer === 'right' ? bx + b.w : ex, sy0 = p.pointer === 'top' ? by : p.pointer === 'bottom' ? by + b.h : ey;
+        g.lineWidth = lw; g.beginPath(); g.moveTo(sx0, sy0); g.lineTo(ex, ey); g.stroke();
+        if (p.dot) { g.beginPath(); g.arc(ex, ey, Math.max(2.5 * k, lw * 2), 0, Math.PI * 2); g.fill(); }
+      }
+    },
+  },
+  widget: {
+    label: 'Data widget', size: [.42, .24], defaults: { mode: 'stat', data: 'ORBITS: 128\nMOONS: 14\nDAYS: 365', font: 'mono', weight: '500', size: 13, c2: '#ff4655', lw: 1.2, grid: true, fillArea: true }, thumbK: .6, noShuffle: true,
+    ui: [{ k: 'mode', t: 'select', label: 'Widget', opts: [['stat', 'Big numbers'], ['table', 'Property table'], ['bars', 'Bar chart'], ['radar', 'Radar'], ['timeline', 'Timeline']] }, { k: 'data', t: 'area', label: 'Data (one per line, Label: value)' },
+      { k: 'font', t: 'select', label: 'Font', opts: KIT_FONT_OPTS }, { k: 'weight', t: 'select', label: 'Weight', opts: KIT_WEIGHTS }, { k: 'size', t: 'range', label: 'Text size', min: 7, max: 40, step: 1, unit: 'px' },
+      { k: 'lw', t: 'range', label: 'Line width', min: .4, max: 5, step: .2, unit: 'px' }, { k: 'grid', t: 'check', label: 'Grid lines', when: ['mode', ['radar', 'bars']] }, { k: 'fillArea', t: 'check', label: 'Filled shape', when: ['mode', 'radar'] }, { k: 'c2', t: 'color', label: 'Accent colour' }],
+    draw(g, it, x, y, w, h, k) {
+      const p = it.p, rows = kitRows(p.data), n = rows.length, px = p.size * k, lw = Math.max(.5, p.lw * k), a0 = g.globalAlpha, pad = px * .6;
+      if (!n) return; g.strokeStyle = g.fillStyle = it.fill; g.lineWidth = lw; g.lineCap = 'butt'; g.textBaseline = 'alphabetic';
+      if (p.mode === 'stat') {
+        const cw = w / n;
+        rows.forEach(([lab, val], i) => { const cx = x + i * cw + cw / 2, big = Math.min(cw * .9 / Math.max(2, String(val).length * .62), h * .55);
+          g.textAlign = 'center'; g.font = kitFont(p, big); g.fillStyle = i === 0 ? p.c2 : it.fill; g.fillText(kitFit(g, String(val), cw - pad), cx, y + h / 2 + big * .3);
+          g.fillStyle = it.fill; g.globalAlpha = a0 * .75; g.font = kitFont({ ...p, weight: '400' }, px * .85); g.fillText(kitFit(g, lab.toUpperCase(), cw - pad), cx, y + h / 2 + big * .3 + px * 1.5); g.globalAlpha = a0;
+          if (i) { g.beginPath(); g.moveTo(x + i * cw, y + h * .2); g.lineTo(x + i * cw, y + h * .8); g.stroke(); } });
+      } else if (p.mode === 'table') {
+        const rh = h / n; g.font = kitFont(p, px);
+        rows.forEach(([lab, val], i) => { const yy = y + i * rh + rh / 2 + px * .35; g.textAlign = 'left'; g.globalAlpha = a0 * .75; g.fillText(kitFit(g, lab.toUpperCase(), w * .55), x + pad, yy); g.globalAlpha = a0; g.textAlign = 'right'; g.fillStyle = i === 0 ? p.c2 : it.fill; g.fillText(kitFit(g, String(val), w * .4), x + w - pad, yy); g.fillStyle = it.fill;
+          g.globalAlpha = a0 * .4; g.beginPath(); g.moveTo(x, y + (i + 1) * rh); g.lineTo(x + w, y + (i + 1) * rh); g.stroke(); g.globalAlpha = a0; });
+      } else if (p.mode === 'bars') {
+        const rh = h / n, lblw = w * .32, mx = Math.max(100, ...rows.map(r => kitNum(r[1]))); g.font = kitFont(p, px);
+        rows.forEach(([lab, val], i) => { const yy = y + i * rh + rh / 2, bh = Math.min(rh * .42, px * 1.2), len = (w - lblw - pad * 3 - px * 2.5) * clamp(kitNum(val) / mx, 0, 1), bx = x + lblw + pad;
+          g.textAlign = 'left'; g.textBaseline = 'middle'; g.globalAlpha = a0 * .8; g.fillText(kitFit(g, lab.toUpperCase(), lblw - pad), x + pad, yy); g.globalAlpha = a0;
+          if (p.grid) { g.globalAlpha = a0 * .25; g.fillRect(bx, yy - bh / 2, w - lblw - pad * 3 - px * 2.5, bh); g.globalAlpha = a0; }
+          g.fillStyle = i === 0 ? p.c2 : it.fill; g.fillRect(bx, yy - bh / 2, Math.max(lw, len), bh); g.fillStyle = it.fill; g.textAlign = 'right'; g.fillText(String(val), x + w - pad, yy); });
+      } else if (p.mode === 'radar') {
+        const m = Math.max(3, n), cx = x + w / 2, cy = y + h / 2, R = Math.min(w, h) / 2 - px * 2.4, ang = i => -Math.PI / 2 + i * Math.PI * 2 / m;
+        if (p.grid) { g.globalAlpha = a0 * .35; for (let r = 1; r <= 4; r++) { g.beginPath(); for (let i = 0; i < m; i++) { const q = R * r / 4; g[i ? 'lineTo' : 'moveTo'](cx + Math.cos(ang(i)) * q, cy + Math.sin(ang(i)) * q); } g.closePath(); g.stroke(); }
+          g.beginPath(); for (let i = 0; i < m; i++) { g.moveTo(cx, cy); g.lineTo(cx + Math.cos(ang(i)) * R, cy + Math.sin(ang(i)) * R); } g.stroke(); g.globalAlpha = a0; }
+        const pts = Array.from({ length: m }, (_, i) => { const v = clamp((rows[i] ? kitNum(rows[i][1]) : 0) / 100, 0, 1); return [cx + Math.cos(ang(i)) * R * v, cy + Math.sin(ang(i)) * R * v]; });
+        g.beginPath(); pts.forEach((q, i) => g[i ? 'lineTo' : 'moveTo'](q[0], q[1])); g.closePath();
+        if (p.fillArea) { g.globalAlpha = a0 * .25; g.fillStyle = p.c2; g.fill(); g.globalAlpha = a0; } g.strokeStyle = p.c2; g.lineWidth = lw * 1.3; g.stroke();
+        g.fillStyle = p.c2; pts.forEach(q => { g.beginPath(); g.arc(q[0], q[1], Math.max(2 * k, lw * 1.6), 0, Math.PI * 2); g.fill(); });
+        g.fillStyle = it.fill; g.font = kitFont(p, px * .85); g.textAlign = 'center'; g.textBaseline = 'middle';
+        for (let i = 0; i < Math.min(m, n); i++) g.fillText(kitFit(g, rows[i][0].toUpperCase(), w * .3), cx + Math.cos(ang(i)) * (R + px * 1.3), cy + Math.sin(ang(i)) * (R + px * 1.3));
+      } else {
+        const cy = y + h / 2, sx = n === 1 ? w / 2 : (w - pad * 6) / (n - 1); g.beginPath(); g.moveTo(x + pad, cy); g.lineTo(x + w - pad, cy); g.stroke(); g.font = kitFont(p, px); g.textAlign = 'center';
+        rows.forEach(([lab, val], i) => { const cx = n === 1 ? x + w / 2 : x + pad * 3 + i * sx, up = i % 2 === 0, dir = up ? -1 : 1; g.fillStyle = i === n - 1 ? p.c2 : it.fill; g.beginPath(); g.arc(cx, cy, Math.max(3 * k, lw * 2.2), 0, Math.PI * 2); g.fill();
+          g.beginPath(); g.moveTo(cx, cy + dir * px * .6); g.lineTo(cx, cy + dir * px * 1.8); g.stroke(); g.fillStyle = it.fill; g.textBaseline = up ? 'bottom' : 'top'; g.fillText(kitFit(g, lab.toUpperCase(), sx * 1.6), cx, cy + dir * px * 2.1);
+          if (val) { g.globalAlpha = a0 * .7; g.textBaseline = up ? 'bottom' : 'top'; g.font = kitFont({ ...p, weight: '400' }, px * .8); g.fillText(kitFit(g, val, sx * 1.6), cx, cy + dir * (px * 2.1 + px * 1.1)); g.globalAlpha = a0; g.font = kitFont(p, px); } });
+      }
+    },
+  },
   hud: {
     label: 'HUD', defaults: { glyph: 'brackets', lw: 1.2, n: 8, len: .22, c2: '#ff4655', mix: .2, size: .6, angle: 45 }, thumbK: .6,
     ui: [{ k: 'glyph', t: 'select', label: 'Symbol', opts: [['brackets', 'Corner brackets'], ['dots', 'Dot matrix'], ['hatch', 'Diagonal hatch'], ['plusMinus', 'Plus / minus'], ['reticle', 'Target reticle'], ['diamonds', 'Diamond row'], ['warning', 'Warning sign'], ['star4', 'Four-point star'], ['barGrad', 'Gradient bars'], ['angleLine', 'Angle bracket line']] },
@@ -8731,7 +8806,7 @@ class CoreStudio {
     if (kind !== 'text') {
       it.w = o.w ?? .32; it.h = o.h ?? .32; if (kind === 'stroke') { it.w0 = o.w0 ?? it.w; it.h0 = o.h0 ?? it.h; }
       if (it.decor) { it.fill = o.fill ?? '#ff3d8a'; it.opacity = o.opacity ?? .85; }
-      if (kind === 'kit') { it.decor = true; it.kit = KIT[o.kit] ? o.kit : 'rings'; it.p = { ...KIT[it.kit].defaults, ...(o.p || {}) }; it.seed = o.seed ?? (Math.random() * 1e9 | 0); it.fill = o.fill ?? '#e8ecf5'; it.opacity = o.opacity ?? 1; it.w = o.w ?? .38; it.h = o.h ?? .38; }
+      if (kind === 'kit') { it.decor = true; it.kit = KIT[o.kit] ? o.kit : 'rings'; it.p = { ...KIT[it.kit].defaults, ...(o.p || {}) }; it.seed = o.seed ?? (Math.random() * 1e9 | 0); it.fill = o.fill ?? '#e8ecf5'; it.opacity = o.opacity ?? 1; it.w = o.w ?? KIT[it.kit].size?.[0] ?? .38; it.h = o.h ?? KIT[it.kit].size?.[1] ?? .38; }
       it.st = { fillOn: false, lineOn: !!it.decor, lineColor: it.decor ? (it.fill || '#ffffff') : '#ffffff', lineW: 3, dash: 'solid', pattern: 'none', ...(o.st || {}) };
     }
     const el = document.createElement('div'); it.el = el;
@@ -8900,7 +8975,7 @@ class CoreStudio {
   maskD(pts, w, h, x = 0, y = 0) { if (!pts.length) return ''; if (pts.length === 1) return `M${x + pts[0][0] * w} ${y + pts[0][1] * h}l0.01 0`; return 'M' + pts.map(q => `${x + q[0] * w} ${y + q[1] * h}`).join('L'); }
   drawShapeSvg(it, w, h) {
     const svg = it.el.querySelector('svg.st-outline'); if (!svg) return;
-    if (it.kind === 'kit') { svg.setAttribute('viewBox', `0 0 ${w} ${h}`); svg.innerHTML = `<path class="st-guide" d="M0 0H${w}V${h}H0Z"/>`; this.drawKit(it, w, h); return; }
+    if (it.kind === 'kit') { svg.setAttribute('viewBox', `0 0 ${w} ${h}`); svg.innerHTML = `<path class="st-guide" d="M0 0H${w}V${h}H0Z"/>`; this.drawKit(it, w, h); this.syncGlass(it, w, h); return; }
     const mk = this.maskSvg(it, w, h), wrapO = mk ? `<g mask="url(#mk${it.id})">` : '', wrapC = mk ? '</g>' : '';
     if (it.kind === 'stroke' && it.strokes) {
       svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
@@ -8934,7 +9009,9 @@ class CoreStudio {
     g.save(); g.globalCompositeOperation = this.blendOp(it); rot(g, c => this.drawShapeCanvas0(c, it, x, y, w, h, k)); g.restore();
   }
   drawShapeCanvas0(g, it, x, y, w, h, k) {
-    if (it.kind === 'kit') { g.save(); g.globalAlpha = (it.opacity ?? 1) * (it.alpha ?? 1); const ang = this.kitAngle(it); if (ang) { g.translate(x + w / 2, y + h / 2); g.rotate(ang * Math.PI / 180); g.translate(-(x + w / 2), -(y + h / 2)); } KIT[it.kit].draw(g, it, x, y, w, h, k); g.restore(); return; }
+    if (it.kind === 'kit') { g.save(); g.globalAlpha = (it.opacity ?? 1) * (it.alpha ?? 1); const ang = this.kitAngle(it); if (ang) { g.translate(x + w / 2, y + h / 2); g.rotate(ang * Math.PI / 180); g.translate(-(x + w / 2), -(y + h / 2)); }
+      if (KIT[it.kit].glass) { const b = KIT[it.kit].geom(it.p, w, h), ga = g.globalAlpha; g.save(); kitRR(g, x + b.x, y + b.y, b.w, b.h, b.r); g.clip(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.drawImage(softBlur(g.canvas, it.p.blur * k), 0, 0); g.restore(); g.globalAlpha = ga; }
+      KIT[it.kit].draw(g, it, x, y, w, h, k); g.restore(); return; }
     if (it.kind === 'stroke' && it.strokes) {
       g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
       const one = (c, st) => { c.globalAlpha = st.opacity * (it.alpha ?? 1); c.strokeStyle = st.color; c.lineWidth = st.size * k; c.setLineDash(this.dashArr({ lineW: st.size, dash: st.dash }).map(v => v * k)); c.stroke(new Path2D(this.strokeD(it, w, h, x, y, st.pts))); };
@@ -9347,6 +9424,14 @@ class CoreStudio {
       };
       grip.addEventListener('pointerup', drop); grip.addEventListener('pointercancel', drop);
     });
+  }
+  // Frosted label: a child box carries the CSS backdrop blur; Save blurs a copy of the poster instead.
+  syncGlass(it, w, h) {
+    const def = KIT[it.kit]; let gb = it.el.querySelector('.st-glassbox');
+    if (!def.glass) { if (gb) gb.remove(); return; }
+    if (!gb) { gb = document.createElement('div'); gb.className = 'st-glassbox'; gb.setAttribute('aria-hidden', 'true'); it.el.insertBefore(gb, it.el.firstChild); }
+    const b = def.geom(it.p, w, h), f = `blur(${it.p.blur}px)`;
+    Object.assign(gb.style, { left: `${b.x}px`, top: `${b.y}px`, width: `${b.w}px`, height: `${b.h}px`, borderRadius: `${b.r}px`, backdropFilter: f, webkitBackdropFilter: f });
   }
   drawKit(it, w, h) {
     const c = it.el.querySelector('canvas.st-kitc'); if (!c) return;
