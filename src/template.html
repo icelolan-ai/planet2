@@ -7786,7 +7786,7 @@ class CoreStudio {
       <h3>Background</h3><select data-studio-background aria-label="Studio background"><option value="space">Space</option><option value="white">White</option><option value="studio">Studio light</option><option value="model">Model workspace</option><option value="solid">Solid colour</option><option value="gradient">Gradient</option><option value="points">Colour points</option></select>
       <div class="st-cpts-ed" data-cpts-ed hidden><p class="studio-note">Colour A is the base. Drag the dots on the canvas to place each colour.</p><div data-cpts-list></div><button type="button" class="st-btn" data-cpts-add>+ Add colour</button></div>
       <div class="studio-two"><label>Colour A<input type="color" data-studio-bg-a value="#111727"></label><label>Colour B<input type="color" data-studio-bg-b value="#274052"></label></div>
-      <label class="studio-control"><span>Gradient angle</span><input type="range" min="0" max="360" value="115" data-studio-angle><output>115°</output></label><label class="studio-control"><span>Grid</span><select data-studio-gridmode aria-label="Grid"><option value="always">Always</option><option value="focus">Only with a focus shape</option><option value="off">Off</option></select></label><input type="checkbox" data-studio-grid hidden checked>
+      <label class="studio-control"><span>Gradient angle</span><input type="range" min="0" max="360" value="115" data-studio-angle><output>115°</output></label><label class="studio-control"><span>Grid</span><select data-studio-gridmode aria-label="Grid"><option value="always">Always</option><option value="focus">Only with a focus shape</option><option value="off">Off</option></select></label><input type="checkbox" data-studio-grid hidden checked><label class="studio-control"><span>Grid colour</span><input type="color" data-grid-c value="#ffffff" aria-label="Grid colour"><button type="button" class="st-chip" data-grid-auto>Auto</button></label><label class="studio-control"><span>Grid strength</span><input type="range" min="0.05" max="1" step="0.05" value="0.25" data-grid-a><output>25%</output></label><label class="studio-control"><span>Grid thickness</span><input type="range" min="0.5" max="6" step="0.5" value="1" data-grid-t><output>1px</output></label><label class="studio-control"><span>Grid size</span><input type="range" min="8" max="64" step="1" value="24" data-grid-n><output>24</output></label>
       <h3>Colour effects</h3><select data-studio-effect aria-label="Colour effect"><option value="off">Off</option><option value="chromatic">Chromatic aberration</option><option value="rgb">RGB split</option><option value="color">Color split</option><option value="vhs">VHS effect</option><option value="glitch">Glitch art</option></select><label class="studio-control"><span>Strength</span><input type="range" min="0" max="20" value="5" data-studio-effect-amount><output>5</output></label>
       <h3>Light &amp; floor shadow</h3><label class="studio-control"><span>Film grain</span><input type="checkbox" data-studio-grain></label><label class="studio-control"><span>Grain amount</span><input type="range" min="0.02" max="0.3" step="0.01" value="0.1" data-studio-grain-amt><output>10%</output></label><label class="studio-control"><span>Camera lens (depth blur &amp; colour fringe)</span><input type="checkbox" data-studio-lens></label><label class="studio-control"><span>Key light</span><input type="range" min="0.4" max="1.8" step="0.05" value="1" data-studio-light><output>1.00×</output></label><label class="studio-control"><span>Light direction</span><input type="range" min="-6" max="6" step="0.25" value="4" data-studio-light-x><output>4</output></label><label class="studio-control"><span>Shadow</span><input type="range" min="0" max="1" step="0.05" value="0.65" data-studio-shadow><output>65%</output></label><label class="studio-control"><span>Softness</span><input type="range" min="0" max="1" step="0.05" value="0.6" data-studio-shadow-soft><output>60%</output></label>
       <h3>World parts</h3><div class="studio-layers"><button type="button" class="studio-layer" data-studio-layer="atmo" aria-pressed="true" aria-label="Hide atmosphere"><span>Atmosphere glow</span>${eye}</button><button type="button" class="studio-layer" data-studio-layer="stars" aria-pressed="true" aria-label="Hide stars"><span>Background stars</span>${eye}</button></div>
@@ -7950,7 +7950,19 @@ class CoreStudio {
     this.el.querySelector('[data-flyout="style"]').addEventListener('pointerdown', e => e.stopPropagation());
     this.el.querySelector('[data-studio-effect]').onchange = e => { this.effect = e.target.value; this.syncFxLayers(); this.el.querySelector('[data-studio-fx]').setAttribute('aria-pressed', String(this.fxOn)); this.commit(); };
     this.el.querySelector('[data-studio-grid]').onchange = e => { this.grid = e.target.checked; this.gridMode = this.grid ? 'always' : 'off'; this.el.querySelector('[data-studio-gridmode]').value = this.gridMode; this.paintBackground(); };
-    this.gridMode = 'always'; this.el.querySelector('[data-studio-gridmode]').onchange = e => { this.gridMode = e.target.value; this.paintBackground(); this.commit(); };
+    this.gridMode = 'always'; this.gridStyle = { auto: true, c: '#ffffff', a: .25, t: 1, n: 24 };
+    {
+      const q = x => this.el.querySelector(x), gc = q('[data-grid-c]'), ga = q('[data-grid-a]'), gt = q('[data-grid-t]'), gn = q('[data-grid-n]'), au = q('[data-grid-auto]');
+      const out = (el, t) => { el.nextElementSibling.textContent = t; };
+      const sync = () => { const G = this.gridStyle; gc.value = G.c; ga.value = G.a; gt.value = G.t; gn.value = G.n; au.classList.toggle('is-on', G.auto); out(ga, Math.round(G.a * 100) + '%'); out(gt, G.t + 'px'); out(gn, String(G.n)); };
+      this.syncGridUI = sync;
+      const upd = () => { this.gridStyle = { auto: this.gridStyle.auto, c: gc.value, a: +ga.value, t: +gt.value, n: +gn.value }; sync(); this.paintBackground(); };
+      gc.addEventListener('input', () => { this.gridStyle.auto = false; upd(); }); [ga, gt, gn].forEach(e => e.addEventListener('input', upd));
+      [gc, ga, gt, gn].forEach(e => e.addEventListener('change', () => this.commit()));
+      au.addEventListener('click', () => { this.gridStyle.auto = true; sync(); this.paintBackground(); this.commit(); });
+      sync();
+    }
+    this.el.querySelector('[data-studio-gridmode]').onchange = e => { this.gridMode = e.target.value; this.paintBackground(); this.commit(); };
     const rangeControl = (selector, key, format, repaint) => {
       const el = this.el.querySelector(selector);
       el.oninput = () => { this[key] = +el.value; el.nextElementSibling.textContent = format(this[key]); if (repaint) repaint(); };
@@ -8816,7 +8828,7 @@ class CoreStudio {
     if (!quiet) this.commit();
   }  // Undo/redo: whole-composition snapshots (items, shape blur and the look settings).
   snapshot() {
-    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'grain', 'grainAmt', 'cpts', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides', 'groups'];
+    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'grain', 'grainAmt', 'cpts', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides', 'groups', 'gridStyle'];
     return JSON.stringify({ s: Object.fromEntries(keys.map(k => [k, this[k]])), layers: this.layers, core: this.coreLayers,
       items: this.items.map(({ el, id, ...rest }) => rest) });
   }
@@ -8831,7 +8843,7 @@ class CoreStudio {
   restore(json) {
     const d = JSON.parse(json); this.restoring = true;
     this.select(null); this.items.slice().forEach(it => this.removeItem(it, true));
-    Object.assign(this, d.s); this.groups = this.groups || []; Object.assign(this.layers, d.layers); d.core.forEach((v, i) => { this.coreLayers[i] = v; });
+    Object.assign(this, d.s); this.groups = this.groups || []; this.gridStyle = this.gridStyle || { auto: true, c: '#ffffff', a: .25, t: 1, n: 24 }; if (this.syncGridUI) this.syncGridUI(); Object.assign(this.layers, d.layers); d.core.forEach((v, i) => { this.coreLayers[i] = v; });
     d.items.forEach(o => this.addItem(o.kind, { ...o, silent: true }));
     const v = { '[data-studio-background]': this.background, '[data-studio-bg-a]': this.bgA, '[data-studio-bg-b]': this.bgB, '[data-studio-angle]': this.angle, '[data-studio-grid]': this.grid,
       '[data-studio-light]': this.light, '[data-studio-light-x]': this.lightX, '[data-studio-shadow]': this.shadow, '[data-studio-shadow-soft]': this.shadowSoft, '[data-studio-effect]': this.effect, '[data-studio-effect-amount]': this.effectAmount };
@@ -9004,8 +9016,9 @@ class CoreStudio {
     }
     const gm = this.gridMode || (this.grid ? 'always' : 'off');
     if (gm === 'always' || (gm === 'focus' && this.focusOn) || mode === 'model') {
-      g.strokeStyle = this.isLightBg() ? 'rgba(18,22,32,.24)' : 'rgba(194,202,217,.17)'; g.lineWidth = Math.max(1, w / 1440);
-      const step = w / 24; g.beginPath();
+      const G = this.gridStyle || { auto: true, a: .25, t: 1, n: 24, c: '#ffffff' }, rgb = G.auto ? (this.isLightBg() ? '18,22,32' : '194,202,217') : [1, 3, 5].map(i => parseInt(G.c.slice(i, i + 2), 16)).join(',');
+      g.strokeStyle = `rgba(${rgb},${G.auto ? (this.isLightBg() ? Math.max(.05, G.a) : G.a * .7) : G.a})`; g.lineWidth = Math.max(.5, G.t * w / 1440);
+      const step = w / Math.max(4, G.n); g.beginPath();
       for (let x = 0; x <= w; x += step) { g.moveTo(x, 0); g.lineTo(x, h); }
       for (let y = 0; y <= h; y += step) { g.moveTo(0, y); g.lineTo(w, y); } g.stroke();
     }
