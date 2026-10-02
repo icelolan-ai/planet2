@@ -1316,6 +1316,8 @@ html,body{touch-action:pan-x pan-y}
   body #studio .st-dock .st-group{flex:1 1 0!important;min-width:0}
   body #studio .st-dock select{flex:0 0 62px!important;max-width:62px!important}
 }
+.tune-row>select+input[type=color]{margin-left:8px;width:40px;height:34px;padding:0;flex:none}
+.tune-row:has(>select+input[type=color]){grid-template-columns:minmax(0,1fr) auto auto}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -1717,16 +1719,44 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
   </section>
 
   <nav class="tune-tabs" role="tablist">
-    <button type="button" role="tab" data-tab="style" aria-selected="true">Style</button>
-    <button type="button" role="tab" data-tab="layers" aria-selected="false">Layers</button>
+    <button type="button" role="tab" data-tab="shape" aria-selected="true">Shape</button>
+    <button type="button" role="tab" data-tab="colour" aria-selected="false">Colour</button>
+    <button type="button" role="tab" data-tab="core" aria-selected="false">Core</button>
     <button type="button" role="tab" data-tab="motion" aria-selected="false">Motion</button>
-    <button type="button" role="tab" data-tab="planet" aria-selected="false">Planet</button>
-    <button type="button" role="tab" data-tab="play" aria-selected="false">Play</button>
+    <button type="button" role="tab" data-tab="fx" aria-selected="false">Effects</button>
     <button type="button" role="tab" data-tab="life" aria-selected="false">Life</button>
     <button type="button" role="tab" data-tab="save" aria-selected="false">Save</button>
   </nav>
 
-  <div class="tune-pane" data-pane="style">
+  <div class="tune-pane" data-pane="shape">
+    <p class="tune-sub">Shells · shape &amp; colour</p>
+    <label class="tune-row"><span>3 · Outer shell</span><select data-t-shape-outer aria-label="3 · Outer shell shape"><option value="sphere">Sphere</option><option value="ball">Football (pentagons)</option><option value="dodeca">Pentagon solid</option><option value="ico">Geodesic ball</option><option value="cube">Cube</option><option value="pyramid">Pyramid</option><option value="octa">Diamond</option><option value="torus">Ring</option><option value="off">Hidden</option></select><input type="color" value="#dfe4ea" data-t-shellc-outer aria-label="outer shell colour"></label>
+    <label class="tune-row"><span>2 · Inner shell</span><select data-t-shape-inner aria-label="2 · Inner shell shape"><option value="sphere">Sphere</option><option value="ball">Football (pentagons)</option><option value="dodeca">Pentagon solid</option><option value="ico">Geodesic ball</option><option value="cube">Cube</option><option value="pyramid">Pyramid</option><option value="octa">Diamond</option><option value="torus">Ring</option><option value="off">Hidden</option></select><input type="color" value="#dfe4ea" data-t-shellc-inner aria-label="inner shell colour"></label>
+    <label class="tune-row"><span>1 · Nucleus</span><select data-t-shape-nucleus aria-label="1 · Nucleus shape"><option value="sphere">Sphere</option><option value="ball">Football (pentagons)</option><option value="dodeca">Pentagon solid</option><option value="ico">Geodesic ball</option><option value="cube">Cube</option><option value="pyramid">Pyramid</option><option value="octa">Diamond</option><option value="torus">Ring</option><option value="off">Hidden</option></select><input type="color" value="#dfe4ea" data-t-shellc-nucleus aria-label="nucleus shell colour"></label>
+    
+    <div class="tune-row"><span>Inner orb</span><div class="tune-seg" data-t-inner><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
+    
+    <p class="tune-sub">Glass</p>
+    <label class="tune-row"><span>Clarity</span><input type="range" min="0" max="4" step="0.05" value="1" data-t-clarity><b data-out>1.0x</b></label>
+    <label class="tune-row"><span>Rim glow</span><input type="range" min="0" max="2" step="0.05" value="0.55" data-t-rim><b data-out>0.55</b></label>
+    
+    <p class="tune-sub">Metal band</p>
+    <div class="tune-row"><span>Metal band</span><div class="tune-seg" data-t-band><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
+    <label class="tune-row"><span>Thickness</span><input type="range" min="0.3" max="3" step="0.05" value="1" data-t-thick><b data-out>1.0x</b></label>
+    <label class="tune-row"><span>Bands</span><input type="range" min="1" max="6" step="1" value="1" data-t-bands><b data-out>1</b></label>
+    <div class="tune-row"><span>Metal</span>
+      <div class="tune-sw" data-t-metal>
+        <button type="button" style="--c:#c9ccd6" data-c="#c9ccd6" aria-label="Silver"></button>
+        <button type="button" style="--c:#d9b36c" data-c="#d9b36c" aria-label="Gold"></button>
+        <button type="button" style="--c:#3a3d45" data-c="#3a3d45" aria-label="Black"></button>
+        <button type="button" style="--c:#c77b4a" data-c="#c77b4a" aria-label="Copper"></button>
+      </div></div>
+    
+    <p class="tune-hint">Pick a ring, the glass or the metal band on the planet to edit just that part.</p>
+  </div>
+
+  <div class="tune-pane" data-pane="colour" hidden>
+    <p class="tune-sub">Theme</p>
     <div class="tune-row tall"><span>Theme</span>
       <div class="tune-grid themes" data-t-theme>
         <button type="button" data-v="nebula" style="--c1:#b44cff;--c2:#5aa8ff">Nebula</button>
@@ -1735,6 +1765,7 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
         <button type="button" data-v="ice" style="--c1:#7fe9ff;--c2:#4f8dff">Ice</button>
         <button type="button" data-v="toxic" style="--c1:#9dff4c;--c2:#2fd08a">Toxic</button>
       </div></div>
+    
     <p class="tune-sub">Paint everything</p>
     <div class="tune-row"><span>Colouring</span><div class="tune-seg" data-t-pmode><button type="button" data-v="original" aria-pressed="true">Original</button><button type="button" data-v="solid" aria-pressed="false">One colour</button><button type="button" data-v="gradient" aria-pressed="false">Gradient</button></div></div>
     <label class="tune-row"><span>Colour A</span><input type="color" data-t-pa value="#ff4655" aria-label="Colour A"></label>
@@ -1751,48 +1782,15 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
         <button type="button" style="--c:#ffc94d" data-c="#ffc94d" aria-label="Gold"></button>
         <label class="tune-pick" aria-label="Custom colour"><input type="color" value="#b44cff" data-t-color></label>
       </div></div>
-    <p class="tune-sub">Ambient dust</p><label class="tune-row"><span>Floating dots</span><input type="range" min="0" max="240" step="1" value="36" data-ambient-count><b data-out>36</b></label>
-    <p class="tune-sub">Lens</p>
-    <div class="tune-row"><span>Lens</span><div class="tune-seg" data-t-lens><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
-    <label class="tune-row"><span>Aberration</span><input type="range" min="0" max="0.12" step="0.002" value="0.035" data-t-aberr><b data-out>0.035</b></label>
-    <label class="tune-row"><span>Focus blur</span><input type="range" min="0" max="1.5" step="0.02" value="0.55" data-t-blur><b data-out>0.55</b></label>
-    <label class="tune-row"><span>Bloom</span><input type="range" min="0" max="2.5" step="0.02" value="0.45" data-t-bloom><b data-out>0.45</b></label>
-    <p class="tune-hint">Pick a ring, the glass or the metal band on the planet to edit just that part.</p>
-    <div class="tune-btns"><button type="button" class="tune-btn" data-t-random>&#9861; Randomize</button><button type="button" class="tune-reset" data-t-reset>Reset</button></div>
+    
   </div>
 
-  <div class="tune-pane" data-pane="layers" hidden>
+  <div class="tune-pane" data-pane="core" hidden>
     <p class="tune-sub">Inside Cerebra · layers 0–4</p>
     <label class="tune-row"><span>Structure lines</span><input type="range" min="0" max="2" step="0.05" value="0.55" data-t-structure aria-label="Geometric structure lines"><b data-out>55%</b></label>
     <div class="layer-controls" data-t-layers></div>
     <p class="tune-hint">Colour, radius, density and motion are independent for each layer. Open the core and tap a layer name to zoom in.</p>
-  </div>
-
-<div class="tune-pane" data-pane="life" hidden><p class="tune-sub">Life inside Cerebra</p><label class="tune-row"><span>Organisms</span><input aria-label="Organisms" type="range" min="0" max="16" step="1" data-life="count"><b data-out></b></label><div class="tune-btns life-actions"><button type="button" class="tune-btn" data-life-add aria-label="Add organism">+ Add</button><button type="button" class="tune-btn" data-life-remove aria-label="Remove one organism">− Remove</button><button type="button" class="tune-reset" data-life-clear>Clear all</button></div><label class="tune-row"><span>Organism size</span><input aria-label="Organism size" type="range" min="0.05" max="0.28" step="0.01" data-life="size"><b data-out></b></label><label class="tune-row"><span>Shape</span><select data-life="shape" aria-label="Organism shape"><option value="0">Jelly</option><option value="1">Spindle</option><option value="2">Urchin</option><option value="3">Amoeba</option></select></label><label class="tune-row"><span>Filaments</span><input aria-label="Filaments" type="range" min="0" max="24" step="1" data-life="filaments"><b data-out></b></label><label class="tune-row"><span>Inflation</span><input aria-label="Inflation" type="range" min="0" max="1.5" step="0.05" data-life="breath"><b data-out></b></label><label class="tune-row"><span>Life speed</span><input aria-label="Life speed" type="range" min="0" max="3" step="0.05" data-life="speed"><b data-out></b></label><label class="tune-row"><span>Movement</span><input aria-label="Movement" type="range" min="0" max="2" step="0.05" data-life="motion"><b data-out></b></label><label class="tune-row"><span>Behaviour</span><select data-life="behavior" aria-label="Organism behaviour"><option value="0">Wander</option><option value="1">School</option><option value="2">Orbit</option><option value="3">Curious</option></select></label><label class="tune-row"><span>Colour</span><input type="color" data-life="color" aria-label="Organism colour"></label><button type="button" class="tune-reset" data-life-reset>Reset life</button><p class="tune-hint">Each visit starts empty. Add or remove one organism, or clear them all. Appearance settings are shared. Reduced motion pauses movement.</p></div>
-  <div class="tune-pane" data-pane="motion" hidden>
-    <label class="tune-row"><span>Particles</span><input type="range" min="0.2" max="3" step="0.05" value="0.55" data-t-density><b data-out>55%</b></label>
-    <label class="tune-row"><span>Speed</span><input type="range" min="0" max="4" step="0.05" value="1" data-t-speed><b data-out>1.0x</b></label>
-    <label class="tune-row"><span>Rings</span><input type="range" min="0" max="24" step="1" value="4" data-t-rings-r aria-label="Rings"><b data-t-rings>4</b></label>
-    <div class="tune-row"><span>Direction</span>
-      <div class="tune-seg" role="group" aria-label="Direction" data-t-dir><button type="button" data-v="1" aria-pressed="true">&#8635; Forward</button><button type="button" data-v="-1" aria-pressed="false">&#8634; Reverse</button></div></div>
-    <div class="tune-row tall"><span>Shape</span><div class="tune-grid" data-t-shape></div></div>
-  </div>
-
-  <div class="tune-pane" data-pane="planet" hidden>
-    <p class="tune-sub">Metal band</p>
-    <div class="tune-row"><span>Show</span><div class="tune-seg" data-t-band><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
-    <label class="tune-row"><span>Thickness</span><input type="range" min="0.3" max="3" step="0.05" value="1" data-t-thick><b data-out>1.0x</b></label>
-    <label class="tune-row"><span>Bands</span><input type="range" min="1" max="6" step="1" value="1" data-t-bands><b data-out>1</b></label>
-    <div class="tune-row"><span>Metal</span>
-      <div class="tune-sw" data-t-metal>
-        <button type="button" style="--c:#c9ccd6" data-c="#c9ccd6" aria-label="Silver"></button>
-        <button type="button" style="--c:#d9b36c" data-c="#d9b36c" aria-label="Gold"></button>
-        <button type="button" style="--c:#3a3d45" data-c="#3a3d45" aria-label="Black"></button>
-        <button type="button" style="--c:#c77b4a" data-c="#c77b4a" aria-label="Copper"></button>
-      </div></div>
-    <p class="tune-sub">Glass</p>
-    <label class="tune-row"><span>Clarity</span><input type="range" min="0" max="4" step="0.05" value="1" data-t-clarity><b data-out>1.0x</b></label>
-    <label class="tune-row"><span>Rim glow</span><input type="range" min="0" max="2" step="0.05" value="0.55" data-t-rim><b data-out>0.55</b></label>
+  
     <p class="tune-sub">Inner particles</p>
     <label class="tune-row"><span>Amount</span><input type="range" min="0" max="4" step="0.05" value="0.35" data-t-swarm><b data-out>35%</b></label>
     <label class="tune-row"><span>Size</span><input type="range" min="0.3" max="3" step="0.05" value="1" data-t-swsize><b data-out>1.0x</b></label>
@@ -1805,6 +1803,18 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
         <button type="button" style="--c:#ffc94d" data-c="#ffc94d" aria-label="Gold"></button>
         <label class="tune-pick" aria-label="Custom inner particle colour"><input type="color" value="#cfe3ff" data-t-swcolor></label>
       </div></div>
+    
+  </div>
+
+  <div class="tune-pane" data-pane="motion" hidden>
+    <p class="tune-sub">Motion</p>
+    <label class="tune-row"><span>Particles</span><input type="range" min="0.2" max="3" step="0.05" value="0.55" data-t-density><b data-out>55%</b></label>
+    <label class="tune-row"><span>Speed</span><input type="range" min="0" max="4" step="0.05" value="1" data-t-speed><b data-out>1.0x</b></label>
+    <label class="tune-row"><span>Rings</span><input type="range" min="0" max="24" step="1" value="4" data-t-rings-r aria-label="Rings"><b data-t-rings>4</b></label>
+    <div class="tune-row"><span>Direction</span>
+      <div class="tune-seg" role="group" aria-label="Direction" data-t-dir><button type="button" data-v="1" aria-pressed="true">&#8635; Forward</button><button type="button" data-v="-1" aria-pressed="false">&#8634; Reverse</button></div></div>
+    <div class="tune-row tall"><span>Shape</span><div class="tune-grid" data-t-shape></div></div>
+  
     <p class="tune-sub">Comets</p>
     <label class="tune-row"><span>Count</span><input type="range" min="0" max="40" step="1" value="1" data-t-cm-n><b data-out>1</b></label>
     <label class="tune-row"><span>Tail length</span><input type="range" min="0.1" max="3" step="0.05" value="1" data-t-cm-tail><b data-out>1.0x</b></label>
@@ -1821,11 +1831,6 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
         <label class="tune-pick" aria-label="Custom comet colour"><input type="color" value="#9fd4ff" data-t-cmcolor></label>
       </div></div>
     <p class="tune-hint">Comets fall in on long ellipses, whip round the core (through the glass when Plunge is low) and fly back out.</p>
-    <div class="tune-row"><span>Inner orb</span><div class="tune-seg" data-t-inner><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
-    <p class="tune-sub">Shell shapes</p>
-    <label class="tune-row"><span>3 · Outer shell</span><select data-t-shape-outer aria-label="3 · Outer shell shape"><option value="sphere">Sphere</option><option value="ball">Football (pentagons)</option><option value="dodeca">Pentagon solid</option><option value="ico">Geodesic ball</option><option value="cube">Cube</option><option value="pyramid">Pyramid</option><option value="octa">Diamond</option><option value="torus">Ring</option><option value="off">Hidden</option></select></label>
-    <label class="tune-row"><span>2 · Inner shell</span><select data-t-shape-inner aria-label="2 · Inner shell shape"><option value="sphere">Sphere</option><option value="ball">Football (pentagons)</option><option value="dodeca">Pentagon solid</option><option value="ico">Geodesic ball</option><option value="cube">Cube</option><option value="pyramid">Pyramid</option><option value="octa">Diamond</option><option value="torus">Ring</option><option value="off">Hidden</option></select></label>
-    <label class="tune-row"><span>1 · Nucleus</span><select data-t-shape-nucleus aria-label="1 · Nucleus shape"><option value="sphere">Sphere</option><option value="ball">Football (pentagons)</option><option value="dodeca">Pentagon solid</option><option value="ico">Geodesic ball</option><option value="cube">Cube</option><option value="pyramid">Pyramid</option><option value="octa">Diamond</option><option value="torus">Ring</option><option value="off">Hidden</option></select></label>
     <p class="tune-sub">Dust &amp; flares</p>
     <label class="tune-row"><span>Dust</span><input type="range" min="0" max="3" step="0.05" value="0.45" data-t-haze><b data-out>45%</b></label>
     <label class="tune-row"><span>Flare rate</span><input type="range" min="0" max="3" step="0.05" value="1" data-t-frate><b data-out>1.0x</b></label>
@@ -1839,33 +1844,51 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
         <button type="button" style="--c:#ffc94d" data-c="#ffc94d" aria-label="Gold"></button>
         <label class="tune-pick" aria-label="Custom flare colour"><input type="color" value="#ffffff" data-t-fcolor></label>
       </div></div>
+  
+    <p class="tune-sub">Ambient dust</p>
+<label class="tune-row"><span>Floating dots</span><input type="range" min="0" max="240" step="1" value="36" data-ambient-count><b data-out>36</b></label>
+    
   </div>
 
-  <div class="tune-pane" data-pane="play" hidden>
-    <p class="tune-sub">Pointer</p>
-    <div class="tune-row"><span>Mode</span><div class="tune-seg" data-t-ptr><button type="button" data-v="0" aria-pressed="true">Off</button><button type="button" data-v="-1" aria-pressed="false">Attract</button><button type="button" data-v="1" aria-pressed="false">Repel</button></div></div>
-    <label class="tune-row"><span>Strength</span><input type="range" min="0.2" max="3" step="0.05" value="1" data-t-ptrs><b data-out>1.0x</b></label>
-    <p class="tune-sub">Sound reactive</p>
-    <div class="tune-row"><span>Mic</span><div class="tune-seg" data-t-mic><button type="button" data-v="0" aria-pressed="true">Off</button><button type="button" data-v="1" aria-pressed="false">On</button></div></div>
-    <label class="tune-row"><span>Sensitivity</span><input type="range" min="0.2" max="4" step="0.05" value="1" data-t-gain><b data-out>1.0x</b></label>
-    <p class="tune-note" data-t-mic-note>Uses your microphone only while this is on. Nothing is recorded.</p>
+  <div class="tune-pane" data-pane="fx" hidden>
+    <p class="tune-sub">Lens</p>
+    <div class="tune-row"><span>Lens</span><div class="tune-seg" data-t-lens><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
+    <label class="tune-row"><span>Aberration</span><input type="range" min="0" max="0.12" step="0.002" value="0.035" data-t-aberr><b data-out>0.035</b></label>
+    <label class="tune-row"><span>Focus blur</span><input type="range" min="0" max="1.5" step="0.02" value="0.55" data-t-blur><b data-out>0.55</b></label>
+    <label class="tune-row"><span>Bloom</span><input type="range" min="0" max="2.5" step="0.02" value="0.45" data-t-bloom><b data-out>0.45</b></label>
     <p class="tune-sub">View</p>
     <label class="tune-row"><span>Zoom</span><input type="range" min="0.45" max="2.4" step="0.01" value="1" data-t-zoom><b data-out>1.00x</b></label>
     <p class="tune-hint">Drag the planet to turn it, scroll or pinch to zoom.</p>
     <button type="button" class="tune-reset" data-t-view>Reset view</button>
+  
+    <p class="tune-sub">Pointer</p>
+    <div class="tune-row"><span>Mode</span><div class="tune-seg" data-t-ptr><button type="button" data-v="0" aria-pressed="true">Off</button><button type="button" data-v="-1" aria-pressed="false">Attract</button><button type="button" data-v="1" aria-pressed="false">Repel</button></div></div>
+    <label class="tune-row"><span>Strength</span><input type="range" min="0.2" max="3" step="0.05" value="1" data-t-ptrs><b data-out>1.0x</b></label>
+    
+    <p class="tune-sub">Sound reactive</p>
+    <div class="tune-row"><span>Mic</span><div class="tune-seg" data-t-mic><button type="button" data-v="0" aria-pressed="true">Off</button><button type="button" data-v="1" aria-pressed="false">On</button></div></div>
+    <label class="tune-row"><span>Sensitivity</span><input type="range" min="0.2" max="4" step="0.05" value="1" data-t-gain><b data-out>1.0x</b></label>
+    <p class="tune-note" data-t-mic-note>Uses your microphone only while this is on. Nothing is recorded.</p>
+    
   </div>
 
+<div class="tune-pane" data-pane="life" hidden><p class="tune-sub">Life inside Cerebra</p><label class="tune-row"><span>Organisms</span><input aria-label="Organisms" type="range" min="0" max="16" step="1" data-life="count"><b data-out></b></label><div class="tune-btns life-actions"><button type="button" class="tune-btn" data-life-add aria-label="Add organism">+ Add</button><button type="button" class="tune-btn" data-life-remove aria-label="Remove one organism">− Remove</button><button type="button" class="tune-reset" data-life-clear>Clear all</button></div><label class="tune-row"><span>Organism size</span><input aria-label="Organism size" type="range" min="0.05" max="0.28" step="0.01" data-life="size"><b data-out></b></label><label class="tune-row"><span>Shape</span><select data-life="shape" aria-label="Organism shape"><option value="0">Jelly</option><option value="1">Spindle</option><option value="2">Urchin</option><option value="3">Amoeba</option></select></label><label class="tune-row"><span>Filaments</span><input aria-label="Filaments" type="range" min="0" max="24" step="1" data-life="filaments"><b data-out></b></label><label class="tune-row"><span>Inflation</span><input aria-label="Inflation" type="range" min="0" max="1.5" step="0.05" data-life="breath"><b data-out></b></label><label class="tune-row"><span>Life speed</span><input aria-label="Life speed" type="range" min="0" max="3" step="0.05" data-life="speed"><b data-out></b></label><label class="tune-row"><span>Movement</span><input aria-label="Movement" type="range" min="0" max="2" step="0.05" data-life="motion"><b data-out></b></label><label class="tune-row"><span>Behaviour</span><select data-life="behavior" aria-label="Organism behaviour"><option value="0">Wander</option><option value="1">School</option><option value="2">Orbit</option><option value="3">Curious</option></select></label><label class="tune-row"><span>Colour</span><input type="color" data-life="color" aria-label="Organism colour"></label><button type="button" class="tune-reset" data-life-reset>Reset life</button><p class="tune-hint">Each visit starts empty. Add or remove one organism, or clear them all. Appearance settings are shared. Reduced motion pauses movement.</p></div>
   <div class="tune-pane" data-pane="save" hidden>
+    <p class="tune-sub">Reset &amp; randomize</p>
+    <div class="tune-btns"><button type="button" class="tune-btn" data-t-random>&#9861; Randomize</button><button type="button" class="tune-reset" data-t-reset>Reset</button></div>
+  
     <p class="tune-sub">Presets</p>
     <div class="tune-row"><span>Name</span><input class="ob-name" type="text" maxlength="24" placeholder="My core" data-p-name></div>
     <button type="button" class="tune-btn" data-p-save>Save preset</button>
     <ul class="ps-list" data-p-list></ul>
+    
     <p class="tune-sub">Capture image</p>
     <div class="tune-row"><span>Format</span><div class="tune-seg" data-cap-type><button type="button" data-v="image/png" aria-pressed="true">PNG</button><button type="button" data-v="image/jpeg" aria-pressed="false">JPEG</button></div></div>
     <div class="tune-row"><span>Quality</span><div class="tune-seg" data-cap-scale><button type="button" data-v="1" aria-pressed="false">Low</button><button type="button" data-v="2" aria-pressed="true">High</button><button type="button" data-v="4" aria-pressed="false">Ultra</button></div></div>
     <div class="tune-row"><span>Background</span><div class="tune-seg" data-cap-bg><button type="button" data-v="1" aria-pressed="true">Transparent</button><button type="button" data-v="0" aria-pressed="false">Space</button></div></div>
     <p class="tune-hint" data-cap-note>Only the 3D scene is saved, no page text. Transparent needs PNG.</p>
     <button type="button" class="tune-btn" data-cap-go>&#9673; Save image</button>
+  
   </div>
 </aside>
 
@@ -2077,6 +2100,6 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.3bbe8f0d17.js", 481519]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.158606900f.js", 481984]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>
