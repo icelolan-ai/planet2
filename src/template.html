@@ -8178,8 +8178,8 @@ class CoreStudio {
         g.body.append(r); g.n++; if (g.cnt) g.cnt.textContent = g.n; touched.add(g);
       });
       touched.forEach(g => {
-        g.body.classList.toggle('one', g.n === 1); g.body.classList.toggle('many', g.n >= 5);
-        if (g.n < 5) g.body.querySelectorAll('input[type=range]').forEach(i => this.knobify(i));
+        g.body.classList.toggle('one', g.n === 1); g.body.classList.toggle('many', g.n >= 3);
+        if (g.n < 3) g.body.querySelectorAll('input[type=range]').forEach(i => this.knobify(i));
       });
     };
     let t = 0; new MutationObserver(() => { cancelAnimationFrame(t); t = requestAnimationFrame(build); }).observe(root, { childList: true, subtree: true });
