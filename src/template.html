@@ -9004,6 +9004,8 @@ class CoreStudio {
     this.setDrawing = on => { if (!on) { this.maskEdit = null; this.syncMaskBar && this.syncMaskBar(); } this.drawing = on; pad.hidden = !on; this.el.classList.toggle('is-drawing', on); btn.setAttribute('aria-pressed', String(on)); if (on) { this.select(null); this.paintGuides(); this.syncAssistBar && this.syncAssistBar(); } };
     btn.addEventListener('click', () => { if (this.drawing) { this.setDrawing(false); this.closeFly(); } else { this.setDrawing(true); sync(); } });
     this.el.querySelector('[data-draw-done]').onclick = () => { this.setDrawing(false); this.closeFly(); };
+    // Picking any other tool in the rails switches the pencil/pen off, so the canvas goes back to normal until the pencil is chosen again.
+    this.el.addEventListener('click', e => { const b = this.drawing && e.target.closest('.st-rail button'); if (b && !b.matches('[data-studio-draw],[data-studio-undo],[data-studio-redo]')) this.setDrawing(false); }, true);
     let cur = null;
     const pt = e => [e.clientX, e.clientY];
     const angles = () => this.drawSet.guide === 'grid' ? [0, 90] : this.drawSet.guide === 'iso' ? [30, 90, 150] : [0, 45, 90, 135];
