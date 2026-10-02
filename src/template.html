@@ -8495,12 +8495,11 @@ class CoreStudio {
     const b = this.el.querySelector('[data-studio-lib-save] .st-label'); if (this.app.cap) return; b.textContent = 'Saving…'; this.select(null);
     let thumb = '';
     try {
-      const { blob } = await this.app.capture({ type: 'image/png', scale: 1, transparent: false });
-      // Sharp portrait thumbnail cropped around the composition centre, sized for the carousel card on retina screens.
-      const bmp = await createImageBitmap(blob), sc = bmp.width / innerWidth, cc = this.compCentre(), sh = this.shift || { x: 0, y: 0 };
-      const ch = bmp.height, cw = Math.min(bmp.width, Math.round(ch * .8)), cx = clamp((cc.x + sh.x) * sc - cw / 2, 0, bmp.width - cw);
+      const full = await this.composePoster(1.5);
+      // Portrait thumbnail of the whole poster (text, shapes, drawings included), sized for the carousel card on retina screens.
+      const ch = full.height, cw = Math.min(full.width, Math.round(ch * .8)), cx = Math.max(0, Math.round((full.width - cw) / 2));
       const c = document.createElement('canvas'), k = Math.min(1, 1100 / ch); c.width = Math.round(cw * k); c.height = Math.round(ch * k);
-      const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(bmp, cx, 0, cw, ch, 0, 0, c.width, c.height);
+      const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(full, cx, 0, cw, ch, 0, 0, c.width, c.height);
       thumb = c.toDataURL('image/webp', .86); if (!thumb.startsWith('data:image/webp')) thumb = c.toDataURL('image/jpeg', .86);
     } catch (e) {}
     const name = (this.items.find(i => i.role === 'title') || {}).content || 'Untitled';
@@ -9043,10 +9042,8 @@ class CoreStudio {
     const c = this.fxBg; if (c.width !== this.bg.width || c.height !== this.bg.height) { c.width = this.bg.width; c.height = this.bg.height; }
     const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(this.bg, 0, 0);
   }
-  async exportPoster(type = 'image/png', scale = 2) {
-    if (!this.active || this.exporting || this.app.cap) return;
-    const button=this.el.querySelector('[data-studio-export]'),label=button.querySelector('[data-export-label]');this.exporting=true;button.disabled=true;label.textContent='Rendering…';if(this.sel)this.select(null);
-    try {
+  async composePoster(scale = 2) {
+    if(this.sel)this.select(null);
       const {blob,width,height}=await this.app.capture({type:'image/png',scale,transparent:false});
       if(!blob)throw Error('Canvas capture failed');
       const bitmap=await createImageBitmap(blob), out=document.createElement('canvas');out.width=width;out.height=height;
@@ -9086,6 +9083,13 @@ class CoreStudio {
       if(innerWidth>900){const c0=this.compCentre(),sh=this.shift||{x:0,y:0},cx=(c0.x+sh.x)*sx,half=Math.min(cx,width-cx);
         fin=document.createElement('canvas');fin.width=Math.round(half*2);fin.height=height;fin.getContext('2d').drawImage(out,Math.round(cx-half),0,fin.width,height,0,0,fin.width,height);}
       if(this.grain&&this.fxVisible('grain')){const gc=fin.getContext('2d'),n=document.createElement('canvas');n.width=256;n.height=256;const ng=n.getContext('2d'),id=ng.createImageData(256,256);for(let i=0;i<id.data.length;i+=4){const v=Math.random()*255;id.data[i]=id.data[i+1]=id.data[i+2]=v;id.data[i+3]=255;}ng.putImageData(id,0,0);gc.save();gc.globalAlpha=this.grainAmt*this.fxItem('grain').alpha;gc.globalCompositeOperation='overlay';gc.fillStyle=gc.createPattern(n,'repeat');gc.fillRect(0,0,fin.width,fin.height);gc.restore();}
+      return fin;
+  }
+  async exportPoster(type = 'image/png', scale = 2) {
+    if (!this.active || this.exporting || this.app.cap) return;
+    const button=this.el.querySelector('[data-studio-export]'),label=button.querySelector('[data-export-label]');this.exporting=true;button.disabled=true;label.textContent='Rendering…';if(this.sel)this.select(null);
+    try {
+      const fin=await this.composePoster(scale);
       const final=await new Promise(resolve=>fin.toBlob(resolve,type,.93));
       if(!final)throw Error('PNG encoding failed');
       const link=document.createElement('a');link.href=URL.createObjectURL(final);link.download=`cerebra-${this.preset}-${fin.width}x${fin.height}.${{'image/jpeg':'jpg','image/webp':'webp'}[type]||'png'}`;
