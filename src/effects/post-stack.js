@@ -240,7 +240,7 @@ class CerebraPostStack {
     const a=window.__cerebra,r=this.stage.renderer;
     // Preserve the existing cutout alpha path; opaque captures keep the post stack.
     if(!this.composer||this.tier>=2||a?.cap?.o.transparent){r.autoClear=this.autoClear;r.render(this.stage.scene,camera);return;}
-    try{this.resize();r.autoClear=false;this.composer.setMainCamera(camera);this.grain.blendMode.opacity.value=this.tier===0&&!this.mobile&&!a?.reduced? .004:0;const ab=this.tier===0&&typeof LENS_U!=='undefined'&&LENS_U.uLensOn.value?LENS_U.uLensAberr.value*.2:0;this.ca.offset.set(ab,ab);this.composer.render(0);}
+    try{this.resize();r.autoClear=false;this.composer.setMainCamera(camera);this.grain.blendMode.opacity.value=this.tier===0&&!this.mobile&&!a?.reduced? .004:0;this.ca.offset.set(0,0);this.composer.render(0);}
     catch(e){this.disable();r.render(this.stage.scene,camera);}
   }
   disable(){this.tier=2;this.status='off';if(this.composer){this.composer.dispose();this.composer=null;}this.stage.renderer.autoClear=this.autoClear;}
