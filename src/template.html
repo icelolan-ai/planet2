@@ -7725,7 +7725,8 @@ class CoreStudio {
         <div class="st-fly-shapes"><button type="button" class="st-btn" data-studio-add="tri">${this.icons.tri}Triangle</button><button type="button" class="st-btn" data-studio-add="rect">${this.icons.rect}Square</button><button type="button" class="st-btn" data-studio-add="circle">${this.icons.circle}Circle</button></div>
         <label class="st-fly-row"><span>Outside blur</span><output data-fo="blur"></output><input type="range" min="0" max="30" data-fset="blur"></label>
         <label class="st-fly-row"><span>Darken outside</span><output data-fo="dim"></output><input type="range" min="0" max="0.7" step="0.05" data-fset="dim"></label>
-        <label class="st-fly-row st-fly-check"><span>Show guide lines</span><input type="checkbox" data-fset="guides"></label></div>
+        <label class="st-fly-row st-fly-check"><span>Show guide lines</span><input type="checkbox" data-fset="guides"></label>
+        <label class="st-fly-row"><span>Grid</span><select data-studio-gridmode aria-label="Grid"><option value="always">Always</option><option value="focus">Only with a focus shape</option><option value="off">Off</option></select></label></div>
       <div class="st-fly st-glass" data-fly="decor" hidden><b class="st-fly-title">Decor shape</b><p class="st-fly-note">Solid shapes to dress the scene. Pick the colour first, or change it later.</p>
         <div class="st-fly-shapes"><button type="button" class="st-btn" data-studio-decor="tri">${this.icons.tri}Triangle</button><button type="button" class="st-btn" data-studio-decor="rect">${this.icons.rect}Square</button><button type="button" class="st-btn" data-studio-decor="circle">${this.icons.circle}Circle</button></div>
         <label class="st-fly-row"><span>Colour</span><input type="color" data-fset="decorFill"></label>
@@ -7969,7 +7970,7 @@ class CoreStudio {
     addEventListener('keydown', e => { if (!this.active || e.target.closest('input,textarea,select,[contenteditable=true]') || e.ctrlKey || e.metaKey) return; const k = e.key.toLowerCase(); if (k === 'v') this.setTool('move'); else if (k === 'h') this.setTool('hand'); });
     this.el.querySelector('[data-flyout="style"]').addEventListener('pointerdown', e => e.stopPropagation());
     this.el.querySelector('[data-studio-effect]').onchange = e => { this.effect = e.target.value; this.syncFxLayers(); this.el.querySelector('[data-studio-fx]').setAttribute('aria-pressed', String(this.fxOn)); this.commit(); };
-    this.el.querySelector('[data-studio-grid]').onchange = e => { this.grid = e.target.checked; this.gridMode = this.grid ? 'always' : 'off'; this.el.querySelector('[data-studio-gridmode]').value = this.gridMode; this.paintBackground(); };
+    this.el.querySelector('[data-studio-grid]').onchange = e => { this.grid = e.target.checked; this.gridMode = this.grid ? 'always' : 'off'; this.setGridMode(this.gridMode); this.paintBackground(); };
     this.gridMode = 'always'; this.gridStyle = { auto: true, c: '#ffffff', a: .25, t: 1, n: 24 };
     {
       const q = x => this.el.querySelector(x), gc = q('[data-grid-c]'), ga = q('[data-grid-a]'), gt = q('[data-grid-t]'), gn = q('[data-grid-n]'), au = q('[data-grid-auto]');
@@ -7982,7 +7983,7 @@ class CoreStudio {
       au.addEventListener('click', () => { this.gridStyle.auto = true; sync(); this.paintBackground(); this.commit(); });
       sync();
     }
-    this.el.querySelector('[data-studio-gridmode]').onchange = e => { this.gridMode = e.target.value; this.paintBackground(); this.commit(); };
+    this.el.querySelectorAll('[data-studio-gridmode]').forEach(sel => { sel.onchange = e => { this.gridMode = e.target.value; this.setGridMode(this.gridMode); this.paintBackground(); this.commit(); }; });
     const rangeControl = (selector, key, format, repaint) => {
       const el = this.el.querySelector(selector);
       el.oninput = () => { this[key] = +el.value; el.nextElementSibling.textContent = format(this[key]); if (repaint) repaint(); };
@@ -8134,7 +8135,7 @@ class CoreStudio {
       infinity:{background:'gradient',a:'#050809',b:'#20292a',angle:145,grid:false,light:1.2,lightX:-4,shadow:.75,soft:.8,effect:'off',amount:4,ink:'#e7f2f1'}
     };
     const p = presets[name]; if (!p) return;
-    this.preset=name; this.background=p.background; this.bgA=p.a; this.bgB=p.b; this.angle=p.angle; this.grid=p.grid;this.gridMode=p.grid?'always':'off';const gmEl=this.el.querySelector('[data-studio-gridmode]');if(gmEl)gmEl.value=this.gridMode;
+    this.preset=name; this.background=p.background; this.bgA=p.a; this.bgB=p.b; this.angle=p.angle; this.grid=p.grid;this.gridMode=p.grid?'always':'off';this.setGridMode(this.gridMode);
     this.light=p.light;this.lightX=p.lightX; this.shadow=p.shadow; this.shadowSoft=p.soft; this.effect=p.effect; this.effectAmount=p.amount;
     this.el.querySelectorAll('[data-studio-preset]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.studioPreset===name)));
     const values={'[data-studio-background]':p.background,'[data-studio-bg-a]':p.a,'[data-studio-bg-b]':p.b,'[data-studio-angle]':p.angle,'[data-studio-grid]':p.grid,
@@ -8952,6 +8953,7 @@ class CoreStudio {
     this.maskEdit = it; this.place(it); if (!this.drawing) this.setDrawing(true); this.setDrawTool && this.setDrawTool('pen'); this.syncMaskBar(); this.commit();
   }
   syncMaskBar() { const b = this.el.querySelector('.st-assist'); if (b) b.classList.toggle('is-mask', !!this.maskEdit); const n = this.el.querySelector('[data-mask-note]'); if (n) n.textContent = this.maskEdit ? `Mask: Pen hides · Eraser reveals (${this.maskEdit.name || this.label(this.maskEdit)})` : ''; }
+  setGridMode(v) { this.gridMode = v; this.el.querySelectorAll('[data-studio-gridmode]').forEach(e => { e.value = v; }); }
   addGroup() {
     const g = { id: Date.now() + Math.floor(Math.random() * 1000), name: `Group ${this.groups.length + 1}`, hide: false, collapsed: false };
     this.groups.push(g); if (this.sel && this.sel.kind !== 'fx') this.sel.group = g.id; this.renderLayers(); this.commit();
@@ -8980,7 +8982,7 @@ class CoreStudio {
   restore(json) {
     const d = JSON.parse(json); this.restoring = true;
     this.select(null); this.items.slice().forEach(it => this.removeItem(it, true));
-    Object.assign(this, d.s); this.groups = this.groups || []; this.gridStyle = this.gridStyle || { auto: true, c: '#ffffff', a: .25, t: 1, n: 24 }; if (this.syncGridUI) this.syncGridUI(); Object.assign(this.layers, d.layers); d.core.forEach((v, i) => { this.coreLayers[i] = v; });
+    Object.assign(this, d.s); this.groups = this.groups || []; this.gridStyle = this.gridStyle || { auto: true, c: '#ffffff', a: .25, t: 1, n: 24 }; if (this.syncGridUI) this.syncGridUI(); this.setGridMode(this.gridMode || 'always'); Object.assign(this.layers, d.layers); d.core.forEach((v, i) => { this.coreLayers[i] = v; });
     d.items.forEach(o => this.addItem(o.kind, { ...o, silent: true }));
     const v = { '[data-studio-background]': this.background, '[data-studio-bg-a]': this.bgA, '[data-studio-bg-b]': this.bgB, '[data-studio-angle]': this.angle, '[data-studio-grid]': this.grid,
       '[data-studio-light]': this.light, '[data-studio-light-x]': this.lightX, '[data-studio-shadow]': this.shadow, '[data-studio-shadow-soft]': this.shadowSoft, '[data-studio-effect]': this.effect, '[data-studio-effect-amount]': this.effectAmount };
