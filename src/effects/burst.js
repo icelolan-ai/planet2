@@ -3,13 +3,13 @@
 const BURST = Effects.register({
   id: 'burst', prefix: 'b_', title: 'Particle burst & ring',
   controls: [
-    { key: 'burst',  label: 'Burst threads',   type: 'select', options: [['0', 'Off'], ['1', 'On']] },
+    { key: 'burst',  label: 'Burst threads',   type: 'toggle' },
     { key: 'lines',  label: 'Threads',         min: 20,   max: 700, step: 1 },
     { key: 'len',    label: 'Reach',           min: 0.2,  max: 3,   step: 0.01 },
     { key: 'twist',  label: 'Twist',           min: -6,   max: 6,   step: 0.05 },
     { key: 'curl',   label: 'Curl noise',      min: 0,    max: 1,   step: 0.01 },
     { key: 'flow',   label: 'Pulse speed',     min: 0,    max: 3,   step: 0.01 },
-    { key: 'ring',   label: 'Particle ring',   type: 'select', options: [['0', 'Off'], ['1', 'On']] },
+    { key: 'ring',   label: 'Particle ring',   type: 'toggle' },
     { key: 'count',  label: 'Ring particles',  min: 400,  max: 9000, step: 50 },
     { key: 'rin',    label: 'Ring inner radius', min: 1.05, max: 3.5, step: 0.01 },
     { key: 'rwid',   label: 'Ring width',      min: 0.1,  max: 2.5, step: 0.01 },
