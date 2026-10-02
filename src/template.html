@@ -2336,7 +2336,7 @@ const WorldTune = (() => {
       const b = body(); if (!b) return; b.randomize();
       setTheme(b.theme); setRange(spd, b.speed, times); setRange(dens, b.density, pct); dir.set(b.dir); shape.set(-1);
       const R = (a, c) => a + Math.random() * (c - a);
-      LENS_U.uLensAberr.value = +R(0, 0.07).toFixed(3); LENS_U.uLensBlur.value = +R(0.2, 1).toFixed(2); LENS_U.uLensBloom.value = +R(0.2, 1).toFixed(2);
+      LENS_U.uLensAberr.value = 0; LENS_U.uLensBlur.value = +R(0.2, 1).toFixed(2); LENS_U.uLensBloom.value = +R(0.2, 1).toFixed(2);
       setRange(aberr, LENS_U.uLensAberr.value, f3); setRange(blur, LENS_U.uLensBlur.value, f2); setRange(bloom, LENS_U.uLensBloom.value, f2);
       syncRings(); save();
     });
@@ -2778,10 +2778,10 @@ float snoise(vec3 v){
 /* Lens for particles, done per point instead of a full-screen pass: depth of field (points away from the focus
    distance grow into soft discs and dim to keep their energy), chromatic aberration that grows toward the screen
    edge, and a light bloom on bright cores. All particle shaders share these uniforms (LENS_U). */
-const LENS_U = { uLensFocus: { value: 10 }, uLensBlur: { value: 0.55 }, uLensAberr: { value: 0.035 }, uLensBloom: { value: 0.45 }, uLensOn: { value: 1 } };
+const LENS_U = { uLensFocus: { value: 10 }, uLensBlur: { value: 0.55 }, uLensAberr: { value: 0 }, uLensBloom: { value: 0.45 }, uLensOn: { value: 1 } };
 const LENS_DEFAULTS = () => (matchMedia('(max-width: 760px), (pointer: coarse)').matches
   ? { uLensOn: 1, uLensAberr: 0, uLensBlur: 0.08, uLensBloom: 0.25 }
-  : { uLensOn: 1, uLensAberr: 0.035, uLensBlur: 0.55, uLensBloom: 0.45 });
+  : { uLensOn: 1, uLensAberr: 0, uLensBlur: 0.55, uLensBloom: 0.45 });
 Object.entries(LENS_DEFAULTS()).forEach(([k, v]) => { LENS_U[k].value = v; });
 const LENS_PARS_V = `
 uniform float uLensFocus, uLensBlur, uLensOn;
