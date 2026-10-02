@@ -1277,6 +1277,15 @@ html,body{touch-action:pan-x pan-y}
 #studio .st-fxbox[hidden]{display:none}
 #studio .st-sub-wide .net-host{display:block}
 #studio .st-sub-wide>.st-fxbox>.st-btn{width:100%;min-width:0;height:44px;flex-direction:row;gap:8px}
+/* Eraser + layer controls in the drawing bar */
+#studio .st-assist-r0{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between}
+#studio .st-assist-r0 .st-esize{display:none;flex:1 1 140px}
+#studio .st-assist.is-erase .st-esize{display:grid}
+#studio .st-assist-new{min-height:38px;padding:0 14px;border:0;border-radius:11px;background:#ffffff1c;color:#fff;font:600 11px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:1px solid #ffffff2e}
+#studio .st-assist-seg button[data-atool].is-on{background:var(--cyg);color:#fff;box-shadow:0 0 14px #8b5cf666}
+#studio .st-draw-pad.is-erase{cursor:none}
+#studio .st-erase-cur{position:absolute;left:0;top:0;border:2px solid #fff;border-radius:50%;pointer-events:none;box-shadow:0 0 0 1px #0008,inset 0 0 0 1px #0008;z-index:3}
+#studio .st-erase-cur[hidden]{display:none}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -7728,7 +7737,7 @@ class CoreStudio {
       f.querySelectorAll('[data-sset]').forEach(el => { const v = it.st[el.dataset.sset]; if (el.type === 'checkbox') el.checked = v; else el.value = v; });
       f.querySelector('[data-so="lineW"]').textContent = `${it.st.lineW}px`; };
     this.el.querySelectorAll('[data-sset]').forEach(el => {
-      el.addEventListener('input', () => { const it = this.sel; if (!it || !it.st) return; const k = el.dataset.sset; it.st[k] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value; this.syncStyle(); this.place(it); });
+      el.addEventListener('input', () => { const it = this.sel; if (!it || !it.st) return; const k = el.dataset.sset; it.st[k] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value; if (it.kind === 'stroke' && it.strokes) it.strokes.forEach(sk => { if (k === 'lineColor') sk.color = it.st.lineColor; if (k === 'lineW') sk.size = it.st.lineW; if (k === 'dash') sk.dash = it.st.dash; }); this.syncStyle(); this.place(it); });
       el.addEventListener('change', () => this.commit());
     });
     this.syncFly = () => this.el.querySelectorAll('[data-fset]').forEach(el => { const k = el.dataset.fset; if (el.type === 'checkbox') el.checked = this[k]; else el.value = this[k]; const o = el.parentNode.querySelector('output'); if (o) o.textContent = fmt[k](this[k]); });
@@ -8055,6 +8064,7 @@ class CoreStudio {
       const fx = { id: ++this.itemId, kind: 'fx', locked: false, alpha: 1, hide: false, ...o, el: document.createElement('div') };
       this.items.push(fx); this.renderLayers(); if (!this.restoring) this.applyFx(); return fx;
     }
+    if (kind === 'stroke' && !o.strokes && o.pts) { o = { ...o, strokes: [{ pts: o.pts, color: (o.st && o.st.lineColor) || o.fill || '#ffffff', size: (o.st && o.st.lineW) || 4, opacity: o.opacity ?? 1, dash: (o.st && o.st.dash) || 'solid' }] }; delete o.pts; }
     const W = innerWidth, H = innerHeight, side = .2;
     const it = { id: ++this.itemId, kind, x: .5, y: .45, w: side * Math.min(1, H / W), h: side * Math.min(1, W / H), locked: false,
       content: 'Your text', font: 'display', size: Math.round(clamp(W * .05, 32, 72)), color: '#ffffff', weight: 400, ls: 0, upper: false, align: 'c', role: null, ...o };
@@ -8150,8 +8160,10 @@ class CoreStudio {
     return p;
   }
   // Smooth path through the stroke's points, scaled into a w x h box at (x, y).
-  strokeD(it, w, h, x = 0, y = 0) {
-    const sx = w / it.w0, sy = h / it.h0, P = it.pts.map(([u, v]) => [x + u * sx, y + v * sy]);
+  strokeD(it, w, h, x = 0, y = 0, pts) {
+    if (!pts) return (it.strokes || []).map(st => this.strokeD(it, w, h, x, y, st.pts)).join('');
+    const sx = w / it.w0, sy = h / it.h0, P = pts.map(([u, v]) => [x + u * sx, y + v * sy]);
+    if (!P.length) return '';
     if (P.length < 3) return P.length === 1 ? `M${P[0][0]} ${P[0][1]}l0.01 0` : `M${P[0][0]} ${P[0][1]}L${P[1][0]} ${P[1][1]}`;
     let d = `M${P[0][0]} ${P[0][1]}`;
     for (let i = 1; i < P.length - 1; i++) d += `Q${P[i][0]} ${P[i][1]} ${(P[i][0] + P[i + 1][0]) / 2} ${(P[i][1] + P[i + 1][1]) / 2}`;
@@ -8161,6 +8173,11 @@ class CoreStudio {
   dashArr(s) { const w = s.lineW; return s.dash === 'dashed' ? [w * 4, w * 3] : s.dash === 'dotted' ? [0.01, w * 2.2] : []; }
   drawShapeSvg(it, w, h) {
     const svg = it.el.querySelector('svg.st-outline'); if (!svg) return;
+    if (it.kind === 'stroke' && it.strokes) {
+      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      svg.innerHTML = it.strokes.map(st => `<path d="${this.strokeD(it, w, h, 0, 0, st.pts)}" fill="none" stroke="${st.color}" stroke-width="${st.size}" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${this.dashArr({ lineW: st.size, dash: st.dash }).join(' ')}" opacity="${st.opacity}"/>`).join('') + `<path class="st-guide" d="${this.strokeD(it, w, h)}"/>`;
+      return;
+    }
     const s = it.st, d = this.shapeD(it.kind, w, h, it), id = 'p' + it.id, col = it.decor ? it.fill : s.lineColor;
     const pat = s.pattern === 'grid' ? `<pattern id="${id}" width="18" height="18" patternUnits="userSpaceOnUse"><path d="M18 0H0V18" fill="none" stroke="${col}" stroke-width="1" opacity=".8"/></pattern>`
       : s.pattern === 'dots' ? `<pattern id="${id}" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="7" cy="7" r="1.8" fill="${col}"/></pattern>` : '';
@@ -8172,6 +8189,11 @@ class CoreStudio {
   }
   // Canvas version for exports; x/y/w/h in output pixels.
   drawShapeCanvas(g, it, x, y, w, h, k) {
+    if (it.kind === 'stroke' && it.strokes) {
+      g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
+      it.strokes.forEach(st => { g.globalAlpha = st.opacity * (it.alpha ?? 1); g.strokeStyle = st.color; g.lineWidth = st.size * k; g.setLineDash(this.dashArr({ lineW: st.size, dash: st.dash }).map(v => v * k)); g.stroke(new Path2D(this.strokeD(it, w, h, x, y, st.pts))); });
+      g.restore(); return;
+    }
     const s = it.st, path = this.shapePath(it.kind, w, h, x, y, it), col = it.decor ? it.fill : s.lineColor, a = (it.decor ? it.opacity : 1) * (it.alpha ?? 1);
     g.save(); g.globalAlpha = a;
     if (it.decor && s.fillOn) { g.fillStyle = it.fill; g.fill(path); }
@@ -8228,9 +8250,9 @@ class CoreStudio {
   // Pencil: freehand strokes become 'stroke' items. Holding still turns a stroke into a line or circle (QuickShape);
   // guides draw a soft grid/isometric lattice and assist locks strokes to its axes.
   initDraw() {
-    this.drawSet = { color: '#ffffff', size: 4, opacity: 1, dash: 'solid', hold: 1.25, guide: 'none', gap: 48, assist: false, gopacity: .3, gthick: 1 };
+    this.drawSet = { color: '#ffffff', size: 4, opacity: 1, dash: 'solid', hold: .75, guide: 'none', gap: 48, assist: false, gopacity: .3, gthick: 1, esize: 24 };
     try { Object.assign(this.drawSet, JSON.parse(localStorage.getItem('cerebra-studio-pencil') || '{}')); } catch (e) {}
-    try { if (!localStorage.getItem('cerebra-hold-v2')) { localStorage.setItem('cerebra-hold-v2', '1'); this.drawSet.hold = 1.25; } } catch (e) {}
+    try { if (!localStorage.getItem('cerebra-hold-v3')) { localStorage.setItem('cerebra-hold-v3', '1'); this.drawSet.hold = .75; } } catch (e) {}
     const pad = this.drawPad = document.createElement('div'); pad.className = 'st-draw-pad'; pad.hidden = true;
     pad.innerHTML = '<canvas class="st-guides"></canvas><svg class="st-ink"><path/></svg>';
     this.stage.after(pad); this.guideCv = pad.querySelector('canvas'); this.ink = pad.querySelector('path');
@@ -8244,7 +8266,7 @@ class CoreStudio {
     // Visible drawing-assist bar (Procreate style): guide type + snap toggle, shown while the pencil is active.
     const bar = document.createElement('div'); bar.className = 'st-assist st-glass';
     const bs = (k, label) => `<label class="st-assist-sl"><span>${label}</span><b data-bo="${k}"></b><input type="range" data-bset="${k}"></label>`;
-    bar.innerHTML = '<div class="st-assist-r1"><span class="st-assist-t">Drawing Guides</span><div class="st-assist-seg" role="group" aria-label="Guide"><button type="button" data-ag="none">Off</button><button type="button" data-ag="grid">2D Grid</button><button type="button" data-ag="iso">Isometric</button></div><button type="button" class="st-assist-sw" data-asnap role="switch" aria-checked="false"><span>Assisted drawing</span><i></i></button><button type="button" class="st-assist-x" data-adone aria-label="Done drawing">Done</button></div><div class="st-assist-r2">' + bs('gopacity', 'Opacity') + bs('gthick', 'Thickness') + bs('gap', 'Grid size') + '</div>';
+    bar.innerHTML = '<div class="st-assist-r0"><div class="st-assist-seg" role="group" aria-label="Tool"><button type="button" data-atool="pen" class="is-on">Pen</button><button type="button" data-atool="erase">Eraser</button></div><label class="st-assist-sl st-esize"><span>Eraser size</span><b data-bo="esize"></b><input type="range" min="6" max="90" step="2" data-eset></label><button type="button" class="st-assist-new" data-anew>+ New layer</button></div><div class="st-assist-r1"><span class="st-assist-t">Drawing Guides</span><div class="st-assist-seg" role="group" aria-label="Guide"><button type="button" data-ag="none">Off</button><button type="button" data-ag="grid">2D Grid</button><button type="button" data-ag="iso">Isometric</button></div><button type="button" class="st-assist-sw" data-asnap role="switch" aria-checked="false"><span>Assisted drawing</span><i></i></button><button type="button" class="st-assist-x" data-adone aria-label="Done drawing">Done</button></div><div class="st-assist-r2">' + bs('gopacity', 'Opacity') + bs('gthick', 'Thickness') + bs('gap', 'Grid size') + '</div>';
     this.el.append(bar);
     const poke = (k, v) => { const el = fly.querySelector(`[data-dset="${k}"]`); if (!el) return; if (el.type === 'checkbox') el.checked = v; else el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
     const syncBar = () => {
@@ -8253,6 +8275,15 @@ class CoreStudio {
       bar.querySelectorAll('[data-bset]').forEach(el => { const k = el.dataset.bset, src = fly.querySelector(`[data-dset="${k}"]`); if (src) { ['min', 'max', 'step'].forEach(a => el.setAttribute(a, src.getAttribute(a))); } if (document.activeElement !== el) el.value = this.drawSet[k]; el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%'); bar.querySelector(`[data-bo="${k}"]`).textContent = fmt[k](this.drawSet[k]); });
       bar.classList.toggle('is-off', this.drawSet.guide === 'none');
     };
+    this.drawTool = 'pen';
+    const esl = bar.querySelector('[data-eset]'), setTool = t => { this.drawTool = t; bar.querySelectorAll('[data-atool]').forEach(b => b.classList.toggle('is-on', b.dataset.atool === t)); bar.classList.toggle('is-erase', t === 'erase'); pad.classList.toggle('is-erase', t === 'erase'); eraseCur.hidden = t !== 'erase'; };
+    this.setDrawTool = setTool;
+    const syncEs = () => { esl.value = this.drawSet.esize; esl.style.setProperty('--p', ((esl.value - esl.min) / (esl.max - esl.min) * 100) + '%'); bar.querySelector('[data-bo="esize"]').textContent = this.drawSet.esize + 'px'; eraseCur.style.width = eraseCur.style.height = this.drawSet.esize * 2 + 'px'; };
+    const eraseCur = document.createElement('i'); eraseCur.className = 'st-erase-cur'; eraseCur.hidden = true; pad.append(eraseCur);
+    esl.addEventListener('input', () => { this.drawSet.esize = +esl.value; syncEs(); try { localStorage.setItem('cerebra-studio-pencil', JSON.stringify(this.drawSet)); } catch (e) {} });
+    bar.querySelectorAll('[data-atool]').forEach(b => b.addEventListener('click', () => setTool(b.dataset.atool)));
+    bar.querySelector('[data-anew]').addEventListener('click', () => { this.items.forEach(i => { if (i.drawCur) i.drawCur = false; }); setTool('pen'); const b = bar.querySelector('[data-anew]'); b.textContent = 'New layer ready ✓'; setTimeout(() => { b.textContent = '+ New layer'; }, 1400); });
+    syncEs(); this.eraseCur = eraseCur;
     bar.querySelectorAll('[data-ag]').forEach(b => b.addEventListener('click', () => poke('guide', b.dataset.ag)));
     bar.querySelector('[data-asnap]').addEventListener('click', () => poke('assist', !this.drawSet.assist));
     bar.querySelectorAll('[data-bset]').forEach(el => el.addEventListener('input', () => poke(el.dataset.bset, +el.value)));
@@ -8298,13 +8329,37 @@ class CoreStudio {
       else { const k = Math.hypot(p[0] - S.c[0], p[1] - S.c[1]) / S.d0, n = 72; cur.pts = Array.from({ length: n + 1 }, (_, i) => [S.c[0] + Math.cos(i / n * 6.2832) * S.rx * k, S.c[1] + Math.sin(i / n * 6.2832) * S.ry * k]); }
       render();
     };
+    let er = null;
+    // Vector eraser: removes the parts of any drawing that fall under the eraser and splits strokes around the gap.
+    const eraseAt = p => {
+      const U = this.U(), W = innerWidth, H = innerHeight, sh = this.shift || { x: 0, y: 0 }, r = this.drawSet.esize;
+      this.items.slice().forEach(t => {
+        if (t.kind !== 'stroke' || !t.strokes || t.locked || t.hide) return;
+        const kx = t.w / t.w0 * U, ky = t.h / t.h0 * U, left = t.x * W + sh.x - t.w * U / 2, top = t.y * H + sh.y - t.h * U / 2;
+        let changed = false; const out = [];
+        t.strokes.forEach(sk => {
+          const abs = sk.pts.map(([u, v]) => [left + u * kx, top + v * ky]);
+          if (!abs.some(q => Math.hypot(q[0] - p[0], q[1] - p[1]) < r + sk.size)) { out.push(sk); return; }
+          changed = true;
+          const dense = []; abs.forEach((q, i) => { if (!i) { dense.push(q); return; } const a = abs[i - 1], n = Math.max(1, Math.ceil(Math.hypot(q[0] - a[0], q[1] - a[1]) / 3)); for (let j = 1; j <= n; j++) dense.push([a[0] + (q[0] - a[0]) * j / n, a[1] + (q[1] - a[1]) * j / n]); });
+          let run = []; const flush = () => { if (run.length > 1) out.push({ ...sk, pts: run.map(q => [+((q[0] - left) / kx).toFixed(4), +((q[1] - top) / ky).toFixed(4)]) }); run = []; };
+          dense.forEach(q => { if (Math.hypot(q[0] - p[0], q[1] - p[1]) < r) flush(); else run.push(q); }); flush();
+        });
+        if (!changed) return;
+        er.changed = true;
+        if (!out.length) { this.removeItem(t, true); return; }
+        t.strokes = out; this.place(t);
+      });
+    };
     pad.addEventListener('pointerdown', e => {
       if (e.button !== 0) return; e.preventDefault(); pad.setPointerCapture(e.pointerId); this.closeFly();
+      if (this.drawTool === 'erase') { er = { id: e.pointerId, changed: false }; eraseAt(pt(e)); return; }
       const D = this.drawSet; this.ink.setAttribute('stroke', D.color); this.ink.setAttribute('stroke-width', D.size); this.ink.setAttribute('opacity', D.opacity);
       this.ink.setAttribute('stroke-dasharray', this.dashArr({ lineW: D.size, dash: D.dash }).join(' '));
       const p0 = D.assist ? node(pt(e)) : pt(e); cur = { id: e.pointerId, start: p0, pts: [p0], anchor: pt(e) }; render(); armHold();
     });
     pad.addEventListener('pointermove', e => {
+      if (this.drawTool === 'erase') { const r = pad.getBoundingClientRect(); this.eraseCur.style.transform = `translate(${e.clientX - r.left}px,${e.clientY - r.top}px) translate(-50%,-50%)`; if (er && er.id === e.pointerId) eraseAt(pt(e)); return; }
       if (!cur || e.pointerId !== cur.id) return;
       const p = pt(e);
       if (cur.shape) { shapeTo(p); return; }
@@ -8314,15 +8369,21 @@ class CoreStudio {
       render();
     });
     const finish = e => {
+      if (er && er.id === e.pointerId) { if (er.changed) this.commit(); er = null; return; }
       if (!cur || e.pointerId !== cur.id) return; clearTimeout(cur.timer);
       const P = cur.pts; cur = null; this.ink.setAttribute('d', '');
       if (!P.length) return;
-      const U = this.U(), W = innerWidth, H = innerHeight, sh = this.shift || { x: 0, y: 0 }, pad = Math.max(12, this.drawSet.size);
-      const xs = P.map(p => p[0]), ys = P.map(p => p[1]), x0 = Math.min(...xs) - pad, y0 = Math.min(...ys) - pad, x1 = Math.max(...xs) + pad, y1 = Math.max(...ys) + pad;
-      const w0 = (x1 - x0) / U, h0 = (y1 - y0) / U, D = this.drawSet;
-      this.addItem('stroke', { decor: true, x: ((x0 + x1) / 2 - sh.x) / W, y: ((y0 + y1) / 2 - sh.y) / H, w: w0, h: h0, w0, h0,
-        pts: P.map(p => [+((p[0] - x0) / U).toFixed(4), +((p[1] - y0) / U).toFixed(4)]), fill: D.color, opacity: D.opacity,
-        st: { fillOn: false, lineOn: true, lineW: D.size, dash: D.dash, pattern: 'none', lineColor: D.color }, silent: true });
+      const U = this.U(), W = innerWidth, H = innerHeight, sh = this.shift || { x: 0, y: 0 }, D = this.drawSet, pad = Math.max(12, D.size);
+      const sk = { color: D.color, size: D.size, opacity: D.opacity, dash: D.dash };
+      const t = this.items.find(i => i.kind === 'stroke' && i.drawCur && !i.locked);
+      const all = [{ ...sk, abs: P }];
+      if (t) { const k = t.w / t.w0 * U, kh = t.h / t.h0 * U, left = t.x * W + sh.x - t.w * U / 2, top = t.y * H + sh.y - t.h * U / 2; all.unshift(...t.strokes.map(o => ({ ...o, abs: o.pts.map(([u, v]) => [left + u * k, top + v * kh]) }))); }
+      const xs = all.flatMap(a => a.abs.map(q => q[0])), ys = all.flatMap(a => a.abs.map(q => q[1])), pd = Math.max(pad, ...all.map(a => a.size));
+      const x0 = Math.min(...xs) - pd, y0 = Math.min(...ys) - pd, x1 = Math.max(...xs) + pd, y1 = Math.max(...ys) + pd, w0 = (x1 - x0) / U, h0 = (y1 - y0) / U;
+      const strokes = all.map(a => ({ color: a.color, size: a.size, opacity: a.opacity, dash: a.dash, pts: a.abs.map(q => [+((q[0] - x0) / U).toFixed(4), +((q[1] - y0) / U).toFixed(4)]) }));
+      const geo = { x: ((x0 + x1) / 2 - sh.x) / W, y: ((y0 + y1) / 2 - sh.y) / H, w: w0, h: h0, w0, h0 };
+      if (t) { Object.assign(t, geo, { strokes }); this.place(t); this.renderLayers(); }
+      else this.addItem('stroke', { decor: true, ...geo, strokes, fill: D.color, opacity: 1, drawCur: true, st: { fillOn: false, lineOn: true, lineW: D.size, dash: D.dash, pattern: 'none', lineColor: D.color }, silent: true });
       this.commit();
     };
     pad.addEventListener('pointerup', finish); pad.addEventListener('pointercancel', finish);
