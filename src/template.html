@@ -1108,6 +1108,22 @@ body .tune-row:has(.st-knob) input[type=range]{display:none}
 .studio-panel .studio-control:has(.st-knob) input[type=range]{display:none}
 .studio-panel .studio-control:has(.st-knob){grid-template-columns:1fr auto auto}
 .studio-panel .studio-control .st-knob{grid-row:1;grid-column:3}
+/* Live pill, scroll-speed response, animated micro-icons */
+.live{display:flex;align-items:center;gap:8px;font:600 11px var(--f-mono);letter-spacing:.12em;color:#aab3c4;white-space:nowrap}
+.live i{width:7px;height:7px;border-radius:50%;background:#46e6a0;box-shadow:0 0 10px #46e6a0;animation:livep 2s ease-in-out infinite}
+@keyframes livep{50%{opacity:.35}}
+@media(max-width:900px){.live [data-live-iss]{display:none}.live{font-size:10px}}
+@media(max-width:560px){.live{display:none}}
+#gl{filter:saturate(calc(1 + var(--scroll-speed,0) * .35)) brightness(calc(1 + var(--scroll-speed,0) * .06))}
+body.studio-on #gl{filter:none}
+@keyframes mi-spin{to{transform:rotate(180deg)}}@keyframes mi-wig{25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}@keyframes mi-bob{50%{transform:translateY(3px)}}@keyframes mi-blink{45%,55%{transform:scaleY(.1)}}@keyframes mi-pulse{50%{transform:scale(1.18)}}
+.fab-btn:hover .fab-ico svg{animation:mi-spin .6s ease-out}
+#studio [data-studio-draw]:hover svg{animation:mi-wig .5s ease-in-out}
+#studio [data-studio-show]:hover svg{animation:mi-blink .6s ease-in-out}
+#studio [data-studio-export]:hover svg,#studio [data-studio-lib-save]:hover svg{animation:mi-bob .5s ease-in-out}
+#studio [data-studio-home]:hover svg,#studio [data-studio-tune]:hover svg{animation:mi-pulse .5s ease-in-out}
+#studio [data-studio-reset-all]:hover svg{animation:mi-spin .6s ease-in-out reverse}
+@media(prefers-reduced-motion:reduce){#studio .st-btn svg{animation:none!important}}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -1385,6 +1401,7 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 <header class="hud hud-top">
   <a class="brand" href="#core" data-cursor="Surface"><span class="brand-name">Cerebra</span><span class="brand-sub">The living planet</span></a>
   <div class="hud-right">
+    <div class="live" data-hud-live aria-label="Live"><i></i><span data-live-time></span><span data-live-iss></span></div>
     <div class="depth" aria-live="polite"><span data-depth-num>Surface</span><span class="depth-name" data-depth-name>The core</span></div>
     <button class="sound" type="button" data-sound aria-pressed="true" data-cursor="Toggle sound"><span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i></span><span data-sound-label>Sound on</span></button>
   </div>
@@ -5957,6 +5974,66 @@ class ScreenLabels {
 }
 
 /** Maps page scroll to a continuous position between sections, easing so each section holds its composition. */
+/* Glide: inertial smooth scrolling (Lenis-style) with a gentle settle onto the nearest chapter; also reports scroll speed. */
+const Glide = (() => {
+  let app = null, cur = 0, tgt = 0, vel = 0, last = 0, idle = 0, active = false;
+  const fine = matchMedia('(pointer: fine)').matches, still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const blocked = e => {
+    const b = document.body, h = document.documentElement;
+    if (b.matches('.route-choose,.atelier-on,.studio-on,.tune-open,.wtune-open,.obuild-open,.is-exploring') || h.matches('.route-lock,.studio-lock,.tune-lock')) return true;
+    if (app && app.detail && app.detail.open) return true;
+    return !!(e && e.target.closest && e.target.closest('.tune,#detail,.picker-list,.gear-menu,.fab-menu,textarea,select,[contenteditable]'));
+  };
+  const tick = now => {
+    requestAnimationFrame(tick);
+    const dt = Math.min(.05, (now - last) / 1000) || .016; last = now;
+    if (Math.abs(scrollY - cur) > 3 && !active) { cur = tgt = scrollY; }
+    if (active) {
+      const prev = cur; cur += (tgt - cur) * (1 - Math.exp(-dt * 9));
+      if (Math.abs(tgt - cur) < .4) { cur = tgt; active = false; }
+      scrollTo({ top: cur, behavior: 'instant' }); vel = (cur - prev) / dt; idle = 0;
+    } else { vel *= Math.exp(-dt * 8); idle += dt; }
+    const sp = Math.min(1, Math.abs(vel) / 2600);
+    document.documentElement.style.setProperty('--scroll-speed', sp.toFixed(3));
+    if (app && app.sound) app.sound.wind(sp);
+    if (!still && app && app.scroll && idle > .35 && !active && !blocked() && fine) {
+      const s = app.scroll, i = Math.round(s.raw()), top = s.top(i), d = top - scrollY;
+      if (Math.abs(d) > 6 && Math.abs(d) < innerHeight * .3) { tgt = top; active = true; idle = 0; }
+    }
+  };
+  const start = a => {
+    app = a; if (!fine || still) { requestAnimationFrame(tick); return; }
+    cur = tgt = scrollY;
+    addEventListener('wheel', e => {
+      if (e.ctrlKey || blocked(e)) return;
+      e.preventDefault();
+      const max = document.documentElement.scrollHeight - innerHeight;
+      if (!active) cur = scrollY;
+      tgt = Math.max(0, Math.min(max, (active ? tgt : cur) + e.deltaY * (e.deltaMode === 1 ? 32 : 1)));
+      active = true;
+    }, { passive: false });
+    requestAnimationFrame(tick);
+  };
+  return { start };
+})();
+
+/* Live: local time and the ISS position (wheretheiss.at) in a small HUD pill. */
+const Live = (() => {
+  const tick = () => {
+    const d = new Date(), h = d.getHours() + d.getMinutes() / 60, el = document.querySelector('[data-live-time]');
+    if (el) el.textContent = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} · ${h > 5 && h < 8 ? 'DAWN' : h >= 8 && h < 17 ? 'DAY' : h >= 17 && h < 20 ? 'DUSK' : 'NIGHT'}`;
+  };
+  const iss = async () => {
+    const el = document.querySelector('[data-live-iss]');
+    try {
+      const r = await fetch('https://api.wheretheiss.at/v1/satellites/25544', { cache: 'no-store' }); if (!r.ok) throw 0; const j = await r.json();
+      if (el) el.textContent = ` · ISS ${Math.abs(j.latitude).toFixed(1)}°${j.latitude >= 0 ? 'N' : 'S'} ${Math.abs(j.longitude).toFixed(1)}°${j.longitude >= 0 ? 'E' : 'W'}`;
+    } catch (e) { if (el) el.textContent = ''; }
+  };
+  const start = () => { if (!document.querySelector("[data-hud-live]")) return; tick(); setInterval(tick, 30000); iss(); setInterval(iss, 20000); };
+  return { start };
+})();
+
 class ScrollDirector {
   constructor(sections, states) {
     this.sections = sections; this.states = states;
@@ -6031,6 +6108,18 @@ class SoundDesk {
     if (this.ctx && this.ctx.state === 'suspended') await this.ctx.resume();
     return this.enabled;
   }
+  // Soft airy bed whose loudness and brightness follow the scroll speed.
+  wind(sp) {
+    if (!this.enabled || !this.ctx) return;
+    if (!this.windNode) {
+      const n = this.ctx.createBufferSource(), len = this.ctx.sampleRate * 2, buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate), d = buf.getChannelData(0);
+      let b = 0; for (let i = 0; i < len; i++) { b = (b + (Math.random() * 2 - 1) * .02) * .985; d[i] = b * 6; }
+      n.buffer = buf; n.loop = true; const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 300; const g = this.ctx.createGain(); g.gain.value = 0;
+      n.connect(f); f.connect(g); g.connect(this.master); n.start(); this.windNode = { f, g };
+    }
+    const t = this.ctx.currentTime; this.windNode.g.gain.setTargetAtTime(sp * .16, t, .12); this.windNode.f.frequency.setTargetAtTime(260 + sp * 1500, t, .12);
+  }
+  tick(freq = 1800) { const now = performance.now(); if (now - (this._tk || 0) < 40) return; this._tk = now; this.tone(freq, .04, .03); }
   tone(freq, dur, gain, slide = 0) {
     if (!this.enabled || !this.ctx) return;
     const t = this.ctx.currentTime, o = this.ctx.createOscillator(), g = this.ctx.createGain();
@@ -7316,7 +7405,7 @@ class CoreStudio {
         <button type="button" class="st-btn" data-studio-reset-all aria-label="Reset everything">${I('<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/>')}<span class="st-label">Reset all</span></button>
         <button type="button" class="st-btn" data-studio-tools aria-expanded="false" aria-controls="studio-tools" aria-label="Settings">${I('<path d="M4 6h16M4 12h16M4 18h16"/>')}<span class="st-label">Settings</span></button></div>
       <aside id="studio-tools" class="studio-panel st-glass" data-tray="panel" aria-label="Studio settings" hidden><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-panel-fold aria-expanded="true"><h2>Cerebra, in focus.</h2><span class="st-chev" aria-hidden="true"></span></button>
-      <h3>Poster presets</h3><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-preset="ember" style="--p1:#0c1625;--p2:#d26448">Ember dossier</button><button type="button" class="studio-preset" data-studio-preset="monolith" style="--p1:#e0e4e3;--p2:#666e72">Monolith</button><button type="button" class="studio-preset" data-studio-preset="blueprint" style="--p1:#f4f5f3;--p2:#becbd2">Orbital grid</button><button type="button" class="studio-preset" data-studio-preset="bio" style="--p1:#1a0b3a;--p2:#7b2fa8">Biocomputer</button><button type="button" class="studio-preset" data-studio-preset="infinity" style="--p1:#05090b;--p2:#72b4b4">Infinity noir</button></div><p class="studio-note">Tap any poster text to edit it, drag to move it. Add shapes from the left to keep an area sharp and blur the rest.</p>
+      <h3>Poster presets</h3><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-preset="ember" style="--p1:#0c1625;--p2:#d26448">Ember dossier</button><button type="button" class="studio-preset" data-studio-preset="monolith" style="--p1:#e0e4e3;--p2:#666e72">Monolith</button><button type="button" class="studio-preset" data-studio-preset="blueprint" style="--p1:#f4f5f3;--p2:#becbd2">Orbital grid</button><button type="button" class="studio-preset" data-studio-preset="bio" style="--p1:#1a0b3a;--p2:#7b2fa8">Biocomputer</button><button type="button" class="studio-preset" data-studio-preset="mineral" style="--p1:#0b0c0e;--p2:#a4aab0">Mineral</button><button type="button" class="studio-preset" data-studio-preset="infinity" style="--p1:#05090b;--p2:#72b4b4">Infinity noir</button></div><p class="studio-note">Tap any poster text to edit it, drag to move it. Add shapes from the left to keep an area sharp and blur the rest.</p>
       <h3>Background</h3><select data-studio-background aria-label="Studio background"><option value="space">Space</option><option value="white">White</option><option value="studio">Studio light</option><option value="model">Model workspace</option><option value="solid">Solid colour</option><option value="gradient">Gradient</option><option value="points">Colour points</option></select>
       <div class="st-cpts-ed" data-cpts-ed hidden><p class="studio-note">Colour A is the base. Drag the dots on the canvas to place each colour.</p><div data-cpts-list></div><button type="button" class="st-btn" data-cpts-add>+ Add colour</button></div>
       <div class="studio-two"><label>Colour A<input type="color" data-studio-bg-a value="#111727"></label><label>Colour B<input type="color" data-studio-bg-b value="#274052"></label></div>
@@ -7551,6 +7640,7 @@ class CoreStudio {
       monolith:{background:'gradient',a:'#d9dddc',b:'#879096',angle:150,grid:false,light:1.35,lightX:-2,shadow:.72,soft:.45,effect:'off',amount:0,ink:'#0b0e12'},
       blueprint:{background:'gradient',a:'#f7f8f6',b:'#dae1e6',angle:75,grid:true,light:1.15,lightX:3,shadow:.5,soft:.7,effect:'off',amount:0,ink:'#0d111c'},
       bio:{background:'gradient',a:'#1a0b3a',b:'#4a1d6e',angle:160,grid:false,light:1.1,lightX:3,shadow:.5,soft:.8,effect:'off',amount:4,ink:'#f4ecff'},
+      mineral:{background:'gradient',a:'#0b0c0e',b:'#9aa0a6',angle:200,grid:false,light:1.45,lightX:-5,shadow:.9,soft:.3,effect:'off',amount:0,ink:'#f2f3f4',grain:.16},
       infinity:{background:'gradient',a:'#050809',b:'#20292a',angle:145,grid:false,light:1.2,lightX:-4,shadow:.75,soft:.8,effect:'off',amount:4,ink:'#e7f2f1'}
     };
     const p = presets[name]; if (!p) return;
@@ -7560,6 +7650,7 @@ class CoreStudio {
     const values={'[data-studio-background]':p.background,'[data-studio-bg-a]':p.a,'[data-studio-bg-b]':p.b,'[data-studio-angle]':p.angle,'[data-studio-grid]':p.grid,
       '[data-studio-light]':p.light,'[data-studio-light-x]':p.lightX,'[data-studio-shadow]':p.shadow,'[data-studio-shadow-soft]':p.soft,'[data-studio-effect]':p.effect,'[data-studio-effect-amount]':p.amount};
     Object.entries(values).forEach(([selector,value])=>{const el=this.el.querySelector(selector);if(el.type==='checkbox')el.checked=value;else el.value=value;if(el.type==='range')el.dispatchEvent(new Event('input'));});
+    if (this.syncGrain) { this.grain = !!p.grain; if (p.grain) this.grainAmt = p.grain; this.syncGrain(); const gr = this.el.querySelector('[data-studio-grain-amt]'); if (gr) { gr.value = this.grainAmt; gr.nextElementSibling.textContent = `${Math.round(this.grainAmt * 100)}%`; } }
     if (texts) this.presetTexts(name, p.ink); this.commit();
     this.updateFocus(); this.paintBackground(); this.paintVfx();
   }
@@ -7581,6 +7672,7 @@ class CoreStudio {
       monolith: [['title', 'l', L, top + .08, 1.2], ['kicker', 'l', L, top + .2], ['index', 'r', R, low + .02]],
       blueprint: [['kicker', 'l', L, top], ['index', 'r', R, top], ['title', 'l', L, low]],
       bio: [['kicker', 'l', L, top + .12], ['title', 'l', L, top + .24, .9], ['index', 'r', R, top]],
+      mineral: [['kicker', 'l', L, top], ['title', 'l', L, low - .02, 1.15], ['index', 'r', R, top]],
       infinity: [['kicker', 'l', L, top], ['tech', 'r', R, top], ['title', 'l', L, .5, .7], ['index', 'r', R, low + .02]]
     }[name];
     layout.filter(([role]) => W >= 600 || role !== 'tech').forEach(([role, align, x, y, k = 1]) => this.addItem('text', { ...T[role], role, align, x, y, size: Math.round(T[role].size * k), color: ink, silent: true }));
@@ -7978,7 +8070,7 @@ class CoreStudio {
     const kv = k.querySelector('.kv'), kp = k.querySelector('.kp'); k.querySelector('.kt').setAttribute('d', arc(A0, A1));
     const lo = +input.min, hi = +input.max, st = +input.step || (hi - lo) / 100;
     const draw = () => { const f = (input.value - lo) / (hi - lo), a = A0 + f * (A1 - A0); kv.setAttribute('d', f > .001 ? arc(A0, a) : ''); kp.setAttribute('transform', `rotate(${a} 31 31)`); k.setAttribute('aria-valuenow', input.value); };
-    const set = v => { input.value = clamp(Math.round((v - lo) / st) * st + lo, lo, hi); input.dispatchEvent(new Event('input', { bubbles: true })); draw(); };
+    const set = v => { const nv = clamp(Math.round((v - lo) / st) * st + lo, lo, hi); if (nv !== +input.value && this.app.sound) this.app.sound.tick(900 + (nv - lo) / (hi - lo) * 1600); input.value = nv; input.dispatchEvent(new Event('input', { bubbles: true })); draw(); };
     let drag = null;
     k.addEventListener('pointerdown', e => { e.preventDefault(); k.setPointerCapture(e.pointerId); drag = { y: e.clientY, x: e.clientX, v: +input.value }; });
     k.addEventListener('pointermove', e => { if (!drag) return; set(drag.v + ((drag.y - e.clientY) + (e.clientX - drag.x)) / 160 * (hi - lo)); });
@@ -8418,7 +8510,7 @@ class App {
     this.worldsReady = false;
     this.buildLabels(count);
     this.buildStates();
-    this.scroll = new ScrollDirector(this.sections, this.states);
+    this.scroll = new ScrollDirector(this.sections, this.states); Glide.start(this); Live.start();
     this.onSection(0);
     this.resize();
     this.bindRuntime();
