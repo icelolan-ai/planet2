@@ -7739,7 +7739,7 @@ class CoreStudio {
         <label data-ctx-for="shape">Outside blur<input type="range" min="0" max="30" data-ctx-blur><output></output></label>
         <button type="button" class="st-btn st-fly-btn" data-flyout="style" data-ctx-for-shape aria-expanded="false">Style<i class="st-caret"></i></button>
         <span class="st-rotbox"><label>Rotate<input type="number" step="1" min="-360" max="360" data-ctx-rot aria-label="Rotation in degrees"><i>°</i></label><label>Snap<select data-ctx-rsnap aria-label="Rotation snap"><option value="0">Free</option><option value="15">15°</option><option value="45">45°</option><option value="90">90°</option><option value="180">180°</option><option value="custom">Custom…</option></select></label><input type="number" min="1" max="180" step="1" data-ctx-rsnap-n hidden placeholder="°" aria-label="Custom snap degrees"></span>
-        <button type="button" class="st-btn" data-ctx-lock></button><button type="button" class="st-btn" data-ctx-delete aria-label="Delete">${this.icons.trash}</button></div>
+        <button type="button" class="st-btn" data-ctx-lock></button><button type="button" class="st-btn" data-ctx-dup aria-label="Duplicate"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg><span>Copy</span></button><button type="button" class="st-btn" data-ctx-delete aria-label="Delete">${this.icons.trash}</button></div>
       <div class="st-save st-glass" data-studio-save hidden><span class="st-ctx-kind">Save image</span>
         <label>Format<select data-save-type><option value="image/png">PNG</option><option value="image/jpeg">JPG</option><option value="image/webp">WebP</option></select></label>
         <label>Size<select data-save-scale><option value="1">1× screen</option><option value="2" selected>2× (sharp)</option><option value="3">3× (print)</option></select></label>
@@ -7990,6 +7990,7 @@ class CoreStudio {
     ['fill', 'opacity'].forEach(k => ctx(k).addEventListener('change', () => this.commit()));
     ctx('blur').oninput = e => { this.blur = +e.target.value; e.target.nextElementSibling.textContent = `${this.blur}px`; this.updateFocus(); };
     ctx('lock').onclick = () => { if (this.sel) this.lockItem(this.sel, !this.sel.locked); };
+    ctx('dup').onclick = () => { if (this.sel) this.dupItem(this.sel); };
     ctx('delete').onclick = () => { if (this.sel) this.removeItem(this.sel); };
     this.el.querySelector('[data-studio-gravity]').onclick = e => { this.gravity = !this.gravity; e.currentTarget.setAttribute('aria-pressed', String(this.gravity)); };
     this.el.querySelector('[data-studio-home]').onclick = () => this.home();
@@ -8746,7 +8747,7 @@ class CoreStudio {
       const sw = it.kind === 'fx' ? `<i class="st-sw is-fx">${{ colour: '◐', grain: '▒', network: '⌘' }[it.fxType]}</i>` : it.kind === 'text' ? `<i class="st-sw" style="color:${it.color}">T</i>` : `<i class="st-sw ${it.decor ? 'is-fill' : ''}" style="color:${it.decor ? it.fill : '#fff'}">${this.icons[it.kind]}</i>`;
       const name = it.kind === 'text' ? esc((it.content || '').split('\n')[0].slice(0, 24) || 'Text') : this.label(it);
       const lk = it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-llock${it.locked ? ' is-on' : ''}" aria-pressed="${!!it.locked}" aria-label="${it.locked ? 'Unlock' : 'Lock'} layer">${it.locked ? this.icons.lock : this.icons.unlock}</button>`;
-      return `<li class="st-layer${inGroup ? ' in-group' : ''}${it === this.sel ? ' is-sel' : ''}${it.hide ? ' is-hidden' : ''}${this.isHid(it) && !it.hide ? ' is-ghidden' : ''}" data-layer="${this.items.indexOf(it)}"><span class="st-grip" aria-label="Drag to restack or into a group">⋮⋮</span>${sw}<span class="st-lname">${name}</span>${lk}<button type="button" class="st-eye" data-leye aria-pressed="${!it.hide}" aria-label="${it.hide ? 'Show' : 'Hide'} layer">${eye}</button><button type="button" class="st-eye st-ldel" aria-label="Delete layer">${this.icons.trash}</button>${it === this.sel ? `<label class="st-lop">Opacity<input type="range" min="0" max="1" step="0.05" value="${it.alpha ?? 1}" aria-label="Layer opacity"><output>${Math.round((it.alpha ?? 1) * 100)}%</output></label>` : ''}</li>`;
+      return `<li class="st-layer${inGroup ? ' in-group' : ''}${it === this.sel ? ' is-sel' : ''}${it.hide ? ' is-hidden' : ''}${this.isHid(it) && !it.hide ? ' is-ghidden' : ''}" data-layer="${this.items.indexOf(it)}"><span class="st-grip" aria-label="Drag to restack or into a group">⋮⋮</span>${sw}<span class="st-lname">${name}</span>${lk}${it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-ldup" aria-label="Duplicate layer"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg></button>`}<button type="button" class="st-eye" data-leye aria-pressed="${!it.hide}" aria-label="${it.hide ? 'Show' : 'Hide'} layer">${eye}</button><button type="button" class="st-eye st-ldel" aria-label="Delete layer">${this.icons.trash}</button>${it === this.sel ? `<label class="st-lop">Opacity<input type="range" min="0" max="1" step="0.05" value="${it.alpha ?? 1}" aria-label="Layer opacity"><output>${Math.round((it.alpha ?? 1) * 100)}%</output></label>` : ''}</li>`;
     };
     const head = g => { const m = this.items.filter(i => i.group === g.id), allLocked = m.length && m.every(i => i.locked); return `<li class="st-ghead${g.hide ? ' is-hidden' : ''}" data-gid="${g.id}"><button type="button" class="st-eye st-gtog" aria-expanded="${!g.collapsed}" aria-label="${g.collapsed ? 'Expand' : 'Collapse'} group"><span class="st-chev${g.collapsed ? ' is-closed' : ''}" aria-hidden="true"></span></button>${folder}<span class="st-lname st-gname" data-gname>${esc(g.name)}</span><span class="st-gcount">${m.length}</span><button type="button" class="st-eye st-glock${allLocked ? ' is-on' : ''}" aria-pressed="${!!allLocked}" aria-label="Lock group">${allLocked ? this.icons.lock : this.icons.unlock}</button><button type="button" class="st-eye st-geye" aria-pressed="${!g.hide}" aria-label="${g.hide ? 'Show' : 'Hide'} group">${eye}</button><button type="button" class="st-eye st-gdel" aria-label="Ungroup">${this.icons.trash}</button></li>`; };
     const seen = new Set(), out = [];
@@ -8771,6 +8772,7 @@ class CoreStudio {
     ul.querySelectorAll('.st-layer').forEach(li => {
       const it = this.items[+li.dataset.layer];
       li.querySelector('.st-ldel').addEventListener('click', () => this.removeItem(it));
+      const dp = li.querySelector('.st-ldup'); if (dp) dp.addEventListener('click', () => this.dupItem(it));
       const lk = li.querySelector('.st-llock'); if (lk) lk.addEventListener('click', () => this.lockItem(it, !it.locked));
       const op = li.querySelector('.st-lop input');
       if (op) { op.addEventListener('input', () => { it.alpha = +op.value; op.nextElementSibling.textContent = `${Math.round(it.alpha * 100)}%`; this.place(it); }); op.addEventListener('change', () => this.commit()); }
@@ -8814,6 +8816,14 @@ class CoreStudio {
       };
       grip.addEventListener('pointerup', drop); grip.addEventListener('pointercancel', drop);
     });
+  }
+  dupItem(it) {
+    if (it.kind === 'fx') return null;
+    const { el, id, drawCur, ...rest } = it, o = JSON.parse(JSON.stringify(rest));
+    o.x = clamp(o.x + .03, 0, 1); o.y = clamp(o.y + .03, 0, 1); o.locked = false; o.silent = true;
+    const n = this.addItem(it.kind, o), k = this.items.indexOf(n), j = this.items.indexOf(it);
+    if (k !== j + 1) { this.items.splice(k, 1); this.items.splice(j + 1, 0, n); this.items.forEach(i => this.stage.append(i.el)); }
+    this.place(n); this.updateFocus(); this.select(n); this.commit(); return n;
   }
   addGroup() {
     const g = { id: Date.now() + Math.floor(Math.random() * 1000), name: `Group ${this.groups.length + 1}`, hide: false, collapsed: false };
