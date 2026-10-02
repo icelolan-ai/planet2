@@ -997,6 +997,19 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 .gateway-orb{transition:transform .25s ease-out}
 .atelier-copy.mb{border-radius:18px}
 @media(prefers-reduced-motion:reduce){.mb-p,.mb-r{display:none}}
+.st-lib{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;justify-content:center;gap:18px;background:#07080dcc;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);pointer-events:auto}
+.st-lib[hidden]{display:none}
+.st-lib-head{display:flex;align-items:center;gap:14px;padding:0 max(24px,6vw)}
+.st-lib-head b{font:400 clamp(28px,4vw,52px) var(--f-display);letter-spacing:.04em;text-transform:uppercase}
+.st-lib-head span{flex:1;color:#97a1b3;font:12px var(--f-mono)}
+.st-lib-track{display:flex;gap:28px;overflow-x:auto;scroll-snap-type:x mandatory;padding:20px calc(50vw - min(34vw,190px));scrollbar-width:none}
+.st-lib-track::-webkit-scrollbar{display:none}
+.st-lib-card{flex:0 0 min(68vw,380px);scroll-snap-align:center;border-radius:26px;overflow:hidden;background:#141821;border:1px solid #ffffff1c;box-shadow:0 30px 70px #000a;transition:transform .2s,opacity .2s}
+.st-lib-img{height:min(62vh,480px);background-size:cover;background-repeat:no-repeat;background-color:#0b0d13}
+.st-lib-info{padding:16px 18px;display:grid;gap:4px}
+.st-lib-info b{font:600 16px var(--f-sans)}.st-lib-info small{color:#97a1b3}
+.st-lib-info div{display:flex;gap:8px;margin-top:8px}
+.st-lib-empty{text-align:center;color:#97a1b3}
 /* Movable trays */
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
 .st-edge-hint[hidden]{display:none}
@@ -7068,6 +7081,8 @@ class CoreStudio {
         <label>Format<select data-save-type><option value="image/png">PNG</option><option value="image/jpeg">JPG</option><option value="image/webp">WebP</option></select></label>
         <label>Size<select data-save-scale><option value="1">1× screen</option><option value="2" selected>2× (sharp)</option><option value="3">3× (print)</option></select></label>
         <button type="button" class="st-btn is-primary" data-save-go>Download</button></div>
+      <div class="st-lib" data-studio-library hidden><div class="st-lib-head"><b>Library</b><span data-lib-count></span><button type="button" class="st-btn" data-lib-close aria-label="Close library">✕</button></div>
+        <div class="st-lib-track" data-lib-track></div><p class="st-lib-empty" data-lib-empty>Nothing kept yet. Press Keep in the toolbar to save this composition.</p></div>
       <div class="st-dock st-glass" data-tray="dock" role="toolbar" aria-label="Studio"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button>
         <button type="button" class="st-btn st-dock-fold" data-dock-fold aria-expanded="true" aria-label="Fold toolbar"><span class="st-chev" aria-hidden="true"></span></button>
         <select data-studio-subject aria-label="Object in studio"><option value="-1">Cerebra</option>${WORLDS.map((d,i) => `<option value="${i}">${d.name}</option>`).join('')}</select>
@@ -7080,6 +7095,8 @@ class CoreStudio {
         <button type="button" class="st-btn" data-studio-gravity aria-pressed="false" aria-label="Gravity">${I('<path d="M12 4v13M6 12l6 6 6-6"/>')}<span class="st-label">Gravity</span></button>
         <button type="button" class="st-btn" data-studio-export aria-label="Save image" aria-expanded="false">${I('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>')}<span class="st-label" data-export-label>Save</span></button>
         <span class="st-sep"></span>
+        <button type="button" class="st-btn" data-studio-lib-save aria-label="Save to library">${I('<path d="M6 3h12v18l-6-4-6 4z"/>')}<span class="st-label">Keep</span></button>
+        <button type="button" class="st-btn" data-studio-lib aria-label="Open library">${I('<rect x="3" y="5" width="7" height="14" rx="1.5"/><rect x="14" y="5" width="7" height="14" rx="1.5"/>')}<span class="st-label">Library</span></button>
         <button type="button" class="st-btn" data-studio-reset-all aria-label="Reset everything">${I('<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/>')}<span class="st-label">Reset all</span></button>
         <button type="button" class="st-btn" data-studio-tools aria-expanded="false" aria-controls="studio-tools" aria-label="Settings">${I('<path d="M4 6h16M4 12h16M4 18h16"/>')}<span class="st-label">Settings</span></button></div>
       <aside id="studio-tools" class="studio-panel st-glass" data-tray="panel" aria-label="Studio settings" hidden><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-panel-fold aria-expanded="true"><h2>Cerebra, in focus.</h2><span class="st-chev" aria-hidden="true"></span></button>
@@ -7205,6 +7222,11 @@ class CoreStudio {
       this.home(); this.applyPreset('ember'); this.paintVfx();
     };
     this.frozen = false; this.lensOn = false;
+    this.lib = this.el.querySelector('[data-studio-library]');
+    this.el.querySelector('[data-studio-lib-save]').onclick = () => this.libSave();
+    this.el.querySelector('[data-studio-lib]').onclick = () => this.libOpen(true);
+    this.el.querySelector('[data-lib-close]').onclick = () => this.libOpen(false);
+    this.el.querySelector('[data-lib-track]').addEventListener('scroll', () => this.libParallax(), { passive: true });
     this.el.querySelector('[data-studio-lens]').onchange = e => { this.lensOn = e.target.checked; };
     this.el.querySelector('[data-studio-freeze]').onclick = e => { this.frozen = !this.frozen; const b = e.currentTarget; b.setAttribute('aria-pressed', String(this.frozen)); b.setAttribute('aria-label', this.frozen ? 'Resume motion' : 'Freeze motion'); b.querySelector('[data-freeze-label]').textContent = this.frozen ? 'Play' : 'Stop'; };
     this.showSubject = true;
@@ -7540,6 +7562,42 @@ class CoreStudio {
     }
     if (s.lineOn) { g.strokeStyle = col; g.lineWidth = s.lineW * k; g.lineCap = 'round'; g.setLineDash(this.dashArr(s).map(v => v * k)); g.stroke(path); }
     g.restore();
+  }
+  // Library: keep compositions (all settings + a thumbnail) in this browser and reopen them in a parallax carousel.
+  libRead() { try { return JSON.parse(localStorage.getItem('cerebra-studio-library') || '[]'); } catch (e) { return []; } }
+  libWrite(a) { try { localStorage.setItem('cerebra-studio-library', JSON.stringify(a)); return true; } catch (e) { return false; } }
+  async libSave() {
+    const b = this.el.querySelector('[data-studio-lib-save] .st-label'); if (this.app.cap) return; b.textContent = 'Saving…'; this.select(null);
+    let thumb = '';
+    try {
+      const { blob } = await this.app.capture({ type: 'image/png', scale: .5, transparent: false });
+      const bmp = await createImageBitmap(blob), c = document.createElement('canvas'), k = 420 / bmp.width; c.width = 420; c.height = Math.round(bmp.height * k);
+      c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); thumb = c.toDataURL('image/jpeg', .72);
+    } catch (e) {}
+    const name = (this.items.find(i => i.role === 'title') || {}).content || 'Untitled';
+    const a = this.libRead(); a.unshift({ id: Date.now(), name, date: new Date().toLocaleString(), subject: this.subject, state: this.snapshot(), thumb });
+    while (a.length && !this.libWrite(a.slice(0, 30))) a.pop();
+    b.textContent = 'Kept ✓'; setTimeout(() => { b.textContent = 'Keep'; }, 1600);
+  }
+  libOpen(on) {
+    this.lib.hidden = !on; if (!on) return;
+    const a = this.libRead(), tr = this.el.querySelector('[data-lib-track]'), esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    this.el.querySelector('[data-lib-empty]').hidden = a.length > 0; this.el.querySelector('[data-lib-count]').textContent = a.length ? `${a.length} kept` : '';
+    tr.innerHTML = a.map(w => `<article class="st-lib-card" data-id="${w.id}"><div class="st-lib-img" style="background-image:url('${w.thumb}')"></div><div class="st-lib-info"><b>${esc(w.name)}</b><small>${esc(w.date)}</small><div><button type="button" class="st-btn is-primary" data-lib-load>Open</button><button type="button" class="st-btn" data-lib-del aria-label="Delete">${this.icons.trash}</button></div></div></article>`).join('');
+    tr.querySelectorAll('.st-lib-card').forEach(card => {
+      const w = a.find(x => String(x.id) === card.dataset.id);
+      card.querySelector('[data-lib-load]').onclick = () => { this.setSubject(w.subject ?? -1); this.restore(w.state); this.commit(); this.libOpen(false); };
+      card.querySelector('[data-lib-del]').onclick = () => { this.libWrite(this.libRead().filter(x => x.id !== w.id)); this.libOpen(true); };
+    });
+    requestAnimationFrame(() => this.libParallax());
+  }
+  libParallax() {
+    const tr = this.el.querySelector('[data-lib-track]'), mid = tr.getBoundingClientRect().left + tr.clientWidth / 2;
+    tr.querySelectorAll('.st-lib-card').forEach(c => {
+      const r = c.getBoundingClientRect(), d = clamp((r.left + r.width / 2 - mid) / tr.clientWidth, -1, 1);
+      c.querySelector('.st-lib-img').style.backgroundPosition = `${50 + d * 40}% 50%`;
+      c.style.transform = `scale(${1 - Math.abs(d) * .12})`; c.style.opacity = 1 - Math.abs(d) * .45;
+    });
   }
   label(it) { return it.kind === 'text' ? 'Text' : (it.decor ? '' : 'Focus ') + { tri: 'triangle', rect: 'square', circle: 'circle' }[it.kind]; }
   // Photoshop-style layer list: top of the list is the front. Drag ⋮⋮ to restack, the eye hides, a tap selects.
