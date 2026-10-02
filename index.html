@@ -1189,8 +1189,9 @@ body .tune-row:has(.st-knob),.studio-panel .studio-control:has(.st-knob){align-i
 .dial-grp>summary::after{content:"";width:7px;height:7px;border-right:2px solid #c9a8ff;border-bottom:2px solid #c9a8ff;transform:rotate(45deg);transition:transform .2s;margin:-3px 2px 0 6px}
 .dial-grp[open]>summary::after{transform:rotate(225deg);margin-top:3px}
 .dial-grp[open]>summary{box-shadow:inset 3px 0 0 #8b5cf6;border-radius:16px 16px 0 0}
-body .dial-body{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px 6px;padding:6px 10px 16px;justify-items:center}
-body .dial-body:not(.many)>.tune-row,body .dial-body:not(.many)>.studio-control{display:flex;flex-direction:column;align-items:center;gap:2px;margin:0;padding:0;background:none;box-shadow:none;width:100%;min-width:0}
+body .dial-body{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:10px 8px;padding:6px 10px 16px}
+.st-knob .kn{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:0;margin:0;pointer-events:none}
+body .dial-body:not(.many)>.tune-row,body .dial-body:not(.many)>.studio-control{display:flex;flex-direction:column;align-items:center;gap:2px;margin:0;padding:0;background:none;box-shadow:none;width:108px;flex:0 0 108px;min-width:0}
 body .dial-body>[hidden]{display:none}
 body .dial-body:not(.many) .st-knob{order:1;width:100px;height:100px;grid-column:auto;justify-self:auto}
 body .dial-body:not(.many)>*>span:first-child{order:2;font:600 10px/1.25 var(--f-sans);letter-spacing:.1em;text-transform:uppercase;color:#aeb4c4;text-align:center}
@@ -1204,7 +1205,7 @@ body .dial-body.many .studio-control{display:grid;width:100%;grid-template-colum
 body .dial-body.many .studio-control>input[type=range]{grid-column:1/-1;grid-row:2}
 body .dial-body.many .tune-row:has(.st-knob) b[data-out]{display:inline}
 body .dial-body.one{display:flex;justify-content:center;padding:10px 10px 22px}
-body .dial-body.one>.tune-row,body .dial-body.one>.studio-control{width:auto}
+body .dial-body.one>.tune-row,body .dial-body.one>.studio-control{width:auto;flex:0 0 auto}
 body .dial-body.one .st-knob{width:168px;height:168px}
 body .dial-body.one .st-knob .kn{font-size:26px}
 body .dial-body.one>*>span:first-child{font-size:11px;margin-top:6px}
