@@ -1075,7 +1075,7 @@ body.studio-on :is(#tune,#wtune) input[type=range]::-webkit-slider-thumb{width:1
 body.studio-on :is(#tune,#wtune) input[type=range]::-moz-range-thumb{border-radius:50%}
 
 /* Explore-view Tune panels get the same frosted-glass look. */
-body:not(.atelier-on) :is(#tune,#wtune,#obuild){top:14px;bottom:14px;height:auto;border-radius:26px;border:1px solid #ffffff1c;background:linear-gradient(150deg,#1c2029c4,#0d1016d6)!important;backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);box-shadow:inset 1px 1px 0 #ffffff1a,0 24px 60px #0009;scrollbar-width:none}
+body:not(.atelier-on) :is(#tune,#wtune,#obuild){border-radius:26px;border:1px solid #ffffff1c;background:linear-gradient(150deg,#1c2029c4,#0d1016d6)!important;backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);box-shadow:inset 1px 1px 0 #ffffff1a,0 24px 60px #0009;scrollbar-width:none}
 body:not(.atelier-on) :is(#tune,#wtune,#obuild)::-webkit-scrollbar{display:none}
 body:not(.atelier-on) :is(#tune,#wtune,#obuild) .tune-h{border-left:0;padding-left:0}
 body:not(.atelier-on) :is(#tune,#wtune,#obuild) .tune-x{border-radius:50%;background:#ffffff0d;border:1px solid #ffffff1c}
@@ -1095,8 +1095,11 @@ body:not(.atelier-on) :is(#tune,#wtune,#obuild) input[type=range]::-webkit-slide
 body:not(.atelier-on) :is(#tune,#wtune,#obuild) input[type=range]::-webkit-slider-thumb{width:18px;height:18px;margin-top:-7px;border-radius:50%;transform:none!important;box-shadow:0 0 0 3px #ff465533,0 2px 6px #0008}
 body:not(.atelier-on) :is(#tune,#wtune,#obuild) input[type=range]::-moz-range-thumb{border-radius:50%}
 body:is(.tune-open,.wtune-open) #route-back{opacity:0;pointer-events:none}
+@media(min-width:761px){
+body:not(.atelier-on) :is(#tune,#wtune,#obuild){top:14px;bottom:14px;height:auto}
 body:not(.atelier-on) :is(#tune,#wtune,#obuild):not([data-side=right]){left:14px}
 body:not(.atelier-on) :is(#tune,#wtune,#obuild)[data-side=right]{right:14px;border-left:1px solid #ffffff1c}
+}
 .st-knob{display:inline-grid;place-items:center;width:62px;height:62px;position:relative;cursor:ns-resize;touch-action:none;user-select:none}
 .st-knob svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .st-knob .kt{fill:none;stroke:#ffffff1f;stroke-width:5;stroke-linecap:round}
