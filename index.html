@@ -1031,6 +1031,20 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 .st-lib.is-circular .st-lib-card{flex-basis:min(56vw,320px)}
 @supports (backdrop-filter:url(#x)){@media(pointer:fine){#studio .studio-panel.st-glass,#studio .st-dock.st-glass{backdrop-filter:url(#rb-glass) blur(16px) saturate(1.5)}}}
 @media(prefers-reduced-motion:reduce){.gateway-mark{animation:none}}
+@property --rbang{syntax:'<angle>';inherits:false;initial-value:0deg}
+.rb-star{position:relative;isolation:isolate}
+.rb-star::after{content:'';position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;pointer-events:none;background:conic-gradient(from var(--rbang),transparent 0 70%,#fff8 78%,#fff 82%,#ff6571 86%,transparent 92%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:rbang 3.2s linear infinite}
+@keyframes rbang{to{--rbang:360deg}}
+.rb-pixels{position:fixed;inset:0;z-index:300;pointer-events:none}
+.st-grain{position:absolute;inset:0;z-index:0;pointer-events:none;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");animation:rbgrain .5s steps(4) infinite}
+.st-grain[hidden]{display:none}
+@keyframes rbgrain{25%{background-position:-40px 20px}50%{background-position:30px -50px}75%{background-position:-20px -30px}}
+.st-folder .ff{transform-origin:12px 19px;transition:transform .35s cubic-bezier(.3,.7,.2,1)}
+.st-folder:hover .ff,.st-folder.is-open .ff{transform:perspective(40px) rotateX(-35deg)}
+.st-lib:not([hidden]) .st-lib-card{animation:rbfolder .6s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rbfolder{from{translate:0 60vh;rotate:-8deg;opacity:0}to{translate:0 0;rotate:0deg}}
+.atelier-copy h2 .ch{transition:scale .2s ease-out,color .9s,text-shadow .9s;transform-origin:50% 100%}
+@media(prefers-reduced-motion:reduce){.rb-star::after,.st-grain{animation:none}}
 /* Movable trays */
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
 .st-edge-hint[hidden]{display:none}
@@ -1776,6 +1790,6 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.ceded7d091.js", 428613]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.86f3766bbb.js", 432601]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>

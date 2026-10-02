@@ -1023,6 +1023,20 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 .st-lib.is-circular .st-lib-card{flex-basis:min(56vw,320px)}
 @supports (backdrop-filter:url(#x)){@media(pointer:fine){#studio .studio-panel.st-glass,#studio .st-dock.st-glass{backdrop-filter:url(#rb-glass) blur(16px) saturate(1.5)}}}
 @media(prefers-reduced-motion:reduce){.gateway-mark{animation:none}}
+@property --rbang{syntax:'<angle>';inherits:false;initial-value:0deg}
+.rb-star{position:relative;isolation:isolate}
+.rb-star::after{content:'';position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;pointer-events:none;background:conic-gradient(from var(--rbang),transparent 0 70%,#fff8 78%,#fff 82%,#ff6571 86%,transparent 92%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:rbang 3.2s linear infinite}
+@keyframes rbang{to{--rbang:360deg}}
+.rb-pixels{position:fixed;inset:0;z-index:300;pointer-events:none}
+.st-grain{position:absolute;inset:0;z-index:0;pointer-events:none;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");animation:rbgrain .5s steps(4) infinite}
+.st-grain[hidden]{display:none}
+@keyframes rbgrain{25%{background-position:-40px 20px}50%{background-position:30px -50px}75%{background-position:-20px -30px}}
+.st-folder .ff{transform-origin:12px 19px;transition:transform .35s cubic-bezier(.3,.7,.2,1)}
+.st-folder:hover .ff,.st-folder.is-open .ff{transform:perspective(40px) rotateX(-35deg)}
+.st-lib:not([hidden]) .st-lib-card{animation:rbfolder .6s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rbfolder{from{translate:0 60vh;rotate:-8deg;opacity:0}to{translate:0 0;rotate:0deg}}
+.atelier-copy h2 .ch{transition:scale .2s ease-out,color .9s,text-shadow .9s;transform-origin:50% 100%}
+@media(prefers-reduced-motion:reduce){.rb-star::after,.st-grain{animation:none}}
 /* Movable trays */
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
 .st-edge-hint[hidden]{display:none}
@@ -6742,7 +6756,41 @@ const RB = (() => {
       s.innerHTML = Array.from({ length: 8 }, (_, i) => `<i style="--a:${i * 45}deg"></i>`).join(''); document.body.append(s); setTimeout(() => s.remove(), 500);
     }, { passive: true });
   };
-  return { ribbons, galaxy, dock, sparks };
+  // Decrypted text: letters cycle through glyphs before settling.
+  const decrypt = chars => {
+    if (!chars || !chars.length || still) return;
+    const G = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789#%&$@', list = [...chars], real = list.map(c => c.dataset.ch || (c.dataset.ch = c.textContent));
+    const t0 = performance.now(), dur = 700;
+    const step = now => {
+      const k = (now - t0) / dur;
+      list.forEach((c, i) => { c.textContent = k > (i + 1) / list.length ? real[i] : G[Math.random() * G.length | 0]; });
+      if (k < 1.05) requestAnimationFrame(step); else list.forEach((c, i) => { c.textContent = real[i]; });
+    };
+    requestAnimationFrame(step);
+  };
+  // Text pressure: letters near the pointer stretch taller.
+  const pressure = (host, sel) => {
+    if (!fine || still) return;
+    host.addEventListener('pointermove', e => host.querySelectorAll('.is-current ' + sel).forEach(c => {
+      const r = c.getBoundingClientRect(), d = Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2)), k = Math.max(0, 1 - d / 220);
+      c.style.scale = `${1 - k * .12} ${1 + k * .45}`;
+    }), { passive: true });
+    host.addEventListener('pointerleave', () => host.querySelectorAll(sel).forEach(c => { c.style.scale = ''; }));
+  };
+  // Pixel transition: the screen fills with squares, then clears.
+  const pixels = (color, ms) => {
+    if (still) return;
+    const c = document.createElement('canvas'); c.className = 'rb-pixels'; document.body.append(c);
+    const W = c.width = innerWidth, H = c.height = innerHeight, s = Math.ceil(Math.max(W, H) / 22), cols = Math.ceil(W / s), rows = Math.ceil(H / s);
+    const cells = Array.from({ length: cols * rows }, (_, i) => [i % cols, i / cols | 0, Math.random()]), g = c.getContext('2d'), t0 = performance.now();
+    const step = now => {
+      const k = (now - t0) / ms; g.clearRect(0, 0, W, H); g.fillStyle = color;
+      cells.forEach(([x, y, r]) => { if (k < 1 ? r < k : r > k - 1) g.fillRect(x * s, y * s, s + 1, s + 1); });
+      if (k < 2) requestAnimationFrame(step); else c.remove();
+    };
+    requestAnimationFrame(step);
+  };
+  return { ribbons, galaxy, dock, sparks, decrypt, pressure, pixels };
 })();
 /* Magic Bento (after reactbits.dev): a spotlight and glowing border that follow the pointer, optional tilt and
    magnetism, a few drifting particles on hover and a ripple on click. Vanilla, applied by selector. */
@@ -6880,6 +6928,7 @@ class WorldAtelier {
       return new GatewayNet(cv, i ? '255,40,50' : '255,120,190', () => { const a = orb.getBoundingClientRect(), b = cv.getBoundingClientRect(); return { x: a.left + a.width / 2 - b.left, y: a.top + a.height / 2 - b.top, r: Math.max(40, a.width / 2) }; }, () => ({ density: i ? 70 : 55 }));
     });
     RB.galaxy(this.choice); RB.ribbons(); RB.sparks();
+    this.choice.querySelectorAll('.gateway-enter').forEach(b => b.classList.add('rb-star'));
     MagicBento.apply('.gateway-choice', { tilt: 10, magnet: 14, target: '.gateway-orb', particles: true });
     MagicBento.apply('.atelier-copy', { ripple: true, particles: true });
     netList.forEach(n => n.watch(this.choice, () => !this.choice.hidden, ['hidden']));
@@ -6927,6 +6976,15 @@ class WorldAtelier {
     }));
     this.track.querySelectorAll('[data-at-studio]').forEach(b => b.addEventListener('click', () => this.openStudio(+b.dataset.atStudio)));
     this.worldDrag = null;
+    RB.pressure(this.track, 'h2 .ch');
+    // Infinite scroll: pushing past the last world wraps to the first, and back.
+    let wrapLock = 0;
+    const wrap = dir => { if (!this.active || performance.now() < wrapLock) return; const max = this.track.scrollHeight - this.track.clientHeight;
+      if (dir > 0 && this.track.scrollTop >= max - 2) { wrapLock = performance.now() + 900; this.track.scrollTo({ top: 0, behavior: 'instant' }); this.progress = 0; this.select(0); }
+      else if (dir < 0 && this.track.scrollTop <= 2) { wrapLock = performance.now() + 900; this.track.scrollTo({ top: max, behavior: 'instant' }); this.progress = WORLDS.length; this.select(WORLDS.length); } };
+    this.track.addEventListener('wheel', e => { if (Math.abs(e.deltaY) > 20) wrap(Math.sign(e.deltaY)); }, { passive: true });
+    let ty = null; this.track.addEventListener('touchstart', e => { ty = e.touches[0].clientY; }, { passive: true });
+    this.track.addEventListener('touchend', e => { if (ty == null) return; const dy = ty - e.changedTouches[0].clientY; ty = null; if (Math.abs(dy) > 60) wrap(Math.sign(dy)); }, { passive: true });
     this.track.addEventListener('pointerdown', e => {
       if (!this.active || this.index === 0 || e.button !== 0 || e.target.closest('[data-at-spin]')?.dataset.atSpin !== String(this.index)) return;
       this.worldDrag = { id: e.pointerId, x: e.clientX, t: performance.now() };
@@ -6976,7 +7034,7 @@ class WorldAtelier {
       this.choice.classList.remove('is-entering'); this.entering = false;
       if (route === 'atelier') this.enter(); else this.orbit();
     };
-    if (this.app.reduced) finish(); else setTimeout(finish, 680);
+    if (this.app.reduced) finish(); else { RB.pixels(route === 'atelier' ? '#ff3d8a' : '#ff4655', 620); setTimeout(finish, 680); }
   }
   ready() { if (this.pending) this.launch('atelier'); }
   enter() {
@@ -6997,6 +7055,7 @@ class WorldAtelier {
     if (this.index > 0) this.app.detail.index = this.index - 1;
     this.el.querySelector('[data-at-count]').textContent = `${String(this.index + 1).padStart(2, '0')} / ${String(WORLDS.length + 1).padStart(2, '0')}`;
     this.track.querySelectorAll('.atelier-stop').forEach((stop, k) => { stop.classList.toggle('is-current', k === this.index); });
+    RB.decrypt(this.track.querySelectorAll('.atelier-stop')[this.index]?.querySelectorAll('h2 .ch'));
   }
   openStudio(i) {
     if (!this.app.studio || !this.app.worldsReady) return;
@@ -7171,7 +7230,7 @@ class CoreStudio {
         <button type="button" class="st-btn" data-studio-export aria-label="Save image" aria-expanded="false">${I('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>')}<span class="st-label" data-export-label>Save</span></button>
         <span class="st-sep"></span>
         <button type="button" class="st-btn" data-studio-lib-save aria-label="Save to library">${I('<path d="M6 3h12v18l-6-4-6 4z"/>')}<span class="st-label">Keep</span></button>
-        <button type="button" class="st-btn" data-studio-lib aria-label="Open library">${I('<rect x="3" y="5" width="7" height="14" rx="1.5"/><rect x="14" y="5" width="7" height="14" rx="1.5"/>')}<span class="st-label">Library</span></button>
+        <button type="button" class="st-btn st-folder" data-studio-lib aria-label="Open library">${I('<path class="fb" d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path class="ff" d="M3 11h18v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>')}<span class="st-label">Library</span></button>
         <button type="button" class="st-btn" data-studio-reset-all aria-label="Reset everything">${I('<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/>')}<span class="st-label">Reset all</span></button>
         <button type="button" class="st-btn" data-studio-tools aria-expanded="false" aria-controls="studio-tools" aria-label="Settings">${I('<path d="M4 6h16M4 12h16M4 18h16"/>')}<span class="st-label">Settings</span></button></div>
       <aside id="studio-tools" class="studio-panel st-glass" data-tray="panel" aria-label="Studio settings" hidden><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-panel-fold aria-expanded="true"><h2>Cerebra, in focus.</h2><span class="st-chev" aria-hidden="true"></span></button>
@@ -7180,7 +7239,7 @@ class CoreStudio {
       <div class="studio-two"><label>Colour A<input type="color" data-studio-bg-a value="#111727"></label><label>Colour B<input type="color" data-studio-bg-b value="#274052"></label></div>
       <label class="studio-control"><span>Gradient angle</span><input type="range" min="0" max="360" value="115" data-studio-angle><output>115°</output></label><label class="studio-control"><span>Grid</span><select data-studio-gridmode aria-label="Grid"><option value="always">Always</option><option value="focus">Only with a focus shape</option><option value="off">Off</option></select></label><input type="checkbox" data-studio-grid hidden checked>
       <h3>Colour effects</h3><select data-studio-effect aria-label="Colour effect"><option value="off">Off</option><option value="chromatic">Chromatic aberration</option><option value="rgb">RGB split</option><option value="color">Color split</option><option value="vhs">VHS effect</option><option value="glitch">Glitch art</option></select><label class="studio-control"><span>Strength</span><input type="range" min="0" max="20" value="5" data-studio-effect-amount><output>5</output></label>
-      <h3>Light &amp; floor shadow</h3><label class="studio-control"><span>Camera lens (depth blur &amp; colour fringe)</span><input type="checkbox" data-studio-lens></label><label class="studio-control"><span>Key light</span><input type="range" min="0.4" max="1.8" step="0.05" value="1" data-studio-light><output>1.00×</output></label><label class="studio-control"><span>Light direction</span><input type="range" min="-6" max="6" step="0.25" value="4" data-studio-light-x><output>4</output></label><label class="studio-control"><span>Shadow</span><input type="range" min="0" max="1" step="0.05" value="0.65" data-studio-shadow><output>65%</output></label><label class="studio-control"><span>Softness</span><input type="range" min="0" max="1" step="0.05" value="0.6" data-studio-shadow-soft><output>60%</output></label>
+      <h3>Light &amp; floor shadow</h3><label class="studio-control"><span>Film grain</span><input type="checkbox" data-studio-grain></label><label class="studio-control"><span>Grain amount</span><input type="range" min="0.02" max="0.3" step="0.01" value="0.1" data-studio-grain-amt><output>10%</output></label><label class="studio-control"><span>Camera lens (depth blur &amp; colour fringe)</span><input type="checkbox" data-studio-lens></label><label class="studio-control"><span>Key light</span><input type="range" min="0.4" max="1.8" step="0.05" value="1" data-studio-light><output>1.00×</output></label><label class="studio-control"><span>Light direction</span><input type="range" min="-6" max="6" step="0.25" value="4" data-studio-light-x><output>4</output></label><label class="studio-control"><span>Shadow</span><input type="range" min="0" max="1" step="0.05" value="0.65" data-studio-shadow><output>65%</output></label><label class="studio-control"><span>Softness</span><input type="range" min="0" max="1" step="0.05" value="0.6" data-studio-shadow-soft><output>60%</output></label>
       <h3>Network backdrop</h3><div class="net-host">${NET.html()}</div>
       <h3>World parts</h3><div class="studio-layers"><button type="button" class="studio-layer" data-studio-layer="atmo" aria-pressed="true" aria-label="Hide atmosphere"><span>Atmosphere glow</span>${eye}</button><button type="button" class="studio-layer" data-studio-layer="stars" aria-pressed="true" aria-label="Hide stars"><span>Background stars</span>${eye}</button></div>
       <h3>Planet parts</h3><div class="studio-layers">${Object.keys(names).map(k => `<button type="button" class="studio-layer" data-studio-layer="${k}" aria-pressed="${k !== 'dust'}" aria-label="Show ${names[k]}"><span>${names[k]}</span>${eye}</button>`).join('')}</div>
@@ -7208,6 +7267,7 @@ class CoreStudio {
     fold(this.el.querySelector('[data-panel-fold]'), this.panel);
     fold(this.el.querySelector('[data-layers-fold]'), this.el.querySelector('[data-tray="layers"]'));
     this.initTrays(); RB.dock(this.el.querySelector('.st-dock'));
+    this.el.querySelectorAll('[data-studio-tune],[data-save-go]').forEach(b => b.classList.add('rb-star'));
     MagicBento.apply('#studio .st-glass', { ripple: true }); MagicBento.apply('#studio .studio-preset', { tilt: 8, magnet: 4, ripple: true, particles: true });
     fold(this.el.querySelector('[data-dock-fold]'), this.el.querySelector('.st-dock'), 'toolbar');
     this.el.querySelector('[data-studio-tools]').onclick = () => {
@@ -7296,7 +7356,12 @@ class CoreStudio {
       this.el.querySelectorAll('[data-studio-layer],[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioLayer !== 'dust')));
       this.home(); this.applyPreset('ember'); this.paintVfx();
     };
-    this.frozen = false; this.lensOn = false;
+    this.frozen = false; this.lensOn = false; this.grain = false; this.grainAmt = .1;
+    this.grainEl = document.createElement('div'); this.grainEl.className = 'st-grain'; this.grainEl.hidden = true; this.stage.after(this.grainEl);
+    const syncGrain = () => { this.grainEl.hidden = !this.grain; this.grainEl.style.opacity = this.grainAmt; };
+    this.el.querySelector('[data-studio-grain]').onchange = e => { this.grain = e.target.checked; syncGrain(); this.commit(); };
+    this.el.querySelector('[data-studio-grain-amt]').oninput = e => { this.grainAmt = +e.target.value; e.target.nextElementSibling.textContent = `${Math.round(this.grainAmt * 100)}%`; syncGrain(); };
+    this.syncGrain = () => { syncGrain(); this.el.querySelector('[data-studio-grain]').checked = this.grain; };
     this.lib = this.el.querySelector('[data-studio-library]');
     this.el.querySelector('[data-studio-lib-save]').onclick = () => this.libSave();
     this.el.querySelector('[data-studio-lib]').onclick = () => this.libOpen(true);
@@ -7656,11 +7721,11 @@ class CoreStudio {
     b.textContent = 'Kept ✓'; setTimeout(() => { b.textContent = 'Keep'; }, 1600);
   }
   libOpen(on) {
-    this.lib.hidden = !on; if (!on) return;
+    this.lib.hidden = !on; this.el.querySelector('[data-studio-lib]').classList.toggle('is-open', on); if (!on) return;
     const a = this.libRead(), tr = this.el.querySelector('[data-lib-track]'), esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     this.el.querySelector('[data-lib-empty]').hidden = a.length > 0; this.el.querySelector('[data-lib-count]').textContent = a.length ? `${a.length} kept` : '';
     tr.innerHTML = a.map(w => `<article class="st-lib-card" data-id="${w.id}"><div class="st-lib-img" style="background-image:url('${w.thumb}')"></div><div class="st-lib-info"><b>${esc(w.name)}</b><small>${esc(w.date)}</small><div><button type="button" class="st-btn is-primary" data-lib-load>Open</button><button type="button" class="st-btn" data-lib-del aria-label="Delete">${this.icons.trash}</button></div></div></article>`).join('');
-    tr.querySelectorAll('.st-lib-card').forEach(card => {
+    tr.querySelectorAll('.st-lib-card').forEach((card, i) => { card.style.animationDelay = `${i * 70}ms`;
       const w = a.find(x => String(x.id) === card.dataset.id);
       card.querySelector('[data-lib-load]').onclick = () => { this.setSubject(w.subject ?? -1); this.restore(w.state); this.commit(); this.libOpen(false); };
       card.querySelector('[data-lib-del]').onclick = () => { this.libWrite(this.libRead().filter(x => x.id !== w.id)); this.libOpen(true); };
@@ -7727,7 +7792,7 @@ class CoreStudio {
     if (!quiet) this.commit();
   }  // Undo/redo: whole-composition snapshots (items, shape blur and the look settings).
   snapshot() {
-    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides'];
+    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'grain', 'grainAmt', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides'];
     return JSON.stringify({ s: Object.fromEntries(keys.map(k => [k, this[k]])), layers: this.layers, core: this.coreLayers,
       items: this.items.map(({ el, id, ...rest }) => rest) });
   }
@@ -7750,7 +7815,7 @@ class CoreStudio {
     this.el.querySelectorAll('[data-studio-preset]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioPreset === this.preset)));
     this.el.querySelectorAll('[data-studio-layer]').forEach(b => b.setAttribute('aria-pressed', String(this.layers[b.dataset.studioLayer])));
     this.el.querySelectorAll('[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(this.coreLayers[+b.dataset.studioCore])));
-    this.el.classList.toggle('hide-guides', this.guides === false); this.updateFocus(); this.paintBackground(); this.paintVfx();
+    this.el.classList.toggle('hide-guides', this.guides === false); if (this.syncGrain) this.syncGrain(); this.updateFocus(); this.paintBackground(); this.paintVfx();
     this.restoring = false; this.syncHist();
   }
 
@@ -7814,6 +7879,7 @@ class CoreStudio {
       let fin=out;
       if(innerWidth>900){const c0=this.compCentre(),sh=this.shift||{x:0,y:0},cx=(c0.x+sh.x)*sx,half=Math.min(cx,width-cx);
         fin=document.createElement('canvas');fin.width=Math.round(half*2);fin.height=height;fin.getContext('2d').drawImage(out,Math.round(cx-half),0,fin.width,height,0,0,fin.width,height);}
+      if(this.grain){const gc=fin.getContext('2d'),n=document.createElement('canvas');n.width=256;n.height=256;const ng=n.getContext('2d'),id=ng.createImageData(256,256);for(let i=0;i<id.data.length;i+=4){const v=Math.random()*255;id.data[i]=id.data[i+1]=id.data[i+2]=v;id.data[i+3]=255;}ng.putImageData(id,0,0);gc.save();gc.globalAlpha=this.grainAmt;gc.globalCompositeOperation='overlay';gc.fillStyle=gc.createPattern(n,'repeat');gc.fillRect(0,0,fin.width,fin.height);gc.restore();}
       const final=await new Promise(resolve=>fin.toBlob(resolve,type,.93));
       if(!final)throw Error('PNG encoding failed');
       const link=document.createElement('a');link.href=URL.createObjectURL(final);link.download=`cerebra-${this.preset}-${fin.width}x${fin.height}.${{'image/jpeg':'jpg','image/webp':'webp'}[type]||'png'}`;
