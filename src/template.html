@@ -918,12 +918,12 @@ body.studio-on #studio{display:block}
 #studio .studio-preset[aria-pressed=true]{border:2px solid #ff4655;box-shadow:0 0 0 3px #ff465533}
 .studio-stage{position:absolute;inset:0;z-index:0;pointer-events:none;transition:transform .35s cubic-bezier(.3,.7,.2,1)}
 .st-item{position:absolute;pointer-events:auto;touch-action:none}
-.st-text{transform:translate(var(--ax,-50%),-50%);white-space:pre;cursor:grab;padding:4px 6px;line-height:1.02;border-radius:4px;outline:1px dashed transparent;outline-offset:2px;text-shadow:0 2px 14px #0004}
+.st-text{transform:translate(var(--ax,-50%),-50%) rotate(var(--rot,0deg));white-space:pre;cursor:grab;padding:4px 6px;line-height:1.02;border-radius:4px;outline:1px dashed transparent;outline-offset:2px;text-shadow:0 2px 14px #0004}
 .st-text:hover{outline-color:#ffffff40}
 .st-text.is-selected{outline:1px solid #ff4655}
 .st-text[contenteditable=true]{cursor:text;outline:1px solid #fff;background:#0005}
 .st-text.is-locked{cursor:default}
-.st-shape{cursor:grab;color:#fff}
+.st-shape{cursor:grab;color:#fff;transform:rotate(var(--rot,0deg))}
 .st-shape svg.st-outline{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 2px #0009)}
 .st-shape .st-guide{fill:#ffffff06;stroke:currentColor;stroke-width:1.2;stroke-dasharray:5 4;vector-effect:non-scaling-stroke}
 .st-decor .st-guide{fill:none;stroke:none}
@@ -1310,6 +1310,26 @@ html,body{touch-action:pan-x pan-y}
 }
 .tune-row>select+input[type=color]{margin-left:8px;width:40px;height:34px;padding:0;flex:none}
 .tune-row:has(>select+input[type=color]){grid-template-columns:minmax(0,1fr) auto auto}
+/* Groups, lock buttons and rotation */
+.st-addgroup{width:100%;margin:2px 0 8px;min-height:36px!important;font:600 11px var(--f-cond);letter-spacing:.08em;text-transform:uppercase}
+.st-ghead{display:flex;align-items:center;gap:8px;padding:6px 8px;margin:4px 0;border-radius:14px;background:linear-gradient(145deg,#ffffff24,#ffffff0a);border:1px solid #ffffff22;list-style:none}
+.st-ghead.is-hidden{opacity:.55}
+.st-ghead .st-gcount{font:600 10px var(--f-num);padding:2px 7px;border-radius:99px;background:var(--cyg);color:#fff}
+.st-ghead .st-chev{transition:transform .2s}.st-ghead .st-chev.is-closed{transform:rotate(-135deg)}
+.st-gname{cursor:text;flex:1;min-width:0}
+.st-gedit{flex:1;min-width:0;height:30px;border-radius:9px!important;border:1px solid #ffffff3a;background:#0000003a;color:#fff;padding:0 8px;font:600 12px var(--f-sans)}
+.st-layer.in-group{margin-left:14px;border-left:2px solid #8b5cf6aa}
+.st-layer.is-ghidden{opacity:.5}
+.st-llock.is-on,.st-glock.is-on{color:#ff8f98}
+.is-drop-in{outline:2px solid #8b5cf6;outline-offset:1px;background:#8b5cf633}
+.is-drop-above{box-shadow:0 -3px 0 #8b5cf6}.is-drop-below{box-shadow:0 3px 0 #8b5cf6}
+#studio .st-roth{position:absolute;z-index:7;width:38px;height:38px;margin:-19px 0 0 -19px;border-radius:50%;border:2px solid #fff;background:var(--cyg);color:#fff;display:grid;place-items:center;pointer-events:auto;touch-action:none;cursor:grab;box-shadow:0 4px 16px #0008;padding:0}
+#studio .st-roth[hidden]{display:none}
+#studio .st-roth .st-i{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.st-rotbox{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.st-rotbox label{display:inline-flex;align-items:center;gap:5px;font:600 10px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;color:#cfd6e2}
+.st-rotbox input[type=number]{width:62px;height:36px;border-radius:10px!important;border:1px solid #ffffff2e;background:#0000003a;color:#fff;padding:0 6px;font:600 13px var(--f-num)}
+.st-rotbox select{min-height:36px!important;height:36px;padding:0 8px!important}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -7718,6 +7738,7 @@ class CoreStudio {
         <span data-ctx-for="decor"><input type="color" data-ctx-fill aria-label="Shape colour"></span><label data-ctx-for="decor">Opacity<input type="range" min="0.05" max="1" step="0.05" data-ctx-opacity><output></output></label>
         <label data-ctx-for="shape">Outside blur<input type="range" min="0" max="30" data-ctx-blur><output></output></label>
         <button type="button" class="st-btn st-fly-btn" data-flyout="style" data-ctx-for-shape aria-expanded="false">Style<i class="st-caret"></i></button>
+        <span class="st-rotbox"><label>Rotate<input type="number" step="1" min="-360" max="360" data-ctx-rot aria-label="Rotation in degrees"><i>°</i></label><label>Snap<select data-ctx-rsnap aria-label="Rotation snap"><option value="0">Free</option><option value="15">15°</option><option value="45">45°</option><option value="90">90°</option><option value="180">180°</option><option value="custom">Custom…</option></select></label><input type="number" min="1" max="180" step="1" data-ctx-rsnap-n hidden placeholder="°" aria-label="Custom snap degrees"></span>
         <button type="button" class="st-btn" data-ctx-lock></button><button type="button" class="st-btn" data-ctx-delete aria-label="Delete">${this.icons.trash}</button></div>
       <div class="st-save st-glass" data-studio-save hidden><span class="st-ctx-kind">Save image</span>
         <label>Format<select data-save-type><option value="image/png">PNG</option><option value="image/jpeg">JPG</option><option value="image/webp">WebP</option></select></label>
@@ -7772,10 +7793,10 @@ class CoreStudio {
       <h3>Planet parts</h3><div class="studio-layers">${Object.keys(names).map(k => `<button type="button" class="studio-layer" data-studio-layer="${k}" aria-pressed="${k !== 'dust'}" aria-label="Show ${names[k]}"><span>${names[k]}</span>${eye}</button>`).join('')}</div>
       <h3>Inside the core</h3><div class="studio-layers">${LAYER_NAMES.map((name, i) => `<button type="button" class="studio-layer" data-studio-core="${i}" aria-pressed="true" aria-label="Hide ${name}"><span>${name}</span>${eye}</button>`).join('')}<button type="button" class="studio-layer" data-studio-layer="life" aria-pressed="true" aria-label="Hide organisms"><span>Organisms</span>${eye}</button></div>
       <button type="button" class="st-btn st-reset" data-studio-reset>Reset settings</button></aside>
-      <aside class="studio-panel st-layers-tray st-glass" data-tray="layers" aria-label="Layers"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-layers-fold aria-expanded="true"><h2>Layers</h2><span class="st-chev" aria-hidden="true"></span></button><ul class="st-layers" data-studio-objects></ul><p class="studio-note" data-objects-empty>Add text, shapes or decor. Drag ⋮⋮ to restack, the eye hides a layer.</p></aside>`;
+      <aside class="studio-panel st-layers-tray st-glass" data-tray="layers" aria-label="Layers"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-layers-fold aria-expanded="true"><h2>Layers</h2><span class="st-chev" aria-hidden="true"></span></button><button type="button" class="st-btn st-addgroup" data-add-group aria-label="Add a group">+ Group</button><ul class="st-layers" data-studio-objects></ul><p class="studio-note" data-objects-empty>Add text, shapes or decor. Drag ⋮⋮ to restack, the eye hides a layer.</p></aside>`;
     document.body.append(this.bg, this.fx, this.vfx, this.el);
     this.panel = this.el.querySelector('.studio-panel'); this.stage = this.el.querySelector('[data-studio-stage]'); this.ctx = this.el.querySelector('[data-studio-context]');
-    this.items = []; this.itemId = 0; this.sel = null;
+    this.items = []; this.itemId = 0; this.sel = null; this.groups = []; this.rotSnap = 0; try { this.rotSnap = +localStorage.getItem('cerebra-rot-snap') || 0; } catch (e) {}
     const typing = e => e.target.matches && (e.target.matches('input[type=text],textarea') || e.target.isContentEditable);
     this.el.addEventListener('focusin', e => { if (typing(e) && matchMedia('(pointer: coarse)').matches) this.el.classList.add('st-typing'); });
     this.el.addEventListener('focusout', e => { if (typing(e)) { this.el.classList.remove('st-typing'); requestAnimationFrame(() => scrollTo(0, 0)); } });
@@ -7793,6 +7814,7 @@ class CoreStudio {
     const fold = (btn, box, label) => btn.onclick = () => { const f = box.classList.toggle('is-folded'); btn.setAttribute('aria-expanded', String(!f)); if (label) btn.setAttribute('aria-label', (f ? 'Unfold ' : 'Fold ') + label); this.layoutTrays(); };
     fold(this.el.querySelector('[data-panel-fold]'), this.panel);
     fold(this.el.querySelector('[data-layers-fold]'), this.el.querySelector('[data-tray="layers"]'));
+    this.el.querySelector('[data-add-group]').addEventListener('click', () => this.addGroup());
     // Effects popover: pick an effect, set its strength, and the network backdrop live together.
     {
       const fxsel = this.el.querySelector('[data-studio-effect]'), amt = this.el.querySelector('[data-studio-effect-amount]'), box = this.el.querySelector('[data-fxbox]'), mine = this.el.querySelector('[data-fxamt]'), mo = this.el.querySelector('[data-fxamt-o]');
@@ -7915,12 +7937,12 @@ class CoreStudio {
       el.addEventListener('change', () => this.commit());
     });
     document.addEventListener('pointerdown', e => { if (!e.target.closest('.st-fly,[data-flyout]')) this.closeFly(); }, true);
-    this.initDraw();
+    this.initDraw(); this.initRotate();
     ['[data-t-aberr]', '[data-t-blur]', '[data-t-bloom]', '[data-t-speed]', '[data-t-zoom]', '[data-t-density]', '[data-t-thick]', '[data-t-rim]', '[data-t-haze]', '[data-t-frate]', '[data-t-famt]', '[data-t-ptrs]', '[data-t-gain]', '[data-studio-light]', '[data-studio-light-x]', '[data-studio-shadow]', '[data-studio-shadow-soft]', '[data-studio-angle]', '[data-studio-blur]', '[data-studio-effect-amount]'].forEach(s => this.knobify(document.querySelector(s)));
     document.querySelectorAll('#tune,#wtune,#obuild').forEach(el => this.dialDeck(el, '.tune-row', true));
     this.el.querySelectorAll('.studio-panel').forEach(el => this.dialDeck(el, '.studio-control', false));
     this.tool = 'move';
-    this.setTool = tool => { if (tool !== 'draw' && this.drawing) this.setDrawing(false); this.tool = tool === 'hand' ? 'hand' : 'move'; this.el.classList.toggle('tool-hand', this.tool === 'hand');
+    this.setTool = tool => { if (tool !== 'draw' && this.drawing) this.setDrawing(false); this.tool = tool === 'hand' ? 'hand' : 'move'; setTimeout(() => this.updateRotHandle && this.updateRotHandle(), 0); this.el.classList.toggle('tool-hand', this.tool === 'hand');
       this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioTool === this.tool && !this.drawing))); if (this.tool === 'hand') this.select(null); };
     this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.onclick = () => this.setTool(b.dataset.studioTool));
     this.el.querySelector('[data-studio-draw]').addEventListener('click', () => { if (this.drawing) { this.tool = 'move'; this.el.classList.remove('tool-hand'); } this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(!this.drawing && b.dataset.studioTool === this.tool))); });
@@ -8289,13 +8311,44 @@ class CoreStudio {
       Object.assign(el.style, { left: `${it.x * 100}%`, top: `${it.y * 100}%`, fontFamily: family[it.font], fontSize: `${it.size}px`, color: it.color, fontWeight: it.weight, letterSpacing: `${it.ls}em`, textTransform: it.upper ? 'uppercase' : 'none', textAlign: { l: 'left', c: 'center', r: 'right' }[it.align] });
       el.style.setProperty('--ax', { l: '0%', c: '-50%', r: '-100%' }[it.align]);
     } else { const U = this.U(); Object.assign(el.style, { left: `${it.x * W - it.w * U / 2}px`, top: `${it.y * H - it.h * U / 2}px`, width: `${it.w * U}px`, height: `${it.h * U}px` }); if (it.decor) { el.style.color = it.fill; el.style.setProperty('--op', it.opacity); } this.drawShapeSvg(it, it.w * U, it.h * U); }
-    el.hidden = !!it.hide; el.style.opacity = it.alpha ?? 1;
+    el.hidden = !!this.isHid(it); el.style.opacity = it.alpha ?? 1; el.style.setProperty('--rot', (it.rot || 0) + 'deg'); if (it === this.sel) this.updateRotHandle();
     const lock = el.querySelector('.st-lock');
     if (lock) { lock.innerHTML = it.locked ? this.icons.lock : this.icons.unlock; lock.setAttribute('aria-label', it.locked ? 'Unlock shape' : 'Lock shape in place'); }
   }
+  // Rotate handle: drag the round grip above the selected item; snap to 15/45/90/180 or a custom step.
+  initRotate() {
+    const h = this.rotH = document.createElement('button'); h.type = 'button'; h.className = 'st-roth'; h.hidden = true; h.setAttribute('aria-label', 'Rotate'); h.innerHTML = '<svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5"/></svg>'; this.el.append(h);
+    const c = this.ctx, rot = c.querySelector('[data-ctx-rot]'), sn = c.querySelector('[data-ctx-rsnap]'), sn2 = c.querySelector('[data-ctx-rsnap-n]');
+    const norm = a => ((a + 180) % 360 + 360) % 360 - 180;
+    const syncSnap = () => { const v = this.rotSnap, std = ['0', '15', '45', '90', '180'].includes(String(v)); sn.value = std ? String(v) : 'custom'; sn2.hidden = std; if (!std) sn2.value = v; };
+    this.syncRotUI = () => { const it = this.sel; rot.value = it ? Math.round(it.rot || 0) : 0; syncSnap(); };
+    const saveSnap = () => { try { localStorage.setItem('cerebra-rot-snap', String(this.rotSnap)); } catch (e) {} };
+    sn.addEventListener('change', () => { if (sn.value === 'custom') { this.rotSnap = +sn2.value || 30; syncSnap(); sn2.focus(); } else this.rotSnap = +sn.value; saveSnap(); sn2.hidden = sn.value !== 'custom'; });
+    sn2.addEventListener('input', () => { this.rotSnap = Math.max(0, +sn2.value || 0); saveSnap(); });
+    rot.addEventListener('input', () => { const it = this.sel; if (!it || it.locked) return; it.rot = norm(+rot.value || 0); this.place(it); this.updateFocus(); });
+    rot.addEventListener('change', () => this.commit());
+    h.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); h.setPointerCapture(e.pointerId); this.rotDrag = { id: e.pointerId, it: this.sel, moved: false }; });
+    h.addEventListener('pointermove', e => {
+      const d = this.rotDrag; if (!d || d.id !== e.pointerId) return; const it = d.it, r = it.el.getBoundingClientRect();
+      let a = Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)) * 180 / Math.PI + 90;
+      if (this.rotSnap > 0) a = Math.round(a / this.rotSnap) * this.rotSnap;
+      it.rot = +norm(a).toFixed(2); d.moved = true; this.place(it); this.updateFocus(); rot.value = Math.round(it.rot);
+    });
+    const end = e => { const d = this.rotDrag; if (!d || d.id !== e.pointerId) return; this.rotDrag = null; if (d.moved) this.commit(); };
+    h.addEventListener('pointerup', end); h.addEventListener('pointercancel', end);
+    addEventListener('resize', () => this.updateRotHandle());
+  }
+  updateRotHandle() {
+    const h = this.rotH; if (!h) return; const it = this.sel;
+    const show = !!(this.active && it && it.kind !== 'fx' && !it.locked && !this.isHid(it) && this.tool === 'move' && !this.drawing && !it.el.isContentEditable);
+    h.hidden = !show; if (!show) return;
+    const r = it.el.getBoundingClientRect(), a = (it.rot || 0) * Math.PI / 180, d = it.el.offsetHeight / 2 + 40;
+    h.style.left = (r.left + r.width / 2 + Math.sin(a) * d) + 'px'; h.style.top = (r.top + r.height / 2 - Math.cos(a) * d) + 'px';
+  }
+  isHid(it) { return !!it.hide || (it.group != null && this.groups.some(g => g.id === it.group && g.hide)); }
   select(it) {
     if (this.sel && this.sel !== it && this.sel.el.isContentEditable) this.sel.el.blur();
-    this.sel = it; this.items.forEach(i => i.el.classList.toggle('is-selected', i === it)); this.renderLayers();
+    this.sel = it; this.items.forEach(i => i.el.classList.toggle('is-selected', i === it)); this.renderLayers(); this.updateRotHandle();
     const c = this.ctx; c.hidden = !it || it.kind === 'fx'; if (this.closeFly) this.closeFly(); if (!it || it.kind === 'fx') return;
     const text = it.kind === 'text';
     const group = text ? 'text' : it.decor ? 'decor' : 'shape';
@@ -8308,6 +8361,7 @@ class CoreStudio {
       c.querySelector('[data-ctx-size]').value = it.size; c.querySelector('[data-ctx-size]').nextElementSibling.textContent = `${it.size}`;
       c.querySelector('[data-ctx-color]').value = it.color;
     } else { c.querySelector('[data-ctx-blur]').value = this.blur; c.querySelector('[data-ctx-blur]').nextElementSibling.textContent = `${this.blur}px`; }
+    if (this.syncRotUI) this.syncRotUI(); this.updateRotHandle();
     const lock = c.querySelector('[data-ctx-lock]');
     lock.innerHTML = `${it.locked ? this.icons.lock : this.icons.unlock}<span>${it.locked ? 'Locked' : 'Lock'}</span>`; lock.setAttribute('aria-pressed', String(it.locked));
   }
@@ -8349,6 +8403,10 @@ class CoreStudio {
   }
   // Canvas version for exports; x/y/w/h in output pixels.
   drawShapeCanvas(g, it, x, y, w, h, k) {
+    if (!it.rot) return this.drawShapeCanvas0(g, it, x, y, w, h, k);
+    const cx = x + w / 2, cy = y + h / 2; g.save(); g.translate(cx, cy); g.rotate(it.rot * Math.PI / 180); g.translate(-cx, -cy); this.drawShapeCanvas0(g, it, x, y, w, h, k); g.restore();
+  }
+  drawShapeCanvas0(g, it, x, y, w, h, k) {
     if (it.kind === 'stroke' && it.strokes) {
       g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
       it.strokes.forEach(st => { g.globalAlpha = st.opacity * (it.alpha ?? 1); g.strokeStyle = st.color; g.lineWidth = st.size * k; g.setLineDash(this.dashArr({ lineW: st.size, dash: st.dash }).map(v => v * k)); g.stroke(new Path2D(this.strokeD(it, w, h, x, y, st.pts))); });
@@ -8491,11 +8549,12 @@ class CoreStudio {
     };
     let er = null;
     // Vector eraser: removes the parts of any drawing that fall under the eraser and splits strokes around the gap.
-    const eraseAt = p => {
+    const eraseAt = p0 => {
       const U = this.U(), W = innerWidth, H = innerHeight, sh = this.shift || { x: 0, y: 0 }, r = this.drawSet.esize;
       this.items.slice().forEach(t => {
-        if (t.kind !== 'stroke' || !t.strokes || t.locked || t.hide) return;
+        if (t.kind !== 'stroke' || !t.strokes || t.locked || this.isHid(t)) return;
         const kx = t.w / t.w0 * U, ky = t.h / t.h0 * U, left = t.x * W + sh.x - t.w * U / 2, top = t.y * H + sh.y - t.h * U / 2;
+        const p = t.rot ? (() => { const a = -t.rot * Math.PI / 180, cx = t.x * W + sh.x, cy = t.y * H + sh.y, dx = p0[0] - cx, dy = p0[1] - cy; return [cx + dx * Math.cos(a) - dy * Math.sin(a), cy + dx * Math.sin(a) + dy * Math.cos(a)]; })() : p0;
         let changed = false; const out = [];
         t.strokes.forEach(sk => {
           const abs = sk.pts.map(([u, v]) => [left + u * kx, top + v * ky]);
@@ -8535,7 +8594,7 @@ class CoreStudio {
       if (!P.length) return;
       const U = this.U(), W = innerWidth, H = innerHeight, sh = this.shift || { x: 0, y: 0 }, D = this.drawSet, pad = Math.max(12, D.size);
       const sk = { color: D.color, size: D.size, opacity: D.opacity, dash: D.dash };
-      const t = this.items.find(i => i.kind === 'stroke' && i.drawCur && !i.locked);
+      const t = this.items.find(i => i.kind === 'stroke' && i.drawCur && !i.locked && !i.rot);
       const all = [{ ...sk, abs: P }];
       if (t) { const k = t.w / t.w0 * U, kh = t.h / t.h0 * U, left = t.x * W + sh.x - t.w * U / 2, top = t.y * H + sh.y - t.h * U / 2; all.unshift(...t.strokes.map(o => ({ ...o, abs: o.pts.map(([u, v]) => [left + u * k, top + v * kh]) }))); }
       const xs = all.flatMap(a => a.abs.map(q => q[0])), ys = all.flatMap(a => a.abs.map(q => q[1])), pd = Math.max(pad, ...all.map(a => a.size));
@@ -8667,44 +8726,86 @@ class CoreStudio {
   renderLayers() {
     const ul = this.el.querySelector('[data-studio-objects]'); if (!ul || this.dragLayer) return;
     cancelAnimationFrame(this.relayRaf); this.relayRaf = requestAnimationFrame(() => this.layoutTrays());
-    this.el.querySelector('[data-objects-empty]').hidden = this.items.length > 0;
+    this.el.querySelector('[data-objects-empty]').hidden = this.items.length > 0 || this.groups.length > 0;
     const eye = '<svg class="studio-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg>';
+    const folder = '<svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
     const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-    ul.innerHTML = this.items.slice().reverse().map(it => {
+    const row = (it, inGroup) => {
       const sw = it.kind === 'fx' ? `<i class="st-sw is-fx">${{ colour: '◐', grain: '▒', network: '⌘' }[it.fxType]}</i>` : it.kind === 'text' ? `<i class="st-sw" style="color:${it.color}">T</i>` : `<i class="st-sw ${it.decor ? 'is-fill' : ''}" style="color:${it.decor ? it.fill : '#fff'}">${this.icons[it.kind]}</i>`;
       const name = it.kind === 'text' ? esc((it.content || '').split('\n')[0].slice(0, 24) || 'Text') : this.label(it);
-      return `<li class="st-layer${it === this.sel ? ' is-sel' : ''}${it.hide ? ' is-hidden' : ''}" data-layer="${this.items.indexOf(it)}"><span class="st-grip" aria-label="Drag to restack">⋮⋮</span>${sw}<span class="st-lname">${name}</span>${it.locked ? `<span class="st-lk">${this.icons.lock}</span>` : ''}<button type="button" class="st-eye" aria-pressed="${!it.hide}" aria-label="${it.hide ? 'Show' : 'Hide'} layer">${eye}</button><button type="button" class="st-eye st-ldel" aria-label="Delete layer">${this.icons.trash}</button>${it === this.sel ? `<label class="st-lop">Opacity<input type="range" min="0" max="1" step="0.05" value="${it.alpha ?? 1}" aria-label="Layer opacity"><output>${Math.round((it.alpha ?? 1) * 100)}%</output></label>` : ''}</li>`;
-    }).join('');
+      const lk = it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-llock${it.locked ? ' is-on' : ''}" aria-pressed="${!!it.locked}" aria-label="${it.locked ? 'Unlock' : 'Lock'} layer">${it.locked ? this.icons.lock : this.icons.unlock}</button>`;
+      return `<li class="st-layer${inGroup ? ' in-group' : ''}${it === this.sel ? ' is-sel' : ''}${it.hide ? ' is-hidden' : ''}${this.isHid(it) && !it.hide ? ' is-ghidden' : ''}" data-layer="${this.items.indexOf(it)}"><span class="st-grip" aria-label="Drag to restack or into a group">⋮⋮</span>${sw}<span class="st-lname">${name}</span>${lk}<button type="button" class="st-eye" data-leye aria-pressed="${!it.hide}" aria-label="${it.hide ? 'Show' : 'Hide'} layer">${eye}</button><button type="button" class="st-eye st-ldel" aria-label="Delete layer">${this.icons.trash}</button>${it === this.sel ? `<label class="st-lop">Opacity<input type="range" min="0" max="1" step="0.05" value="${it.alpha ?? 1}" aria-label="Layer opacity"><output>${Math.round((it.alpha ?? 1) * 100)}%</output></label>` : ''}</li>`;
+    };
+    const head = g => { const m = this.items.filter(i => i.group === g.id), allLocked = m.length && m.every(i => i.locked); return `<li class="st-ghead${g.hide ? ' is-hidden' : ''}" data-gid="${g.id}"><button type="button" class="st-eye st-gtog" aria-expanded="${!g.collapsed}" aria-label="${g.collapsed ? 'Expand' : 'Collapse'} group"><span class="st-chev${g.collapsed ? ' is-closed' : ''}" aria-hidden="true"></span></button>${folder}<span class="st-lname st-gname" data-gname>${esc(g.name)}</span><span class="st-gcount">${m.length}</span><button type="button" class="st-eye st-glock${allLocked ? ' is-on' : ''}" aria-pressed="${!!allLocked}" aria-label="Lock group">${allLocked ? this.icons.lock : this.icons.unlock}</button><button type="button" class="st-eye st-geye" aria-pressed="${!g.hide}" aria-label="${g.hide ? 'Show' : 'Hide'} group">${eye}</button><button type="button" class="st-eye st-gdel" aria-label="Ungroup">${this.icons.trash}</button></li>`; };
+    const seen = new Set(), out = [];
+    this.items.slice().reverse().forEach(it => {
+      if (it.group == null || !this.groups.some(g => g.id === it.group)) { out.push(row(it, false)); return; }
+      if (seen.has(it.group)) return; seen.add(it.group);
+      const g = this.groups.find(x => x.id === it.group); out.push(head(g));
+      if (!g.collapsed) this.items.slice().reverse().filter(i => i.group === g.id).forEach(i => out.push(row(i, true)));
+    });
+    this.groups.forEach(g => { if (!seen.has(g.id)) out.push(head(g)); });
+    ul.innerHTML = out.join('');
+    // group headers
+    ul.querySelectorAll('.st-ghead').forEach(li => {
+      const g = this.groups.find(x => x.id === +li.dataset.gid), mem = () => this.items.filter(i => i.group === g.id);
+      li.querySelector('.st-gtog').addEventListener('click', () => { g.collapsed = !g.collapsed; this.renderLayers(); this.commit(); });
+      li.querySelector('.st-geye').addEventListener('click', () => { g.hide = !g.hide; if (g.hide && this.sel && this.sel.group === g.id) this.select(null); mem().forEach(i => this.place(i)); this.updateFocus(); this.renderLayers(); this.commit(); });
+      li.querySelector('.st-glock').addEventListener('click', () => { const m = mem(), lock = !(m.length && m.every(i => i.locked)); m.forEach(i => { i.locked = lock; this.place(i); }); this.renderLayers(); this.commit(); });
+      li.querySelector('.st-gdel').addEventListener('click', () => { mem().forEach(i => { i.group = null; }); this.groups = this.groups.filter(x => x !== g); this.renderLayers(); this.commit(); });
+      const nm = li.querySelector('[data-gname]');
+      nm.addEventListener('click', () => { const inp = document.createElement('input'); inp.type = 'text'; inp.className = 'st-gedit'; inp.value = g.name; inp.maxLength = 24; nm.replaceWith(inp); inp.focus(); inp.select(); const done = () => { g.name = inp.value.trim() || g.name; this.renderLayers(); this.commit(); }; inp.addEventListener('blur', done); inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); if (e.key === 'Escape') { inp.value = g.name; inp.blur(); } e.stopPropagation(); }); });
+    });
     ul.querySelectorAll('.st-layer').forEach(li => {
       const it = this.items[+li.dataset.layer];
       li.querySelector('.st-ldel').addEventListener('click', () => this.removeItem(it));
+      const lk = li.querySelector('.st-llock'); if (lk) lk.addEventListener('click', () => this.lockItem(it, !it.locked));
       const op = li.querySelector('.st-lop input');
       if (op) { op.addEventListener('input', () => { it.alpha = +op.value; op.nextElementSibling.textContent = `${Math.round(it.alpha * 100)}%`; this.place(it); }); op.addEventListener('change', () => this.commit()); }
-      li.addEventListener('click', e => { if (e.target.closest('.st-eye,.st-grip,.st-lop')) return; if (!it.hide) this.select(it); });
-      li.querySelector('.st-eye').addEventListener('click', () => { it.hide = !it.hide; if (it.hide && this.sel === it) this.select(null); this.place(it); this.updateFocus(); this.renderLayers(); this.commit(); });
+      li.addEventListener('click', e => { if (e.target.closest('.st-eye,.st-grip,.st-lop')) return; if (!this.isHid(it)) this.select(it); });
+      li.querySelector('[data-leye]').addEventListener('click', () => { it.hide = !it.hide; if (it.hide && this.sel === it) this.select(null); this.place(it); this.updateFocus(); this.renderLayers(); this.commit(); });
       const grip = li.querySelector('.st-grip');
       grip.addEventListener('pointerdown', e => {
         e.preventDefault(); grip.setPointerCapture(e.pointerId);
-        const rows = [...ul.children], h = li.getBoundingClientRect().height + 6;
-        this.dragLayer = { id: e.pointerId, y: e.clientY, from: rows.indexOf(li), to: rows.indexOf(li), rows, h };
+        this.dragLayer = { id: e.pointerId, y: e.clientY, li, it, target: null };
         li.classList.add('is-drag');
       });
       grip.addEventListener('pointermove', e => {
         const d = this.dragLayer; if (!d || d.id !== e.pointerId) return;
-        const dy = e.clientY - d.y; li.style.transform = `translateY(${dy}px)`;
-        d.to = clamp(d.from + Math.round(dy / d.h), 0, d.rows.length - 1);
-        d.rows.forEach((r, i) => { if (r !== li) r.style.transform = (d.from < d.to && i > d.from && i <= d.to) ? `translateY(${-d.h}px)` : (d.from > d.to && i < d.from && i >= d.to) ? `translateY(${d.h}px)` : ''; });
+        li.style.transform = `translateY(${e.clientY - d.y}px)`;
+        ul.querySelectorAll('.is-drop-in,.is-drop-above,.is-drop-below').forEach(n => n.classList.remove('is-drop-in', 'is-drop-above', 'is-drop-below'));
+        d.target = null;
+        for (const n of ul.children) {
+          if (n === li) continue; const r = n.getBoundingClientRect();
+          if (e.clientY >= r.top && e.clientY <= r.bottom) {
+            if (n.classList.contains('st-ghead')) { n.classList.add('is-drop-in'); d.target = { kind: 'group', id: +n.dataset.gid }; }
+            else { const above = e.clientY < r.top + r.height / 2; n.classList.add(above ? 'is-drop-above' : 'is-drop-below'); d.target = { kind: 'row', it: this.items[+n.dataset.layer], above }; }
+            break;
+          }
+        }
       });
       const drop = e => {
         const d = this.dragLayer; if (!d || d.id !== e.pointerId) return; this.dragLayer = null;
-        if (d.to !== d.from) {
-          const order = this.items.slice().reverse(), [m] = order.splice(d.from, 1); order.splice(d.to, 0, m);
-          this.items = order.reverse(); this.items.forEach(i => this.stage.append(i.el)); this.commit();
+        li.classList.remove('is-drag'); li.style.transform = '';
+        const t = d.target, moved = Math.abs(e.clientY - d.y) > 6;
+        if (t && moved) {
+          if (t.kind === 'group') it.group = t.id;
+          else if (t.it && t.it !== it) {
+            this.items = this.items.filter(i => i !== it);
+            const k = this.items.indexOf(t.it); this.items.splice(t.above ? k + 1 : k, 0, it);
+            it.group = t.it.group ?? null;
+            this.items.forEach(i => this.stage.append(i.el));
+          }
+          this.place(it); this.updateFocus(); this.commit();
         }
         this.renderLayers();
       };
       grip.addEventListener('pointerup', drop); grip.addEventListener('pointercancel', drop);
     });
+  }
+  addGroup() {
+    const g = { id: Date.now() + Math.floor(Math.random() * 1000), name: `Group ${this.groups.length + 1}`, hide: false, collapsed: false };
+    this.groups.push(g); if (this.sel && this.sel.kind !== 'fx') this.sel.group = g.id; this.renderLayers(); this.commit();
   }
   lockItem(it, on) { it.locked = on; this.place(it); this.select(it); this.renderLayers(); this.commit(); }
   removeItem(it, quiet) {
@@ -8715,7 +8816,7 @@ class CoreStudio {
     if (!quiet) this.commit();
   }  // Undo/redo: whole-composition snapshots (items, shape blur and the look settings).
   snapshot() {
-    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'grain', 'grainAmt', 'cpts', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides'];
+    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'grain', 'grainAmt', 'cpts', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides', 'groups'];
     return JSON.stringify({ s: Object.fromEntries(keys.map(k => [k, this[k]])), layers: this.layers, core: this.coreLayers,
       items: this.items.map(({ el, id, ...rest }) => rest) });
   }
@@ -8730,7 +8831,7 @@ class CoreStudio {
   restore(json) {
     const d = JSON.parse(json); this.restoring = true;
     this.select(null); this.items.slice().forEach(it => this.removeItem(it, true));
-    Object.assign(this, d.s); Object.assign(this.layers, d.layers); d.core.forEach((v, i) => { this.coreLayers[i] = v; });
+    Object.assign(this, d.s); this.groups = this.groups || []; Object.assign(this.layers, d.layers); d.core.forEach((v, i) => { this.coreLayers[i] = v; });
     d.items.forEach(o => this.addItem(o.kind, { ...o, silent: true }));
     const v = { '[data-studio-background]': this.background, '[data-studio-bg-a]': this.bgA, '[data-studio-bg-b]': this.bgB, '[data-studio-angle]': this.angle, '[data-studio-grid]': this.grid,
       '[data-studio-light]': this.light, '[data-studio-light-x]': this.lightX, '[data-studio-shadow]': this.shadow, '[data-studio-shadow-soft]': this.shadowSoft, '[data-studio-effect]': this.effect, '[data-studio-effect-amount]': this.effectAmount };
@@ -8744,7 +8845,7 @@ class CoreStudio {
 
   // Shapes keep their area sharp: the scene is blurred and a clipped, sharp copy sits on top. Works in Safari, unlike masked backdrop blur.
   updateFocus() {
-    const shapes = this.items.filter(i => i.kind !== 'text' && i.kind !== 'fx' && !i.decor && !i.hide), U = this.U(), on = this.active && shapes.length > 0 && (this.blur > 0 || this.dim > 0), W = innerWidth, H = innerHeight, gl = this.app.stage.renderer.domElement;
+    const shapes = this.items.filter(i => i.kind !== 'text' && i.kind !== 'fx' && !i.decor && !this.isHid(i)), U = this.U(), on = this.active && shapes.length > 0 && (this.blur > 0 || this.dim > 0), W = innerWidth, H = innerHeight, gl = this.app.stage.renderer.domElement;
     if (this.focusOn !== on && this.gridMode === 'focus') { this.focusOn = on; this.paint(this.bg.getContext('2d'), this.bg.width, this.bg.height); }
     this.focusOn = on;
     gl.style.filter = this.active ? `brightness(${this.light * (on ? 1 - this.dim : 1)})${on ? ` blur(${this.blur}px)` : ''}` : '';
@@ -8754,9 +8855,10 @@ class CoreStudio {
     this.fxGl.style.filter = `brightness(${this.light})`;
     const d = shapes.map(s => {
       const sh = this.shift || { x: 0, y: 0 }, w = s.w * U, h = s.h * U, x = s.x * W - w / 2 + sh.x, y = s.y * H - h / 2 + sh.y, f = n => n.toFixed(1);
-      if (s.kind === 'circle') return `M${f(x)} ${f(y + h / 2)}A${f(w / 2)} ${f(h / 2)} 0 1 0 ${f(x + w)} ${f(y + h / 2)}A${f(w / 2)} ${f(h / 2)} 0 1 0 ${f(x)} ${f(y + h / 2)}Z`;
-      if (s.kind === 'tri') return `M${f(x + w / 2)} ${f(y)}L${f(x + w)} ${f(y + h)}L${f(x)} ${f(y + h)}Z`;
-      return `M${f(x)} ${f(y)}H${f(x + w)}V${f(y + h)}H${f(x)}Z`;
+      const ang = (s.rot || 0), ra = ang * Math.PI / 180, ca = Math.cos(ra), sa = Math.sin(ra), cx = x + w / 2, cy = y + h / 2, P = (u, v) => `${f(cx + u * ca - v * sa)} ${f(cy + u * sa + v * ca)}`;
+      if (s.kind === 'circle') return `M${P(-w / 2, 0)}A${f(w / 2)} ${f(h / 2)} ${f(ang)} 1 0 ${P(w / 2, 0)}A${f(w / 2)} ${f(h / 2)} ${f(ang)} 1 0 ${P(-w / 2, 0)}Z`;
+      const pts = s.kind === 'tri' ? [[0, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]] : [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]];
+      return 'M' + pts.map(([u, v]) => P(u, v)).join('L') + 'Z';
     }).join('');
     this.fx.style.clipPath = this.fx.style.webkitClipPath = `path('${d}')`;
     this.copySharpBg();
@@ -8774,30 +8876,29 @@ class CoreStudio {
       const bitmap=await createImageBitmap(blob), out=document.createElement('canvas');out.width=width;out.height=height;
       const g=out.getContext('2d'),sx=width/this.app.stage.width,sy=height/this.app.stage.height;
       g.drawImage(bitmap,0,0);bitmap.close();
-      const U=this.U(),shapes=this.items.filter(i=>i.kind!=='text'&&i.kind!=='fx'&&!i.decor&&!i.hide);
+      const U=this.U(),shapes=this.items.filter(i=>i.kind!=='text'&&i.kind!=='fx'&&!i.decor&&!this.isHid(i));
       if(shapes.length&&(this.blur>0||this.dim>0)){
         const blurred=document.createElement('canvas');blurred.width=width;blurred.height=height;
         const b=blurred.getContext('2d');b.drawImage(softBlur(out,this.blur*Math.max(sx,sy)),0,0);if(this.dim>0){b.fillStyle=`rgba(0,0,0,${this.dim})`;b.fillRect(0,0,width,height);}
         b.globalCompositeOperation='destination-out';b.beginPath();
-        shapes.forEach(s=>{const x=s.x*width,y=s.y*height,rx=s.w*U*sx/2,ry=s.h*U*sy/2;b.moveTo(x+rx,y);
-          if(s.kind==='circle')b.ellipse(x,y,rx,ry,0,0,Math.PI*2);
-          else if(s.kind==='tri'){b.moveTo(x,y-ry);b.lineTo(x+rx,y+ry);b.lineTo(x-rx,y+ry);b.closePath();}
-          else b.rect(x-rx,y-ry,rx*2,ry*2);});
+        shapes.forEach(s=>{const x=s.x*width,y=s.y*height,rx=s.w*U*sx/2,ry=s.h*U*sy/2,a=(s.rot||0)*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a),P=(u,v)=>[x+u*ca-v*sa,y+u*sa+v*ca];b.moveTo(x+rx,y);
+          if(s.kind==='circle')b.ellipse(x,y,rx,ry,a,0,Math.PI*2);
+          else{const pts=s.kind==='tri'?[[0,-ry],[rx,ry],[-rx,ry]]:[[-rx,-ry],[rx,-ry],[rx,ry],[-rx,ry]];pts.forEach(([u,v],i)=>{const q=P(u,v);i?b.lineTo(q[0],q[1]):b.moveTo(q[0],q[1]);});b.closePath();}});
         b.fill();b.globalCompositeOperation='source-over';g.drawImage(blurred,0,0);
       }
       if(this.fxLive()&&this.effect!=='off'&&this.effectAmount>0){g.save();g.globalAlpha=(this.fxItem('colour')||{alpha:1}).alpha;g.drawImage(this.vfx,0,0,width,height);g.restore();}
-      const drawText=(el)=>{
-        const style=getComputedStyle(el),r=el.getBoundingClientRect();if(!r.width||!r.height)return;
-        g.save();g.fillStyle=style.color;g.globalAlpha=+style.opacity||1;g.font=`${style.fontWeight} ${parseFloat(style.fontSize)*sy}px ${style.fontFamily}`;
+      const drawText=(el,rot)=>{
+        const style=getComputedStyle(el);let r=el.getBoundingClientRect();if(!r.width||!r.height)return;
+        g.save();if(rot){const cx=r.left+r.width/2,cy=r.top+r.height/2,cw=el.offsetWidth,ch=el.offsetHeight;r={left:cx-cw/2,top:cy-ch/2,width:cw,height:ch,right:cx+cw/2};g.translate(cx*sx,cy*sy);g.rotate(rot*Math.PI/180);g.translate(-cx*sx,-cy*sy);}g.fillStyle=style.color;g.globalAlpha=+style.opacity||1;g.font=`${style.fontWeight} ${parseFloat(style.fontSize)*sy}px ${style.fontFamily}`;
         if('letterSpacing' in g)g.letterSpacing=`${(parseFloat(style.letterSpacing)||0)*sx}px`;
         g.textBaseline='top';const upper=style.textTransform==='uppercase',pad=parseFloat(style.paddingLeft)||0,lines=el.innerText.split(/\n/);let yy=(r.top+(parseFloat(style.paddingTop)||0))*sy;
         for(const raw of lines){const line=upper?raw.toUpperCase():raw;g.textAlign=style.textAlign==='right'?'right':style.textAlign==='center'?'center':'left';
           const xx=g.textAlign==='right'?(r.right-pad)*sx:g.textAlign==='center'?(r.left+r.width/2)*sx:(r.left+pad)*sx;g.fillText(line,xx,yy);yy+=(parseFloat(style.lineHeight)||parseFloat(style.fontSize)*1.05)*sy;}
         g.restore();
       };
-      this.items.filter(i=>!i.hide).forEach(i=>{
+      this.items.filter(i=>!this.isHid(i)).forEach(i=>{
         if(i.kind==='fx')return;
-        if(i.kind==='text'){drawText(i.el);return;}
+        if(i.kind==='text'){drawText(i.el,i.rot);return;}
         const U2=this.U()*sx,ww=i.w*U2,hh=i.h*U2*(sy/sx);this.drawShapeCanvas(g,i,i.x*width-ww/2,i.y*height-hh/2,ww,hh,sx);});
       // Crop to the poster: the band under the side menus is not part of the composition.
       let fin=out;
@@ -8935,7 +9036,7 @@ class CoreStudio {
       else cc.y = Math.max(110, (H - r.height) / 2 + 10);
     } else if (!wide && !this.panel.hidden) cc.y = Math.max(110, (H - this.panel.getBoundingClientRect().height - 80) / 2 + 10);
     const sx = Math.round(cc.x - c0.x), sy = Math.round(cc.y - c0.y);
-    if (!this.shift || this.shift.x !== sx || this.shift.y !== sy) { this.shift = { x: sx, y: sy }; this.stage.style.transform = sx || sy ? `translate(${sx}px,${sy}px)` : ''; this.updateFocus(); }
+    if (!this.shift || this.shift.x !== sx || this.shift.y !== sy) { this.shift = { x: sx, y: sy }; this.stage.style.transform = sx || sy ? `translate(${sx}px,${sy}px)` : ''; this.updateFocus(); this.updateRotHandle(); }
     const x = (cc.x - W / 2) / W * 2 * hw, y = (H / 2 - cc.y) / H * 2 * hh;
     if (a.reduced || tuning) this.vx = this.vy = 0;
     if (!this.drag && !a.reduced && !tuning) {
