@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-visual">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual">
 <title>Cerebra — a living planet and its worlds</title>
 <meta name="description" content="Cerebra is a living planet with a mind of its own, holding seven worlds in orbit. Every thought on the page is computed live in your browser.">
 <meta name="theme-color" content="#05070a">
@@ -1257,6 +1257,9 @@ body #studio .st-dock{overflow:visible!important;-webkit-mask:none!important;mas
 #studio .st-assist-sl b{font:600 11px var(--f-num);color:#c9a8ff}
 #studio .st-assist-sl input{grid-column:1/-1;width:100%}
 @media(max-width:600px){#studio .st-assist-t{display:none}#studio .st-assist-r2{gap:8px}#studio .st-assist-sl{font-size:10px}#studio .st-assist-r1{justify-content:center}}
+/* No accidental page zoom on phones/tablets: no double-tap zoom, no focus zoom on fields */
+html,body{touch-action:manipulation}
+@media(pointer:coarse){#studio input[type=text],#studio input[type=number],#studio select,#studio textarea,.tune select,.tune input[type=text],.st-text[contenteditable]{font-size:16px!important}}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -2265,6 +2268,9 @@ const Settings = (() => {
   return { wire };
 })();
 
+/* Block pinch-zoom of the whole page (Safari ignores user-scalable=no) */
+['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
+document.addEventListener('touchmove', e => { if (e.touches.length > 1 && !e.target.closest('[data-allow-pinch]')) e.preventDefault(); }, { passive: false });
 /* Mobile tuning sheets: drag the grip or header; controls below remain scrollable. */
 (() => {
   const mq = matchMedia('(max-width:760px)');
@@ -7494,7 +7500,7 @@ class CoreStudio {
         <label class="st-fly-row"><span>Size</span><output data-do="size"></output><input type="range" min="1" max="40" step="1" data-dset="size"></label>
         <label class="st-fly-row"><span>Opacity</span><output data-do="opacity"></output><input type="range" min="0.05" max="1" step="0.05" data-dset="opacity"></label>
         <label class="st-fly-row"><span>Line type</span><select data-dset="dash"><option value="solid">Solid</option><option value="dashed">Dashed</option><option value="dotted">Dotted</option></select></label>
-        <label class="st-fly-row"><span>Hold to shape</span><output data-do="hold"></output><input type="range" min="0.3" max="2" step="0.1" data-dset="hold"></label>
+        <label class="st-fly-row"><span>Hold to shape</span><output data-do="hold"></output><input type="range" min="0.3" max="2" step="0.05" data-dset="hold"></label>
         <label class="st-fly-row"><span>Guide</span><select data-dset="guide"><option value="none">None</option><option value="grid">Grid</option><option value="iso">Isometric</option></select></label>
         <label class="st-fly-row"><span>Guide spacing</span><output data-do="gap"></output><input type="range" min="16" max="120" step="4" data-dset="gap"></label>
         <label class="st-fly-row"><span>Guide opacity</span><output data-do="gopacity"></output><input type="range" min="0.05" max="1" step="0.05" data-dset="gopacity"></label>
@@ -8124,8 +8130,9 @@ class CoreStudio {
   // Pencil: freehand strokes become 'stroke' items. Holding still turns a stroke into a line or circle (QuickShape);
   // guides draw a soft grid/isometric lattice and assist locks strokes to its axes.
   initDraw() {
-    this.drawSet = { color: '#ffffff', size: 4, opacity: 1, dash: 'solid', hold: 2, guide: 'none', gap: 48, assist: false, gopacity: .3, gthick: 1 };
+    this.drawSet = { color: '#ffffff', size: 4, opacity: 1, dash: 'solid', hold: 1.25, guide: 'none', gap: 48, assist: false, gopacity: .3, gthick: 1 };
     try { Object.assign(this.drawSet, JSON.parse(localStorage.getItem('cerebra-studio-pencil') || '{}')); } catch (e) {}
+    try { if (!localStorage.getItem('cerebra-hold-v2')) { localStorage.setItem('cerebra-hold-v2', '1'); this.drawSet.hold = 1.25; } } catch (e) {}
     const pad = this.drawPad = document.createElement('div'); pad.className = 'st-draw-pad'; pad.hidden = true;
     pad.innerHTML = '<canvas class="st-guides"></canvas><svg class="st-ink"><path/></svg>';
     this.stage.after(pad); this.guideCv = pad.querySelector('canvas'); this.ink = pad.querySelector('path');
