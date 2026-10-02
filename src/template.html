@@ -2734,6 +2734,7 @@ const WorldTune = (() => {
       [[dens, CORE_DEFAULTS.density, pct], [structure, CORE_DEFAULTS.structure, pct], [spd, 1, times], [thick, 1, times], [clar, 1, times], [rim, 0.55, v => v.toFixed(2)], [haze, CORE_DEFAULTS.haze, pct],
        [frate, 1, times], [famt, 1, times], [bands, 1, v => String(Math.round(v))], [swarm, CORE_DEFAULTS.swarm, pct], [swsize, 1, times], [cmN, CORE_DEFAULTS.comets, intf], [cmTail, 1, times], [cmSpeed, 1, times], [cmSize, 1, times], [cmDive, 1, times], [ptrs, 1, times], [gain, 1, times], [zoom, 1, v => v.toFixed(2) + 'x']].forEach(([el, v, f]) => setRange(el, v, f));
       LAYER_U.uStructure.value = CORE_DEFAULTS.structure;
+      Object.assign(pcfg, { mode: 'original', a: '#ff4655', b: '#8b5cf6', ink: 'auto' }); showPaint(); ['outer', 'inner'].forEach(k => { shellSel(k).value = 'sphere'; }); shellSel('nucleus').value = 'off'; ['outer', 'inner', 'nucleus'].forEach(k => { shellCol(k).value = '#dfe4ea'; });
       dir.set(1); band.set(1); inner.set(1); ptr.set(0); shape.set(0); setTheme('nebula'); neon.set('#b44cff'); flareC.set('#ffffff'); swarmC.set('#cfe3ff'); cometC.set('#9fd4ff'); setLayers([0, 1, 2, 3, 4].map(() => LAYER_DEFAULT)); setLayerValues(null); setLayerEyes(null);
       const L = LENS_DEFAULTS(); Object.keys(L).forEach(k => { LENS_U[k].value = L[k]; });
       setRange(aberr, L.uLensAberr, f3); setRange(blur, L.uLensBlur, f2); setRange(bloom, L.uLensBloom, f2); lens.set(1);
@@ -4782,6 +4783,8 @@ class PlanetBody {
     this.setDensity(CORE_DEFAULTS.density); this.setHaze(CORE_DEFAULTS.haze); this.setSpeed(1); this.setDirection(1); this.setShape(0);
     this.setFlare(1, 1); this.setFlareColor("#ffffff"); this.setPointer(0, 1); this.setBand(true, 1); this.setBandCount(1); this.setSwarm(CORE_DEFAULTS.swarm, 1, '#cfe3ff'); this.setComets({ n: CORE_DEFAULTS.comets, tail: 1, speed: 1, size: 1, dive: 1, color: '#9fd4ff' }); this.setInner(true); this.setGlass(1, 0.55);
     this.outer.show = true; this.resetView(); this.selected = null;
+    this.paint = { mode: 'original', a: '#ff4655', b: '#8b5cf6', ink: 'auto' }; this._painted = false; this._paintKey = ''; this.shellColors = {};
+    this.setShell('outer', 'sphere'); this.setShell('inner', 'sphere'); this.setShell('nucleus', 'off'); this.setInner(true);
   }
 
   /* ---- per-item editing ---- */
@@ -7950,6 +7953,7 @@ class CoreStudio {
       [['[data-studio-freeze]', 'false'], ['[data-studio-show]', 'true'], ['[data-studio-fx]', 'false']].forEach(([s, v]) => this.el.querySelector(s).setAttribute('aria-pressed', v));
       this.el.querySelector('[data-freeze-label]').textContent = 'Stop';
       this.el.querySelectorAll('[data-studio-layer],[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioLayer !== 'dust')));
+      document.querySelector('[data-t-reset]').click();
       this.home(); this.applyPreset('ember'); this.paintVfx(); this.resetTrays();
     };
     this.frozen = false; this.lensOn = false; this.grain = false; this.grainAmt = .1;
