@@ -2632,7 +2632,7 @@ const WorldTune = (() => {
     P.querySelector('[data-wt-name]').textContent = w.def.name;
     P.querySelectorAll('input[data-wt]').forEach(el => { el.value = el.type === 'color' ? (w.tune[el.dataset.wt] || w.def.accent) : w.tune[el.dataset.wt]; if (el.type !== 'color') out(el); });
     P.querySelectorAll('[data-wt-seg]').forEach(g => g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === w.tune[g.dataset.wtSeg]))));
-    P.querySelectorAll('select[data-wt]').forEach(el => { el.value = w.tune[el.dataset.wt] || 'sphere'; });
+    P.querySelectorAll('select[data-wt]').forEach(el => { const v = w.tune[el.dataset.wt]; el.value = v != null ? String(v) : el.querySelector('option[value=sphere]') ? 'sphere' : el.options[0].value; });
   };
   const set = (k, v) => { if (!w) return; w.setTune(k, v); (store[w.def.id] = store[w.def.id] || {})[k] = v; save(); if (['hue','sat','bright','colorize','allColor'].includes(k)) syncAccent(); };
   const tab = id => {
@@ -2663,10 +2663,12 @@ const WorldTune = (() => {
       `<label class="tune-row"><span>${c.label}</span><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" data-wt="r_${c.key}"><b data-out></b></label>`).join('');
     // One section per registered effect: on/off, its sliders and a replay button.
     Pn.querySelector('[data-wt-effects]').innerHTML = Effects.list.map(fx => {
-      fx.controls.forEach(c => { fmt[fx.prefix + c.key] = v => (+v).toFixed(c.step < 0.01 ? 3 : 2); });
+      fx.controls.forEach(c => { if (!c.type) fmt[fx.prefix + c.key] = v => (+v).toFixed(c.step < 0.01 ? 3 : 2); });
       return `<section data-effect="${fx.id}"><p class="tune-sub">${fx.title}</p>` +
         `<div class="tune-row"><span>${fx.title}</span><div class="tune-seg" data-wt-seg="${fx.prefix}enabled"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>` +
-        fx.controls.map(c => `<label class="tune-row"><span>${c.label}</span><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" data-wt="${fx.prefix}${c.key}"><b data-out></b></label>`).join('') +
+        fx.controls.map(c => c.type === 'select' ? `<label class="tune-row"><span>${c.label}</span><select data-wt="${fx.prefix}${c.key}">${c.options.map(([v, n]) => `<option value="${v}">${n}</option>`).join('')}</select></label>`
+          : c.type === 'color' ? `<label class="tune-row"><span>${c.label}</span><input type="color" data-wt="${fx.prefix}${c.key}"></label>`
+          : `<label class="tune-row"><span>${c.label}</span><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" data-wt="${fx.prefix}${c.key}"><b data-out></b></label>`).join('') +
         (fx.play ? `<button type="button" class="tune-btn" data-fx-replay="${fx.id}">&#8635; Replay ${fx.title.toLowerCase()}</button>` : '') + '</section>';
     }).join('');
     ['camera','atmosphere'].forEach(id=>Pn.querySelector(`[data-wt-pane="${id}"]`).append(Pn.querySelector(`[data-effect="${id}"]`)));
