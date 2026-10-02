@@ -7038,7 +7038,7 @@ class CoreStudio {
       <div class="studio-two"><label>Colour A<input type="color" data-studio-bg-a value="#111727"></label><label>Colour B<input type="color" data-studio-bg-b value="#274052"></label></div>
       <label class="studio-control"><span>Gradient angle</span><input type="range" min="0" max="360" value="115" data-studio-angle><output>115°</output></label><label class="studio-control"><span>Grid</span><select data-studio-gridmode aria-label="Grid"><option value="always">Always</option><option value="focus">Only with a focus shape</option><option value="off">Off</option></select></label><input type="checkbox" data-studio-grid hidden checked>
       <h3>Colour effects</h3><select data-studio-effect aria-label="Colour effect"><option value="off">Off</option><option value="chromatic">Chromatic aberration</option><option value="rgb">RGB split</option><option value="color">Color split</option><option value="vhs">VHS effect</option><option value="glitch">Glitch art</option></select><label class="studio-control"><span>Strength</span><input type="range" min="0" max="20" value="5" data-studio-effect-amount><output>5</output></label>
-      <h3>Light &amp; floor shadow</h3><label class="studio-control"><span>Key light</span><input type="range" min="0.4" max="1.8" step="0.05" value="1" data-studio-light><output>1.00×</output></label><label class="studio-control"><span>Light direction</span><input type="range" min="-6" max="6" step="0.25" value="4" data-studio-light-x><output>4</output></label><label class="studio-control"><span>Shadow</span><input type="range" min="0" max="1" step="0.05" value="0.65" data-studio-shadow><output>65%</output></label><label class="studio-control"><span>Softness</span><input type="range" min="0" max="1" step="0.05" value="0.6" data-studio-shadow-soft><output>60%</output></label>
+      <h3>Light &amp; floor shadow</h3><label class="studio-control"><span>Camera lens (depth blur &amp; colour fringe)</span><input type="checkbox" data-studio-lens></label><label class="studio-control"><span>Key light</span><input type="range" min="0.4" max="1.8" step="0.05" value="1" data-studio-light><output>1.00×</output></label><label class="studio-control"><span>Light direction</span><input type="range" min="-6" max="6" step="0.25" value="4" data-studio-light-x><output>4</output></label><label class="studio-control"><span>Shadow</span><input type="range" min="0" max="1" step="0.05" value="0.65" data-studio-shadow><output>65%</output></label><label class="studio-control"><span>Softness</span><input type="range" min="0" max="1" step="0.05" value="0.6" data-studio-shadow-soft><output>60%</output></label>
       <h3>Network backdrop</h3><div class="net-host">${NET.html()}</div>
       <h3>World parts</h3><div class="studio-layers"><button type="button" class="studio-layer" data-studio-layer="atmo" aria-pressed="true" aria-label="Hide atmosphere"><span>Atmosphere glow</span>${eye}</button><button type="button" class="studio-layer" data-studio-layer="stars" aria-pressed="true" aria-label="Hide stars"><span>Background stars</span>${eye}</button></div>
       <h3>Planet parts</h3><div class="studio-layers">${Object.keys(names).map(k => `<button type="button" class="studio-layer" data-studio-layer="${k}" aria-pressed="true" aria-label="Show ${names[k]}"><span>${names[k]}</span>${eye}</button>`).join('')}</div>
@@ -7153,7 +7153,8 @@ class CoreStudio {
       this.el.querySelectorAll('[data-studio-layer],[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', 'true'));
       this.home(); this.applyPreset('ember'); this.paintVfx();
     };
-    this.frozen = false;
+    this.frozen = false; this.lensOn = false;
+    this.el.querySelector('[data-studio-lens]').onchange = e => { this.lensOn = e.target.checked; };
     this.el.querySelector('[data-studio-freeze]').onclick = e => { this.frozen = !this.frozen; const b = e.currentTarget; b.setAttribute('aria-pressed', String(this.frozen)); b.setAttribute('aria-label', this.frozen ? 'Resume motion' : 'Freeze motion'); b.querySelector('[data-freeze-label]').textContent = this.frozen ? 'Play' : 'Stop'; };
     this.showSubject = true;
     // The colour split ghost suits the glassy core only; worlds never get it.
@@ -7802,7 +7803,12 @@ class CoreStudio {
       w.atmoMat.uniforms.uLight.value.copy(this.sun).sub(w.group.position).normalize();
     }
     if (!this.showSubject) { c.group.visible = false; if (a.organisms) a.organisms.group.visible = false; a.orrery.worlds.forEach(w => { w.group.visible = false; }); }
-    a.stage.scene.updateMatrixWorld(); a.stage.render(cam);
+    a.stage.scene.updateMatrixWorld();
+    // Studio renders sharp: the explore view's lens (depth blur, colour fringe) is only applied when asked for.
+    const lensKeep = [LENS_U.uLensAberr.value, LENS_U.uLensBlur.value];
+    if (!this.lensOn) { LENS_U.uLensAberr.value = 0; LENS_U.uLensBlur.value = 0; }
+    a.stage.render(cam);
+    LENS_U.uLensAberr.value = lensKeep[0]; LENS_U.uLensBlur.value = lensKeep[1];
     if (this.focusOn) { const src = a.stage.renderer.domElement, c = this.fxGl; if (c.width !== src.width || c.height !== src.height) { c.width = src.width; c.height = src.height; } const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(src, 0, 0); }
     { const Wp = a.stage.width, Hp = a.stage.height, px = { x: ((this.planetBase.x + this.x) / (2 * hw) + .5) * Wp, y: (.5 - (this.planetBase.y + this.y) / (2 * hh)) * Hp, r: this.planetR / (2 * hw) * Wp }, o = this.planetPx;
       if (!o || Math.abs(o.x - px.x) > 1.5 || Math.abs(o.y - px.y) > 1.5 || Math.abs(o.r - px.r) > 1.5) { this.planetPx = px; if (this.shadow > 0) this.paintBackground(); } }
