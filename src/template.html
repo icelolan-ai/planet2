@@ -1292,9 +1292,22 @@ html,body{touch-action:pan-x pan-y}
 #studio .st-sub .st-tray-lock,#studio .st-sub .st-tray-snap{position:static!important;width:52px;height:40px;min-width:0;padding:0 10px;border-radius:13px;display:inline-flex!important;align-items:center;justify-content:center;gap:6px;font:600 10px var(--f-cond);letter-spacing:.06em;text-transform:uppercase}
 #studio .st-sub .st-tray-snap{width:auto;min-width:70px}
 #studio .st-chip.st-wide{width:100%;margin-top:6px}
-@media(max-width:480px){body #studio .st-dock:not(.is-v) .st-label{display:none!important}body #studio .st-dock:not(.is-v) .is-sel .st-label,body #studio .st-dock:not(.is-v) .is-sel>.st-label{display:inline!important}body #studio .st-dock>.st-btn:not(.st-dock-fold),body #studio .st-group>.st-btn{min-width:0!important;overflow:hidden}body #studio .st-dock select{flex:0 0 58px!important;max-width:58px!important}}
-@media(max-width:480px){body #studio .st-dock>[data-studio-tune]:not(.is-sel){flex:1 1 0!important;min-width:0!important;max-width:44px!important;width:auto!important;padding:0 2px!important}body #studio .st-dock>.st-btn:not(.st-dock-fold):not(.is-sel),body #studio .st-dock>.st-group:not(:has(.is-sel))>.st-btn{max-width:44px}}
 .pc-sw{display:flex;flex-wrap:wrap;gap:8px}.pc-sw button{width:34px;height:34px;border-radius:50%;border:2px solid #ffffff55;background:var(--c);padding:0;cursor:pointer;box-shadow:0 2px 8px #0006}
+/* Phone dock: five buttons + More */
+#studio .st-more{display:none}
+@media(max-width:600px){
+  #studio .st-more{display:flex}
+  #studio .st-more>.st-sub{max-height:min(64vh,520px);overflow-y:auto}
+  #studio .st-more .st-group{display:block;position:static;width:100%;flex:none}
+  #studio .st-more .st-group>.st-btn{display:none}
+  #studio .st-more .st-group>.st-sub{position:static;transform:none;display:flex!important;width:auto;max-width:none;max-height:none;overflow:visible;padding:6px 0;border:0;box-shadow:none;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;margin:0 0 6px}
+  #studio .st-more .st-group[data-grp=view]>.st-sub::before{content:"View";flex:1 1 100%;font:600 10px var(--f-cond);letter-spacing:.16em;text-transform:uppercase;color:#d9ccff}
+  #studio .st-more>.st-sub>.st-btn[data-studio-reset-all]{width:100%;height:46px;flex-direction:row;gap:8px;margin-top:4px}
+  body #studio .st-dock:not(.is-v) .st-label{display:inline!important;font-size:8.5px!important;letter-spacing:.04em!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  body #studio .st-dock>.st-btn:not(.st-dock-fold),body #studio .st-group>.st-btn,body #studio .st-dock>[data-studio-tune]:not(.is-sel){flex:1 1 0!important;min-width:0!important;max-width:none!important;width:auto!important;padding:0 2px!important;height:54px!important}
+  body #studio .st-dock .st-group{flex:1 1 0!important;min-width:0}
+  body #studio .st-dock select{flex:0 0 62px!important;max-width:62px!important}
+}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -7678,7 +7691,7 @@ class CoreStudio {
           <label class="st-fxamt"><span>Strength</span><b data-fxamt-o></b><input type="range" min="0" max="20" step="1" data-fxamt></label>
           <button type="button" class="st-btn" data-studio-fx aria-pressed="false" aria-label="Colour effect on Cerebra">${I('<circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/>')}<span class="st-label">Effect</span></button></div>
           <div class="st-netbox"><p class="st-sub-t">Network backdrop</p>
-          <div class="net-host">${NET.html()}</div>
+          <div class="net-host">${NET.html()}</div></div>
         </div></div>
         <div class="st-group" data-grp="view"><button type="button" class="st-btn" data-grp-btn aria-expanded="false" aria-label="View menu"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="st-label">View</span><i class="st-caret" aria-hidden="true"></i></button><div class="st-sub" hidden>
         <button type="button" class="st-btn" data-studio-show aria-pressed="true" aria-label="Hide subject">${I('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/>')}<span class="st-label" data-show-label>Subject</span></button>
@@ -7702,6 +7715,7 @@ class CoreStudio {
             <label class="st-fxamt"><span>Blur</span><b data-ui-o="glb"></b><input type="range" min="0" max="48" step="1" data-ui="glb"></label></div>
           <div class="st-setbox"><p class="st-sub-t">UI theme</p><div class="st-chips"><button type="button" class="st-chip" data-uitheme="violet">Violet</button><button type="button" class="st-chip" data-uitheme="ocean">Ocean</button><button type="button" class="st-chip" data-uitheme="sunset">Sunset</button><button type="button" class="st-chip" data-uitheme="mint">Mint</button><button type="button" class="st-chip" data-uitheme="mono">Mono</button></div></div>
         </div></div>
+        <div class="st-group st-more" data-grp="more"><button type="button" class="st-btn" data-grp-btn aria-expanded="false" aria-label="More menu"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span class="st-label">More</span><i class="st-caret" aria-hidden="true"></i></button><div class="st-sub st-sub-wide" hidden></div></div>
         <button type="button" class="st-btn" data-studio-reset-all aria-label="Reset everything">${I('<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/>')}<span class="st-label">Reset</span></button></div>
       <aside id="studio-tools" class="studio-panel st-glass" data-tray="panel" aria-label="Studio settings" hidden><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-panel-fold aria-expanded="true"><h2>Cerebra, in focus.</h2><span class="st-chev" aria-hidden="true"></span></button>
       <h3>Poster presets</h3><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-preset="ember" style="--p1:#0c1625;--p2:#d26448">Ember dossier</button><button type="button" class="studio-preset" data-studio-preset="monolith" style="--p1:#e0e4e3;--p2:#666e72">Monolith</button><button type="button" class="studio-preset" data-studio-preset="blueprint" style="--p1:#f4f5f3;--p2:#becbd2">Orbital grid</button><button type="button" class="studio-preset" data-studio-preset="bio" style="--p1:#1a0b3a;--p2:#7b2fa8">Biocomputer</button><button type="button" class="studio-preset" data-studio-preset="mineral" style="--p1:#0b0c0e;--p2:#a4aab0">Mineral</button><button type="button" class="studio-preset" data-studio-preset="infinity" style="--p1:#05090b;--p2:#72b4b4">Infinity noir</button></div><p class="studio-note">Tap any poster text to edit it, drag to move it. Add shapes from the left to keep an area sharp and blur the rest.</p>
@@ -7764,7 +7778,20 @@ class CoreStudio {
       applyUI();
     }
     this.dockGroups = [...this.el.querySelectorAll('.st-group')];
-    const closeGrp = () => this.dockGroups.forEach(g => { g.querySelector('.st-sub').hidden = true; g.querySelector('[data-grp-btn]').setAttribute('aria-expanded', 'false'); g.classList.remove('is-open'); });
+    const closeGrp = () => this.dockGroups.forEach(g => { if (g.parentElement && g.parentElement.closest('.st-more')) return; g.querySelector('.st-sub').hidden = true; g.querySelector('[data-grp-btn]').setAttribute('aria-expanded', 'false'); g.classList.remove('is-open'); });
+    // Phones: View, Settings and Reset fold into one "More" menu so the bar keeps five easy targets.
+    {
+      const more = this.el.querySelector('[data-grp=more]'), moreSub = more.querySelector('.st-sub'), dockEl2 = this.el.querySelector('.st-dock');
+      const parts = ['view', 'settings'].map(n => this.el.querySelector(`[data-grp=${n}]`)).concat([this.el.querySelector('[data-studio-reset-all]')]);
+      const marks = parts.map(el => { const m = document.createComment('slot'); el.before(m); return m; });
+      const mq = matchMedia('(max-width: 600px)');
+      const lay = () => {
+        if (mq.matches) parts.forEach(el => { moreSub.append(el); if (el.classList.contains('st-group')) el.querySelector('.st-sub').hidden = false; });
+        else parts.forEach((el, i) => { marks[i].after(el); if (el.classList.contains('st-group')) el.querySelector('.st-sub').hidden = true; });
+        dockEl2.classList.toggle('is-phone', mq.matches);
+      };
+      mq.addEventListener('change', lay); lay();
+    }
     this.closeGrp = closeGrp;
     this.dockGroups.forEach(g => {
       const btn = g.querySelector('[data-grp-btn]'), sub = g.querySelector('.st-sub');
