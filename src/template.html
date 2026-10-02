@@ -1210,7 +1210,7 @@ body .dial-body.one>*>span:first-child{font-size:11px;margin-top:6px}
 .tune-tabs,.tune-seg{background:#0000003a!important;border:1px solid #ffffff1a}
 body .dial-body>.tune-row,body .dial-body>.studio-control{background:none;border:0;box-shadow:none}
 /* ===== Dock groups: 5 main buttons, extras tucked into popover menus ===== */
-body #studio .st-dock{overflow:visible!important;-webkit-mask:none!important;mask:none!important;touch-action:auto}
+body #studio .st-dock{overflow:visible!important;-webkit-mask:none!important;mask:none!important;touch-action:manipulation}
 #studio .st-group{position:relative;display:flex;flex:0 0 auto}
 #studio .st-group>.st-btn .st-caret{width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-135deg) translate(-1px,-1px);opacity:.7;transition:transform .2s;margin-left:2px}
 #studio .st-group.is-open>.st-btn{background:var(--cyg)!important;color:#fff!important}
@@ -1259,7 +1259,8 @@ body #studio .st-dock{overflow:visible!important;-webkit-mask:none!important;mas
 #studio .st-assist-sl input{grid-column:1/-1;width:100%}
 @media(max-width:600px){#studio .st-assist-t{display:none}#studio .st-assist-r2{gap:8px}#studio .st-assist-sl{font-size:10px}#studio .st-assist-r1{justify-content:center}}
 /* No accidental page zoom on phones/tablets: no double-tap zoom, no focus zoom on fields */
-html,body{touch-action:manipulation}
+html,body{touch-action:pan-x pan-y}
+*{-webkit-text-size-adjust:100%}
 @media(pointer:coarse){#studio input[type=text],#studio input[type=number],#studio select,#studio textarea,.tune select,.tune input[type=text],.st-text[contenteditable]{font-size:16px!important}}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
