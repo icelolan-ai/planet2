@@ -1234,6 +1234,19 @@ body #studio .st-dock{overflow:visible!important;-webkit-mask:none!important;mas
   #studio .st-sub{max-width:min(94vw,340px)}
   #studio .st-sub .st-btn{min-width:60px;height:56px}
 }
+/* Drawing assist bar */
+#studio .st-assist{position:absolute;left:50%;top:calc(max(var(--st-gap),env(safe-area-inset-top)) + 8px);transform:translateX(-50%);display:none;align-items:center;gap:10px;padding:8px 10px 8px 16px;border-radius:22px;pointer-events:auto;z-index:8;max-width:calc(100% - 24px)}
+#studio.is-drawing .st-assist{display:flex}
+#studio .st-assist-t{font:600 10px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:#d9ccff;white-space:nowrap}
+#studio .st-assist-seg{display:flex;padding:3px;gap:2px;border-radius:14px;background:#0000003a;border:1px solid #ffffff1a}
+#studio .st-assist-seg button,#studio .st-assist-sw,#studio .st-assist-x{min-height:36px;padding:0 12px;border:0;border-radius:11px;background:transparent;color:#cfd6e2;font:600 11px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+#studio .st-assist-seg button.is-on{background:var(--cyg);color:#fff;box-shadow:0 0 14px #8b5cf666}
+#studio .st-assist-sw{display:flex;align-items:center;gap:8px;background:#0000003a;border:1px solid #ffffff1a}
+#studio .st-assist-sw i{width:28px;height:16px;border-radius:9px;background:#ffffff26;position:relative;transition:background .2s}
+#studio .st-assist-sw i::after{content:"";position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:transform .2s}
+#studio .st-assist-sw.is-on i{background:var(--cyg)}#studio .st-assist-sw.is-on i::after{transform:translateX(12px)}
+#studio .st-assist-x{background:var(--cyg);color:#fff}
+@media(max-width:600px){#studio .st-assist{flex-wrap:wrap;justify-content:center;gap:6px;padding:8px 10px}#studio .st-assist-t{display:none}}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -8111,8 +8124,18 @@ class CoreStudio {
       try { localStorage.setItem('cerebra-studio-pencil', JSON.stringify(this.drawSet)); } catch (e) {}
     }));
     sync();
+    // Visible drawing-assist bar (Procreate style): guide type + snap toggle, shown while the pencil is active.
+    const bar = document.createElement('div'); bar.className = 'st-assist st-glass';
+    bar.innerHTML = '<span class="st-assist-t">Drawing assist</span><div class="st-assist-seg" role="group" aria-label="Guide"><button type="button" data-ag="none">Off</button><button type="button" data-ag="grid">Grid</button><button type="button" data-ag="iso">Iso</button></div><button type="button" class="st-assist-sw" data-asnap role="switch" aria-checked="false"><i></i><span>Snap</span></button><button type="button" class="st-assist-x" data-adone aria-label="Done drawing">Done</button>';
+    this.el.append(bar);
+    const poke = (k, v) => { const el = fly.querySelector(`[data-dset="${k}"]`); if (!el) return; if (el.type === 'checkbox') el.checked = v; else el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
+    const syncBar = () => { bar.querySelectorAll('[data-ag]').forEach(b => b.classList.toggle('is-on', b.dataset.ag === this.drawSet.guide)); const sw = bar.querySelector('[data-asnap]'); sw.setAttribute('aria-checked', String(!!this.drawSet.assist)); sw.classList.toggle('is-on', !!this.drawSet.assist); };
+    bar.querySelectorAll('[data-ag]').forEach(b => b.addEventListener('click', () => { poke('guide', b.dataset.ag); if (b.dataset.ag !== 'none' && !this.drawSet.assist) poke('assist', true); }));
+    bar.querySelector('[data-asnap]').addEventListener('click', () => poke('assist', !this.drawSet.assist));
+    bar.querySelector('[data-adone]').addEventListener('click', () => { this.setDrawing(false); this.closeFly(); });
+    fly.addEventListener('input', syncBar); syncBar(); this.syncAssistBar = syncBar;
     const btn = this.el.querySelector('[data-studio-draw]');
-    this.setDrawing = on => { this.drawing = on; pad.hidden = !on; this.el.classList.toggle('is-drawing', on); btn.setAttribute('aria-pressed', String(on)); if (on) { this.select(null); this.paintGuides(); } };
+    this.setDrawing = on => { this.drawing = on; pad.hidden = !on; this.el.classList.toggle('is-drawing', on); btn.setAttribute('aria-pressed', String(on)); if (on) { this.select(null); this.paintGuides(); this.syncAssistBar && this.syncAssistBar(); } };
     btn.addEventListener('click', () => { if (this.drawing) { this.setDrawing(false); this.closeFly(); } else { this.setDrawing(true); sync(); } });
     this.el.querySelector('[data-draw-done]').onclick = () => { this.setDrawing(false); this.closeFly(); };
     let cur = null;
@@ -8529,9 +8552,9 @@ class CoreStudio {
     }
     if(this.light>0){const cx=w*(.5+this.lightX*.035),cy=h*.32,r=Math.max(w,h)*.6;const glow=g.createRadialGradient(cx,cy,0,cx,cy,r);glow.addColorStop(0,`rgba(255,255,255,${Math.max(0,this.light-0.35)*.13})`);glow.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=glow;g.fillRect(0,0,w,h);}
     if(this.shadow>0&&this.showSubject!==false){
-      const P=this.planetPx||{x:innerWidth/2,y:innerHeight/2,r:Math.min(innerWidth,innerHeight)*.25},k=w/innerWidth,x=(P.x-this.lightX*P.r*.06)*k,y=(P.y+P.r*1.18)*k;
+      const P=this.planetPx||{xf:.5,yf:.5,rf:Math.min(innerWidth,innerHeight)*.25/innerWidth},R=P.rf*w,x=(P.xf-this.lightX*P.rf*.06)*w,y=P.yf*h+R*1.18;
       g.save();g.translate(x,y);g.scale(1,.22+this.shadowSoft*.15);
-      const r=P.r*k*(.85+this.shadowSoft*.5),shade=g.createRadialGradient(0,0,0,0,0,r);
+      const r=R*(.85+this.shadowSoft*.5),shade=g.createRadialGradient(0,0,0,0,0,r);
       shade.addColorStop(0,`rgba(0,0,0,${this.shadow*.65})`);shade.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=shade;g.beginPath();g.arc(0,0,r,0,Math.PI*2);g.fill();g.restore();
     }
   }
@@ -8608,8 +8631,8 @@ class CoreStudio {
     a.stage.render(cam);
     LENS_U.uLensAberr.value = lensKeep[0]; LENS_U.uLensBlur.value = lensKeep[1];
     if (this.focusOn) { const src = a.stage.renderer.domElement, c = this.fxGl; if (c.width !== src.width || c.height !== src.height) { c.width = src.width; c.height = src.height; } const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(src, 0, 0); }
-    { const Wp = a.stage.width, Hp = a.stage.height, px = { x: ((this.planetBase.x + this.x) / (2 * hw) + .5) * Wp, y: (.5 - (this.planetBase.y + this.y) / (2 * hh)) * Hp, r: this.planetR / (2 * hw) * Wp }, o = this.planetPx;
-      if (!o || Math.abs(o.x - px.x) > 1.5 || Math.abs(o.y - px.y) > 1.5 || Math.abs(o.r - px.r) > 1.5) { this.planetPx = px; if (this.shadow > 0) this.paintBackground(); } }
+    { const Wp = a.stage.width, Hp = a.stage.height, px = { xf: (this.planetBase.x + this.x) / (2 * hw) + .5 + (this.shift ? this.shift.x : 0) / innerWidth, yf: .5 - (this.planetBase.y + this.y) / (2 * hh) + (this.shift ? this.shift.y : 0) / innerHeight, rf: this.planetR / (2 * hw) }, o = this.planetPx;
+      if (!o || Math.abs(o.xf - px.xf) * Wp > 1.5 || Math.abs(o.yf - px.yf) * Hp > 1.5 || Math.abs(o.rf - px.rf) * Wp > 1.5) { this.planetPx = px; if (this.shadow > 0) this.paintBackground(); } }
     this.paintVfx();
     if (a.cap) a.captureStep();
     return true;
