@@ -7726,6 +7726,10 @@ class CoreStudio {
         <label class="st-fly-row"><span>Outside blur</span><output data-fo="blur"></output><input type="range" min="0" max="30" data-fset="blur"></label>
         <label class="st-fly-row"><span>Darken outside</span><output data-fo="dim"></output><input type="range" min="0" max="0.7" step="0.05" data-fset="dim"></label>
         <label class="st-fly-row st-fly-check"><span>Show guide lines</span><input type="checkbox" data-fset="guides"></label>
+        <p class="st-fly-sub">Where to blur</p>
+        <label class="st-fly-row"><span>Blur area</span><select data-fset-sel="focusInv"><option value="0">Outside the shape</option><option value="1">Inside the shape</option></select></label>
+        <label class="st-fly-row st-fly-check"><span>Also blur text &amp; numbers</span><input type="checkbox" data-fset="focusText"></label>
+        <label class="st-fly-row st-fly-check"><span>Also blur shapes &amp; drawings</span><input type="checkbox" data-fset="focusObj"></label>
         <label class="st-fly-row"><span>Grid</span><select data-studio-gridmode aria-label="Grid"><option value="always">Always</option><option value="focus">Only with a focus shape</option><option value="off">Off</option></select></label></div>
       <div class="st-fly st-glass" data-fly="decor" hidden><b class="st-fly-title">Decor shape</b><p class="st-fly-note">Solid shapes to dress the scene. Pick the colour first, or change it later.</p>
         <div class="st-fly-shapes"><button type="button" class="st-btn" data-studio-decor="tri">${this.icons.tri}Triangle</button><button type="button" class="st-btn" data-studio-decor="rect">${this.icons.rect}Square</button><button type="button" class="st-btn" data-studio-decor="circle">${this.icons.circle}Circle</button></div>
@@ -7932,7 +7936,7 @@ class CoreStudio {
     this.el.querySelectorAll('[data-studio-preset]').forEach(b => b.onclick = () => this.applyPreset(b.dataset.studioPreset));
     this.el.querySelectorAll('[data-studio-add]').forEach(b => b.onclick = () => this.addItem(b.dataset.studioAdd));
     this.el.querySelectorAll('[data-studio-decor]').forEach(b => b.onclick = () => this.addItem(b.dataset.studioDecor, { decor: true, fill: this.decorFill, opacity: this.decorOpacity }));
-    this.dim = 0; this.guides = true; this.decorFill = '#ff3d8a'; this.decorOpacity = .85;
+    this.dim = 0; this.focusInv = 0; this.focusText = false; this.focusObj = false; this.guides = true; this.decorFill = '#ff3d8a'; this.decorOpacity = .85;
     const flys = [...this.el.querySelectorAll('[data-fly]')], fmt = { blur: v => `${v}px`, dim: v => `${Math.round(v * 100)}%`, decorOpacity: v => `${Math.round(v * 100)}%` };
     this.syncStyle = () => { const it = this.sel; if (!it || !it.st) return; const f = this.el.querySelector('[data-fly="style"]');
       f.querySelectorAll('[data-sfor]').forEach(n => { n.hidden = n.dataset.sfor !== (it.decor ? 'decor' : 'focus'); });
@@ -7942,7 +7946,9 @@ class CoreStudio {
       el.addEventListener('input', () => { const it = this.sel; if (!it || !it.st) return; const k = el.dataset.sset; it.st[k] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value; if (it.kind === 'stroke' && it.strokes) it.strokes.forEach(sk => { if (k === 'lineColor') sk.color = it.st.lineColor; if (k === 'lineW') sk.size = it.st.lineW; if (k === 'dash') sk.dash = it.st.dash; }); this.syncStyle(); this.place(it); });
       el.addEventListener('change', () => this.commit());
     });
-    this.syncFly = () => this.el.querySelectorAll('[data-fset]').forEach(el => { const k = el.dataset.fset; if (el.type === 'checkbox') el.checked = this[k]; else el.value = this[k]; const o = el.parentNode.querySelector('output'); if (o) o.textContent = fmt[k](this[k]); });
+    this.el.querySelectorAll('[data-fset-sel]').forEach(el => el.addEventListener('change', () => { this[el.dataset.fsetSel] = +el.value; this.updateFocus(); this.commit(); }));
+    this.syncFly = () => { this.el.querySelectorAll('[data-fset-sel]').forEach(el => { el.value = String(this[el.dataset.fsetSel] || 0); }); this.syncFly0(); };
+    this.syncFly0 = () => this.el.querySelectorAll('[data-fset]').forEach(el => { const k = el.dataset.fset; if (el.type === 'checkbox') el.checked = this[k]; else el.value = this[k]; const o = el.parentNode.querySelector('output'); if (o) o.textContent = fmt[k](this[k]); });
     this.closeFly = () => { flys.forEach(f => { f.hidden = true; }); this.el.querySelectorAll('[data-flyout]').forEach(b => b.setAttribute('aria-expanded', 'false')); };
     this.el.querySelectorAll('[data-flyout]').forEach(b => b.onclick = e => {
       e.stopPropagation(); const f = this.el.querySelector(`[data-fly="${b.dataset.flyout}"]`), open = f.hidden; this.closeFly(); if (!open) return;
@@ -7954,7 +7960,7 @@ class CoreStudio {
     flys.forEach(f => f.querySelectorAll('[data-studio-add],[data-studio-decor]').forEach(b => b.addEventListener('click', () => this.closeFly())));
     this.el.querySelectorAll('[data-fset]').forEach(el => {
       const k = el.dataset.fset;
-      el.addEventListener('input', () => { this[k] = el.type === 'checkbox' ? el.checked : el.type === 'color' ? el.value : +el.value; this.syncFly(); this.el.classList.toggle('hide-guides', !this.guides); if (k === 'blur' || k === 'dim') this.updateFocus(); });
+      el.addEventListener('input', () => { this[k] = el.type === 'checkbox' ? el.checked : el.type === 'color' ? el.value : +el.value; this.syncFly(); this.el.classList.toggle('hide-guides', !this.guides); if (k === 'blur' || k === 'dim' || k === 'focusText' || k === 'focusObj') this.updateFocus(); });
       el.addEventListener('change', () => this.commit());
     });
     document.addEventListener('pointerdown', e => { if (!e.target.closest('.st-fly,[data-flyout]')) this.closeFly(); }, true);
@@ -8313,7 +8319,7 @@ class CoreStudio {
       d.moved = true; if (it.locked) return;
       if (d.resize) { const U = this.U(), W = innerWidth, H = innerHeight; it.w = Math.max(.04, d.ow + (e.clientX - d.x) / U); it.h = Math.max(.04, d.oh + (e.clientY - d.y) / U); it.x = d.ox + (it.w - d.ow) * U / 2 / W; it.y = d.oy + (it.h - d.oh) * U / 2 / H; }
       else { it.x = clamp(d.ox + dx, 0, 1); it.y = clamp(d.oy + dy, 0, 1); }
-      this.place(it); if (kind !== 'text') this.updateFocus();
+      this.place(it); if (kind !== 'text') this.updateFocus(); else if (this.focusText) this.updateItemBlur();
     });
     const end = e => {
       const d = this.itemDrag; if (!d || d.id !== e.pointerId || d.it !== it) return;
@@ -8967,7 +8973,7 @@ class CoreStudio {
     if (!quiet) this.commit();
   }  // Undo/redo: whole-composition snapshots (items, shape blur and the look settings).
   snapshot() {
-    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'grain', 'grainAmt', 'cpts', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides', 'groups', 'gridStyle'];
+    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'grain', 'grainAmt', 'cpts', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides', 'groups', 'gridStyle', 'focusInv', 'focusText', 'focusObj'];
     return JSON.stringify({ s: Object.fromEntries(keys.map(k => [k, this[k]])), layers: this.layers, core: this.coreLayers,
       items: this.items.map(({ el, id, ...rest }) => rest) });
   }
@@ -8999,8 +9005,11 @@ class CoreStudio {
     const shapes = this.items.filter(i => i.kind !== 'text' && i.kind !== 'fx' && !i.decor && !this.isHid(i)), U = this.U(), on = this.active && shapes.length > 0 && (this.blur > 0 || this.dim > 0), W = innerWidth, H = innerHeight, gl = this.app.stage.renderer.domElement;
     if (this.focusOn !== on && this.gridMode === 'focus') { this.focusOn = on; this.paint(this.bg.getContext('2d'), this.bg.width, this.bg.height); }
     this.focusOn = on;
-    gl.style.filter = this.active ? `brightness(${this.light * (on ? 1 - this.dim : 1)})${on ? ` blur(${this.blur}px)` : ''}` : '';
-    this.bg.style.filter = this.vfx.style.filter = on ? `blur(${this.blur}px) brightness(${1 - this.dim})` : '';
+    const inv = !!this.focusInv;
+    gl.style.filter = this.active ? `brightness(${this.light * (on && !inv ? 1 - this.dim : 1)})${on && !inv ? ` blur(${this.blur}px)` : ''}` : '';
+    this.bg.style.filter = this.vfx.style.filter = on && !inv ? `blur(${this.blur}px) brightness(${1 - this.dim})` : '';
+    this.fx.style.filter = on && inv ? `blur(${this.blur}px) brightness(${1 - this.dim})` : '';
+    this.updateItemBlur();
     this.fx.style.display = on ? 'block' : 'none';
     if (!on) return;
     this.fxGl.style.filter = `brightness(${this.light})`;
@@ -9013,6 +9022,22 @@ class CoreStudio {
     }).join('');
     this.fx.style.clipPath = this.fx.style.webkitClipPath = `path('${d}')`;
     this.copySharpBg();
+  }
+  // Text and objects can follow the focus blur: blurred when their centre is outside (or, in invert mode, inside) a focus shape.
+  focusShapes() { return this.items.filter(i => i.kind !== 'text' && i.kind !== 'fx' && !i.decor && !i.ref && !this.isHid(i)); }
+  inFocus(it, shapes) {
+    const W = innerWidth, H = innerHeight, U = this.U();
+    return shapes.some(s => { const a = -(s.rot || 0) * Math.PI / 180, dx = (it.x - s.x) * W, dy = (it.y - s.y) * H, rx = dx * Math.cos(a) - dy * Math.sin(a), ry = dx * Math.sin(a) + dy * Math.cos(a), hw = s.w * U / 2, hh = s.h * U / 2;
+      if (s.kind === 'circle') return (rx / hw) ** 2 + (ry / hh) ** 2 <= 1; if (s.kind === 'tri') return ry >= -hh && ry <= hh && Math.abs(rx) <= hw * (ry + hh) / (2 * hh); return Math.abs(rx) <= hw && Math.abs(ry) <= hh; });
+  }
+  itemBlurPx(it, shapes) {
+    if (!this.active || !shapes.length || !(this.blur > 0)) return 0;
+    if (it.kind === 'text' ? !this.focusText : (it.kind === 'fx' || !it.decor && it.kind !== 'stroke' || !this.focusObj)) return 0;
+    const inside = this.inFocus(it, shapes); return (this.focusInv ? inside : !inside) ? this.blur : 0;
+  }
+  updateItemBlur() {
+    const shapes = this.focusShapes();
+    this.items.forEach(i => { if (!i.el) return; const b = this.itemBlurPx(i, shapes); i.el.style.filter = b ? `blur(${b}px)` : ''; });
   }
   copySharpBg() {
     const c = this.fxBg; if (c.width !== this.bg.width || c.height !== this.bg.height) { c.width = this.bg.width; c.height = this.bg.height; }
@@ -9031,26 +9056,31 @@ class CoreStudio {
       if(shapes.length&&(this.blur>0||this.dim>0)){
         const blurred=document.createElement('canvas');blurred.width=width;blurred.height=height;
         const b=blurred.getContext('2d');b.drawImage(softBlur(out,this.blur*Math.max(sx,sy)),0,0);if(this.dim>0){b.fillStyle=`rgba(0,0,0,${this.dim})`;b.fillRect(0,0,width,height);}
-        b.globalCompositeOperation='destination-out';b.beginPath();
+        b.globalCompositeOperation=this.focusInv?'destination-in':'destination-out';b.beginPath();
         shapes.forEach(s=>{const x=s.x*width,y=s.y*height,rx=s.w*U*sx/2,ry=s.h*U*sy/2,a=(s.rot||0)*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a),P=(u,v)=>[x+u*ca-v*sa,y+u*sa+v*ca];b.moveTo(x+rx,y);
           if(s.kind==='circle')b.ellipse(x,y,rx,ry,a,0,Math.PI*2);
           else{const pts=s.kind==='tri'?[[0,-ry],[rx,ry],[-rx,ry]]:[[-rx,-ry],[rx,-ry],[rx,ry],[-rx,ry]];pts.forEach(([u,v],i)=>{const q=P(u,v);i?b.lineTo(q[0],q[1]):b.moveTo(q[0],q[1]);});b.closePath();}});
-        b.fill();b.globalCompositeOperation='source-over';g.drawImage(blurred,0,0);
+        b.fill();b.globalCompositeOperation='source-over';if(this.focusInv){g.save();g.drawImage(blurred,0,0);g.restore();}else g.drawImage(blurred,0,0);
       }
       if(this.fxLive()&&this.effect!=='off'&&this.effectAmount>0){g.save();g.globalAlpha=(this.fxItem('colour')||{alpha:1}).alpha;g.drawImage(this.vfx,0,0,width,height);g.restore();}
-      const drawText=(el,rot)=>{
+      const drawText=(el,rot,gx)=>{
         const style=getComputedStyle(el);let r=el.getBoundingClientRect();if(!r.width||!r.height)return;
-        g.save();if(rot){const cx=r.left+r.width/2,cy=r.top+r.height/2,cw=el.offsetWidth,ch=el.offsetHeight;r={left:cx-cw/2,top:cy-ch/2,width:cw,height:ch,right:cx+cw/2};g.translate(cx*sx,cy*sy);g.rotate(rot*Math.PI/180);g.translate(-cx*sx,-cy*sy);}g.fillStyle=style.color;g.globalAlpha=+style.opacity||1;g.font=`${style.fontWeight} ${parseFloat(style.fontSize)*sy}px ${style.fontFamily}`;
-        if('letterSpacing' in g)g.letterSpacing=`${(parseFloat(style.letterSpacing)||0)*sx}px`;
-        g.textBaseline='top';const upper=style.textTransform==='uppercase',pad=parseFloat(style.paddingLeft)||0,lines=el.innerText.split(/\n/);let yy=(r.top+(parseFloat(style.paddingTop)||0))*sy;
-        for(const raw of lines){const line=upper?raw.toUpperCase():raw;g.textAlign=style.textAlign==='right'?'right':style.textAlign==='center'?'center':'left';
-          const xx=g.textAlign==='right'?(r.right-pad)*sx:g.textAlign==='center'?(r.left+r.width/2)*sx:(r.left+pad)*sx;g.fillText(line,xx,yy);yy+=(parseFloat(style.lineHeight)||parseFloat(style.fontSize)*1.05)*sy;}
-        g.restore();
+        gx.save();if(rot){const cx=r.left+r.width/2,cy=r.top+r.height/2,cw=el.offsetWidth,ch=el.offsetHeight;r={left:cx-cw/2,top:cy-ch/2,width:cw,height:ch,right:cx+cw/2};gx.translate(cx*sx,cy*sy);gx.rotate(rot*Math.PI/180);gx.translate(-cx*sx,-cy*sy);}gx.fillStyle=style.color;gx.globalAlpha=+style.opacity||1;gx.font=`${style.fontWeight} ${parseFloat(style.fontSize)*sy}px ${style.fontFamily}`;
+        if('letterSpacing' in gx)gx.letterSpacing=`${(parseFloat(style.letterSpacing)||0)*sx}px`;
+        gx.textBaseline='top';const upper=style.textTransform==='uppercase',pad=parseFloat(style.paddingLeft)||0,lines=el.innerText.split(/\n/);let yy=(r.top+(parseFloat(style.paddingTop)||0))*sy;
+        for(const raw of lines){const line=upper?raw.toUpperCase():raw;gx.textAlign=style.textAlign==='right'?'right':style.textAlign==='center'?'center':'left';
+          const xx=gx.textAlign==='right'?(r.right-pad)*sx:gx.textAlign==='center'?(r.left+r.width/2)*sx:(r.left+pad)*sx;gx.fillText(line,xx,yy);yy+=(parseFloat(style.lineHeight)||parseFloat(style.fontSize)*1.05)*sy;}
+        gx.restore();
       };
       this.items.filter(i=>!this.isHid(i)).forEach(i=>{
         if(i.kind==='fx'||i.ref)return;
-        if(i.kind==='text'){g.save();g.globalCompositeOperation=this.blendOp(i);drawText(i.el,i.rot);g.restore();return;}
-        const U2=this.U()*sx,ww=i.w*U2,hh=i.h*U2*(sy/sx);this.drawShapeCanvas(g,i,i.x*width-ww/2,i.y*height-hh/2,ww,hh,sx);});
+        const bp=this.itemBlurPx(i,shapes)*Math.max(sx,sy);
+        let tg=g,tc=null;if(bp>0){tc=document.createElement('canvas');tc.width=width;tc.height=height;tg=tc.getContext('2d');}
+        const g0=g;
+        if(i.kind==='text'){tg.save();tg.globalCompositeOperation=bp>0?'source-over':this.blendOp(i);drawText(i.el,i.rot,tg);tg.restore();}
+        else{const U2=this.U()*sx,ww=i.w*U2,hh=i.h*U2*(sy/sx);this.drawShapeCanvas(bp>0?tg:g,i,i.x*width-ww/2,i.y*height-hh/2,ww,hh,sx);}
+        if(bp>0){g0.save();g0.globalCompositeOperation=this.blendOp(i);g0.drawImage(softBlur(tc,bp),0,0);g0.restore();}
+      });
       // Crop to the poster: the band under the side menus is not part of the composition.
       let fin=out;
       if(innerWidth>900){const c0=this.compCentre(),sh=this.shift||{x:0,y:0},cx=(c0.x+sh.x)*sx,half=Math.min(cx,width-cx);
