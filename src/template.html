@@ -1041,7 +1041,8 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 .st-draw-pad[hidden]{display:none}
 .st-guides,.st-ink{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .st-ink path{fill:none;stroke-linecap:round;stroke-linejoin:round}
-#studio.is-drawing .st-item{pointer-events:none}
+#studio.is-drawing .st-item,#studio.tool-hand .st-item{pointer-events:none}
+body.studio-on:has(#studio.tool-hand) #gl{cursor:grab!important}body.studio-on:has(#studio.tool-hand) #gl:active{cursor:grabbing!important}
 #studio [data-studio-draw][aria-pressed=true]{background:linear-gradient(150deg,#ff6b78,#e8364a);color:#fff}
 .st-cpts{position:absolute;inset:0;z-index:0;pointer-events:none}
 .st-cpts[hidden],.st-cpts.is-off{display:none}
@@ -1050,6 +1051,8 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 .st-cpt-row input[type=color]{width:44px!important;height:34px!important}
 .st-cpt-row span{flex:1;font:13px var(--f-sans);color:#cfd6e2}
 .st-cpts-ed[hidden]{display:none}
+.studio-section[open]>summary{color:#ff6571;box-shadow:inset 3px 0 0 #ff4655;padding-left:12px;margin-left:-12px;transition:color .2s,padding .2s}
+.studio-section[open]{background:linear-gradient(90deg,#ff46550d,transparent 70%)}
 /* Movable trays */
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
 .st-edge-hint[hidden]{display:none}
@@ -7192,7 +7195,7 @@ class CoreStudio {
     this.el.innerHTML = `<div class="studio-stage" data-studio-stage></div>
       <button type="button" class="st-btn st-back st-glass" data-studio-exit aria-label="Exit studio">${I('<path d="M19 12H5M11 6l-6 6 6 6"/>')}</button>
       <button type="button" class="st-btn st-tray-lock st-glass" data-tray-lock aria-pressed="true" aria-label="Unlock menus to move them"></button><button type="button" class="st-btn st-tray-snap st-glass" data-tray-snap aria-pressed="true" aria-label="Snap menus to edges">${I('<path d="M4 4v16M4 12h9M10 8l4 4-4 4"/>')}<span>Snap</span></button>
-      <nav class="st-rail st-glass" data-tray="add" aria-label="Add to poster"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><span class="st-rail-label">Add</span>
+      <nav class="st-rail st-glass" data-tray="add" aria-label="Add to poster"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><span class="st-rail-label">Tools</span><button type="button" class="st-btn" data-studio-tool="move" aria-pressed="true" title="Move (V)">${I('<path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>')}Move</button><button type="button" class="st-btn" data-studio-tool="hand" aria-pressed="false" title="Hand: rotate the subject (H)">${I('<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12M11 11.5v-7a1.5 1.5 0 0 1 3 0v7M14 11.5v-5a1.5 1.5 0 0 1 3 0v7c0 4-2.5 7-6.5 7-3 0-4.5-1.6-6-4.4L3 13.4a1.5 1.5 0 0 1 2.6-1.5L8 15"/>')}Hand</button><span class="st-rail-sep"></span><span class="st-rail-label">Add</span>
         <button type="button" class="st-btn" data-studio-add="text">${this.icons.text}Text</button><button type="button" class="st-btn st-fly-btn" data-flyout="focus" aria-expanded="false">${this.icons.tri}Focus<i class="st-caret"></i></button><button type="button" class="st-btn st-fly-btn" data-flyout="draw" data-studio-draw aria-pressed="false" aria-expanded="false">${this.icons.stroke}Draw<i class="st-caret"></i></button></nav>
       <nav class="st-rail st-rail-decor st-glass" data-tray="decor" aria-label="Add decoration"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><span class="st-rail-label">Decor</span>
         <button type="button" class="st-btn st-fly-btn" data-flyout="decor" aria-expanded="false">${this.icons.circle}Shapes<i class="st-caret"></i></button><span class="st-rail-sep"></span>
@@ -7245,7 +7248,7 @@ class CoreStudio {
         <select data-studio-subject aria-label="Object in studio"><option value="-1">Cerebra</option>${WORLDS.map((d,i) => `<option value="${i}">${d.name}</option>`).join('')}</select>
         <button type="button" class="st-btn is-primary" data-studio-tune>${I('<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>')}<span class="st-label" data-tune-label>Tune core</span></button>
         <span class="st-sep"></span>
-        <button type="button" class="st-btn" data-studio-fx aria-pressed="true" aria-label="Colour effect on Cerebra">${I('<circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/>')}<span class="st-label">Effect</span></button>
+        <button type="button" class="st-btn" data-studio-fx aria-pressed="false" aria-label="Colour effect on Cerebra">${I('<circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/>')}<span class="st-label">Effect</span></button>
         <button type="button" class="st-btn" data-studio-show aria-pressed="true" aria-label="Hide subject">${I('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/>')}<span class="st-label" data-show-label>Subject</span></button>
         <button type="button" class="st-btn" data-studio-freeze aria-pressed="false" aria-label="Freeze motion">${I('<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>')}<span class="st-label" data-freeze-label>Stop</span></button>
         <button type="button" class="st-btn" data-studio-home aria-label="Recenter">${I('<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>')}<span class="st-label">Recenter</span></button>
@@ -7340,6 +7343,12 @@ class CoreStudio {
     });
     document.addEventListener('pointerdown', e => { if (!e.target.closest('.st-fly,[data-flyout]')) this.closeFly(); }, true);
     this.initDraw();
+    this.tool = 'move';
+    this.setTool = tool => { if (tool !== 'draw' && this.drawing) this.setDrawing(false); this.tool = tool === 'hand' ? 'hand' : 'move'; this.el.classList.toggle('tool-hand', this.tool === 'hand');
+      this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioTool === this.tool && !this.drawing))); if (this.tool === 'hand') this.select(null); };
+    this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.onclick = () => this.setTool(b.dataset.studioTool));
+    this.el.querySelector('[data-studio-draw]').addEventListener('click', () => { if (this.drawing) { this.tool = 'move'; this.el.classList.remove('tool-hand'); } this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(!this.drawing && b.dataset.studioTool === this.tool))); });
+    addEventListener('keydown', e => { if (!this.active || e.target.closest('input,textarea,select,[contenteditable=true]') || e.ctrlKey || e.metaKey) return; const k = e.key.toLowerCase(); if (k === 'v') this.setTool('move'); else if (k === 'h') this.setTool('hand'); });
     this.el.querySelector('[data-flyout="style"]').addEventListener('pointerdown', e => e.stopPropagation());
     this.el.querySelector('[data-studio-effect]').onchange = e => { this.effect = e.target.value; this.fxOn = this.effect !== 'off'; this.el.querySelector('[data-studio-fx]').setAttribute('aria-pressed', String(this.fxOn)); this.lastVfx = 0; this.paintVfx(); };
     this.el.querySelector('[data-studio-grid]').onchange = e => { this.grid = e.target.checked; this.gridMode = this.grid ? 'always' : 'off'; this.el.querySelector('[data-studio-gridmode]').value = this.gridMode; this.paintBackground(); };
@@ -7378,8 +7387,8 @@ class CoreStudio {
       this.items.slice().forEach(it => this.removeItem(it, true));
       Object.keys(this.layers).forEach(k => { this.layers[k] = k !== 'dust'; }); this.coreLayers.fill(true);
       this.blur = 8; this.dim = 0; this.guides = true; this.el.classList.remove('hide-guides');
-      this.frozen = false; this.showSubject = true; this.fxOn = true;
-      [['[data-studio-freeze]', 'false'], ['[data-studio-show]', 'true'], ['[data-studio-fx]', 'true']].forEach(([s, v]) => this.el.querySelector(s).setAttribute('aria-pressed', v));
+      this.frozen = false; this.showSubject = true; this.fxOn = false;
+      [['[data-studio-freeze]', 'false'], ['[data-studio-show]', 'true'], ['[data-studio-fx]', 'false']].forEach(([s, v]) => this.el.querySelector(s).setAttribute('aria-pressed', v));
       this.el.querySelector('[data-freeze-label]').textContent = 'Stop';
       this.el.querySelectorAll('[data-studio-layer],[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioLayer !== 'dust')));
       this.home(); this.applyPreset('ember'); this.paintVfx();
@@ -7400,10 +7409,10 @@ class CoreStudio {
     this.el.querySelector('[data-studio-freeze]').onclick = e => { this.frozen = !this.frozen; const b = e.currentTarget; b.setAttribute('aria-pressed', String(this.frozen)); b.setAttribute('aria-label', this.frozen ? 'Resume motion' : 'Freeze motion'); b.querySelector('[data-freeze-label]').textContent = this.frozen ? 'Play' : 'Stop'; };
     this.showSubject = true;
     // The colour split ghost suits the glassy core only; worlds never get it.
-    this.fxOn = true; this.fxLive = () => this.fxOn && this.subject < 0;
+    this.fxOn = false; this.fxLive = () => this.fxOn && this.subject < 0;
     this.fxSection = this.el.querySelector('[data-studio-effect]').closest('details'); this.coreSection = this.el.querySelector('[data-studio-core]').closest('details'); this.partsSection = this.el.querySelector('[data-studio-layer="shells"]').closest('details'); this.worldSection = this.el.querySelector('[data-studio-layer="atmo"]').closest('details'); this.worldSection.hidden = true;
     this.el.querySelector('[data-studio-reset]').onclick = () => { Object.keys(this.layers).forEach(k => { this.layers[k] = k !== 'dust'; }); this.coreLayers.fill(true); this.blur = 8; this.applyPreset(this.preset, false); this.el.querySelectorAll('[data-studio-layer],[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioLayer !== 'dust'))); this.updateFocus(); this.commit(); };
-    this.el.querySelector('[data-studio-fx]').onclick = e => { this.fxOn = !this.fxOn; e.currentTarget.setAttribute('aria-pressed', String(this.fxOn)); this.paintVfx(); };
+    this.el.querySelector('[data-studio-fx]').onclick = e => { this.fxOn = !this.fxOn; if (this.fxOn && this.effect === 'off') { this.effect = 'chromatic'; if (!this.effectAmount) this.effectAmount = 4; const s = this.el.querySelector('[data-studio-effect]'); s.value = 'chromatic'; const r = this.el.querySelector('[data-studio-effect-amount]'); r.value = this.effectAmount; r.dispatchEvent(new Event('input')); } this.lastVfx = 0; e.currentTarget.setAttribute('aria-pressed', String(this.fxOn)); this.paintVfx(); };
     this.el.querySelector('[data-studio-show]').onclick = e => { this.showSubject = !this.showSubject; const b = e.currentTarget; b.setAttribute('aria-pressed', String(this.showSubject)); b.setAttribute('aria-label', this.showSubject ? 'Hide subject' : 'Show subject'); this.paintBackground(); };
     this.el.querySelectorAll('[data-studio-layer]').forEach(b => b.onclick = () => { const k = b.dataset.studioLayer; this.layers[k] = !this.layers[k]; b.setAttribute('aria-pressed', String(this.layers[k])); });
     this.el.querySelectorAll('[data-studio-core]').forEach(b => b.onclick = () => { const i = +b.dataset.studioCore; this.coreLayers[i] = !this.coreLayers[i]; b.setAttribute('aria-pressed', String(this.coreLayers[i])); b.setAttribute('aria-label', `${this.coreLayers[i] ? 'Hide' : 'Show'} ${LAYER_NAMES[i]}`); });
@@ -7411,7 +7420,7 @@ class CoreStudio {
     canvas.addEventListener('pointerdown', e => {
       if (!this.active || document.body.classList.contains('tune-open') || this.drag || e.button !== 0) return;
       this.select(null);
-      if (this.subject < 0 && !app.hitCore(e.clientX, e.clientY)) return;
+      if (this.tool !== 'hand' && this.subject < 0 && !app.hitCore(e.clientX, e.clientY)) return;
       e.preventDefault(); canvas.setPointerCapture(e.pointerId);
       this.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
       this.vx = this.vy = 0;
@@ -7420,13 +7429,20 @@ class CoreStudio {
       const d = this.drag; if (!d || d.id !== e.pointerId) return;
       const now = performance.now(), dt = Math.max(.008, (now - d.t) / 1000);
       const sx = 2 * app.rig.halfWidth / app.stage.width, sy = 2 * app.rig.halfHeight / app.stage.height;
+      if (this.tool === 'hand') {
+        // Hand: grab the subject and spin it instead of moving it.
+        const rx = (e.clientX - d.x) * .008, ry = (e.clientY - d.y) * .008;
+        if (this.subject < 0) app.core.planet.turn(rx, ry);
+        else { const w = app.orrery.worlds[this.subject]; w.userRot += rx; w.userVel = damp(w.userVel, rx / dt, 18, dt); }
+        d.x = e.clientX; d.y = e.clientY; d.t = now; return;
+      }
       const dx = (e.clientX - d.x) * sx, dy = -(e.clientY - d.y) * sy;
       this.x += dx; this.y += dy; this.vx = clamp(dx / dt, -10, 10); this.vy = clamp(dy / dt, -10, 10);
       d.x = e.clientX; d.y = e.clientY; d.t = now;
     }, { signal });
     const release = (e, cancel = false) => {
       if (!this.drag || e.pointerId !== this.drag.id) return;
-      if (cancel || app.reduced || performance.now() - this.drag.t > 120) this.vx = this.vy = 0;
+      if (cancel || app.reduced || this.tool === 'hand' || performance.now() - this.drag.t > 120) this.vx = this.vy = 0;
       this.drag = null;
       if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
     };
@@ -7748,9 +7764,13 @@ class CoreStudio {
     const b = this.el.querySelector('[data-studio-lib-save] .st-label'); if (this.app.cap) return; b.textContent = 'Saving…'; this.select(null);
     let thumb = '';
     try {
-      const { blob } = await this.app.capture({ type: 'image/png', scale: .5, transparent: false });
-      const bmp = await createImageBitmap(blob), c = document.createElement('canvas'), k = 420 / bmp.width; c.width = 420; c.height = Math.round(bmp.height * k);
-      c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); thumb = c.toDataURL('image/jpeg', .72);
+      const { blob } = await this.app.capture({ type: 'image/png', scale: 1, transparent: false });
+      // Sharp portrait thumbnail cropped around the composition centre, sized for the carousel card on retina screens.
+      const bmp = await createImageBitmap(blob), sc = bmp.width / innerWidth, cc = this.compCentre(), sh = this.shift || { x: 0, y: 0 };
+      const ch = bmp.height, cw = Math.min(bmp.width, Math.round(ch * .8)), cx = clamp((cc.x + sh.x) * sc - cw / 2, 0, bmp.width - cw);
+      const c = document.createElement('canvas'), k = Math.min(1, 1100 / ch); c.width = Math.round(cw * k); c.height = Math.round(ch * k);
+      const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(bmp, cx, 0, cw, ch, 0, 0, c.width, c.height);
+      thumb = c.toDataURL('image/webp', .86); if (!thumb.startsWith('data:image/webp')) thumb = c.toDataURL('image/jpeg', .86);
     } catch (e) {}
     const name = (this.items.find(i => i.role === 'title') || {}).content || 'Untitled';
     const a = this.libRead(); a.unshift({ id: Date.now(), name, date: new Date().toLocaleString(), subject: this.subject, state: this.snapshot(), thumb });
