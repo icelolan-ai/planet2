@@ -1262,6 +1262,10 @@ body #studio .st-dock{overflow:visible!important;-webkit-mask:none!important;mas
 html,body{touch-action:pan-x pan-y}
 *{-webkit-text-size-adjust:100%}
 @media(pointer:coarse){#studio input[type=text],#studio input[type=number],#studio select,#studio textarea,.tune select,.tune input[type=text],.st-text[contenteditable]{font-size:16px!important}}
+/* Dock magnify: selected item grows, the rest shrink (macOS style) */
+#studio .st-dock>.st-btn,#studio .st-dock>.st-group>.st-btn,#studio .st-dock>select{transition:transform .28s cubic-bezier(.3,1.4,.5,1),opacity .2s,margin .28s;transform-origin:50% 100%}
+#studio .st-dock.has-sel>.st-btn:not(.st-dock-fold):not(.is-sel),#studio .st-dock.has-sel>.st-group:not(:has(.is-sel))>.st-btn,#studio .st-dock.has-sel>select{transform:scale(.82);opacity:.75}
+#studio .st-dock.has-sel .is-sel{transform:translateY(-6px) scale(1.18);margin:0 8px;z-index:2;box-shadow:0 0 22px #8b5cf688,0 12px 24px #0006!important}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -7045,7 +7049,7 @@ const RB = (() => {
   const dock = el => {
     if (!fine || still) return;
     el.addEventListener('pointermove', e => {
-      if (el.classList.contains('is-v')) return;
+      if (el.classList.contains('is-v') || el.classList.contains('has-sel')) return;
       el.querySelectorAll('.st-btn,select').forEach(b => { const r = b.getBoundingClientRect(), d = Math.abs(e.clientX - (r.left + r.width / 2)); b.style.transform = `translateY(${-Math.max(0, 1 - d / 160) * 8}px) scale(${1 + Math.max(0, 1 - d / 160) * .22})`; });
     });
     el.addEventListener('pointerleave', () => el.querySelectorAll('.st-btn,select').forEach(b => { b.style.transform = ''; }));
@@ -7542,14 +7546,14 @@ class CoreStudio {
         <button type="button" class="st-btn" data-studio-freeze aria-pressed="false" aria-label="Freeze motion">${I('<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>')}<span class="st-label" data-freeze-label>Stop</span></button>
         <button type="button" class="st-btn" data-studio-home aria-label="Recenter">${I('<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>')}<span class="st-label">Recenter</span></button>
         <button type="button" class="st-btn" data-studio-gravity aria-pressed="false" aria-label="Gravity">${I('<path d="M12 4v13M6 12l6 6 6-6"/>')}<span class="st-label">Gravity</span></button>
-        <button type="button" class="st-btn" data-studio-reset-all aria-label="Reset everything">${I('<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/>')}<span class="st-label">Reset all</span></button>
         </div></div>
         <div class="st-group" data-grp="save"><button type="button" class="st-btn" data-grp-btn aria-expanded="false" aria-label="Save menu"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span class="st-label">Save</span><i class="st-caret" aria-hidden="true"></i></button><div class="st-sub" hidden>
         <button type="button" class="st-btn" data-studio-export aria-label="Save image" aria-expanded="false">${I('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>')}<span class="st-label" data-export-label>Save</span></button>
         <button type="button" class="st-btn" data-studio-lib-save aria-label="Save to library">${I('<path d="M6 3h12v18l-6-4-6 4z"/>')}<span class="st-label">Keep</span></button>
         <button type="button" class="st-btn st-folder" data-studio-lib aria-label="Open library">${I('<path class="fb" d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path class="ff" d="M3 11h18v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>')}<span class="st-label">Library</span></button>
         </div></div>
-        <button type="button" class="st-btn" data-studio-tools aria-expanded="false" aria-controls="studio-tools" aria-label="Settings">${I('<path d="M4 6h16M4 12h16M4 18h16"/>')}<span class="st-label">Settings</span></button></div>
+        <button type="button" class="st-btn" data-studio-tools aria-expanded="false" aria-controls="studio-tools" aria-label="Settings">${I('<path d="M4 6h16M4 12h16M4 18h16"/>')}<span class="st-label">Settings</span></button>
+        <button type="button" class="st-btn" data-studio-reset-all aria-label="Reset everything">${I('<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/>')}<span class="st-label">Reset</span></button></div>
       <aside id="studio-tools" class="studio-panel st-glass" data-tray="panel" aria-label="Studio settings" hidden><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-panel-fold aria-expanded="true"><h2>Cerebra, in focus.</h2><span class="st-chev" aria-hidden="true"></span></button>
       <h3>Poster presets</h3><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-preset="ember" style="--p1:#0c1625;--p2:#d26448">Ember dossier</button><button type="button" class="studio-preset" data-studio-preset="monolith" style="--p1:#e0e4e3;--p2:#666e72">Monolith</button><button type="button" class="studio-preset" data-studio-preset="blueprint" style="--p1:#f4f5f3;--p2:#becbd2">Orbital grid</button><button type="button" class="studio-preset" data-studio-preset="bio" style="--p1:#1a0b3a;--p2:#7b2fa8">Biocomputer</button><button type="button" class="studio-preset" data-studio-preset="mineral" style="--p1:#0b0c0e;--p2:#a4aab0">Mineral</button><button type="button" class="studio-preset" data-studio-preset="infinity" style="--p1:#05090b;--p2:#72b4b4">Infinity noir</button></div><p class="studio-note">Tap any poster text to edit it, drag to move it. Add shapes from the left to keep an area sharp and blur the rest.</p>
       <h3>Background</h3><select data-studio-background aria-label="Studio background"><option value="space">Space</option><option value="white">White</option><option value="studio">Studio light</option><option value="model">Model workspace</option><option value="solid">Solid colour</option><option value="gradient">Gradient</option><option value="points">Colour points</option></select>
@@ -7598,8 +7602,23 @@ class CoreStudio {
         const r = sub.getBoundingClientRect(); let dx = 0; if (r.left < 8) dx = 8 - r.left; else if (r.right > innerWidth - 8) dx = innerWidth - 8 - r.right;
         sub.style.setProperty('--sx', dx + 'px');
       });
-      sub.addEventListener('click', e => { if (e.target.closest('[data-studio-export],[data-studio-lib-save],[data-studio-lib],[data-studio-home],[data-studio-reset-all]')) closeGrp(); });
+      sub.addEventListener('click', e => { if (e.target.closest('[data-studio-export],[data-studio-lib-save],[data-studio-lib],[data-studio-home]')) closeGrp(); });
     });
+    // macOS-dock feel: the open/selected item grows, the others shrink.
+    const dockEl = this.el.querySelector('.st-dock');
+    const syncSel = () => {
+      const open = dockEl.querySelector('.st-group.is-open>.st-btn');
+      const tuneOn = document.body.classList.contains('tune-open') || document.body.classList.contains('wtune-open');
+      const toolsBtn = dockEl.querySelector('[data-studio-tools]'), toolsOn = toolsBtn.getAttribute('aria-expanded') === 'true';
+      const sel = open || (tuneOn ? dockEl.querySelector('[data-studio-tune]') : null) || (toolsOn ? toolsBtn : null);
+      dockEl.querySelectorAll('.is-sel').forEach(b => { if (b !== sel) b.classList.remove('is-sel'); });
+      if (sel && !sel.classList.contains('is-sel')) { sel.classList.add('is-sel'); dockEl.querySelectorAll('.st-btn,select').forEach(b => { if (b !== sel && !b.closest('.st-sub')) b.style.transform = ''; }); }
+      if (dockEl.classList.contains('has-sel') !== !!sel) dockEl.classList.toggle('has-sel', !!sel);
+    };
+    let selRaf = 0; const syncSelSoon = () => { cancelAnimationFrame(selRaf); selRaf = requestAnimationFrame(syncSel); };
+    const mo = new MutationObserver(syncSelSoon);
+    mo.observe(dockEl, { attributes: true, subtree: true, attributeFilter: ['class', 'aria-expanded'] }); mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    syncSel();
     document.addEventListener('pointerdown', e => { if (!e.target.closest('.st-group')) closeGrp(); }, true);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeGrp(); });
     this.initTrays(); RB.dock(this.el.querySelector('.st-dock'));
