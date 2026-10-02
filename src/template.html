@@ -1679,6 +1679,7 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .st-fly .st-fly-row{grid-template-columns:minmax(0,1fr) auto}
 #studio .st-fly select,#studio .st-fly input[type=text]{max-width:100%;min-width:0;text-overflow:ellipsis}
 #studio .st-fly .st-fly-row>span{overflow-wrap:anywhere}
+#studio .st-fly [hidden]{display:none!important}
 </style>
 </head>
 <body class="is-loading">
@@ -8101,15 +8102,18 @@ class CoreStudio {
         <label class="st-fly-row st-fly-check"><span>Drawing assist (snap to guide)</span><input type="checkbox" data-dset="assist"></label>
         <button type="button" class="st-btn is-primary" data-draw-done>Done drawing</button></div>
       <div class="st-fly st-glass" data-fly="textdesign" hidden><b class="st-fly-title">Design</b>
-        <label class="st-fly-row"><span>Size</span><output data-tdo="size"></output><input type="range" min="10" max="220" step="1" data-td="size"></label>
+        <label class="st-fly-row"><span>Size</span><output data-tdo="size"></output><input type="range" min="10" max="600" step="1" data-td="size"></label>
         <label class="st-fly-row"><span>Kerning (word gap)</span><output data-tdo="kern"></output><input type="range" min="-0.3" max="1.5" step="0.02" data-td="kern"></label>
         <label class="st-fly-row"><span>Tracking (letter gap)</span><output data-tdo="track"></output><input type="range" min="-0.1" max="0.6" step="0.01" data-td="track"></label>
         <label class="st-fly-row"><span>Leading (line height)</span><output data-tdo="lead"></output><input type="range" min="0.6" max="2.6" step="0.02" data-td="lead"></label>
         <label class="st-fly-row"><span>Baseline shift</span><output data-tdo="base"></output><input type="range" min="-80" max="80" step="1" data-td="base"></label>
         <label class="st-fly-row"><span>Opacity</span><output data-tdo="alpha"></output><input type="range" min="0.05" max="1" step="0.05" data-td="alpha"></label>
+        <label class="st-fly-row" data-tfor="outline" hidden><span>Outline width</span><output data-tdo="ow"></output><input type="range" min="0.5" max="16" step="0.5" data-td="ow"></label>
+        <div class="st-td-chip" data-tfor="chip" hidden><label class="st-fly-row"><span>Chip colour</span><input type="color" data-tchip="chipBg"></label><label class="st-fly-row"><span>Chip padding</span><output data-tdo="chipPad"></output><input type="range" min="0.1" max="1" step="0.05" data-td="chipPad"></label><label class="st-fly-row"><span>Chip corners</span><output data-tdo="chipRad"></output><input type="range" min="0" max="1" step="0.05" data-td="chipRad"></label></div>
 
         <div class="st-td-al" role="group" aria-label="Alignment"><button type="button" data-talign="l" aria-label="Align left"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 10h10M4 14h16M4 18h10"/></svg></button><button type="button" data-talign="c" aria-label="Align centre"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 10h10M4 14h16M7 18h10"/></svg></button><button type="button" data-talign="r" aria-label="Align right"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M10 10h10M4 14h16M10 18h10"/></svg></button><button type="button" data-talign="j" aria-label="Align justify"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg></button></div>
-        <div class="st-td-tg" role="group" aria-label="Text style"><button type="button" data-ttoggle="ul" aria-pressed="false" aria-label="Underline"><u>U</u></button><button type="button" data-ttoggle="outline" aria-pressed="false" aria-label="Outline"><span class="td-o">O</span></button><button type="button" data-ttoggle="bold" aria-pressed="false" aria-label="Bold"><b>B</b></button><button type="button" data-ttoggle="italic" aria-pressed="false" aria-label="Italic"><i>I</i></button><button type="button" data-ttoggle="upper" aria-pressed="false" aria-label="All caps">TT</button></div></div>
+        <div class="st-td-tg" role="group" aria-label="Text style"><button type="button" data-ttoggle="ul" aria-pressed="false" aria-label="Underline"><u>U</u></button><button type="button" data-ttoggle="outline" aria-pressed="false" aria-label="Outline"><span class="td-o">O</span></button><button type="button" data-ttoggle="bold" aria-pressed="false" aria-label="Bold"><b>B</b></button><button type="button" data-ttoggle="italic" aria-pressed="false" aria-label="Italic"><i>I</i></button><button type="button" data-ttoggle="upper" aria-pressed="false" aria-label="All caps">TT</button></div>
+        <div class="st-td-tg" role="group" aria-label="Text display"><button type="button" data-ttoggle="chip" aria-pressed="false" aria-label="Label chip (coloured box behind the text)">Chip</button><button type="button" data-ttoggle="vert" aria-pressed="false" aria-label="Vertical text (turn 90 degrees)">Vertical</button></div></div>
       <div class="st-fly st-glass" data-fly="style" hidden><b class="st-fly-title">Shape style</b>
         <div class="st-rad" data-srad hidden><b class="st-fly-sub">Corner radius</b>
           <label class="st-fly-row st-fly-check"><span>All corners together</span><input type="checkbox" data-rad-link></label>
@@ -8124,7 +8128,7 @@ class CoreStudio {
       <div class="st-context st-glass" data-studio-context hidden><span class="st-ctx-kind" data-ctx-kind></span>
         <span data-ctx-for="text"><input type="text" data-ctx-content aria-label="Text"></span>
         <span data-ctx-for="text"><select data-ctx-font aria-label="Font"><option value="display">Bebas Neue</option><option value="sans">Barlow</option><option value="cond">Barlow Condensed</option><option value="mono">Geist Mono</option><option value="valorant">Valorant</option></select></span>
-        <label data-ctx-for="text">Size<input type="range" min="10" max="220" data-ctx-size><output></output></label>
+        <label data-ctx-for="text">Size<input type="range" min="10" max="600" data-ctx-size><output></output></label>
         <button type="button" class="st-btn st-fly-btn" data-flyout="textdesign" data-ctx-for="text" aria-expanded="false">Design<i class="st-caret"></i></button>
         <span data-ctx-for="text"><input type="color" data-ctx-color aria-label="Text colour"></span>
         <span data-ctx-for="decor"><input type="color" data-ctx-fill aria-label="Shape colour"></span><label data-ctx-for="decor">Opacity<input type="range" min="0.05" max="1" step="0.05" data-ctx-opacity><output></output></label>
@@ -8414,17 +8418,20 @@ class CoreStudio {
     ctx('size').oninput = withText((it, el) => { it.size = +el.value; el.nextElementSibling.textContent = `${it.size}`; });
     ctx('color').oninput = withText((it, el) => { it.color = el.value; });
     {
-      const f = this.el.querySelector('[data-fly="textdesign"]'), fmtT = { size: v => `${Math.round(v)}pt`, kern: v => `${Math.round(v * 100)}%`, track: v => `${Math.round(v * 100)}%`, lead: v => `${(+v).toFixed(2)}×`, base: v => `${Math.round(v)}pt`, alpha: v => `${Math.round(v * 100)}%` };
-      const map = { size: 'size', kern: 'kern', track: 'ls', lead: 'lead', base: 'base', alpha: 'alpha' };
+      const f = this.el.querySelector('[data-fly="textdesign"]'), fmtT = { size: v => `${Math.round(v)}pt`, kern: v => `${Math.round(v * 100)}%`, track: v => `${Math.round(v * 100)}%`, lead: v => `${(+v).toFixed(2)}×`, base: v => `${Math.round(v)}pt`, alpha: v => `${Math.round(v * 100)}%`, ow: v => `${+v}px`, chipPad: v => `${Math.round(v * 100)}%`, chipRad: v => `${Math.round(v * 100)}%` };
+      const map = { size: 'size', kern: 'kern', track: 'ls', lead: 'lead', base: 'base', alpha: 'alpha', ow: 'ow', chipPad: 'chipPad', chipRad: 'chipRad' };
+      const tdef = { alpha: 1, chipPad: .3, chipRad: .15 };
       this.syncText = () => { const it = this.sel; if (!it || it.kind !== 'text') return;
-        f.querySelectorAll('[data-td]').forEach(el => { const k = el.dataset.td, v = it[map[k]] ?? (k === 'alpha' ? 1 : 0); el.value = v; f.querySelector(`[data-tdo="${k}"]`).textContent = fmtT[k](v); el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%'); });
+        f.querySelectorAll('[data-td]').forEach(el => { const k = el.dataset.td, v = it[map[k]] ?? (k === 'ow' ? Math.max(1, Math.round(it.size / 40 * 2) / 2) : tdef[k] ?? 0); el.value = v; f.querySelector(`[data-tdo="${k}"]`).textContent = fmtT[k](v); el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%'); });
         f.querySelectorAll('[data-talign]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.talign === it.align)));
-        const on = { ul: it.ul, outline: it.outline, bold: it.weight >= 600, italic: it.italic, upper: it.upper };
+        const on = { ul: it.ul, outline: it.outline, bold: it.weight >= 600, italic: it.italic, upper: it.upper, chip: it.chip, vert: it.rot === -90 };
+        f.querySelectorAll('[data-tfor]').forEach(r => { r.hidden = !it[r.dataset.tfor]; }); f.querySelector('[data-tchip=chipBg]').value = it.chipBg || '#e8364a';
         f.querySelectorAll('[data-ttoggle]').forEach(b => b.setAttribute('aria-pressed', String(!!on[b.dataset.ttoggle])));
         ctx('size').value = it.size; ctx('size').nextElementSibling.textContent = String(it.size); };
       f.querySelectorAll('[data-td]').forEach(el => { el.addEventListener('input', () => { const it = this.sel; if (!it || it.kind !== 'text') return; it[map[el.dataset.td]] = +el.value; it.edited = true; this.place(it); this.syncText(); }); el.addEventListener('change', () => this.commit()); });
+      f.querySelector('[data-tchip=chipBg]').addEventListener('input', e => { const it = this.sel; if (!it || it.kind !== 'text') return; it.chipBg = e.target.value; this.place(it); }); f.querySelector('[data-tchip=chipBg]').addEventListener('change', () => this.commit());
       f.querySelectorAll('[data-talign]').forEach(b => b.addEventListener('click', () => { const it = this.sel; if (!it) return; it.align = b.dataset.talign; this.place(it); this.syncText(); this.commit(); }));
-      f.querySelectorAll('[data-ttoggle]').forEach(b => b.addEventListener('click', () => { const it = this.sel; if (!it) return; const k = b.dataset.ttoggle; if (k === 'bold') it.weight = it.weight >= 600 ? 400 : 700; else it[k] = !it[k]; this.place(it); this.syncText(); this.commit(); }));
+      f.querySelectorAll('[data-ttoggle]').forEach(b => b.addEventListener('click', () => { const it = this.sel; if (!it) return; const k = b.dataset.ttoggle; if (k === 'bold') it.weight = it.weight >= 600 ? 400 : 700; else if (k === 'vert') it.rot = it.rot === -90 ? 0 : -90; else it[k] = !it[k]; it.edited = true; this.place(it); this.syncText(); this.commit(); }));
     }
     ctx('fill').oninput = e => { const it = this.sel; if (it && it.decor) { it.fill = e.target.value; if (it.st && !it.st.fillOn) it.st.lineColor = it.fill; this.place(it); this.renderLayers(); } };
     ctx('opacity').oninput = e => { const it = this.sel; if (it && it.decor) { it.opacity = +e.target.value; e.target.nextElementSibling.textContent = `${Math.round(it.opacity * 100)}%`; this.place(it); } };
@@ -8781,7 +8788,8 @@ class CoreStudio {
     el.classList.toggle('is-locked', it.locked);
     if (it.kind === 'text') {
       const family = { display: '"Bebas Neue",var(--f-display)', sans: 'var(--f-sans)', cond: 'var(--f-cond)', mono: 'var(--f-num)', valorant: '"Valorant",var(--f-display)' };
-      Object.assign(el.style, { left: `${it.x * 100}%`, top: `${it.y * 100}%`, fontFamily: family[it.font], fontSize: `${it.size}px`, color: it.color, fontWeight: it.weight, letterSpacing: `${it.ls}em`, wordSpacing: `${it.kern || 0}em`, lineHeight: String(it.lead || 1.02), fontStyle: it.italic ? 'italic' : 'normal', textDecoration: it.ul ? 'underline' : 'none', webkitTextStroke: it.outline ? `${Math.max(1, it.size / 40)}px ${it.color}` : '0', webkitTextFillColor: it.outline ? 'transparent' : '', textTransform: it.upper ? 'uppercase' : 'none', textAlign: { l: 'left', c: 'center', r: 'right', j: 'justify' }[it.align], textAlignLast: it.align === 'j' ? 'justify' : 'auto' });
+      Object.assign(el.style, { left: `${it.x * 100}%`, top: `${it.y * 100}%`, fontFamily: family[it.font], fontSize: `${it.size}px`, color: it.color, fontWeight: it.weight, letterSpacing: `${it.ls}em`, wordSpacing: `${it.kern || 0}em`, lineHeight: String(it.lead || 1.02), fontStyle: it.italic ? 'italic' : 'normal', textDecoration: it.ul ? 'underline' : 'none', webkitTextStroke: it.outline ? `${it.ow ?? Math.max(1, it.size / 40)}px ${it.color}` : '0', webkitTextFillColor: it.outline ? 'transparent' : '', textTransform: it.upper ? 'uppercase' : 'none', textAlign: { l: 'left', c: 'center', r: 'right', j: 'justify' }[it.align], textAlignLast: it.align === 'j' ? 'justify' : 'auto' });
+      { const cp = it.chipPad ?? .3; Object.assign(el.style, it.chip ? { backgroundColor: it.chipBg || '#e8364a', padding: `${cp}em ${cp * 2}em`, borderRadius: `${it.chipRad ?? .15}em`, textShadow: 'none' } : { backgroundColor: '', padding: '', borderRadius: '', textShadow: '' }); }
       el.style.setProperty('--ax', { l: '0%', c: '-50%', r: '-100%', j: '0%' }[it.align]); el.style.setProperty('--by', (it.base || 0) + 'px');
     } else { const U = this.U(); Object.assign(el.style, { left: `${it.x * W - it.w * U / 2}px`, top: `${it.y * H - it.h * U / 2}px`, width: `${it.w * U}px`, height: `${it.h * U}px` }); if (it.decor) { el.style.color = it.fill; el.style.setProperty('--op', it.opacity); } this.drawShapeSvg(it, it.w * U, it.h * U); }
     el.hidden = !!this.isHid(it); el.style.opacity = (it.alpha ?? 1) * (it.ref ? .45 : 1); el.style.mixBlendMode = it.blend && it.blend !== 'normal' ? it.blend : ''; el.style.pointerEvents = it.ref ? 'none' : ''; el.classList.toggle('is-ref', !!it.ref); el.style.setProperty('--rot', (it.rot || 0) + 'deg'); if (it === this.sel) this.updateRotHandle();
@@ -9647,7 +9655,8 @@ class CoreStudio {
       if(this.fxLive()&&this.effect!=='off'&&this.effectAmount>0){g.save();g.globalAlpha=(this.fxItem('colour')||{alpha:1}).alpha;g.drawImage(this.vfx,0,0,width,height);g.restore();}
       const drawText=(el,rot,gx)=>{
         const style=getComputedStyle(el);let r=el.getBoundingClientRect();if(!r.width||!r.height)return;
-        gx.save();if(rot){const cx=r.left+r.width/2,cy=r.top+r.height/2,cw=el.offsetWidth,ch=el.offsetHeight;r={left:cx-cw/2,top:cy-ch/2,width:cw,height:ch,right:cx+cw/2};gx.translate(cx*sx,cy*sy);gx.rotate(rot*Math.PI/180);gx.translate(-cx*sx,-cy*sy);}gx.fillStyle=style.color;gx.globalAlpha=+style.opacity||1;gx.font=`${style.fontStyle==='italic'?'italic ':''}${style.fontWeight} ${parseFloat(style.fontSize)*sy}px ${style.fontFamily}`;if('wordSpacing' in gx)gx.wordSpacing=`${(parseFloat(style.wordSpacing)||0)*sx}px`;const stroked=parseFloat(style.webkitTextStrokeWidth)>0&&/transparent|rgba\(0, 0, 0, 0\)/.test(style.webkitTextFillColor||'');
+        gx.save();if(rot){const cx=r.left+r.width/2,cy=r.top+r.height/2,cw=el.offsetWidth,ch=el.offsetHeight;r={left:cx-cw/2,top:cy-ch/2,width:cw,height:ch,right:cx+cw/2};gx.translate(cx*sx,cy*sy);gx.rotate(rot*Math.PI/180);gx.translate(-cx*sx,-cy*sy);}const bg=style.backgroundColor;if(bg&&!/rgba\(0, 0, 0, 0\)|transparent/.test(bg)&&el.contentEditable!=='true'){gx.globalAlpha=+style.opacity||1;gx.fillStyle=bg;const rr=(parseFloat(style.borderTopLeftRadius)||0)*Math.min(sx,sy);gx.beginPath();if(gx.roundRect)gx.roundRect(r.left*sx,r.top*sy,r.width*sx,r.height*sy,rr);else gx.rect(r.left*sx,r.top*sy,r.width*sx,r.height*sy);gx.fill();}
+        gx.fillStyle=style.color;gx.globalAlpha=+style.opacity||1;gx.font=`${style.fontStyle==='italic'?'italic ':''}${style.fontWeight} ${parseFloat(style.fontSize)*sy}px ${style.fontFamily}`;if('wordSpacing' in gx)gx.wordSpacing=`${(parseFloat(style.wordSpacing)||0)*sx}px`;const stroked=parseFloat(style.webkitTextStrokeWidth)>0&&/transparent|rgba\(0, 0, 0, 0\)/.test(style.webkitTextFillColor||'');
         if('letterSpacing' in gx)gx.letterSpacing=`${(parseFloat(style.letterSpacing)||0)*sx}px`;
         gx.textBaseline='top';const upper=style.textTransform==='uppercase',pad=parseFloat(style.paddingLeft)||0,lines=el.innerText.split(/\n/);let yy=(r.top+(parseFloat(style.paddingTop)||0))*sy;
         for(const raw of lines){const line=upper?raw.toUpperCase():raw;gx.textAlign=style.textAlign==='right'?'right':style.textAlign==='center'?'center':'left';
