@@ -1055,6 +1055,9 @@ body.studio-on:has(#studio.tool-hand) #gl{cursor:grab!important}body.studio-on:h
 .st-cpt-row span{flex:1;font:13px var(--f-sans);color:#cfd6e2}
 .st-cpts-ed[hidden]{display:none}
 .studio-section[open]>summary{color:#ff6571;box-shadow:inset 3px 0 0 #ff4655;padding-left:12px;margin-left:-12px;transition:color .2s,padding .2s}
+.tune .tune-row b,#studio .st-val{color:#c9a8ff!important;text-shadow:0 0 10px #8b5cf655}
+.tune .tune-h b,.wtune .tune-h b{background:linear-gradient(90deg,#6aa0ff,#c06bff,#ff5a8a);-webkit-background-clip:text;background-clip:text;color:transparent!important}
+.tune .tune-h{border-left:0;position:relative}.tune .tune-h::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px;background:linear-gradient(180deg,#3b82f6,#8b5cf6,#ef3b6f)}
 .studio-section[open]{background:linear-gradient(90deg,#ff46550d,transparent 70%)}
 /* Tune panels inside the studio share the studio's frosted-glass look; some sliders become rotary knobs. */
 body.studio-on :is(#tune,#wtune){top:14px;bottom:14px;left:14px;height:auto;border-radius:26px;border:1px solid #ffffff1c;background:linear-gradient(150deg,#1c2029c4,#0d1016d6)!important;backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);box-shadow:inset 1px 1px 0 #ffffff1a,0 24px 60px #0009;scrollbar-width:none}
@@ -1124,17 +1127,17 @@ body.studio-on #gl{filter:none}
 #studio [data-studio-reset-all]:hover svg{animation:mi-spin .6s ease-in-out reverse}
 @media(prefers-reduced-motion:reduce){#studio .st-btn svg{animation:none!important}}
 /* ===== Neumorphic skin (soft raised surfaces, cyan gradient controls, big rotary dials) ===== */
-:root{--nm1:#32363d;--nm2:#262a30;--nm-hi:#ffffff0d;--nm-lo:#0000006b;--cy1:#27e0ee;--cy2:#1688d8;--cyg:linear-gradient(145deg,#27e0ee,#1688d8)}
+:root{--nm1:#35323f;--nm2:#25232e;--nm-hi:#ffffff0d;--nm-lo:#0000006b;--cy1:#4f8cff;--cy2:#ef3b6f;--cyg:linear-gradient(135deg,#3b82f6,#8b5cf6 52%,#ef3b6f)}
 :is(.tune,#studio){--val:#27d3e6}
 .st-knob{display:inline-grid;place-items:center;width:92px;height:92px;position:relative;cursor:ns-resize;touch-action:none;user-select:none;flex:none}
 .st-knob svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .st-knob .kt{fill:none;stroke:#1d2025;stroke-width:9;stroke-linecap:round;filter:drop-shadow(0 1px 0 #ffffff12)}
-.st-knob .kv{fill:none;stroke-width:9;stroke-linecap:round;filter:drop-shadow(0 0 7px #27e0ee88)}
-.st-knob .kth{fill:#fff;stroke:#27e0ee;stroke-width:2;filter:drop-shadow(0 0 6px #27e0eecc)}
+.st-knob .kv{fill:none;stroke-width:9;stroke-linecap:round;filter:drop-shadow(0 0 7px #8b5cf688)}
+.st-knob .kth{fill:#fff;stroke:#8b5cf6;stroke-width:2;filter:drop-shadow(0 0 6px #8b5cf6cc)}
 .st-knob .kd{position:absolute;inset:17px;border-radius:50%;background:linear-gradient(145deg,#2c3037,#1f2328);box-shadow:inset 3px 3px 7px #0000008a,inset -3px -3px 7px #ffffff0a,0 0 0 1px #00000040}
 .st-knob .kn{position:relative;font:600 15px var(--f-sans);color:#fff;letter-spacing:.02em}
-.st-knob:focus-visible{outline:2px solid #27e0ee;border-radius:50%}
-.st-knob.is-turn .kd{box-shadow:inset 4px 4px 9px #000000a0,inset -3px -3px 7px #ffffff0a,0 0 18px #27e0ee33}
+.st-knob:focus-visible{outline:2px solid #8b5cf6;border-radius:50%}
+.st-knob.is-turn .kd{box-shadow:inset 4px 4px 9px #000000a0,inset -3px -3px 7px #ffffff0a,0 0 18px #8b5cf633}
 body .tune-row:has(.st-knob),.studio-panel .studio-control:has(.st-knob){align-items:center}
 .tune-row .st-knob{justify-self:end;grid-column:2/-1}
 .tune-row:has(.st-knob) b[data-out]{display:none}.studio-panel .studio-control:has(.st-knob) output{display:none}
@@ -1146,27 +1149,27 @@ body .tune-row:has(.st-knob),.studio-panel .studio-control:has(.st-knob){align-i
 :is(.tune,.studio-panel) .tune-row>span,:is(.tune,.studio-panel) .studio-control>span{color:#c8ced8}
 /* sliders: cyan gradient track with a glowing round thumb */
 :is(.tune,#studio) input[type=range]{height:26px}
-:is(.tune,#studio) input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:8px;background:linear-gradient(90deg,#27e0ee,#1688d8) 0 0/var(--p,50%) 100% no-repeat,#1b1e23;box-shadow:inset 2px 2px 4px #0009,inset -1px -1px 2px #ffffff0d}
-:is(.tune,#studio) input[type=range]::-webkit-slider-thumb{width:22px;height:22px;margin-top:-7px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px #27e0ee55,0 3px 8px #000a;transform:none}
-:is(.tune,#studio) input[type=range]::-moz-range-progress{background:linear-gradient(90deg,#27e0ee,#1688d8);height:8px;border-radius:8px}
-:is(.tune,#studio) input[type=range]::-moz-range-thumb{background:#fff;border:0;border-radius:50%;box-shadow:0 0 0 4px #27e0ee55}
+:is(.tune,#studio) input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:8px;background:linear-gradient(90deg,#3b82f6,#8b5cf6 55%,#ef3b6f) 0 0/var(--p,50%) 100% no-repeat,#1b1e23;box-shadow:inset 2px 2px 4px #0009,inset -1px -1px 2px #ffffff0d}
+:is(.tune,#studio) input[type=range]::-webkit-slider-thumb{width:22px;height:22px;margin-top:-7px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px #8b5cf655,0 3px 8px #000a;transform:none}
+:is(.tune,#studio) input[type=range]::-moz-range-progress{background:linear-gradient(90deg,#3b82f6,#8b5cf6 55%,#ef3b6f);height:8px;border-radius:8px}
+:is(.tune,#studio) input[type=range]::-moz-range-thumb{background:#fff;border:0;border-radius:50%;box-shadow:0 0 0 4px #8b5cf655}
 /* switches, chips, tiles */
 :is(.tune-seg){background:#1d2025!important;border-radius:999px!important;padding:4px!important;box-shadow:inset 3px 3px 7px #0009,inset -2px -2px 5px #ffffff0a}
 :is(.tune-seg) button{border-radius:999px!important;color:#9aa3b2;transition:background .25s,box-shadow .25s}
-:is(.tune-seg) button[aria-pressed=true]{background:var(--cyg)!important;color:#fff!important;box-shadow:0 0 16px #27e0ee66,inset 1px 1px 0 #ffffff55}
+:is(.tune-seg) button[aria-pressed=true]{background:var(--cyg)!important;color:#fff!important;box-shadow:0 0 16px #8b5cf666,inset 1px 1px 0 #ffffff55}
 .tune-tabs{background:#1d2025!important;box-shadow:inset 3px 3px 7px #0009,inset -2px -2px 5px #ffffff0a;border-radius:999px!important}
 .tune-tabs button{border-radius:999px!important}
-.tune-tabs button[aria-selected=true]{background:var(--cyg)!important;color:#fff!important;box-shadow:0 0 16px #27e0ee66,inset 1px 1px 0 #ffffff55!important}
+.tune-tabs button[aria-selected=true]{background:var(--cyg)!important;color:#fff!important;box-shadow:0 0 16px #8b5cf666,inset 1px 1px 0 #ffffff55!important}
 .tune :is(.tune-btn,.tune-reset){border-radius:18px!important;clip-path:none!important;background:linear-gradient(145deg,#31353c,#272b31)!important;color:#e6eaf0!important;border:0!important;box-shadow:5px 6px 14px #0000006b,-3px -3px 9px #ffffff0a!important}
-.tune .tune-btn{background:var(--cyg)!important;color:#fff!important;box-shadow:0 0 18px #27e0ee55,5px 6px 14px #0000006b!important}
+.tune .tune-btn{background:var(--cyg)!important;color:#fff!important;box-shadow:0 0 18px #8b5cf655,5px 6px 14px #0000006b!important}
 .tune [class*=theme] button,.tune .tune-chips button,.tune .tune-themes button{border-radius:18px!important;border:0!important;background:linear-gradient(145deg,#31353c,#272b31)!important;box-shadow:4px 5px 11px #0000005c,-3px -3px 8px #ffffff08;color:#cdd3dc}
-.tune :is([class*=theme] button,.tune-chips button)[aria-pressed=true]{background:var(--cyg)!important;color:#fff!important;box-shadow:0 0 16px #27e0ee66!important}
+.tune :is([class*=theme] button,.tune-chips button)[aria-pressed=true]{background:var(--cyg)!important;color:#fff!important;box-shadow:0 0 16px #8b5cf666!important}
 #studio .st-btn{border:0!important;background:linear-gradient(145deg,#33373e,#282c32)!important;box-shadow:4px 5px 11px #0000005c,-3px -3px 8px #ffffff0a!important;border-radius:18px}
-#studio .st-btn[aria-pressed=true],#studio .st-btn.is-primary,#studio [data-studio-draw][aria-pressed=true]{background:var(--cyg)!important;color:#fff!important;box-shadow:0 0 18px #27e0ee66,4px 5px 11px #0000005c!important}
+#studio .st-btn[aria-pressed=true],#studio .st-btn.is-primary,#studio [data-studio-draw][aria-pressed=true]{background:var(--cyg)!important;color:#fff!important;box-shadow:0 0 18px #8b5cf666,4px 5px 11px #0000005c!important}
 #studio .st-layer,#studio .studio-layer,#studio .studio-preset{border:0!important;box-shadow:4px 5px 11px #0000005c,-3px -3px 8px #ffffff08}
-#studio .st-layer.is-sel{background:#2a3a43;box-shadow:0 0 0 1px #27e0ee88,4px 5px 11px #0000005c}
-.studio-section[open]>summary{color:#27e0ee;box-shadow:inset 3px 0 0 #27e0ee}
-.studio-section[open]{background:linear-gradient(90deg,#27e0ee0d,transparent 70%)}
+#studio .st-layer.is-sel{background:#35294a;box-shadow:0 0 0 1px #8b5cf688,4px 5px 11px #0000005c}
+.studio-section[open]>summary{color:#8b5cf6;box-shadow:inset 3px 0 0 #8b5cf6}
+.studio-section[open]{background:linear-gradient(90deg,#8b5cf60d,transparent 70%)}
 #studio .st-panel-head h2,.tune-h{color:#fff}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
@@ -8120,7 +8123,7 @@ class CoreStudio {
     if (!input || input._knob) return; input._knob = 1;
     const k = document.createElement('span'); k.className = 'st-knob'; k.tabIndex = 0; k.setAttribute('role', 'slider');
     const gid = 'kg' + Math.random().toString(36).slice(2, 7);
-    k.innerHTML = `<svg viewBox="0 0 92 92"><defs><linearGradient id="${gid}" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#27e0ee"/><stop offset="1" stop-color="#1688d8"/></linearGradient></defs><path class="kt"/><path class="kv" stroke="url(#${gid})"/><circle class="kth" r="5.5"/></svg><i class="kd"></i><b class="kn"></b>`;
+    k.innerHTML = `<svg viewBox="0 0 92 92"><defs><linearGradient id="${gid}" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#3b82f6"/><stop offset=".55" stop-color="#8b5cf6"/><stop offset="1" stop-color="#ef3b6f"/></linearGradient></defs><path class="kt"/><path class="kv" stroke="url(#${gid})"/><circle class="kth" r="5.5"/></svg><i class="kd"></i><b class="kn"></b>`;
     input.after(k);
     const A0 = -140, A1 = 140, R = 38, P = a => [46 + R * Math.sin(a * Math.PI / 180), 46 - R * Math.cos(a * Math.PI / 180)];
     const arc = (a0, a1) => { const [x0, y0] = P(a0), [x1, y1] = P(a1); return `M${x0} ${y0}A${R} ${R} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1} ${y1}`; };
