@@ -1204,6 +1204,22 @@ body .dial-body.one>*>span:first-child{font-size:11px;margin-top:6px}
 .st-knob .kt{stroke:#ffffff1c}
 .tune-tabs,.tune-seg{background:#0000003a!important;border:1px solid #ffffff1a}
 body .dial-body>.tune-row,body .dial-body>.studio-control{background:none;border:0;box-shadow:none}
+/* ===== Dock groups: 5 main buttons, extras tucked into popover menus ===== */
+body #studio .st-dock{overflow:visible!important;-webkit-mask:none!important;mask:none!important;touch-action:auto}
+#studio .st-group{position:relative;display:flex;flex:0 0 auto}
+#studio .st-group>.st-btn .st-caret{width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-135deg) translate(-1px,-1px);opacity:.7;transition:transform .2s;margin-left:2px}
+#studio .st-group.is-open>.st-btn{background:var(--cyg)!important;color:#fff!important}
+#studio .st-group.is-open>.st-btn .st-caret{transform:rotate(45deg)}
+#studio .st-sub{position:absolute;bottom:calc(100% + 16px);left:50%;transform:translateX(calc(-50% + var(--sx,0px)));display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:max-content;max-width:min(92vw,360px);padding:10px;border-radius:22px;z-index:6;background:linear-gradient(145deg,rgba(70,56,110,.55),rgba(24,20,44,.5));border:1px solid #ffffff2e;box-shadow:0 18px 50px #0000008c,inset 1px 1px 0 #ffffff33;backdrop-filter:blur(26px) saturate(1.6);-webkit-backdrop-filter:blur(26px) saturate(1.6)}
+#studio .st-dock>.st-btn:not(.st-dock-fold),#studio .st-group>.st-btn{flex-direction:column;gap:3px;height:56px;min-width:62px;padding:0 10px!important;font:600 10px var(--f-cond);letter-spacing:.08em;text-transform:uppercase}
+#studio .st-dock:not(.is-v) .st-label{display:inline!important}
+#studio .st-group>.st-btn .st-label{display:inline-flex;align-items:center;gap:6px}
+#studio .st-sub[hidden]{display:none}
+#studio .st-sub.is-down{bottom:auto;top:calc(100% + 16px)}
+#studio .st-sub .st-btn{flex:0 0 auto!important;flex-direction:column;gap:4px;min-width:72px;height:64px;padding:0 8px!important;font:600 10px var(--f-cond);letter-spacing:.08em;text-transform:uppercase}
+#studio .st-sub .st-label{display:inline!important}
+@media(max-width:900px){#studio .st-dock{justify-content:space-around}#studio .st-group{flex:1 1 0}#studio .st-group>.st-btn{width:100%}#studio .st-dock>.st-btn,#studio .st-group>.st-btn{flex:1 1 0}#studio .st-dock .st-label{display:inline!important;font:600 9px var(--f-cond);letter-spacing:.06em}#studio .st-dock .st-btn{flex-direction:column;gap:3px}#studio .st-dock select{flex:0 1 84px;max-width:84px}}
+@media(max-width:900px){body #studio .st-dock{gap:3px!important;padding:6px!important}body #studio .st-dock>.st-btn:not(.st-dock-fold),body #studio .st-group>.st-btn{flex:1 1 0!important;min-width:0!important;padding:0 2px!important;height:54px!important;font-size:8.5px!important;letter-spacing:.03em!important}body #studio .st-group{flex:1 1 0!important;min-width:0}body #studio .st-dock .st-dock-fold{flex:0 0 30px!important;min-width:30px!important;height:44px!important}body #studio .st-dock select{flex:0 0 66px!important;max-width:66px!important;min-width:0;height:44px!important;padding:0 4px!important;font-size:11px}body #studio .st-group>.st-btn .st-caret{display:none}}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -7473,17 +7489,19 @@ class CoreStudio {
         <button type="button" class="st-btn st-dock-fold" data-dock-fold aria-expanded="true" aria-label="Fold toolbar"><span class="st-chev" aria-hidden="true"></span></button>
         <select data-studio-subject aria-label="Object in studio"><option value="-1">Cerebra</option>${WORLDS.map((d,i) => `<option value="${i}">${d.name}</option>`).join('')}</select>
         <button type="button" class="st-btn is-primary" data-studio-tune>${I('<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>')}<span class="st-label" data-tune-label>Tune core</span></button>
-        <span class="st-sep"></span>
         <button type="button" class="st-btn" data-studio-fx aria-pressed="false" aria-label="Colour effect on Cerebra">${I('<circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/>')}<span class="st-label">Effect</span></button>
+        <div class="st-group" data-grp="view"><button type="button" class="st-btn" data-grp-btn aria-expanded="false" aria-label="View menu"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="st-label">View</span><i class="st-caret" aria-hidden="true"></i></button><div class="st-sub" hidden>
         <button type="button" class="st-btn" data-studio-show aria-pressed="true" aria-label="Hide subject">${I('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/>')}<span class="st-label" data-show-label>Subject</span></button>
         <button type="button" class="st-btn" data-studio-freeze aria-pressed="false" aria-label="Freeze motion">${I('<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>')}<span class="st-label" data-freeze-label>Stop</span></button>
         <button type="button" class="st-btn" data-studio-home aria-label="Recenter">${I('<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>')}<span class="st-label">Recenter</span></button>
         <button type="button" class="st-btn" data-studio-gravity aria-pressed="false" aria-label="Gravity">${I('<path d="M12 4v13M6 12l6 6 6-6"/>')}<span class="st-label">Gravity</span></button>
+        <button type="button" class="st-btn" data-studio-reset-all aria-label="Reset everything">${I('<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/>')}<span class="st-label">Reset all</span></button>
+        </div></div>
+        <div class="st-group" data-grp="save"><button type="button" class="st-btn" data-grp-btn aria-expanded="false" aria-label="Save menu"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span class="st-label">Save</span><i class="st-caret" aria-hidden="true"></i></button><div class="st-sub" hidden>
         <button type="button" class="st-btn" data-studio-export aria-label="Save image" aria-expanded="false">${I('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>')}<span class="st-label" data-export-label>Save</span></button>
-        <span class="st-sep"></span>
         <button type="button" class="st-btn" data-studio-lib-save aria-label="Save to library">${I('<path d="M6 3h12v18l-6-4-6 4z"/>')}<span class="st-label">Keep</span></button>
         <button type="button" class="st-btn st-folder" data-studio-lib aria-label="Open library">${I('<path class="fb" d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path class="ff" d="M3 11h18v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>')}<span class="st-label">Library</span></button>
-        <button type="button" class="st-btn" data-studio-reset-all aria-label="Reset everything">${I('<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/>')}<span class="st-label">Reset all</span></button>
+        </div></div>
         <button type="button" class="st-btn" data-studio-tools aria-expanded="false" aria-controls="studio-tools" aria-label="Settings">${I('<path d="M4 6h16M4 12h16M4 18h16"/>')}<span class="st-label">Settings</span></button></div>
       <aside id="studio-tools" class="studio-panel st-glass" data-tray="panel" aria-label="Studio settings" hidden><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-panel-fold aria-expanded="true"><h2>Cerebra, in focus.</h2><span class="st-chev" aria-hidden="true"></span></button>
       <h3>Poster presets</h3><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-preset="ember" style="--p1:#0c1625;--p2:#d26448">Ember dossier</button><button type="button" class="studio-preset" data-studio-preset="monolith" style="--p1:#e0e4e3;--p2:#666e72">Monolith</button><button type="button" class="studio-preset" data-studio-preset="blueprint" style="--p1:#f4f5f3;--p2:#becbd2">Orbital grid</button><button type="button" class="studio-preset" data-studio-preset="bio" style="--p1:#1a0b3a;--p2:#7b2fa8">Biocomputer</button><button type="button" class="studio-preset" data-studio-preset="mineral" style="--p1:#0b0c0e;--p2:#a4aab0">Mineral</button><button type="button" class="studio-preset" data-studio-preset="infinity" style="--p1:#05090b;--p2:#72b4b4">Infinity noir</button></div><p class="studio-note">Tap any poster text to edit it, drag to move it. Add shapes from the left to keep an area sharp and blur the rest.</p>
@@ -7519,6 +7537,24 @@ class CoreStudio {
     const fold = (btn, box, label) => btn.onclick = () => { const f = box.classList.toggle('is-folded'); btn.setAttribute('aria-expanded', String(!f)); if (label) btn.setAttribute('aria-label', (f ? 'Unfold ' : 'Fold ') + label); this.layoutTrays(); };
     fold(this.el.querySelector('[data-panel-fold]'), this.panel);
     fold(this.el.querySelector('[data-layers-fold]'), this.el.querySelector('[data-tray="layers"]'));
+    this.dockGroups = [...this.el.querySelectorAll('.st-group')];
+    const closeGrp = () => this.dockGroups.forEach(g => { g.querySelector('.st-sub').hidden = true; g.querySelector('[data-grp-btn]').setAttribute('aria-expanded', 'false'); g.classList.remove('is-open'); });
+    this.closeGrp = closeGrp;
+    this.dockGroups.forEach(g => {
+      const btn = g.querySelector('[data-grp-btn]'), sub = g.querySelector('.st-sub');
+      btn.addEventListener('click', e => {
+        e.stopPropagation(); const open = sub.hidden; closeGrp();
+        if (!open) return;
+        sub.hidden = false; btn.setAttribute('aria-expanded', 'true'); g.classList.add('is-open');
+        const dock = g.closest('.st-dock').getBoundingClientRect(), up = dock.top + dock.height / 2 > innerHeight / 2;
+        sub.classList.toggle('is-down', !up); sub.style.setProperty('--sx', '0px');
+        const r = sub.getBoundingClientRect(); let dx = 0; if (r.left < 8) dx = 8 - r.left; else if (r.right > innerWidth - 8) dx = innerWidth - 8 - r.right;
+        sub.style.setProperty('--sx', dx + 'px');
+      });
+      sub.addEventListener('click', e => { if (e.target.closest('[data-studio-export],[data-studio-lib-save],[data-studio-lib],[data-studio-home],[data-studio-reset-all]')) closeGrp(); });
+    });
+    document.addEventListener('pointerdown', e => { if (!e.target.closest('.st-group')) closeGrp(); }, true);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeGrp(); });
     this.initTrays(); RB.dock(this.el.querySelector('.st-dock'));
     this.el.querySelectorAll('[data-studio-tune],[data-save-go]').forEach(b => b.classList.add('rb-star'));
     MagicBento.apply('#studio .st-glass', { ripple: true }); MagicBento.apply('#studio .studio-preset', { tilt: 8, magnet: 4, ripple: true, particles: true });
