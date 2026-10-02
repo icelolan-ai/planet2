@@ -8506,6 +8506,7 @@ class CoreStudio {
       <h3>Light &amp; floor shadow</h3><label class="studio-control"><span>Film grain</span><input type="checkbox" data-studio-grain></label><label class="studio-control"><span>Grain amount</span><input type="range" min="0.02" max="0.3" step="0.01" value="0.1" data-studio-grain-amt><output>10%</output></label><label class="studio-control"><span>Camera lens (depth blur &amp; colour fringe)</span><input type="checkbox" data-studio-lens></label><label class="studio-control"><span>Key light</span><input type="range" min="0.4" max="1.8" step="0.05" value="1" data-studio-light><output>1.00×</output></label><label class="studio-control"><span>Light direction</span><input type="range" min="-6" max="6" step="0.25" value="4" data-studio-light-x><output>4</output></label><label class="studio-control"><span>Shadow</span><input type="range" min="0" max="1" step="0.05" value="0.65" data-studio-shadow><output>65%</output></label><label class="studio-control"><span>Softness</span><input type="range" min="0" max="1" step="0.05" value="0.6" data-studio-shadow-soft><output>60%</output></label>
       <h3>World parts</h3><div class="studio-layers"><button type="button" class="studio-layer" data-studio-layer="atmo" aria-pressed="true" aria-label="Hide atmosphere"><span>Atmosphere glow</span>${eye}</button><button type="button" class="studio-layer" data-studio-layer="stars" aria-pressed="true" aria-label="Hide stars"><span>Background stars</span>${eye}</button></div>
       <h3>Planet parts</h3><div class="studio-layers">${Object.keys(names).map(k => `<button type="button" class="studio-layer" data-studio-layer="${k}" aria-pressed="${k !== 'dust'}" aria-label="Show ${names[k]}"><span>${names[k]}</span>${eye}</button>`).join('')}</div>
+      <h3>Surface &amp; burst</h3><div class="studio-corefx" data-studio-corefx></div>
       <h3>Inside the core</h3><div class="studio-layers">${LAYER_NAMES.map((name, i) => `<button type="button" class="studio-layer" data-studio-core="${i}" aria-pressed="true" aria-label="Hide ${name}"><span>${name}</span>${eye}</button>`).join('')}<button type="button" class="studio-layer" data-studio-layer="life" aria-pressed="true" aria-label="Hide organisms"><span>Organisms</span>${eye}</button></div>
       <button type="button" class="st-btn st-reset" data-studio-reset>Reset settings</button></aside>
       <aside class="studio-panel st-layers-tray st-glass" data-tray="layers" aria-label="Layers"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-layers-fold aria-expanded="true"><h2>Layers</h2><span class="st-chev" aria-hidden="true"></span></button><div class="st-lbar"><button type="button" class="st-btn st-addgroup" data-add-group aria-label="Add a group">+ Group</button><button type="button" class="st-btn st-addgroup" data-sel-mode aria-pressed="false">Select</button></div><div class="st-lsel" data-lsel hidden></div><button type="button" class="st-lresize" data-lresize aria-label="Resize layers panel"></button><ul class="st-layers" data-studio-objects></ul><p class="studio-note" data-objects-empty>Add text, shapes or decor. Drag ⋮⋮ to restack, the eye hides a layer.</p></aside>`;
@@ -8525,6 +8526,7 @@ class CoreStudio {
       while (heading.nextSibling && heading.nextSibling.nodeName !== 'H3') section.append(heading.nextSibling);
       heading.replaceWith(section);
     });
+    this.initCoreFx();
     this.el.querySelector('[data-studio-exit]').onclick = () => this.close();
     const fold = (btn, box, label) => btn.onclick = () => { const f = box.classList.toggle('is-folded'); btn.setAttribute('aria-expanded', String(!f)); if (label) btn.setAttribute('aria-label', (f ? 'Unfold ' : 'Fold ') + label); this.layoutTrays(); };
     fold(this.el.querySelector('[data-panel-fold]'), this.panel);
@@ -8808,7 +8810,7 @@ class CoreStudio {
     // The colour split ghost suits the glassy core only; worlds never get it.
     this.fxOn = false; this.fxLive = () => this.fxOn && this.subject < 0;
     this.fxSection = this.el.querySelector('[data-studio-effect]').closest('details'); this.coreSection = this.el.querySelector('[data-studio-core]').closest('details'); this.partsSection = this.el.querySelector('[data-studio-layer="shells"]').closest('details'); this.worldSection = this.el.querySelector('[data-studio-layer="atmo"]').closest('details'); this.worldSection.hidden = true;
-    this.el.querySelector('[data-studio-reset]').onclick = () => { Object.keys(this.layers).forEach(k => { this.layers[k] = k !== 'dust'; }); this.coreLayers.fill(true); this.blur = 8; this.applyPreset(this.preset, false); this.el.querySelectorAll('[data-studio-layer],[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioLayer !== 'dust'))); this.updateFocus(); this.commit(); };
+    this.el.querySelector('[data-studio-reset]').onclick = () => { this.resetCoreFx(); Object.keys(this.layers).forEach(k => { this.layers[k] = k !== 'dust'; }); this.coreLayers.fill(true); this.blur = 8; this.applyPreset(this.preset, false); this.el.querySelectorAll('[data-studio-layer],[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioLayer !== 'dust'))); this.updateFocus(); this.commit(); };
     this.el.querySelector('[data-studio-fx]').onclick = e => {
       if (this.effect === 'off') { this.effect = 'chromatic'; if (!this.effectAmount) this.effectAmount = 4; const s = this.el.querySelector('[data-studio-effect]'); s.value = 'chromatic'; const r = this.el.querySelector('[data-studio-effect-amount]'); r.value = this.effectAmount; r.dispatchEvent(new Event('input')); this.syncFxLayers(); }
       else { const it = this.fxItem('colour'); if (it) { it.hide = !it.hide; this.applyFx(); this.renderLayers(); } }
@@ -8887,7 +8889,45 @@ class CoreStudio {
     const roles = { title: name, index: String(this.subject + 2).padStart(3, '0'), kicker: `${name} / studio study` };
     this.items.forEach(it => { if (it.role in roles && !it.edited) { it.content = roles[it.role]; it.el.textContent = it.content; } });
     this.panel.querySelector('h2').textContent = `${name}, in focus.`;
-    this.paintBackground();
+    this.paintBackground(); this.syncCoreFx();
+  }
+  // Surface style and Particle burst/ring for the subject on stage: a world uses its own effect settings (saved with the world); Cerebra's core gets an adapter object with the same shape.
+  coreFxObj() {
+    if (this._cw) return this._cw;
+    const body = typeof PlanetBody !== 'undefined' && PlanetBody.active; if (!body) return null;
+    const all = Effects.defaults(), tune = {}; Object.keys(all).forEach(k => { if (k.startsWith('s_') || k.startsWith('b_')) tune[k] = all[k]; });
+    try { Object.assign(tune, JSON.parse(localStorage.getItem('cerebra.corefx.v1') || '{}')); } catch (e) {}
+    const cw = { isCore: true, tune, def: { radius: 1.3 }, spinG: body.group, axis: body.group, model: { visible: true }, reveal: 1 };
+    SURFACE.attach(cw); BURST.attach(cw);
+    const u0 = body.update; body.update = function (dt, f) { const r = u0.call(this, dt, f); try { SURFACE.update(cw, dt); BURST.update(cw, dt); } catch (e) {} return r; };
+    this._cw = cw; return cw;
+  }
+  coreFxTarget() { return this.subject < 0 ? this.coreFxObj() : this.app.orrery.worlds[this.subject]; }
+  coreFxSet(key, val) {
+    const t = this.coreFxTarget(); if (!t) return;
+    if (t.isCore) { Effects.set(t, key, val); try { const o = {}; Object.keys(t.tune).forEach(k => { o[k] = t.tune[k]; }); localStorage.setItem('cerebra.corefx.v1', JSON.stringify(o)); } catch (e) {} }
+    else WorldTune.applyValues(t, { [key]: val });
+  }
+  syncCoreFx() {
+    const box = this.el.querySelector('[data-studio-corefx]'); if (!box || !box.dataset.ready) return;
+    const t = this.coreFxTarget(), def = Effects.defaults();
+    box.querySelectorAll('[data-cfx]').forEach(el => { const k = el.dataset.cfx, v = t && t.tune[k] != null ? t.tune[k] : def[k]; el.value = String(v); const o = el.parentNode.querySelector('output'); if (o) o.textContent = (+v).toFixed(2); if (el.type === 'range') rangeFill(el); });
+    const hide = box.querySelector('[data-cfx="s_hide"]'); if (hide) hide.closest('label').hidden = this.subject < 0;
+  }
+  resetCoreFx() { const t = this._cw; if (!t) return; const d = Effects.defaults(); Object.keys(t.tune).forEach(k => Effects.set(t, k, d[k])); try { localStorage.removeItem('cerebra.corefx.v1'); } catch (e) {} this.syncCoreFx(); }
+  initCoreFx() {
+    const box = this.el.querySelector('[data-studio-corefx]'); if (!box) return;
+    const row = (fx, c) => { const k = fx.prefix + c.key; return c.type === 'select' ? `<label class="studio-control"><span>${c.label}</span><select data-cfx="${k}">${c.options.map(([v, n]) => `<option value="${v}">${n}</option>`).join('')}</select></label>`
+      : c.type === 'color' ? `<label class="studio-control"><span>${c.label}</span><input type="color" data-cfx="${k}"></label>`
+      : `<label class="studio-control"><span>${c.label}</span><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" data-cfx="${k}"><output></output></label>`; };
+    box.innerHTML = [SURFACE, BURST].map(fx => `<p class="studio-note"><b>${fx.title}</b></p>` + fx.controls.map(c => row(fx, c)).join('')).join('');
+    box.dataset.ready = '1';
+    box.querySelectorAll('[data-cfx]').forEach(el => {
+      el.addEventListener('input', () => { const v = el.type === 'range' ? +el.value : el.value; this.coreFxSet(el.dataset.cfx, v); const o = el.parentNode.querySelector('output'); if (o) o.textContent = (+v).toFixed(2); if (el.type === 'range') rangeFill(el); });
+      el.addEventListener('change', () => { if (el.tagName === 'SELECT') this.coreFxSet(el.dataset.cfx, el.value); });
+    });
+    const det = box.closest('details'); if (det) det.addEventListener('toggle', () => { if (det.open) this.syncCoreFx(); });
+    this.syncCoreFx();
   }
   applyPreset(name, texts = true) {
     const presets = {
