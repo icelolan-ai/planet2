@@ -1234,19 +1234,25 @@ body #studio .st-dock{overflow:visible!important;-webkit-mask:none!important;mas
   #studio .st-sub{max-width:min(94vw,340px)}
   #studio .st-sub .st-btn{min-width:60px;height:56px}
 }
-/* Drawing assist bar */
-#studio .st-assist{position:absolute;left:50%;top:calc(max(var(--st-gap),env(safe-area-inset-top)) + 8px);transform:translateX(-50%);display:none;align-items:center;gap:10px;padding:8px 10px 8px 16px;border-radius:22px;pointer-events:auto;z-index:8;max-width:calc(100% - 24px)}
+/* Drawing Guides bar (Procreate style) */
+#studio .st-assist{position:absolute;left:50%;top:calc(max(var(--st-gap),env(safe-area-inset-top)) + 8px);transform:translateX(-50%);display:none;flex-direction:column;gap:10px;padding:12px 14px;border-radius:24px;pointer-events:auto;z-index:8;width:min(640px,calc(100% - 24px))}
 #studio.is-drawing .st-assist{display:flex}
-#studio .st-assist-t{font:600 10px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:#d9ccff;white-space:nowrap}
+#studio .st-assist-r1{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between}
+#studio .st-assist-r2{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+#studio .st-assist.is-off .st-assist-r2{opacity:.4;pointer-events:none}
+#studio .st-assist-t{font:600 11px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:#d9ccff;white-space:nowrap}
 #studio .st-assist-seg{display:flex;padding:3px;gap:2px;border-radius:14px;background:#0000003a;border:1px solid #ffffff1a}
-#studio .st-assist-seg button,#studio .st-assist-sw,#studio .st-assist-x{min-height:36px;padding:0 12px;border:0;border-radius:11px;background:transparent;color:#cfd6e2;font:600 11px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+#studio .st-assist-seg button,#studio .st-assist-sw,#studio .st-assist-x{min-height:38px;padding:0 12px;border:0;border-radius:11px;background:transparent;color:#cfd6e2;font:600 11px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
 #studio .st-assist-seg button.is-on{background:var(--cyg);color:#fff;box-shadow:0 0 14px #8b5cf666}
 #studio .st-assist-sw{display:flex;align-items:center;gap:8px;background:#0000003a;border:1px solid #ffffff1a}
-#studio .st-assist-sw i{width:28px;height:16px;border-radius:9px;background:#ffffff26;position:relative;transition:background .2s}
-#studio .st-assist-sw i::after{content:"";position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:transform .2s}
-#studio .st-assist-sw.is-on i{background:var(--cyg)}#studio .st-assist-sw.is-on i::after{transform:translateX(12px)}
+#studio .st-assist-sw i{width:34px;height:20px;border-radius:11px;background:#ffffff26;position:relative;transition:background .2s}
+#studio .st-assist-sw i::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+#studio .st-assist-sw.is-on i{background:var(--cyg)}#studio .st-assist-sw.is-on i::after{transform:translateX(14px)}
 #studio .st-assist-x{background:var(--cyg);color:#fff}
-@media(max-width:600px){#studio .st-assist{flex-wrap:wrap;justify-content:center;gap:6px;padding:8px 10px}#studio .st-assist-t{display:none}}
+#studio .st-assist-sl{display:grid;grid-template-columns:1fr auto;gap:4px 8px;font:12px var(--f-sans);color:#cfd6e2}
+#studio .st-assist-sl b{font:600 11px var(--f-num);color:#c9a8ff}
+#studio .st-assist-sl input{grid-column:1/-1;width:100%}
+@media(max-width:600px){#studio .st-assist-t{display:none}#studio .st-assist-r2{gap:8px}#studio .st-assist-sl{font-size:10px}#studio .st-assist-r1{justify-content:center}}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -7487,6 +7493,8 @@ class CoreStudio {
         <label class="st-fly-row"><span>Hold to shape</span><output data-do="hold"></output><input type="range" min="0.3" max="2" step="0.1" data-dset="hold"></label>
         <label class="st-fly-row"><span>Guide</span><select data-dset="guide"><option value="none">None</option><option value="grid">Grid</option><option value="iso">Isometric</option></select></label>
         <label class="st-fly-row"><span>Guide spacing</span><output data-do="gap"></output><input type="range" min="16" max="120" step="4" data-dset="gap"></label>
+        <label class="st-fly-row"><span>Guide opacity</span><output data-do="gopacity"></output><input type="range" min="0.05" max="1" step="0.05" data-dset="gopacity"></label>
+        <label class="st-fly-row"><span>Guide thickness</span><output data-do="gthick"></output><input type="range" min="0.5" max="4" step="0.5" data-dset="gthick"></label>
         <label class="st-fly-row st-fly-check"><span>Drawing assist (snap to guide)</span><input type="checkbox" data-dset="assist"></label>
         <button type="button" class="st-btn is-primary" data-draw-done>Done drawing</button></div>
       <div class="st-fly st-glass" data-fly="style" hidden><b class="st-fly-title">Shape style</b>
@@ -8112,12 +8120,12 @@ class CoreStudio {
   // Pencil: freehand strokes become 'stroke' items. Holding still turns a stroke into a line or circle (QuickShape);
   // guides draw a soft grid/isometric lattice and assist locks strokes to its axes.
   initDraw() {
-    this.drawSet = { color: '#ffffff', size: 4, opacity: 1, dash: 'solid', hold: 2, guide: 'none', gap: 48, assist: false };
+    this.drawSet = { color: '#ffffff', size: 4, opacity: 1, dash: 'solid', hold: 2, guide: 'none', gap: 48, assist: false, gopacity: .3, gthick: 1 };
     try { Object.assign(this.drawSet, JSON.parse(localStorage.getItem('cerebra-studio-pencil') || '{}')); } catch (e) {}
     const pad = this.drawPad = document.createElement('div'); pad.className = 'st-draw-pad'; pad.hidden = true;
     pad.innerHTML = '<canvas class="st-guides"></canvas><svg class="st-ink"><path/></svg>';
     this.stage.after(pad); this.guideCv = pad.querySelector('canvas'); this.ink = pad.querySelector('path');
-    const fly = this.el.querySelector('[data-fly="draw"]'), fmt = { size: v => `${v}px`, opacity: v => `${Math.round(v * 100)}%`, hold: v => `${(+v).toFixed(1)}s`, gap: v => `${v}px` };
+    const fly = this.el.querySelector('[data-fly="draw"]'), fmt = { size: v => `${v}px`, opacity: v => `${Math.round(v * 100)}%`, hold: v => `${(+v).toFixed(1)}s`, gap: v => `${v}px`, gopacity: v => `${Math.round(v * 100)}%`, gthick: v => `${v}px` };
     const sync = () => fly.querySelectorAll('[data-dset]').forEach(el => { const k = el.dataset.dset, v = this.drawSet[k]; if (el.type === 'checkbox') el.checked = v; else el.value = v; const o = fly.querySelector(`[data-do="${k}"]`); if (o) o.textContent = fmt[k](v); });
     fly.querySelectorAll('[data-dset]').forEach(el => el.addEventListener('input', () => {
       const k = el.dataset.dset; this.drawSet[k] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value; sync(); this.paintGuides();
@@ -8126,12 +8134,19 @@ class CoreStudio {
     sync();
     // Visible drawing-assist bar (Procreate style): guide type + snap toggle, shown while the pencil is active.
     const bar = document.createElement('div'); bar.className = 'st-assist st-glass';
-    bar.innerHTML = '<span class="st-assist-t">Drawing assist</span><div class="st-assist-seg" role="group" aria-label="Guide"><button type="button" data-ag="none">Off</button><button type="button" data-ag="grid">Grid</button><button type="button" data-ag="iso">Iso</button></div><button type="button" class="st-assist-sw" data-asnap role="switch" aria-checked="false"><i></i><span>Snap</span></button><button type="button" class="st-assist-x" data-adone aria-label="Done drawing">Done</button>';
+    const bs = (k, label) => `<label class="st-assist-sl"><span>${label}</span><b data-bo="${k}"></b><input type="range" data-bset="${k}"></label>`;
+    bar.innerHTML = '<div class="st-assist-r1"><span class="st-assist-t">Drawing Guides</span><div class="st-assist-seg" role="group" aria-label="Guide"><button type="button" data-ag="none">Off</button><button type="button" data-ag="grid">2D Grid</button><button type="button" data-ag="iso">Isometric</button></div><button type="button" class="st-assist-sw" data-asnap role="switch" aria-checked="false"><span>Assisted drawing</span><i></i></button><button type="button" class="st-assist-x" data-adone aria-label="Done drawing">Done</button></div><div class="st-assist-r2">' + bs('gopacity', 'Opacity') + bs('gthick', 'Thickness') + bs('gap', 'Grid size') + '</div>';
     this.el.append(bar);
     const poke = (k, v) => { const el = fly.querySelector(`[data-dset="${k}"]`); if (!el) return; if (el.type === 'checkbox') el.checked = v; else el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
-    const syncBar = () => { bar.querySelectorAll('[data-ag]').forEach(b => b.classList.toggle('is-on', b.dataset.ag === this.drawSet.guide)); const sw = bar.querySelector('[data-asnap]'); sw.setAttribute('aria-checked', String(!!this.drawSet.assist)); sw.classList.toggle('is-on', !!this.drawSet.assist); };
-    bar.querySelectorAll('[data-ag]').forEach(b => b.addEventListener('click', () => { poke('guide', b.dataset.ag); if (b.dataset.ag !== 'none' && !this.drawSet.assist) poke('assist', true); }));
+    const syncBar = () => {
+      bar.querySelectorAll('[data-ag]').forEach(b => b.classList.toggle('is-on', b.dataset.ag === this.drawSet.guide));
+      const sw = bar.querySelector('[data-asnap]'); sw.setAttribute('aria-checked', String(!!this.drawSet.assist)); sw.classList.toggle('is-on', !!this.drawSet.assist);
+      bar.querySelectorAll('[data-bset]').forEach(el => { const k = el.dataset.bset, src = fly.querySelector(`[data-dset="${k}"]`); if (src) { ['min', 'max', 'step'].forEach(a => el.setAttribute(a, src.getAttribute(a))); } if (document.activeElement !== el) el.value = this.drawSet[k]; el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%'); bar.querySelector(`[data-bo="${k}"]`).textContent = fmt[k](this.drawSet[k]); });
+      bar.classList.toggle('is-off', this.drawSet.guide === 'none');
+    };
+    bar.querySelectorAll('[data-ag]').forEach(b => b.addEventListener('click', () => poke('guide', b.dataset.ag)));
     bar.querySelector('[data-asnap]').addEventListener('click', () => poke('assist', !this.drawSet.assist));
+    bar.querySelectorAll('[data-bset]').forEach(el => el.addEventListener('input', () => poke(el.dataset.bset, +el.value)));
     bar.querySelector('[data-adone]').addEventListener('click', () => { this.setDrawing(false); this.closeFly(); });
     fly.addEventListener('input', syncBar); syncBar(); this.syncAssistBar = syncBar;
     const btn = this.el.querySelector('[data-studio-draw]');
@@ -8141,11 +8156,20 @@ class CoreStudio {
     let cur = null;
     const pt = e => [e.clientX, e.clientY];
     const angles = () => this.drawSet.guide === 'grid' ? [0, 90] : this.drawSet.guide === 'iso' ? [30, 90, 150] : [0, 45, 90, 135];
+    const node = p => {
+      const D = this.drawSet, s = D.gap; if (D.guide === 'none') return p;
+      if (D.guide === 'grid') return [Math.round(p[0] / s) * s, Math.round(p[1] / s) * s];
+      const a = s * Math.cos(Math.PI / 6), k0 = Math.round(p[0] / a); let best = p, bd = 1e9;
+      for (let k = k0 - 1; k <= k0 + 1; k++) { const j = Math.round((p[1] - k * s / 2) / s), q = [k * a, (j + k / 2) * s], d = Math.hypot(q[0] - p[0], q[1] - p[1]); if (d < bd) { bd = d; best = q; } }
+      return best;
+    };
     const assist = (p) => {
       if (!this.drawSet.assist || !cur.start) return p;
       const [sx, sy] = cur.start, dx = p[0] - sx, dy = p[1] - sy;
-      if (!cur.axis) { if (Math.hypot(dx, dy) < 10) return p; const a = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 180; cur.axis = angles().reduce((b, c) => Math.min(Math.abs(c - a), 180 - Math.abs(c - a)) < Math.min(Math.abs(b - a), 180 - Math.abs(b - a)) ? c : b) * Math.PI / 180; }
-      const ux = Math.cos(cur.axis), uy = Math.sin(cur.axis), k = dx * ux + dy * uy; return [sx + ux * k, sy + uy * k];
+      if (!cur.axis) { if (Math.hypot(dx, dy) < 10) return p; const a = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 180; const best = angles().reduce((b, c) => Math.min(Math.abs(c - a), 180 - Math.abs(c - a)) < Math.min(Math.abs(b - a), 180 - Math.abs(b - a)) ? c : b); cur.axis = best * Math.PI / 180 || 1e-6; }
+      const ux = Math.cos(cur.axis), uy = Math.sin(cur.axis); let k = dx * ux + dy * uy;
+      if (this.drawSet.guide !== 'none') k = Math.round(k / this.drawSet.gap) * this.drawSet.gap;
+      return [sx + ux * k, sy + uy * k];
     };
     const render = () => { const P = cur.pts; this.ink.setAttribute('d', P.length ? 'M' + P.map(p => p.join(' ')).join('L') : ''); };
     const armHold = () => { clearTimeout(cur.timer); cur.timer = setTimeout(() => quickShape(), this.drawSet.hold * 1000); };
@@ -8169,7 +8193,7 @@ class CoreStudio {
       if (e.button !== 0) return; e.preventDefault(); pad.setPointerCapture(e.pointerId); this.closeFly();
       const D = this.drawSet; this.ink.setAttribute('stroke', D.color); this.ink.setAttribute('stroke-width', D.size); this.ink.setAttribute('opacity', D.opacity);
       this.ink.setAttribute('stroke-dasharray', this.dashArr({ lineW: D.size, dash: D.dash }).join(' '));
-      cur = { id: e.pointerId, start: pt(e), pts: [pt(e)], anchor: pt(e) }; render(); armHold();
+      const p0 = D.assist ? node(pt(e)) : pt(e); cur = { id: e.pointerId, start: p0, pts: [p0], anchor: pt(e) }; render(); armHold();
     });
     pad.addEventListener('pointermove', e => {
       if (!cur || e.pointerId !== cur.id) return;
@@ -8198,13 +8222,13 @@ class CoreStudio {
     const c = this.guideCv; if (!c) return; const D = this.drawSet, W = innerWidth, H = innerHeight, d = Math.min(devicePixelRatio || 1, 2);
     c.width = W * d; c.height = H * d; const g = c.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, W, H);
     if (D.guide === 'none') return;
-    g.strokeStyle = 'rgba(255,255,255,.14)'; g.lineWidth = 1; g.beginPath();
+    g.strokeStyle = `rgba(255,255,255,${D.gopacity})`; g.lineWidth = D.gthick; g.beginPath();
     const s = D.gap;
     if (D.guide === 'grid') { for (let x = 0; x <= W; x += s) { g.moveTo(x, 0); g.lineTo(x, H); } for (let y = 0; y <= H; y += s) { g.moveTo(0, y); g.lineTo(W, y); } }
     else {
-      const t = Math.tan(Math.PI / 6), dx = s / Math.cos(Math.PI / 6);
-      for (let x = 0; x <= W; x += dx * Math.cos(Math.PI / 6)) { g.moveTo(x, 0); g.lineTo(x, H); }
-      for (let c0 = -W * t; c0 <= H + W * t; c0 += s) { g.moveTo(0, c0); g.lineTo(W, c0 - W * t); g.moveTo(0, c0 - W * t); g.lineTo(W, c0); }
+      const t = Math.tan(Math.PI / 6), a = s * Math.cos(Math.PI / 6);
+      for (let x = 0; x <= W; x += a) { g.moveTo(x, 0); g.lineTo(x, H); }
+      for (let i = Math.floor(-t * W / s) - 1; i <= Math.ceil((H + t * W) / s) + 1; i++) { const c0 = i * s; g.moveTo(0, c0); g.lineTo(W, c0 - t * W); g.moveTo(0, c0 + 0); g.lineTo(W, c0 + t * W); }
     }
     g.stroke();
   }
