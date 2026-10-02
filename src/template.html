@@ -2352,6 +2352,20 @@ const Settings = (() => {
   return { wire };
 })();
 
+/* Canvas blur that also works where ctx.filter is missing (Safari before 18): repeated half-size passes down and back up. */
+function softBlur(src, r) {
+  const w = src.width, h = src.height, out = document.createElement('canvas'); out.width = w; out.height = h;
+  const g = out.getContext('2d');
+  if ('filter' in g) { g.filter = `blur(${r}px)`; g.drawImage(src, 0, 0); g.filter = 'none'; return out; }
+  const steps = Math.max(1, Math.round(Math.log2(Math.max(1, r / 1.1)))); let cur = src; const sizes = [[w, h]];
+  for (let i = 0; i < steps; i++) { const t = document.createElement('canvas'); t.width = Math.max(1, cur.width >> 1); t.height = Math.max(1, cur.height >> 1); const tg = t.getContext('2d'); tg.imageSmoothingEnabled = true; tg.imageSmoothingQuality = 'high'; tg.drawImage(cur, 0, 0, t.width, t.height); sizes.push([t.width, t.height]); cur = t; }
+  for (let i = steps - 1; i >= 0; i--) { const t = document.createElement('canvas'); t.width = sizes[i][0]; t.height = sizes[i][1]; const tg = t.getContext('2d'); tg.imageSmoothingEnabled = true; tg.imageSmoothingQuality = 'high'; tg.drawImage(cur, 0, 0, t.width, t.height); cur = t; }
+  g.drawImage(cur, 0, 0, w, h); return out;
+}
+/* Slider fill follows the value everywhere (CSS reads --p). */
+const rangeFill = el => { const mn = +el.min || 0, mx = el.max === '' ? 100 : +el.max, v = +el.value; el.style.setProperty('--p', ((v - mn) / ((mx - mn) || 1) * 100) + '%'); };
+['input', 'change'].forEach(t => document.addEventListener(t, e => { if (e.target && e.target.type === 'range') rangeFill(e.target); }, true));
+setInterval(() => { if (!document.hidden) document.querySelectorAll('input[type=range]').forEach(rangeFill); }, 350);
 /* Block pinch-zoom of the whole page (Safari ignores user-scalable=no) */
 ['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
 document.addEventListener('touchmove', e => { if (e.touches.length > 1 && !e.target.closest('[data-allow-pinch]')) e.preventDefault(); }, { passive: false });
@@ -8763,7 +8777,7 @@ class CoreStudio {
       const U=this.U(),shapes=this.items.filter(i=>i.kind!=='text'&&i.kind!=='fx'&&!i.decor&&!i.hide);
       if(shapes.length&&(this.blur>0||this.dim>0)){
         const blurred=document.createElement('canvas');blurred.width=width;blurred.height=height;
-        const b=blurred.getContext('2d');b.filter=`blur(${this.blur*Math.max(sx,sy)}px)`;b.drawImage(out,0,0);b.filter='none';if(this.dim>0){b.fillStyle=`rgba(0,0,0,${this.dim})`;b.fillRect(0,0,width,height);}
+        const b=blurred.getContext('2d');b.drawImage(softBlur(out,this.blur*Math.max(sx,sy)),0,0);if(this.dim>0){b.fillStyle=`rgba(0,0,0,${this.dim})`;b.fillRect(0,0,width,height);}
         b.globalCompositeOperation='destination-out';b.beginPath();
         shapes.forEach(s=>{const x=s.x*width,y=s.y*height,rx=s.w*U*sx/2,ry=s.h*U*sy/2;b.moveTo(x+rx,y);
           if(s.kind==='circle')b.ellipse(x,y,rx,ry,0,0,Math.PI*2);
