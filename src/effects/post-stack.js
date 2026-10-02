@@ -208,7 +208,7 @@ postprocessing/build/index.js:
 class CerebraPostStack {
   static profile(mobile){return mobile
     ? {bloom:.15,threshold:.65,aberration:0,vignetteOffset:.2,vignetteDarkness:.85,grain:0}
-    : {bloom:.33,threshold:.5,aberration:.008,vignetteOffset:.27,vignetteDarkness:1.5,grain:.004};}
+    : {bloom:.33,threshold:.5,aberration:0,vignetteOffset:.27,vignetteDarkness:1.5,grain:.004};}
   constructor(stage,camera){
     this.stage=stage;this.tier=0;this.elapsed=0;this.samples=0;this.windowMs=0;this.grace=5;this.status='full';
     this.mobile=matchMedia('(max-width: 760px), (pointer: coarse)').matches;
@@ -240,7 +240,7 @@ class CerebraPostStack {
     const a=window.__cerebra,r=this.stage.renderer;
     // Preserve the existing cutout alpha path; opaque captures keep the post stack.
     if(!this.composer||this.tier>=2||a?.cap?.o.transparent){r.autoClear=this.autoClear;r.render(this.stage.scene,camera);return;}
-    try{this.resize();r.autoClear=false;this.composer.setMainCamera(camera);this.grain.blendMode.opacity.value=this.tier===0&&!this.mobile&&!a?.reduced? .004:0;this.composer.render(0);}
+    try{this.resize();r.autoClear=false;this.composer.setMainCamera(camera);this.grain.blendMode.opacity.value=this.tier===0&&!this.mobile&&!a?.reduced? .004:0;const ab=this.tier===0&&typeof LENS_U!=='undefined'&&LENS_U.uLensOn.value?LENS_U.uLensAberr.value*.2:0;this.ca.offset.set(ab,ab);this.composer.render(0);}
     catch(e){this.disable();r.render(this.stage.scene,camera);}
   }
   disable(){this.tier=2;this.status='off';if(this.composer){this.composer.dispose();this.composer=null;}this.stage.renderer.autoClear=this.autoClear;}
