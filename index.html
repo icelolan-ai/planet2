@@ -1274,6 +1274,17 @@ html,body{touch-action:pan-x pan-y}
 #studio .st-dock>.st-btn,#studio .st-dock>.st-group>.st-btn,#studio .st-dock>select{transition:transform .28s cubic-bezier(.3,1.4,.5,1),opacity .2s,margin .28s;transform-origin:50% 100%}
 #studio .st-dock.has-sel>.st-btn:not(.st-dock-fold):not(.is-sel),#studio .st-dock.has-sel>.st-group:not(:has(.is-sel))>.st-btn,#studio .st-dock.has-sel>select{transform:scale(.82);opacity:.75}
 #studio .st-dock.has-sel .is-sel{transform:translateY(-6px) scale(1.18);margin:0 8px;z-index:2;box-shadow:0 0 22px #8b5cf688,0 12px 24px #0006!important}
+/* Effects popover */
+#studio .st-sub-wide{width:min(92vw,360px);max-height:min(56vh,400px);overflow-y:auto;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:12px;padding:14px;scrollbar-width:thin}
+#studio .st-sub-t{margin:0 0 6px;font:600 10px var(--f-cond);letter-spacing:.16em;text-transform:uppercase;color:#d9ccff}
+#studio .st-chips{display:flex;flex-wrap:wrap;gap:6px}
+#studio .st-chip{min-height:36px;padding:0 12px;border:0;border-radius:12px;background:#ffffff14;color:#e6eaf2;font:600 11px var(--f-cond);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+#studio .st-chip.is-on{background:var(--cyg);color:#fff;box-shadow:0 0 14px #8b5cf666}
+#studio .st-fxamt{display:grid;grid-template-columns:1fr auto;gap:4px 8px;margin:10px 0;font:12px var(--f-sans);color:#cfd6e2}
+#studio .st-fxamt b{font:600 11px var(--f-num);color:#c9a8ff}#studio .st-fxamt input{grid-column:1/-1;width:100%}
+#studio .st-fxbox[hidden]{display:none}
+#studio .st-sub-wide .net-host{display:block}
+#studio .st-sub-wide>.st-fxbox>.st-btn{width:100%;min-width:0;height:44px;flex-direction:row;gap:8px}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -2027,6 +2038,6 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.56deb6c28f.js", 466151]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.c15227988e.js", 468251]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>

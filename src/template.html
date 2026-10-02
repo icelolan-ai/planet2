@@ -1266,6 +1266,17 @@ html,body{touch-action:pan-x pan-y}
 #studio .st-dock>.st-btn,#studio .st-dock>.st-group>.st-btn,#studio .st-dock>select{transition:transform .28s cubic-bezier(.3,1.4,.5,1),opacity .2s,margin .28s;transform-origin:50% 100%}
 #studio .st-dock.has-sel>.st-btn:not(.st-dock-fold):not(.is-sel),#studio .st-dock.has-sel>.st-group:not(:has(.is-sel))>.st-btn,#studio .st-dock.has-sel>select{transform:scale(.82);opacity:.75}
 #studio .st-dock.has-sel .is-sel{transform:translateY(-6px) scale(1.18);margin:0 8px;z-index:2;box-shadow:0 0 22px #8b5cf688,0 12px 24px #0006!important}
+/* Effects popover */
+#studio .st-sub-wide{width:min(92vw,360px);max-height:min(56vh,400px);overflow-y:auto;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:12px;padding:14px;scrollbar-width:thin}
+#studio .st-sub-t{margin:0 0 6px;font:600 10px var(--f-cond);letter-spacing:.16em;text-transform:uppercase;color:#d9ccff}
+#studio .st-chips{display:flex;flex-wrap:wrap;gap:6px}
+#studio .st-chip{min-height:36px;padding:0 12px;border:0;border-radius:12px;background:#ffffff14;color:#e6eaf2;font:600 11px var(--f-cond);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+#studio .st-chip.is-on{background:var(--cyg);color:#fff;box-shadow:0 0 14px #8b5cf666}
+#studio .st-fxamt{display:grid;grid-template-columns:1fr auto;gap:4px 8px;margin:10px 0;font:12px var(--f-sans);color:#cfd6e2}
+#studio .st-fxamt b{font:600 11px var(--f-num);color:#c9a8ff}#studio .st-fxamt input{grid-column:1/-1;width:100%}
+#studio .st-fxbox[hidden]{display:none}
+#studio .st-sub-wide .net-host{display:block}
+#studio .st-sub-wide>.st-fxbox>.st-btn{width:100%;min-width:0;height:44px;flex-direction:row;gap:8px}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -7591,7 +7602,13 @@ class CoreStudio {
         <button type="button" class="st-btn st-dock-fold" data-dock-fold aria-expanded="true" aria-label="Fold toolbar"><span class="st-chev" aria-hidden="true"></span></button>
         <select data-studio-subject aria-label="Object in studio"><option value="-1">Cerebra</option>${WORLDS.map((d,i) => `<option value="${i}">${d.name}</option>`).join('')}</select>
         <button type="button" class="st-btn is-primary" data-studio-tune>${I('<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>')}<span class="st-label" data-tune-label>Tune core</span></button>
-        <button type="button" class="st-btn" data-studio-fx aria-pressed="false" aria-label="Colour effect on Cerebra">${I('<circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/>')}<span class="st-label">Effect</span></button>
+        <div class="st-group" data-grp="fx"><button type="button" class="st-btn" data-grp-btn aria-expanded="false" aria-label="Effects menu"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg><span class="st-label">Effects</span><i class="st-caret" aria-hidden="true"></i></button><div class="st-sub st-sub-wide" hidden>
+          <div class="st-fxbox" data-fxbox><p class="st-sub-t">Colour effect</p><div class="st-chips"><button type="button" class="st-chip" data-fxv="off">Off</button><button type="button" class="st-chip" data-fxv="chromatic">Chromatic</button><button type="button" class="st-chip" data-fxv="rgb">RGB split</button><button type="button" class="st-chip" data-fxv="color">Color split</button><button type="button" class="st-chip" data-fxv="vhs">VHS</button><button type="button" class="st-chip" data-fxv="glitch">Glitch</button></div>
+          <label class="st-fxamt"><span>Strength</span><b data-fxamt-o></b><input type="range" min="0" max="20" step="1" data-fxamt></label>
+          <button type="button" class="st-btn" data-studio-fx aria-pressed="false" aria-label="Colour effect on Cerebra">${I('<circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/>')}<span class="st-label">Effect</span></button></div>
+          <div class="st-netbox"><p class="st-sub-t">Network backdrop</p>
+          <div class="net-host">${NET.html()}</div>
+        </div></div>
         <div class="st-group" data-grp="view"><button type="button" class="st-btn" data-grp-btn aria-expanded="false" aria-label="View menu"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="st-label">View</span><i class="st-caret" aria-hidden="true"></i></button><div class="st-sub" hidden>
         <button type="button" class="st-btn" data-studio-show aria-pressed="true" aria-label="Hide subject">${I('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/>')}<span class="st-label" data-show-label>Subject</span></button>
         <button type="button" class="st-btn" data-studio-freeze aria-pressed="false" aria-label="Freeze motion">${I('<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>')}<span class="st-label" data-freeze-label>Stop</span></button>
@@ -7613,7 +7630,6 @@ class CoreStudio {
       <label class="studio-control"><span>Gradient angle</span><input type="range" min="0" max="360" value="115" data-studio-angle><output>115°</output></label><label class="studio-control"><span>Grid</span><select data-studio-gridmode aria-label="Grid"><option value="always">Always</option><option value="focus">Only with a focus shape</option><option value="off">Off</option></select></label><input type="checkbox" data-studio-grid hidden checked>
       <h3>Colour effects</h3><select data-studio-effect aria-label="Colour effect"><option value="off">Off</option><option value="chromatic">Chromatic aberration</option><option value="rgb">RGB split</option><option value="color">Color split</option><option value="vhs">VHS effect</option><option value="glitch">Glitch art</option></select><label class="studio-control"><span>Strength</span><input type="range" min="0" max="20" value="5" data-studio-effect-amount><output>5</output></label>
       <h3>Light &amp; floor shadow</h3><label class="studio-control"><span>Film grain</span><input type="checkbox" data-studio-grain></label><label class="studio-control"><span>Grain amount</span><input type="range" min="0.02" max="0.3" step="0.01" value="0.1" data-studio-grain-amt><output>10%</output></label><label class="studio-control"><span>Camera lens (depth blur &amp; colour fringe)</span><input type="checkbox" data-studio-lens></label><label class="studio-control"><span>Key light</span><input type="range" min="0.4" max="1.8" step="0.05" value="1" data-studio-light><output>1.00×</output></label><label class="studio-control"><span>Light direction</span><input type="range" min="-6" max="6" step="0.25" value="4" data-studio-light-x><output>4</output></label><label class="studio-control"><span>Shadow</span><input type="range" min="0" max="1" step="0.05" value="0.65" data-studio-shadow><output>65%</output></label><label class="studio-control"><span>Softness</span><input type="range" min="0" max="1" step="0.05" value="0.6" data-studio-shadow-soft><output>60%</output></label>
-      <h3>Network backdrop</h3><div class="net-host">${NET.html()}</div>
       <h3>World parts</h3><div class="studio-layers"><button type="button" class="studio-layer" data-studio-layer="atmo" aria-pressed="true" aria-label="Hide atmosphere"><span>Atmosphere glow</span>${eye}</button><button type="button" class="studio-layer" data-studio-layer="stars" aria-pressed="true" aria-label="Hide stars"><span>Background stars</span>${eye}</button></div>
       <h3>Planet parts</h3><div class="studio-layers">${Object.keys(names).map(k => `<button type="button" class="studio-layer" data-studio-layer="${k}" aria-pressed="${k !== 'dust'}" aria-label="Show ${names[k]}"><span>${names[k]}</span>${eye}</button>`).join('')}</div>
       <h3>Inside the core</h3><div class="studio-layers">${LAYER_NAMES.map((name, i) => `<button type="button" class="studio-layer" data-studio-core="${i}" aria-pressed="true" aria-label="Hide ${name}"><span>${name}</span>${eye}</button>`).join('')}<button type="button" class="studio-layer" data-studio-layer="life" aria-pressed="true" aria-label="Hide organisms"><span>Organisms</span>${eye}</button></div>
@@ -7639,6 +7655,16 @@ class CoreStudio {
     const fold = (btn, box, label) => btn.onclick = () => { const f = box.classList.toggle('is-folded'); btn.setAttribute('aria-expanded', String(!f)); if (label) btn.setAttribute('aria-label', (f ? 'Unfold ' : 'Fold ') + label); this.layoutTrays(); };
     fold(this.el.querySelector('[data-panel-fold]'), this.panel);
     fold(this.el.querySelector('[data-layers-fold]'), this.el.querySelector('[data-tray="layers"]'));
+    // Effects popover: pick an effect, set its strength, and the network backdrop live together.
+    {
+      const fxsel = this.el.querySelector('[data-studio-effect]'), amt = this.el.querySelector('[data-studio-effect-amount]'), box = this.el.querySelector('[data-fxbox]'), mine = this.el.querySelector('[data-fxamt]'), mo = this.el.querySelector('[data-fxamt-o]');
+      this.fxBox = box;
+      const syncFx = () => { box.querySelectorAll('[data-fxv]').forEach(c => c.classList.toggle('is-on', c.dataset.fxv === fxsel.value)); mine.value = amt.value; mine.style.setProperty('--p', (mine.value / 20 * 100) + '%'); mo.textContent = amt.value; };
+      box.querySelectorAll('[data-fxv]').forEach(c => c.addEventListener('click', () => { fxsel.value = c.dataset.fxv; fxsel.dispatchEvent(new Event('change', { bubbles: true })); if (c.dataset.fxv !== 'off' && +amt.value === 0) { amt.value = 4; amt.dispatchEvent(new Event('input', { bubbles: true })); } syncFx(); }));
+      mine.addEventListener('input', () => { amt.value = mine.value; amt.dispatchEvent(new Event('input', { bubbles: true })); syncFx(); });
+      this.el.querySelector('[data-grp=fx] [data-grp-btn]').addEventListener('click', syncFx);
+      this.syncFxMenu = syncFx; syncFx();
+    }
     this.dockGroups = [...this.el.querySelectorAll('.st-group')];
     const closeGrp = () => this.dockGroups.forEach(g => { g.querySelector('.st-sub').hidden = true; g.querySelector('[data-grp-btn]').setAttribute('aria-expanded', 'false'); g.classList.remove('is-open'); });
     this.closeGrp = closeGrp;
@@ -7868,7 +7894,7 @@ class CoreStudio {
     const name = this.subject < 0 ? 'Cerebra' : this.app.orrery.worlds[this.subject].def.name;
     this.el.querySelector('[data-studio-subject]').value = String(this.subject);
     this.el.querySelector('[data-tune-label]').textContent = this.subject < 0 ? 'Tune core' : 'Tune world';
-    this.el.querySelector('[data-studio-fx]').hidden = this.subject >= 0; this.fxSection.hidden = this.subject >= 0; this.coreSection.hidden = this.subject >= 0; this.partsSection.hidden = this.subject >= 0; this.worldSection.hidden = this.subject < 0; this.lastVfx = 0; this.paintVfx();
+    this.el.querySelector('[data-studio-fx]').hidden = this.subject >= 0; if (this.fxBox) this.fxBox.hidden = this.subject >= 0; this.fxSection.hidden = this.subject >= 0; this.coreSection.hidden = this.subject >= 0; this.partsSection.hidden = this.subject >= 0; this.worldSection.hidden = this.subject < 0; this.lastVfx = 0; this.paintVfx();
     const roles = { title: name, index: String(this.subject + 2).padStart(3, '0'), kicker: `${name} / studio study` };
     this.items.forEach(it => { if (it.role in roles && !it.edited) { it.content = roles[it.role]; it.el.textContent = it.content; } });
     this.panel.querySelector('h2').textContent = `${name}, in focus.`;
