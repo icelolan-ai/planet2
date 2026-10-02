@@ -1668,7 +1668,7 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio input[type=range]::-webkit-slider-thumb{width:18px;height:18px;margin-top:-6px;box-shadow:0 0 0 3px #8b5cf655,0 2px 6px #000a}
 .st-fly-row{gap:4px 8px}
 /* Pop-up menus (pen bar, flyouts, save box) can be dragged by any empty spot of their frame */
-#studio .st-assist,#studio .st-fly,#studio .st-save{translate:var(--mx,0px) var(--my,0px);cursor:grab}
+#studio .st-assist,#studio .st-fly,#studio .st-save{translate:var(--fdx,0px) var(--fdy,0px);cursor:grab}
 #studio .st-assist,#studio .st-fly:not([data-kit-panel]),#studio .st-fly-title{touch-action:none}
 #studio .st-assist.is-dragging,#studio .st-fly.is-dragging,#studio .st-save.is-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
 #studio .st-assist :is(button,input,select,label),#studio .st-fly :is(button,input,select,label),#studio .st-save :is(button,input,select,label){cursor:pointer}
@@ -8449,13 +8449,13 @@ class CoreStudio {
       let d = null;
       this.el.addEventListener('pointerdown', e => {
         const m = e.target.closest(MENU); if (!m || e.button > 0 || e.target.closest(SKIP)) return;
-        d = { m, id: e.pointerId, x: e.clientX, y: e.clientY, ox: parseFloat(m.style.getPropertyValue('--mx')) || 0, oy: parseFloat(m.style.getPropertyValue('--my')) || 0, r: m.getBoundingClientRect(), moved: false };
+        d = { m, id: e.pointerId, x: e.clientX, y: e.clientY, ox: parseFloat(m.style.getPropertyValue('--fdx')) || 0, oy: parseFloat(m.style.getPropertyValue('--fdy')) || 0, r: m.getBoundingClientRect(), moved: false };
       });
       addEventListener('pointermove', e => {
         if (!d || e.pointerId !== d.id) return; let dx = e.clientX - d.x, dy = e.clientY - d.y;
         if (!d.moved) { if (Math.hypot(dx, dy) < 5) return; d.moved = true; d.m.classList.add('is-dragging'); try { d.m.setPointerCapture(e.pointerId); } catch (_) {} }
         dx = clamp(dx, 48 - d.r.right, innerWidth - 48 - d.r.left); dy = clamp(dy, -d.r.top, innerHeight - 48 - d.r.top);
-        d.m.style.setProperty('--mx', `${d.ox + dx}px`); d.m.style.setProperty('--my', `${d.oy + dy}px`);
+        d.m.style.setProperty('--fdx', `${d.ox + dx}px`); d.m.style.setProperty('--fdy', `${d.oy + dy}px`);
       });
       const end = e => {
         if (!d || e.pointerId !== d.id) return;
@@ -8463,13 +8463,14 @@ class CoreStudio {
         d.m.classList.remove('is-dragging'); d = null;
       };
       addEventListener('pointerup', end); addEventListener('pointercancel', end);
-      addEventListener('resize', () => this.el.querySelectorAll(MENU).forEach(m => { m.style.removeProperty('--mx'); m.style.removeProperty('--my'); }));
+      addEventListener('resize', () => this.el.querySelectorAll(MENU).forEach(m => { m.style.removeProperty('--fdx'); m.style.removeProperty('--fdy'); }));
     }
     this.el.querySelectorAll('[data-flyout]').forEach(b => b.onclick = e => {
-      e.stopPropagation(); const f = this.el.querySelector(`[data-fly="${b.dataset.flyout}"]`), open = f.hidden; this.closeFly(); if (!open) return; f.style.removeProperty('--mx'); f.style.removeProperty('--my');
+      e.stopPropagation(); const f = this.el.querySelector(`[data-fly="${b.dataset.flyout}"]`), open = f.hidden; this.closeFly(); if (!open) return; f.style.removeProperty('--fdx'); f.style.removeProperty('--fdy');
       if (b.dataset.flyout === 'style') this.syncStyle(); else if (b.dataset.flyout === 'textdesign') this.syncText(); else if (b.dataset.flyout === 'kitdesign') this.syncKit(); else this.select(null); this.syncFly(); f.hidden = false; b.setAttribute('aria-expanded', 'true');
       const r = b.getBoundingClientRect(), W = innerWidth, H = innerHeight;
       if (b.dataset.flyout === 'kitdesign') { f.style.maxHeight = Math.max(160, Math.min(H * .6, r.top - 20)) + 'px'; const kw = f.offsetWidth, kh = f.offsetHeight; f.style.left = `${clamp(r.left + r.width / 2 - kw / 2, 8, W - kw - 8)}px`; f.style.top = `${Math.max(8, r.top - kh - 12)}px`; return; }
+      f.style.maxHeight = ''; if (f.offsetHeight > H - 16) f.style.maxHeight = `${H - 16}px`;
       const fw = f.offsetWidth, fh = f.offsetHeight;
       let x = r.right + 12, y = r.top; if (x + fw > W - 8) x = r.left - fw - 12; if (x < 8) { x = clamp(r.left + r.width / 2 - fw / 2, 8, W - fw - 8); y = r.top - fh - 12; if (y < 8) y = r.bottom + 12; }
       f.style.left = `${x}px`; f.style.top = `${clamp(y, 8, H - fh - 8)}px`;
