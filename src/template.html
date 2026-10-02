@@ -968,6 +968,10 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 /* Glass, soft-UI look (rounded, frosted, inner highlight) */
 #studio .st-glass,#studio .st-fly{background:linear-gradient(150deg,#1c2029a6,#0d1016b8);border:1px solid #ffffff1c;border-radius:26px;box-shadow:inset 1px 1px 0 #ffffff1a,inset -1px -1px 0 #0000004d,0 22px 50px #0008;backdrop-filter:blur(22px) saturate(1.5);-webkit-backdrop-filter:blur(22px) saturate(1.5)}
 #studio{color-scheme:dark}
+.tune,.wtune,.obuild,#tune,#wtune,#obuild{color-scheme:dark}
+.tune select,#wtune select,#tune select,#studio select{background-color:#1b1f2b;color:#e8ecf4}
+.tune select option,#wtune select option,#tune select option,#studio select option,#studio select optgroup{background:#1b1f2b;color:#e8ecf4}
+#tune input[type=color]{border-radius:12px;border:1px solid #ffffff2e;background:#0000003a;min-width:46px;height:36px;padding:2px;cursor:pointer}
 #studio select option{background:#1a1d26;color:#eef0f6}
 #studio select{background-color:#ffffff10!important}
 #studio .st-btn{border-radius:16px;background:linear-gradient(150deg,#ffffff10,#ffffff04);border-color:#ffffff14;box-shadow:inset 1px 1px 0 #ffffff12,0 4px 12px #0004}
@@ -1681,6 +1685,21 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .st-fly .st-fly-row>span{overflow-wrap:anywhere}
 #studio .st-fly [hidden]{display:none!important}
 #studio .st-glassbox{position:absolute;pointer-events:none}
+/* Surface style panel */
+#studio .st-off{opacity:.36;filter:grayscale(1);pointer-events:none;transition:opacity .2s}
+#studio .cfx-chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:4px 0 12px}
+#studio .cfx-chip{display:grid;justify-items:center;align-content:center;gap:3px;min-height:56px;padding:8px 3px;border:1px solid #ffffff1f;border-radius:12px;background:#ffffff0d;color:#cfd6e2;font:600 9.5px/1.15 var(--f-cond);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;overflow-wrap:anywhere}
+#studio .cfx-chip i{font-style:normal;font-size:19px;line-height:1}
+#studio .cfx-chip[aria-pressed=true]{background:var(--cyg);color:#fff;border-color:transparent;box-shadow:0 0 14px #8b5cf666}
+#studio .cfx-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;margin:12px 0;font:11.5px/1.3 var(--f-sans);color:#cfd6e2}
+#studio .st-switch{display:flex;gap:3px;padding:3px;border-radius:14px;background:#0000002e;border:1px solid #ffffff1c}
+#studio .st-switch button{min-width:52px;min-height:32px;padding:0 12px;border:0;border-radius:11px;background:transparent;color:#cfd6e2;font:600 11px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+#studio .st-switch button[aria-pressed=true]{background:var(--cyg);color:#fff;box-shadow:0 0 14px #8b5cf666}
+#studio .cfx-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(60px,1fr));gap:8px;margin:12px 0}
+#studio .cfx-col{display:grid;justify-items:center;gap:5px;font:600 9.5px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;color:#aab3c4}
+#studio .cfx-col input[type=color]{width:100%;height:42px;padding:3px;border:1px solid #ffffff2a;border-radius:12px;background:#0000003a;cursor:pointer}
+#studio .cfx-sub{margin:18px 0 4px;padding-top:12px;border-top:1px solid #ffffff14;font:600 11px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:#d9ccff}
+#studio .cfx-reset{width:100%;justify-content:center;margin-top:16px}
 </style>
 </head>
 <body class="is-loading">
@@ -2666,12 +2685,14 @@ const WorldTune = (() => {
       fx.controls.forEach(c => { if (!c.type) fmt[fx.prefix + c.key] = v => (+v).toFixed(c.step < 0.01 ? 3 : 2); });
       return `<section data-effect="${fx.id}"><p class="tune-sub">${fx.title}</p>` +
         `<div class="tune-row"><span>${fx.title}</span><div class="tune-seg" data-wt-seg="${fx.prefix}enabled"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>` +
-        fx.controls.map(c => c.type === 'select' ? `<label class="tune-row"><span>${c.label}</span><select data-wt="${fx.prefix}${c.key}">${c.options.map(([v, n]) => `<option value="${v}">${n}</option>`).join('')}</select></label>`
+        fx.controls.map(c => c.type === 'toggle' ? `<div class="tune-row"><span>${c.label}</span><div class="tune-seg" data-wt-seg="${fx.prefix}${c.key}"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>`
+          : c.type === 'select' ? `<label class="tune-row"><span>${c.label}</span><select data-wt="${fx.prefix}${c.key}">${c.options.map(([v, n]) => `<option value="${v}">${n}</option>`).join('')}</select></label>`
           : c.type === 'color' ? `<label class="tune-row"><span>${c.label}</span><input type="color" data-wt="${fx.prefix}${c.key}"></label>`
           : `<label class="tune-row"><span>${c.label}</span><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" data-wt="${fx.prefix}${c.key}"><b data-out></b></label>`).join('') +
         (fx.play ? `<button type="button" class="tune-btn" data-fx-replay="${fx.id}">&#8635; Replay ${fx.title.toLowerCase()}</button>` : '') + '</section>';
     }).join('');
     ['camera','atmosphere'].forEach(id=>Pn.querySelector(`[data-wt-pane="${id}"]`).append(Pn.querySelector(`[data-effect="${id}"]`)));
+    { const box = Pn.querySelector('[data-wt-effects]'), sf = box.querySelector('[data-effect=surface]'); if (sf) box.prepend(sf); }
     Pn.querySelectorAll('[data-fx-replay]').forEach(b => b.addEventListener('click', () => { const fx = Effects.list.find(x => x.id === b.dataset.fxReplay); if (w && fx) fx.play(w); }));
     Pn.querySelector('[data-wt-rpresets]').innerHTML = Object.keys(RIPPLE_PRESETS).map(n => `<button type="button" data-rp="${n}">${n}</button>`).join('');
     // Every world starts from the ripple defaults, then its saved tuning.
@@ -2920,7 +2941,7 @@ const WorldTune = (() => {
     };
     q('[data-t-reset]').addEventListener('click', () => {
       try { localStorage.removeItem(KEY); } catch (e) {}
-      mic.set(0); call('stopAudio'); call('resetAll'); resetUI(); showSel(null); syncRings();
+      mic.set(0); call('stopAudio'); call('resetAll'); resetUI(); try { const st = window.__cerebra && window.__cerebra.studio; st && st.resetFx && st.resetFx('core'); } catch (e) {} showSel(null); syncRings();
     });
 
     /* ---- selected part ---- */
@@ -8554,6 +8575,7 @@ class CoreStudio {
         </div></div>
         <div class="st-group st-more" data-grp="more"><button type="button" class="st-btn" data-grp-btn aria-expanded="false" aria-label="More menu"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span class="st-label">More</span><i class="st-caret" aria-hidden="true"></i></button><div class="st-sub st-sub-wide" hidden></div></div></div>
       <aside id="studio-tools" class="studio-panel st-glass" data-tray="panel" aria-label="Studio settings" hidden><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-panel-fold aria-expanded="true"><h2>Cerebra, in focus.</h2><span class="st-chev" aria-hidden="true"></span></button>
+      <h3>Surface style</h3><div class="studio-corefx" data-studio-corefx></div>
       <h3>Poster presets</h3><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-preset="ember" style="--p1:#0c1625;--p2:#d26448">Ember dossier</button><button type="button" class="studio-preset" data-studio-preset="monolith" style="--p1:#e0e4e3;--p2:#666e72">Monolith</button><button type="button" class="studio-preset" data-studio-preset="blueprint" style="--p1:#f4f5f3;--p2:#becbd2">Orbital grid</button><button type="button" class="studio-preset" data-studio-preset="bio" style="--p1:#1a0b3a;--p2:#7b2fa8">Biocomputer</button><button type="button" class="studio-preset" data-studio-preset="mineral" style="--p1:#0b0c0e;--p2:#a4aab0">Mineral</button><button type="button" class="studio-preset" data-studio-preset="infinity" style="--p1:#05090b;--p2:#72b4b4">Infinity noir</button><button type="button" class="studio-preset" data-studio-preset="monoPoster" style="--p1:#f3f3f0;--p2:#8c8c86">Mono poster</button><button type="button" class="studio-preset" data-studio-preset="goldHud" style="--p1:#06070a;--p2:#c9a24a">Gold HUD</button><button type="button" class="studio-preset" data-studio-preset="glowOrbit" style="--p1:#02030a;--p2:#3558d8">Glow orbit</button><button type="button" class="studio-preset" data-studio-preset="neonCell" style="--p1:#040907;--p2:#22c58a">Neon cell</button><button type="button" class="studio-preset" data-studio-preset="astrolabe" style="--p1:#1a140e;--p2:#b89560">Astrolabe</button><button type="button" class="studio-preset" data-studio-preset="dataFlow" style="--p1:#090b13;--p2:#4a5ad8">Data flow</button></div><h3>Layout templates</h3><div class="studio-preset-grid" data-tpl-grid><button type="button" class="studio-preset" data-studio-template="editorial" style="--p1:#f3f3f0;--p2:#9a9a94">Editorial calendar</button><button type="button" class="studio-preset" data-studio-template="cyclical" style="--p1:#02030a;--p2:#4a6ae8">Cyclical</button><button type="button" class="studio-preset" data-studio-template="physics" style="--p1:#090b13;--p2:#7a86e8">Physics series</button><button type="button" class="studio-preset" data-studio-template="dashboard" style="--p1:#06070a;--p2:#e8c872">Dashboard</button><button type="button" class="studio-preset" data-studio-template="radial" style="--p1:#1a140e;--p2:#d8a868">Cropped radial</button></div><p class="studio-note">Tap any poster text to edit it, drag to move it. Add shapes from the left to keep an area sharp and blur the rest.</p>
       <h3>Background</h3><select data-studio-background aria-label="Studio background"><option value="space">Space</option><option value="white">White</option><option value="studio">Studio light</option><option value="model">Model workspace</option><option value="solid">Solid colour</option><option value="gradient">Gradient</option><option value="points">Colour points</option></select>
       <div class="st-cpts-ed" data-cpts-ed hidden><p class="studio-note">Colour A is the base. Drag the dots on the canvas to place each colour.</p><div data-cpts-list></div><button type="button" class="st-btn" data-cpts-add>+ Add colour</button></div>
@@ -8563,7 +8585,6 @@ class CoreStudio {
       <h3>Light &amp; floor shadow</h3><label class="studio-control"><span>Film grain</span><input type="checkbox" data-studio-grain></label><label class="studio-control"><span>Grain amount</span><input type="range" min="0.02" max="0.3" step="0.01" value="0.1" data-studio-grain-amt><output>10%</output></label><label class="studio-control"><span>Camera lens (depth blur &amp; colour fringe)</span><input type="checkbox" data-studio-lens></label><label class="studio-control"><span>Key light</span><input type="range" min="0.4" max="1.8" step="0.05" value="1" data-studio-light><output>1.00×</output></label><label class="studio-control"><span>Light direction</span><input type="range" min="-6" max="6" step="0.25" value="4" data-studio-light-x><output>4</output></label><label class="studio-control"><span>Shadow</span><input type="range" min="0" max="1" step="0.05" value="0.65" data-studio-shadow><output>65%</output></label><label class="studio-control"><span>Softness</span><input type="range" min="0" max="1" step="0.05" value="0.6" data-studio-shadow-soft><output>60%</output></label>
       <h3>World parts</h3><div class="studio-layers"><button type="button" class="studio-layer" data-studio-layer="atmo" aria-pressed="true" aria-label="Hide atmosphere"><span>Atmosphere glow</span>${eye}</button><button type="button" class="studio-layer" data-studio-layer="stars" aria-pressed="true" aria-label="Hide stars"><span>Background stars</span>${eye}</button></div>
       <h3>Planet parts</h3><div class="studio-layers">${Object.keys(names).map(k => `<button type="button" class="studio-layer" data-studio-layer="${k}" aria-pressed="${k !== 'dust'}" aria-label="Show ${names[k]}"><span>${names[k]}</span>${eye}</button>`).join('')}</div>
-      <h3>Surface &amp; burst</h3><div class="studio-corefx" data-studio-corefx></div>
       <h3>Inside the core</h3><div class="studio-layers">${LAYER_NAMES.map((name, i) => `<button type="button" class="studio-layer" data-studio-core="${i}" aria-pressed="true" aria-label="Hide ${name}"><span>${name}</span>${eye}</button>`).join('')}<button type="button" class="studio-layer" data-studio-layer="life" aria-pressed="true" aria-label="Hide organisms"><span>Organisms</span>${eye}</button></div>
       <button type="button" class="st-btn st-reset" data-studio-reset>Reset settings</button></aside>
       <aside class="studio-panel st-layers-tray st-glass" data-tray="layers" aria-label="Layers"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-layers-fold aria-expanded="true"><h2>Layers</h2><span class="st-chev" aria-hidden="true"></span></button><div class="st-lbar"><button type="button" class="st-btn st-addgroup" data-add-group aria-label="Add a group">+ Group</button><button type="button" class="st-btn st-addgroup" data-sel-mode aria-pressed="false">Select</button></div><div class="st-lsel" data-lsel hidden></div><button type="button" class="st-lresize" data-lresize aria-label="Resize layers panel"></button><ul class="st-layers" data-studio-objects></ul><p class="studio-note" data-objects-empty>Add text, shapes or decor. Drag ⋮⋮ to restack, the eye hides a layer.</p></aside>`;
@@ -8834,7 +8855,7 @@ class CoreStudio {
       ['[data-t-clarity]', '[data-t-rim]'].forEach(sel => { const e = document.querySelector(sel); if (e) { e.value = 0; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); } }); // Glass is always 0 after a reset
     };
     const resetFull = () => {
-      resetCanvas(); document.querySelector('[data-t-reset]').click(); this.resetTrays();
+      resetCanvas(); document.querySelector('[data-t-reset]').click(); this.resetTrays(); this.resetFx('all');
       try { ['cerebra-ui-prefs', 'cerebra-layers-size', 'cerebra-studio-pencil', 'cerebra-rot-snap'].forEach(k => localStorage.removeItem(k)); } catch (e) {}
       this.laySize = null; this.rotSnap = 0; this.gridStyle = { auto: true, c: '#ffffff', a: .25, t: 1, n: 24 }; if (this.syncGridUI) this.syncGridUI(); this.setGridMode('always');
       const root = document.documentElement; ['--cyg', '--glrgb1', '--glrgb2', '--glk', '--glb'].forEach(v => root.style.removeProperty(v)); this.uiSet && Object.assign(this.uiSet, { glk: 1, glb: 26, theme: 'violet' });
@@ -8866,8 +8887,8 @@ class CoreStudio {
     this.showSubject = true;
     // The colour split ghost suits the glassy core only; worlds never get it.
     this.fxOn = false; this.fxLive = () => this.fxOn && this.subject < 0;
-    this.fxSection = this.el.querySelector('[data-studio-effect]').closest('details'); this.coreSection = this.el.querySelector('[data-studio-core]').closest('details'); this.partsSection = this.el.querySelector('[data-studio-layer="shells"]').closest('details'); this.worldSection = this.el.querySelector('[data-studio-layer="atmo"]').closest('details'); this.worldSection.hidden = true;
-    this.el.querySelector('[data-studio-reset]').onclick = () => { this.resetCoreFx(); Object.keys(this.layers).forEach(k => { this.layers[k] = k !== 'dust'; }); this.coreLayers.fill(true); this.blur = 8; this.applyPreset(this.preset, false); this.el.querySelectorAll('[data-studio-layer],[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioLayer !== 'dust'))); this.updateFocus(); this.commit(); };
+    this.fxSection = this.el.querySelector('[data-studio-effect]').closest('details'); this.coreSection = this.el.querySelector('[data-studio-core]').closest('details'); this.partsSection = this.el.querySelector('[data-studio-layer="shells"]').closest('details'); this.worldSection = this.el.querySelector('[data-studio-layer="atmo"]').closest('details'); this.updateAvail();
+    this.el.querySelector('[data-studio-reset]').onclick = () => { this.resetFx('subject'); Object.keys(this.layers).forEach(k => { this.layers[k] = k !== 'dust'; }); this.coreLayers.fill(true); this.blur = 8; this.applyPreset(this.preset, false); this.el.querySelectorAll('[data-studio-layer],[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioLayer !== 'dust'))); this.updateFocus(); this.commit(); };
     this.el.querySelector('[data-studio-fx]').onclick = e => {
       if (this.effect === 'off') { this.effect = 'chromatic'; if (!this.effectAmount) this.effectAmount = 4; const s = this.el.querySelector('[data-studio-effect]'); s.value = 'chromatic'; const r = this.el.querySelector('[data-studio-effect-amount]'); r.value = this.effectAmount; r.dispatchEvent(new Event('input')); this.syncFxLayers(); }
       else { const it = this.fxItem('colour'); if (it) { it.hide = !it.hide; this.applyFx(); this.renderLayers(); } }
@@ -8942,7 +8963,7 @@ class CoreStudio {
     const name = this.subject < 0 ? 'Cerebra' : this.app.orrery.worlds[this.subject].def.name;
     this.el.querySelector('[data-studio-subject]').value = String(this.subject);
     this.el.querySelector('[data-tune-label]').textContent = this.subject < 0 ? 'Tune core' : 'Tune world';
-    this.el.querySelector('[data-studio-fx]').hidden = this.subject >= 0; if (this.fxBox) this.fxBox.hidden = this.subject >= 0; this.fxSection.hidden = this.subject >= 0; this.coreSection.hidden = this.subject >= 0; this.partsSection.hidden = this.subject >= 0; this.worldSection.hidden = this.subject < 0; this.lastVfx = 0; this.paintVfx();
+    this.updateAvail(); this.lastVfx = 0; this.paintVfx();
     const roles = { title: name, index: String(this.subject + 2).padStart(3, '0'), kicker: `${name} / studio study` };
     this.items.forEach(it => { if (it.role in roles && !it.edited) { it.content = roles[it.role]; it.el.textContent = it.content; } });
     this.panel.querySelector('h2').textContent = `${name}, in focus.`;
@@ -8960,29 +8981,68 @@ class CoreStudio {
     this._cw = cw; return cw;
   }
   coreFxTarget() { return this.subject < 0 ? this.coreFxObj() : this.app.orrery.worlds[this.subject]; }
+  coreFxHidden() { const t = this._cw; return !!(t && t.tune.s_enabled && t.tune.s_style !== 'none' && +t.tune.s_hide); }
   coreFxSet(key, val) {
     const t = this.coreFxTarget(); if (!t) return;
     if (t.isCore) { Effects.set(t, key, val); try { const o = {}; Object.keys(t.tune).forEach(k => { o[k] = t.tune[k]; }); localStorage.setItem('cerebra.corefx.v1', JSON.stringify(o)); } catch (e) {} }
     else WorldTune.applyValues(t, { [key]: val });
+    this.syncCoreFx(true); this.updateAvail();
   }
-  syncCoreFx() {
+  // Which Surface/Burst controls matter for the current choice; the rest are greyed out and locked.
+  coreFxRelevant(t) {
+    const st = t.tune.s_style, on = st !== 'none', bu = +t.tune.b_burst === 1 && t.tune.b_enabled !== 0, ri = +t.tune.b_ring === 1 && t.tune.b_enabled !== 0;
+    const colourC = ['spike', 'threads', 'fur', 'wire', 'shards'].includes(st), noSize = ['wire', 'contour', 'meridian'].includes(st);
+    return {
+      s_hide: on, s_colorA: on, s_colorB: on, s_colorC: on && colourC, s_density: on, s_disp: on, s_size: on && !noSize, s_spin: on, s_shell: st === 'wire',
+      b_lines: bu, b_len: bu, b_twist: bu, b_curl: bu, b_flow: bu, b_count: ri, b_rin: ri, b_rwid: ri, b_soft: ri, b_tilt: ri, b_rspin: ri, b_size: bu || ri, b_colorA: bu || ri, b_colorB: bu || ri,
+    };
+  }
+  syncCoreFx(light) {
     const box = this.el.querySelector('[data-studio-corefx]'); if (!box || !box.dataset.ready) return;
-    const t = this.coreFxTarget(), def = Effects.defaults();
-    box.querySelectorAll('[data-cfx]').forEach(el => { const k = el.dataset.cfx, v = t && t.tune[k] != null ? t.tune[k] : def[k]; el.value = String(v); const o = el.parentNode.querySelector('output'); if (o) o.textContent = (+v).toFixed(2); if (el.type === 'range') rangeFill(el); });
-    const hide = box.querySelector('[data-cfx="s_hide"]'); if (hide) hide.closest('label').hidden = this.subject < 0;
+    const t = this.coreFxTarget(); if (!t) return; const def = Effects.defaults(), rel = this.coreFxRelevant(t);
+    box.querySelectorAll('[data-cfx]').forEach(el => { const k = el.dataset.cfx, v = t.tune[k] != null ? t.tune[k] : def[k]; if (!light || el !== document.activeElement) el.value = String(v); const o = el.parentNode.querySelector('output'); if (o) o.textContent = (+v).toFixed(2); if (el.type === 'range') rangeFill(el); });
+    box.querySelectorAll('[data-cfx-sw]').forEach(g => { const v = +(t.tune[g.dataset.cfxSw] ?? def[g.dataset.cfxSw]); g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === v))); });
+    box.querySelectorAll('[data-cfx-style]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cfxStyle === (t.tune.s_style || 'none'))));
+    box.querySelectorAll('[data-cfx-rel]').forEach(el => { const on = rel[el.dataset.cfxRel] !== false; el.classList.toggle('st-off', !on); if (on) el.removeAttribute('inert'); else el.setAttribute('inert', ''); });
   }
-  resetCoreFx() { const t = this._cw; if (!t) return; const d = Effects.defaults(); Object.keys(t.tune).forEach(k => Effects.set(t, k, d[k])); try { localStorage.removeItem('cerebra.corefx.v1'); } catch (e) {} this.syncCoreFx(); }
+  // Menus that do not apply to what is on stage are greyed out and locked (not hidden): world-only menus for Cerebra, core-only menus for a world,
+  // and the "Inside the core" menus while a surface style hides the original core.
+  updateAvail() {
+    if (!this.fxSection) return;
+    const core = this.subject < 0, hid = core && this.coreFxHidden();
+    const set = (el, on) => { if (!el) return; el.hidden = false; el.classList.toggle('st-off', !on); if (on) el.removeAttribute('inert'); else { el.setAttribute('inert', ''); if (el.tagName === 'DETAILS') el.open = false; } };
+    set(this.fxSection, core); set(this.coreSection, core && !hid); set(this.partsSection, core && !hid); set(this.worldSection, !core);
+    set(this.el.querySelector('[data-studio-fx]'), core); set(this.fxBox, core);
+  }
+  // scope: 'subject' = what is on stage now, 'core' = Cerebra only, 'all' = Cerebra and the world on stage.
+  resetFx(scope = 'subject') {
+    const d = Effects.defaults(), keys = Object.keys(d).filter(k => k.startsWith('s_') || k.startsWith('b_'));
+    const t = this._cw; if (t && (scope === 'all' || scope === 'core' || this.subject < 0)) { keys.forEach(k => Effects.set(t, k, d[k])); try { localStorage.removeItem('cerebra.corefx.v1'); } catch (e) {} }
+    if ((scope === 'all' || scope === 'subject') && this.subject >= 0) { const w = this.app.orrery.worlds[this.subject], o = {}; keys.forEach(k => { o[k] = d[k]; }); WorldTune.applyValues(w, o); }
+    this.syncCoreFx(); this.updateAvail();
+  }
   initCoreFx() {
     const box = this.el.querySelector('[data-studio-corefx]'); if (!box) return;
-    const row = (fx, c) => { const k = fx.prefix + c.key; return c.type === 'select' ? `<label class="studio-control"><span>${c.label}</span><select data-cfx="${k}">${c.options.map(([v, n]) => `<option value="${v}">${n}</option>`).join('')}</select></label>`
-      : c.type === 'color' ? `<label class="studio-control"><span>${c.label}</span><input type="color" data-cfx="${k}"></label>`
-      : `<label class="studio-control"><span>${c.label}</span><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" data-cfx="${k}"><output></output></label>`; };
-    box.innerHTML = [SURFACE, BURST].map(fx => `<p class="studio-note"><b>${fx.title}</b></p>` + fx.controls.map(c => row(fx, c)).join('')).join('');
+    const ICON = { none: '○', dotgrid: '∷', halftone: '◉', spike: '✺', threads: '〰', fur: '✷', wire: '⬡', plexus3d: '⌬', contour: '≋', meridian: '◍', cloud: '☁', shards: '◆' };
+    const ctl = (fx, key) => fx.controls.find(c => c.key === key), id = (fx, key) => fx.prefix + key;
+    const slider = (fx, key) => { const c = ctl(fx, key), k = id(fx, key); return `<label class="studio-control" data-cfx-rel="${k}"><span>${c.label}</span><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" data-cfx="${k}"><output></output></label>`; };
+    const sw = (fx, key) => { const c = ctl(fx, key), k = id(fx, key); return `<div class="cfx-row" data-cfx-rel="${k}"><span>${c.label}</span><div class="st-switch" data-cfx-sw="${k}"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>`; };
+    const cols = (fx, keys) => `<div class="cfx-cols">${keys.map(([key, name]) => `<label class="cfx-col" data-cfx-rel="${id(fx, key)}"><input type="color" data-cfx="${id(fx, key)}" aria-label="${name}"><span>${name}</span></label>`).join('')}</div>`;
+    const styleOpts = ctl(SURFACE, 'style').options;
+    box.innerHTML = `<div class="cfx-chips" role="group" aria-label="Surface style">${styleOpts.map(([v, n]) => `<button type="button" class="cfx-chip" data-cfx-style="${v}" aria-pressed="false"><i aria-hidden="true">${ICON[v] || '•'}</i>${n}</button>`).join('')}</div>`
+      + sw(SURFACE, 'hide') + cols(SURFACE, [['colorA', 'Colour A'], ['colorB', 'Colour B'], ['colorC', 'Colour C']])
+      + ['density', 'disp', 'size', 'spin'].map(k => slider(SURFACE, k)).join('') + sw(SURFACE, 'shell')
+      + `<p class="cfx-sub">Particle burst</p>` + sw(BURST, 'burst') + ['lines', 'len', 'twist', 'curl', 'flow'].map(k => slider(BURST, k)).join('')
+      + `<p class="cfx-sub">Particle ring</p>` + sw(BURST, 'ring') + ['count', 'rin', 'rwid', 'soft', 'tilt', 'rspin'].map(k => slider(BURST, k)).join('')
+      + `<p class="cfx-sub">Burst &amp; ring look</p>` + slider(BURST, 'size') + cols(BURST, [['colorA', 'Colour A'], ['colorB', 'Colour B']])
+      + `<button type="button" class="st-btn cfx-reset" data-cfx-reset>Reset surface &amp; burst</button>`;
     box.dataset.ready = '1';
     box.querySelectorAll('[data-cfx]').forEach(el => {
       el.addEventListener('input', () => { const v = el.type === 'range' ? +el.value : el.value; this.coreFxSet(el.dataset.cfx, v); const o = el.parentNode.querySelector('output'); if (o) o.textContent = (+v).toFixed(2); if (el.type === 'range') rangeFill(el); });
-      el.addEventListener('change', () => { if (el.tagName === 'SELECT') this.coreFxSet(el.dataset.cfx, el.value); });
     });
+    box.querySelectorAll('[data-cfx-style]').forEach(b => b.addEventListener('click', () => this.coreFxSet('s_style', b.dataset.cfxStyle)));
+    box.querySelectorAll('[data-cfx-sw]').forEach(g => g.querySelectorAll('button').forEach(b => b.addEventListener('click', () => this.coreFxSet(g.dataset.cfxSw, +b.dataset.v))));
+    box.querySelector('[data-cfx-reset]').addEventListener('click', () => this.resetFx('subject'));
     const det = box.closest('details'); if (det) det.addEventListener('toggle', () => { if (det.open) this.syncCoreFx(); });
     this.syncCoreFx();
   }
@@ -10340,11 +10400,11 @@ class CoreStudio {
     if (Math.abs(this.y + y) > maxY) { this.y = clamp(this.y + y, -maxY, maxY) - y; this.vy *= -.48; if (Math.abs(this.vy) < .15) this.vy = 0; }
     cam.position.set(0, 0, a.rig.baseZ); cam.lookAt(0, 0, 0); cam.fov = 32; cam.updateProjectionMatrix(); cam.updateMatrixWorld();
     a.camRight.set(1, 0, 0); a.camUp.set(0, 1, 0);
-    const c = a.core, p = c.planet, L = this.layers;
+    const hideCore = this.subject < 0 && this.coreFxHidden(), c = a.core, p = c.planet, L = hideCore ? (this._ln ||= Object.fromEntries(Object.keys(this.layers).map(k => [k, false]))) : this.layers;
     if(this.subject < 0){
       c.group.visible=true;
       a.core.update(dt, a.simTime, { expand:0,separation:0,stack:0,morph:0,flatten:0,intro:1,motion:a.reduced?0:1,reduced:a.reduced,focus:0,focusLayer:-1,rippleT:-1,pointer:a.pointerWorld,pull:0,x:x+this.x,y:y+this.y,scale,G:0,rotX:0,rotY:0,sun:0,spinVel:a.reduced?0:.07,pixelRatio:a.stage.pixelRatio,sizeScale:1.6*scale*a.core.planet.zoom/1.55 });
-      this.coreLayers.forEach((on,i)=>{LAYER_U.uStudioLayerVisible.value[i]=on?1:0;});
+      this.coreLayers.forEach((on,i)=>{LAYER_U.uStudioLayerVisible.value[i]=on&&!hideCore?1:0;});
       c.shells.group.visible=L.shells;c.rings.group.visible=L.rings;
       if(!L.rings&&this.ringsWasOn)p.runners.forEach(rn=>this.ringVisibility.set(rn,rn.pivot.visible));
       if(L.rings&&!this.ringsWasOn)p.runners.forEach(rn=>rn.pivot.visible=this.ringVisibility.get(rn)??rn.pivot.visible);
