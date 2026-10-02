@@ -2430,7 +2430,7 @@ const Settings = (() => {
 /* Canvas blur that also works where ctx.filter is missing (Safari before 18): repeated half-size passes down and back up. */
 function softBlur(src, r) {
   const w = src.width, h = src.height, out = document.createElement('canvas'); out.width = w; out.height = h;
-  const g = out.getContext('2d');
+  const g = out.getContext('2d'); if (!(r > .2)) { g.drawImage(src, 0, 0); return out; }
   if ('filter' in g) { g.filter = `blur(${r}px)`; g.drawImage(src, 0, 0); g.filter = 'none'; return out; }
   const steps = Math.max(1, Math.round(Math.log2(Math.max(1, r / 1.1)))); let cur = src; const sizes = [[w, h]];
   for (let i = 0; i < steps; i++) { const t = document.createElement('canvas'); t.width = Math.max(1, cur.width >> 1); t.height = Math.max(1, cur.height >> 1); const tg = t.getContext('2d'); tg.imageSmoothingEnabled = true; tg.imageSmoothingQuality = 'high'; tg.drawImage(cur, 0, 0, t.width, t.height); sizes.push([t.width, t.height]); cur = t; }
@@ -7781,6 +7781,7 @@ class CoreStudio {
         <label class="st-fly-row"><span>Darken outside</span><output data-fo="dim"></output><input type="range" min="0" max="0.7" step="0.05" data-fset="dim"></label>
         <label class="st-fly-row st-fly-check"><span>Show guide lines</span><input type="checkbox" data-fset="guides"></label>
         <p class="st-fly-sub">Where to blur</p>
+        <label class="st-fly-row st-fly-check"><span>Blur Cerebra &amp; background</span><input type="checkbox" data-fset="focusScene"></label>
         <label class="st-fly-row"><span>Blur area</span><select data-fset-sel="focusInv"><option value="0">Outside the shape</option><option value="1">Inside the shape</option></select></label>
         <label class="st-fly-row st-fly-check"><span>Also blur text &amp; numbers</span><input type="checkbox" data-fset="focusText"></label>
         <label class="st-fly-row st-fly-check"><span>Also blur shapes &amp; drawings</span><input type="checkbox" data-fset="focusObj"></label>
@@ -8006,7 +8007,7 @@ class CoreStudio {
     this.el.querySelectorAll('[data-studio-preset]').forEach(b => b.onclick = () => this.applyPreset(b.dataset.studioPreset));
     this.el.querySelectorAll('[data-studio-add]').forEach(b => b.onclick = () => this.addItem(b.dataset.studioAdd));
     this.el.querySelectorAll('[data-studio-decor]').forEach(b => b.onclick = () => this.addItem(b.dataset.studioDecor, { decor: true, fill: this.decorFill, opacity: this.decorOpacity }));
-    this.dim = 0; this.focusInv = 0; this.focusText = false; this.focusObj = false; this.guides = true; this.decorFill = '#ff3d8a'; this.decorOpacity = .85;
+    this.dim = 0; this.focusInv = 0; this.focusScene = true; this.focusText = false; this.focusObj = false; this.guides = true; this.decorFill = '#ff3d8a'; this.decorOpacity = .85;
     const flys = [...this.el.querySelectorAll('[data-fly]')], fmt = { blur: v => `${v}px`, dim: v => `${Math.round(v * 100)}%`, decorOpacity: v => `${Math.round(v * 100)}%` };
     this.syncStyle = () => { const it = this.sel; if (!it || !it.st) return; const f = this.el.querySelector('[data-fly="style"]');
       f.querySelectorAll('[data-sfor]').forEach(n => { n.hidden = n.dataset.sfor !== (it.decor ? 'decor' : 'focus'); });
@@ -8034,7 +8035,7 @@ class CoreStudio {
     flys.forEach(f => f.querySelectorAll('[data-studio-add],[data-studio-decor]').forEach(b => b.addEventListener('click', () => this.closeFly())));
     this.el.querySelectorAll('[data-fset]').forEach(el => {
       const k = el.dataset.fset;
-      el.addEventListener('input', () => { this[k] = el.type === 'checkbox' ? el.checked : el.type === 'color' ? el.value : +el.value; this.syncFly(); this.el.classList.toggle('hide-guides', !this.guides); if (k === 'blur' || k === 'dim' || k === 'focusText' || k === 'focusObj') this.updateFocus(); });
+      el.addEventListener('input', () => { this[k] = el.type === 'checkbox' ? el.checked : el.type === 'color' ? el.value : +el.value; this.syncFly(); this.el.classList.toggle('hide-guides', !this.guides); if (k === 'blur' || k === 'dim' || k === 'focusText' || k === 'focusObj' || k === 'focusScene') this.updateFocus(); });
       el.addEventListener('change', () => this.commit());
     });
     document.addEventListener('pointerdown', e => { if (!e.target.closest('.st-fly,[data-flyout]')) this.closeFly(); }, true);
@@ -9020,7 +9021,10 @@ class CoreStudio {
     const m = this.lmenu; if (!m || it.kind === 'fx') return; this.lmenuIt = it; m.hidden = false; m.innerHTML = '';
     const BL = [["normal", "Normal"], ["multiply", "Multiply"], ["darken", "Darken"], ["color-burn", "Color Burn"], ["lighten", "Lighten"], ["screen", "Screen"], ["color-dodge", "Color Dodge"], ["plus-lighter", "Add"], ["overlay", "Overlay"], ["soft-light", "Soft Light"], ["hard-light", "Hard Light"], ["difference", "Difference"], ["exclusion", "Exclusion"], ["hue", "Hue"], ["saturation", "Saturation"], ["color", "Color"], ["luminosity", "Luminosity"]];
     const item = (label, fn, o = {}) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'st-lm-i' + (o.on ? ' is-on' : ''); b.setAttribute('role', 'menuitem'); b.disabled = !!o.off; b.innerHTML = `<span>${label}</span>${o.tag ? `<i>${o.tag}</i>` : ''}`; b.onclick = () => { fn(); if (!o.keep) this.closeLayerMenu(); }; m.append(b); };
-    if (view === 'blend') {
+    if (view === 'focus') {
+      const h = document.createElement('div'); h.className = 'st-lm-h'; h.innerHTML = '<button type="button">‹ Back</button><b>Focus effect</b>'; h.firstChild.onclick = () => this.openLayerMenu(it, li); m.append(h);
+      [['auto', 'Auto (follow Focus rules)'], ['sharp', 'Always sharp'], ['blur', 'Always blurred']].forEach(([v, n]) => item(n, () => { it.focusMode = v === 'auto' ? null : v; this.updateFocus(); this.commit(); this.renderLayers(); }, { on: (it.focusMode || 'auto') === v }));
+    } else if (view === 'blend') {
       const h = document.createElement('div'); h.className = 'st-lm-h'; h.innerHTML = '<button type="button">‹ Back</button><b>Blend mode</b>'; h.firstChild.onclick = () => this.openLayerMenu(it, li); m.append(h);
       BL.forEach(([v, n]) => item(n, () => { it.blend = v === 'normal' ? null : v; this.place(it); this.commit(); this.renderLayers(); }, { on: (it.blend || 'normal') === v }));
     } else {
@@ -9035,6 +9039,7 @@ class CoreStudio {
       if (it.mask && it.mask.on) item('Delete Mask', () => { it.mask = null; if (this.maskEdit === it) this.setDrawing(false); this.place(it); this.commit(); });
       item('Drawing Assist', () => { it.assist = !it.assist; if (it.assist) this.armAssist(it); this.commit(); this.renderLayers(); }, { on: !!it.assist, off: !strokeish, tag: strokeish ? (it.assist ? 'on' : '') : 'drawings' });
       item('Invert', () => this.invertLayer(it));
+      if (it.kind === 'text' || it.decor || it.kind === 'stroke') item('Focus effect', () => this.openLayerMenu(it, li, 'focus'), { keep: true, tag: ({ sharp: 'sharp', blur: 'blurred' }[it.focusMode] || 'auto') + ' ›' });
       item('Delete', () => this.removeItem(it));
       item('Blend mode', () => this.openLayerMenu(it, li, 'blend'), { keep: true, tag: (BL.find(b => b[0] === (it.blend || 'normal')) || [0, 'Normal'])[1] + ' ›' });
     }
@@ -9128,7 +9133,7 @@ class CoreStudio {
     if (!quiet) this.commit();
   }  // Undo/redo: whole-composition snapshots (items, shape blur and the look settings).
   snapshot() {
-    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'grain', 'grainAmt', 'cpts', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides', 'groups', 'gridStyle', 'focusInv', 'focusText', 'focusObj'];
+    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'grain', 'grainAmt', 'cpts', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides', 'groups', 'gridStyle', 'focusInv', 'focusScene', 'focusText', 'focusObj'];
     return JSON.stringify({ s: Object.fromEntries(keys.map(k => [k, this[k]])), layers: this.layers, core: this.coreLayers,
       items: this.items.map(({ el, id, ...rest }) => rest) });
   }
@@ -9160,10 +9165,10 @@ class CoreStudio {
     const shapes = this.items.filter(i => i.kind !== 'text' && i.kind !== 'fx' && !i.decor && !this.isHid(i)), U = this.U(), on = this.active && shapes.length > 0 && (this.blur > 0 || this.dim > 0), W = innerWidth, H = innerHeight, gl = this.app.stage.renderer.domElement;
     if (this.focusOn !== on && this.gridMode === 'focus') { this.focusOn = on; this.paint(this.bg.getContext('2d'), this.bg.width, this.bg.height); }
     this.focusOn = on;
-    const inv = !!this.focusInv;
-    gl.style.filter = this.active ? `brightness(${this.light * (on && !inv ? 1 - this.dim : 1)})${on && !inv ? ` blur(${this.blur}px)` : ''}` : '';
-    this.bg.style.filter = this.vfx.style.filter = on && !inv ? `blur(${this.blur}px) brightness(${1 - this.dim})` : '';
-    this.fx.style.filter = on && inv ? `blur(${this.blur}px) brightness(${1 - this.dim})` : '';
+    const inv = !!this.focusInv, bpx = this.focusScene === false ? 0 : this.blur;
+    gl.style.filter = this.active ? `brightness(${this.light * (on && !inv ? 1 - this.dim : 1)})${on && !inv ? ` blur(${bpx}px)` : ''}` : '';
+    this.bg.style.filter = this.vfx.style.filter = on && !inv ? `blur(${bpx}px) brightness(${1 - this.dim})` : '';
+    this.fx.style.filter = on && inv ? `blur(${bpx}px) brightness(${1 - this.dim})` : '';
     this.updateItemBlur();
     this.fx.style.display = on ? 'block' : 'none';
     if (!on) return;
@@ -9188,6 +9193,7 @@ class CoreStudio {
   }
   itemBlurPx(it, shapes) {
     if (!this.active || !shapes.length || !(this.blur > 0)) return 0;
+    if (it.focusMode === 'sharp') return 0; if (it.focusMode === 'blur') return this.blur;
     if (it.kind === 'text' ? !this.focusText : (it.kind === 'fx' || !it.decor && it.kind !== 'stroke' || !this.focusObj)) return 0;
     const inside = this.inFocus(it, shapes); return (this.focusInv ? inside : !inside) ? this.blur : 0;
   }
@@ -9219,7 +9225,7 @@ class CoreStudio {
       const U=this.U(),shapes=this.items.filter(i=>i.kind!=='text'&&i.kind!=='fx'&&!i.decor&&!i.ref&&!this.isHid(i));
       if(shapes.length&&(this.blur>0||this.dim>0)){
         const blurred=document.createElement('canvas');blurred.width=width;blurred.height=height;
-        const b=blurred.getContext('2d');b.drawImage(softBlur(out,this.blur*Math.max(sx,sy)),0,0);if(this.dim>0){b.fillStyle=`rgba(0,0,0,${this.dim})`;b.fillRect(0,0,width,height);}
+        const b=blurred.getContext('2d');b.drawImage(softBlur(out,(this.focusScene===false?0:this.blur)*Math.max(sx,sy)),0,0);if(this.dim>0){b.fillStyle=`rgba(0,0,0,${this.dim})`;b.fillRect(0,0,width,height);}
         b.globalCompositeOperation=this.focusInv?'destination-in':'destination-out';b.beginPath();
         const roundedList=[];shapes.forEach(s=>{const x=s.x*width,y=s.y*height,rx=s.w*U*sx/2,ry=s.h*U*sy/2,a=(s.rot||0)*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a),P=(u,v)=>[x+u*ca-v*sa,y+u*sa+v*ca];b.moveTo(x+rx,y);
           if(s.kind==='circle')b.ellipse(x,y,rx,ry,a,0,Math.PI*2);
