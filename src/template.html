@@ -1809,8 +1809,8 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
     <div class="tune-row"><span>Inner orb</span><div class="tune-seg" data-t-inner><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
     
     <p class="tune-sub">Glass</p>
-    <label class="tune-row"><span>Clarity</span><input type="range" min="0" max="4" step="0.05" value="1" data-t-clarity><b data-out>1.0x</b></label>
-    <label class="tune-row"><span>Rim glow</span><input type="range" min="0" max="2" step="0.05" value="0.55" data-t-rim><b data-out>0.55</b></label>
+    <label class="tune-row"><span>Clarity</span><input type="range" min="0" max="4" step="0.05" value="0" data-t-clarity><b data-out>0.0x</b></label>
+    <label class="tune-row"><span>Rim glow</span><input type="range" min="0" max="2" step="0.05" value="0" data-t-rim><b data-out>0.00</b></label>
     
     <p class="tune-sub">Metal band</p>
     <div class="tune-row"><span>Metal band</span><div class="tune-seg" data-t-band><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
@@ -2844,7 +2844,7 @@ const WorldTune = (() => {
     });
     q('[data-t-view]').addEventListener('click', () => { call('resetView'); setRange(zoom, 1, v => v.toFixed(2) + 'x'); });
     const resetUI = () => {
-      [[dens, CORE_DEFAULTS.density, pct], [structure, CORE_DEFAULTS.structure, pct], [spd, 1, times], [thick, 1, times], [clar, 1, times], [rim, 0.55, v => v.toFixed(2)], [haze, CORE_DEFAULTS.haze, pct],
+      [[dens, CORE_DEFAULTS.density, pct], [structure, CORE_DEFAULTS.structure, pct], [spd, 1, times], [thick, 1, times], [clar, 0, times], [rim, 0, v => v.toFixed(2)], [haze, CORE_DEFAULTS.haze, pct],
        [frate, 1, times], [famt, 1, times], [bands, 1, v => String(Math.round(v))], [swarm, CORE_DEFAULTS.swarm, pct], [swsize, 1, times], [cmN, CORE_DEFAULTS.comets, intf], [cmTail, 1, times], [cmSpeed, 1, times], [cmSize, 1, times], [cmDive, 1, times], [ptrs, 1, times], [gain, 1, times], [zoom, 1, v => v.toFixed(2) + 'x']].forEach(([el, v, f]) => setRange(el, v, f));
       LAYER_U.uStructure.value = CORE_DEFAULTS.structure;
       Object.assign(pcfg, { mode: 'original', a: '#ff4655', b: '#8b5cf6', ink: 'auto' }); showPaint(); ['outer', 'inner'].forEach(k => { shellSel(k).value = 'sphere'; }); shellSel('nucleus').value = 'off'; ['outer', 'inner', 'nucleus'].forEach(k => { shellCol(k).value = '#dfe4ea'; });
@@ -2957,7 +2957,7 @@ const WorldTune = (() => {
       const b = body(); if (!b) return null;
       return { density: b.density, structure: LAYER_U.uStructure.value, speed: b.speed, dir: b.dir, shape: b.shape, neon: hex(b.uNeon.value), theme: b.theme || 'nebula',
         rings: b.ringCount, layers: LAYER_U.uLayerCol.value.map(c => '#' + c.getHexString()), layerVisible: [...LAYER_U.uLayerVisible.value], layerValues: Object.fromEntries(Object.entries(layerKey).map(([k, u]) => [k, [...LAYER_U[u].value]])), comets: b.cometState(), bands: b.bandCount, swarm: b.swarmAmt, swsize: b.swarmMat.uniforms.uSize.value, swcolor: hex(b.swarmMat.uniforms.uColor.value), band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
-        clarity: +clar.value, rim: +rim.value, inner: b.inner.show, haze: b.hazeDensity, frate: b.uFlareRate.value, famt: b.uFlareAmt.value, fcolor: '#' + b.uFlareColor.value.getHexString(),
+        gv: 2, clarity: +clar.value, rim: +rim.value, inner: b.inner.show, haze: b.hazeDensity, frate: b.uFlareRate.value, famt: b.uFlareAmt.value, fcolor: '#' + b.uFlareColor.value.getHexString(),
         ptr: b.ptrMode, ptrs: b.ptrStrength, shells: { ...b.shellKind }, shellColors: { ...b.shellColors }, paint: { ...pcfg },
         lens: LENS_U.uLensOn.value, aberr: LENS_U.uLensAberr.value, blur: LENS_U.uLensBlur.value, bloom: LENS_U.uLensBloom.value };
     }
@@ -2980,7 +2980,8 @@ const WorldTune = (() => {
       if (s.comets) { const c = s.comets; b.setComets(c); setRange(cmN, c.n, intf); setRange(cmTail, c.tail, times); setRange(cmSpeed, c.speed, times); setRange(cmSize, c.size, times); setRange(cmDive, c.dive, times); cometC.set(c.color); }
       if (s.bands) { b.setBandCount(s.bands); setRange(bands, s.bands, v => String(Math.round(v))); }
       if (s.swarm != null) { b.setSwarm(s.swarm, s.swsize, s.swcolor); setRange(swarm, s.swarm, pct); setRange(swsize, s.swsize, times); swarmC.set(s.swcolor); }
-      b.setGlass(s.clarity, s.rim); setRange(clar, s.clarity, times); setRange(rim, s.rim, v => v.toFixed(2));
+      const gOk = s.gv === 2, gC = gOk ? s.clarity : 0, gR = gOk ? s.rim : 0; // saved states from before the zero default keep their glass off
+      b.setGlass(gC, gR); setRange(clar, gC, times); setRange(rim, gR, v => v.toFixed(2));
       b.setInner(s.inner); inner.set(s.inner ? 1 : 0);
       if (s.paint) { Object.assign(pcfg, s.paint); showPaint(); b.paint = { ...pcfg }; b.applyPaint(true); }
       if (s.shellColors) Object.entries(s.shellColors).forEach(([k, v]) => { b.setShellColor(k, v); shellCol(k).value = v; });
@@ -4478,7 +4479,7 @@ class PlanetBody {
     const glass = (radius, rim, name) => {
       const g = new THREE.SphereGeometry(radius, 64, 48);
       const m = additive({
-        uniforms: { uColor: { value: new THREE.Color('#dfe4ea') }, uHiColor: this.uHiColor, uOpacity: { value: 0 }, uRim: { value: rim }, uClarity: { value: 1 }, uHi: { value: 0 }, uPulse: this.uPulse },
+        uniforms: { uColor: { value: new THREE.Color('#dfe4ea') }, uHiColor: this.uHiColor, uOpacity: { value: 0 }, uRim: { value: 0 }, uClarity: { value: 0 }, uHi: { value: 0 }, uPulse: this.uPulse },
         vertexShader: GLASS_VERT, fragmentShader: GLASS_FRAG
       });
       const mesh = new THREE.Mesh(g, m);
@@ -4894,7 +4895,7 @@ class PlanetBody {
     this.setRingCount(CORE_DEFAULTS.rings);
     this.setTheme('nebula');
     this.setDensity(CORE_DEFAULTS.density); this.setHaze(CORE_DEFAULTS.haze); this.setSpeed(1); this.setDirection(1); this.setShape(0);
-    this.setFlare(1, 1); this.setFlareColor("#ffffff"); this.setPointer(0, 1); this.setBand(true, 1); this.setBandCount(1); this.setSwarm(CORE_DEFAULTS.swarm, 1, '#cfe3ff'); this.setComets({ n: CORE_DEFAULTS.comets, tail: 1, speed: 1, size: 1, dive: 1, color: '#9fd4ff' }); this.setInner(true); this.setGlass(1, 0.55);
+    this.setFlare(1, 1); this.setFlareColor("#ffffff"); this.setPointer(0, 1); this.setBand(true, 1); this.setBandCount(1); this.setSwarm(CORE_DEFAULTS.swarm, 1, '#cfe3ff'); this.setComets({ n: CORE_DEFAULTS.comets, tail: 1, speed: 1, size: 1, dive: 1, color: '#9fd4ff' }); this.setInner(true); this.setGlass(0, 0);
     this.outer.show = true; this.resetView(); this.selected = null;
     this.paint = { mode: 'original', a: '#ff4655', b: '#8b5cf6', ink: 'auto' }; this._painted = false; this._paintKey = ''; this.shellColors = {};
     this.setShell('outer', 'sphere'); this.setShell('inner', 'sphere'); this.setShell('nucleus', 'off'); this.setInner(true);
@@ -8225,6 +8226,7 @@ class CoreStudio {
       this.el.querySelector('[data-freeze-label]').textContent = 'Stop';
       this.el.querySelectorAll('[data-studio-layer],[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioLayer !== 'dust')));
       this.home(); this.applyPreset('ember'); this.paintVfx(); this.renderLayers();
+      ['[data-t-clarity]', '[data-t-rim]'].forEach(sel => { const e = document.querySelector(sel); if (e) { e.value = 0; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); } }); // Glass is always 0 after a reset
     };
     const resetFull = () => {
       resetCanvas(); document.querySelector('[data-t-reset]').click(); this.resetTrays();
