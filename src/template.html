@@ -918,7 +918,7 @@ body.studio-on #studio{display:block}
 #studio .studio-preset[aria-pressed=true]{border:2px solid #ff4655;box-shadow:0 0 0 3px #ff465533}
 .studio-stage{position:absolute;inset:0;z-index:0;pointer-events:none;transition:transform .35s cubic-bezier(.3,.7,.2,1)}
 .st-item{position:absolute;pointer-events:auto;touch-action:none}
-.st-text{transform:translate(var(--ax,-50%),-50%) rotate(var(--rot,0deg));white-space:pre;cursor:grab;padding:4px 6px;line-height:1.02;border-radius:4px;outline:1px dashed transparent;outline-offset:2px;text-shadow:0 2px 14px #0004}
+.st-text{transform:translate(var(--ax,-50%),calc(-50% + var(--by,0px))) rotate(var(--rot,0deg));white-space:pre;cursor:grab;padding:4px 6px;line-height:1.02;border-radius:4px;outline:1px dashed transparent;outline-offset:2px;text-shadow:0 2px 14px #0004}
 .st-text:hover{outline-color:#ffffff40}
 .st-text.is-selected{outline:1px solid #ff4655}
 .st-text[contenteditable=true]{cursor:text;outline:1px solid #fff;background:#0005}
@@ -1351,6 +1351,12 @@ html,body{touch-action:pan-x pan-y}
 #studio .st-assist.is-mask .st-mask-note{display:block}
 .st-item.is-ref{outline:1px dashed #ffffff55}
 #studio .st-save[hidden]{display:none!important}
+.st-td-al,.st-td-tg{display:flex;gap:6px;margin-top:8px}
+.st-td-al button,.st-td-tg button{flex:1;min-height:42px;border:0;border-radius:12px;background:#ffffff14;color:#e8ecf4;font:600 14px var(--f-sans);cursor:pointer}
+.st-td-al button[aria-pressed=true],.st-td-tg button[aria-pressed=true]{background:var(--cyg);color:#fff;box-shadow:0 0 14px #8b5cf666}
+.st-td-al .st-i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.td-o{-webkit-text-stroke:1px currentColor;-webkit-text-fill-color:transparent;font-weight:700}
+#studio .st-context{flex-wrap:wrap;row-gap:8px;height:auto!important;min-height:0;justify-content:center;max-width:min(920px,calc(100% - 24px))}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -2407,6 +2413,39 @@ function softBlur(src, r) {
 const rangeFill = el => { const mn = +el.min || 0, mx = el.max === '' ? 100 : +el.max, v = +el.value; el.style.setProperty('--p', ((v - mn) / ((mx - mn) || 1) * 100) + '%'); };
 ['input', 'change'].forEach(t => document.addEventListener(t, e => { if (e.target && e.target.type === 'range') rangeFill(e.target); }, true));
 setInterval(() => { if (!document.hidden) document.querySelectorAll('input[type=range]').forEach(rangeFill); }, 350);
+/* Poster encoders: PNG/JPEG/WebP via the browser, plus PDF, TIFF and flattened PSD written here. */
+async function encodePoster(c, type) {
+  const blob = (t, q) => new Promise(r => c.toBlob(r, t, q));
+  if (type === 'image/png' || type === 'image/webp' || type === 'image/jpeg') return blob(type, .95);
+  const w = c.width, h = c.height, px = c.getContext('2d').getImageData(0, 0, w, h).data;
+  if (type === 'image/tiff') {
+    const n = w * h * 4, ifdN = 12, ifd = 8, bps = ifd + 2 + ifdN * 12 + 4, data = bps + 8, buf = new ArrayBuffer(data + n), v = new DataView(buf);
+    v.setUint16(0, 0x4949, true); v.setUint16(2, 42, true); v.setUint32(4, 8, true); v.setUint16(ifd, ifdN, true);
+    const tag = (i, t, ty, cnt, val) => { const o = ifd + 2 + i * 12; v.setUint16(o, t, true); v.setUint16(o + 2, ty, true); v.setUint32(o + 4, cnt, true); if (ty === 3 && cnt === 1) v.setUint16(o + 8, val, true); else v.setUint32(o + 8, val, true); };
+    tag(0, 256, 4, 1, w); tag(1, 257, 4, 1, h); tag(2, 258, 3, 4, bps); tag(3, 259, 3, 1, 1); tag(4, 262, 3, 1, 2); tag(5, 273, 4, 1, data); tag(6, 277, 3, 1, 4); tag(7, 278, 4, 1, h); tag(8, 279, 4, 1, n); tag(9, 284, 3, 1, 1); tag(10, 338, 3, 1, 2); tag(11, 305, 2, 0, 0);
+    v.setUint32(ifd + 2 + ifdN * 12, 0, true); for (let i = 0; i < 4; i++) v.setUint16(bps + i * 2, 8, true);
+    new Uint8Array(buf, data).set(px); return new Blob([buf], { type: 'image/tiff' });
+  }
+  if (type === 'image/vnd.adobe.photoshop') {
+    const plane = w * h, buf = new ArrayBuffer(26 + 4 + 4 + 4 + 2 + plane * 3), v = new DataView(buf), u = new Uint8Array(buf);
+    u.set([0x38, 0x42, 0x50, 0x53], 0); v.setUint16(4, 1); v.setUint16(12, 3); v.setUint32(14, h); v.setUint32(18, w); v.setUint16(22, 8); v.setUint16(24, 3);
+    let o = 26 + 12 + 2; for (let ch = 0; ch < 3; ch++) for (let i = 0; i < plane; i++) u[o++] = px[i * 4 + ch];
+    return new Blob([buf], { type: 'image/vnd.adobe.photoshop' });
+  }
+  if (type === 'application/pdf') {
+    const jpg = new Uint8Array(await (await blob('image/jpeg', .95)).arrayBuffer()), pw = (w * .5).toFixed(2), ph = (h * .5).toFixed(2), enc = new TextEncoder(), parts = [], off = []; let len = 0;
+    const push = b => { const x = typeof b === 'string' ? enc.encode(b) : b; parts.push(x); len += x.length; };
+    push('%PDF-1.4\n'); const obj = (n, body) => { off[n] = len; push(`${n} 0 obj\n${body}\nendobj\n`); };
+    obj(1, '<< /Type /Catalog /Pages 2 0 R >>'); obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+    obj(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] /Contents 4 0 R /Resources << /XObject << /Im0 5 0 R >> >> >>`);
+    const cs = `q ${pw} 0 0 ${ph} 0 0 cm /Im0 Do Q`; obj(4, `<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`);
+    off[5] = len; push(`5 0 obj\n<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`); push(jpg); push('\nendstream\nendobj\n');
+    const x0 = len; push(`xref\n0 6\n0000000000 65535 f \n` + [1, 2, 3, 4, 5].map(n => String(off[n]).padStart(10, '0') + ' 00000 n \n').join('')); push(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${x0}\n%%EOF`);
+    return new Blob(parts, { type: 'application/pdf' });
+  }
+  return blob('image/png');
+}
+window.__encodePoster = encodePoster;
 /* Block pinch-zoom of the whole page (Safari ignores user-scalable=no) */
 ['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
 document.addEventListener('touchmove', e => { if (e.touches.length > 1 && !e.target.closest('[data-allow-pinch]')) e.preventDefault(); }, { passive: false });
@@ -7748,6 +7787,16 @@ class CoreStudio {
         <label class="st-fly-row"><span>Guide thickness</span><output data-do="gthick"></output><input type="range" min="0.5" max="4" step="0.5" data-dset="gthick"></label>
         <label class="st-fly-row st-fly-check"><span>Drawing assist (snap to guide)</span><input type="checkbox" data-dset="assist"></label>
         <button type="button" class="st-btn is-primary" data-draw-done>Done drawing</button></div>
+      <div class="st-fly st-glass" data-fly="textdesign" hidden><b class="st-fly-title">Design</b>
+        <label class="st-fly-row"><span>Size</span><output data-tdo="size"></output><input type="range" min="10" max="220" step="1" data-td="size"></label>
+        <label class="st-fly-row"><span>Kerning (word gap)</span><output data-tdo="kern"></output><input type="range" min="-0.3" max="1.5" step="0.02" data-td="kern"></label>
+        <label class="st-fly-row"><span>Tracking (letter gap)</span><output data-tdo="track"></output><input type="range" min="-0.1" max="0.6" step="0.01" data-td="track"></label>
+        <label class="st-fly-row"><span>Leading (line height)</span><output data-tdo="lead"></output><input type="range" min="0.6" max="2.6" step="0.02" data-td="lead"></label>
+        <label class="st-fly-row"><span>Baseline shift</span><output data-tdo="base"></output><input type="range" min="-80" max="80" step="1" data-td="base"></label>
+        <label class="st-fly-row"><span>Opacity</span><output data-tdo="alpha"></output><input type="range" min="0.05" max="1" step="0.05" data-td="alpha"></label>
+
+        <div class="st-td-al" role="group" aria-label="Alignment"><button type="button" data-talign="l" aria-label="Align left"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 10h10M4 14h16M4 18h10"/></svg></button><button type="button" data-talign="c" aria-label="Align centre"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 10h10M4 14h16M7 18h10"/></svg></button><button type="button" data-talign="r" aria-label="Align right"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M10 10h10M4 14h16M10 18h10"/></svg></button><button type="button" data-talign="j" aria-label="Align justify"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg></button></div>
+        <div class="st-td-tg" role="group" aria-label="Text style"><button type="button" data-ttoggle="ul" aria-pressed="false" aria-label="Underline"><u>U</u></button><button type="button" data-ttoggle="outline" aria-pressed="false" aria-label="Outline"><span class="td-o">O</span></button><button type="button" data-ttoggle="bold" aria-pressed="false" aria-label="Bold"><b>B</b></button><button type="button" data-ttoggle="italic" aria-pressed="false" aria-label="Italic"><i>I</i></button><button type="button" data-ttoggle="upper" aria-pressed="false" aria-label="All caps">TT</button></div></div>
       <div class="st-fly st-glass" data-fly="style" hidden><b class="st-fly-title">Shape style</b>
         <label class="st-fly-row st-fly-check" data-sfor="decor"><span>Fill colour</span><input type="checkbox" data-sset="fillOn"></label>
         <label class="st-fly-row st-fly-check"><span>Outline</span><input type="checkbox" data-sset="lineOn"></label>
@@ -7760,6 +7809,7 @@ class CoreStudio {
         <span data-ctx-for="text"><input type="text" data-ctx-content aria-label="Text"></span>
         <span data-ctx-for="text"><select data-ctx-font aria-label="Font"><option value="display">Bebas Neue</option><option value="sans">Barlow</option><option value="cond">Barlow Condensed</option><option value="mono">Geist Mono</option><option value="valorant">Valorant</option></select></span>
         <label data-ctx-for="text">Size<input type="range" min="10" max="220" data-ctx-size><output></output></label>
+        <button type="button" class="st-btn st-fly-btn" data-flyout="textdesign" data-ctx-for="text" aria-expanded="false">Design<i class="st-caret"></i></button>
         <span data-ctx-for="text"><input type="color" data-ctx-color aria-label="Text colour"></span>
         <span data-ctx-for="decor"><input type="color" data-ctx-fill aria-label="Shape colour"></span><label data-ctx-for="decor">Opacity<input type="range" min="0.05" max="1" step="0.05" data-ctx-opacity><output></output></label>
         <label data-ctx-for="shape">Outside blur<input type="range" min="0" max="30" data-ctx-blur><output></output></label>
@@ -7767,8 +7817,9 @@ class CoreStudio {
         <span class="st-rotbox"><label>Rotate<input type="number" step="1" min="-360" max="360" data-ctx-rot aria-label="Rotation in degrees"><i>°</i></label><label>Snap<select data-ctx-rsnap aria-label="Rotation snap"><option value="0">Free</option><option value="15">15°</option><option value="45">45°</option><option value="90">90°</option><option value="180">180°</option><option value="custom">Custom…</option></select></label><input type="number" min="1" max="180" step="1" data-ctx-rsnap-n hidden placeholder="°" aria-label="Custom snap degrees"></span>
         <button type="button" class="st-btn" data-ctx-lock></button><button type="button" class="st-btn" data-ctx-dup aria-label="Duplicate"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg><span>Copy</span></button><button type="button" class="st-btn" data-ctx-delete aria-label="Delete">${this.icons.trash}</button></div>
       <div class="st-save st-glass" data-studio-save hidden><span class="st-ctx-kind">Save image</span>
-        <label>Format<select data-save-type><option value="image/png">PNG</option><option value="image/jpeg">JPG</option><option value="image/webp">WebP</option></select></label>
+        <label>Format<select data-save-type><option value="image/png">PNG</option><option value="image/jpeg">JPEG</option><option value="application/pdf">PDF</option><option value="image/tiff">TIFF</option><option value="image/vnd.adobe.photoshop">PSD</option><option value="image/webp">WebP</option><option value="application/x-cerebra">Cerebra project</option></select></label>
         <label>Size<select data-save-scale><option value="1">1× screen</option><option value="2" selected>2× (sharp)</option><option value="3">3× (print)</option></select></label>
+        <button type="button" class="st-btn" data-save-import>Import project</button><input type="file" accept=".cerebra,.json,application/json" data-save-file hidden>
         <button type="button" class="st-btn is-primary" data-save-go>Download</button></div>
       <div class="st-lib" data-studio-library hidden><div class="st-lib-head"><b>Library</b><span data-lib-count></span><button type="button" class="st-btn" data-lib-mode aria-pressed="false">Circular</button><button type="button" class="st-btn" data-lib-close aria-label="Close library">✕</button></div>
         <div class="st-lib-track" data-lib-track></div><p class="st-lib-empty" data-lib-empty>Nothing kept yet. Press Keep in the toolbar to save this composition.</p></div>
@@ -7953,7 +8004,7 @@ class CoreStudio {
     this.closeFly = () => { flys.forEach(f => { f.hidden = true; }); this.el.querySelectorAll('[data-flyout]').forEach(b => b.setAttribute('aria-expanded', 'false')); };
     this.el.querySelectorAll('[data-flyout]').forEach(b => b.onclick = e => {
       e.stopPropagation(); const f = this.el.querySelector(`[data-fly="${b.dataset.flyout}"]`), open = f.hidden; this.closeFly(); if (!open) return;
-      if (b.dataset.flyout === 'style') this.syncStyle(); else this.select(null); this.syncFly(); f.hidden = false; b.setAttribute('aria-expanded', 'true');
+      if (b.dataset.flyout === 'style') this.syncStyle(); else if (b.dataset.flyout === 'textdesign') this.syncText(); else this.select(null); this.syncFly(); f.hidden = false; b.setAttribute('aria-expanded', 'true');
       const r = b.getBoundingClientRect(), W = innerWidth, H = innerHeight, fw = f.offsetWidth, fh = f.offsetHeight;
       let x = r.right + 12, y = r.top; if (x + fw > W - 8) x = r.left - fw - 12; if (x < 8) { x = clamp(r.left + r.width / 2 - fw / 2, 8, W - fw - 8); y = r.top - fh - 12; if (y < 8) y = r.bottom + 12; }
       f.style.left = `${x}px`; f.style.top = `${clamp(y, 8, H - fh - 8)}px`;
@@ -8007,6 +8058,7 @@ class CoreStudio {
     saveBtn.onclick = () => { saveMenu.hidden = !saveMenu.hidden; saveBtn.setAttribute('aria-expanded', String(!saveMenu.hidden)); if (!saveMenu.hidden) this.select(null); };
     document.addEventListener('pointerdown', e => { if (!saveMenu.hidden && !e.target.closest('.st-save,[data-studio-export]')) { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); } }, true);
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !saveMenu.hidden) { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); } });
+    const fileIn = this.el.querySelector('[data-save-file]'); this.el.querySelector('[data-save-import]').onclick = () => fileIn.click(); fileIn.onchange = () => { if (fileIn.files[0]) this.importProject(fileIn.files[0]); fileIn.value = ''; saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); };
     this.el.querySelector('[data-save-go]').onclick = () => { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); this.exportPoster(saveMenu.querySelector('[data-save-type]').value, +saveMenu.querySelector('[data-save-scale]').value); };
     const ctx = k => this.ctx.querySelector(`[data-ctx-${k}]`), withText = f => e => { const it = this.sel; if (it && it.kind === 'text') { f(it, e.target); it.edited = true; this.place(it); } };
     ctx('content').oninput = withText((it, el) => { it.content = el.value; it.el.textContent = el.value; this.renderLayers(); });
@@ -8015,6 +8067,19 @@ class CoreStudio {
     ctx('font').onchange = withText((it, el) => { it.font = el.value; });
     ctx('size').oninput = withText((it, el) => { it.size = +el.value; el.nextElementSibling.textContent = `${it.size}`; });
     ctx('color').oninput = withText((it, el) => { it.color = el.value; });
+    {
+      const f = this.el.querySelector('[data-fly="textdesign"]'), fmtT = { size: v => `${Math.round(v)}pt`, kern: v => `${Math.round(v * 100)}%`, track: v => `${Math.round(v * 100)}%`, lead: v => `${(+v).toFixed(2)}×`, base: v => `${Math.round(v)}pt`, alpha: v => `${Math.round(v * 100)}%` };
+      const map = { size: 'size', kern: 'kern', track: 'ls', lead: 'lead', base: 'base', alpha: 'alpha' };
+      this.syncText = () => { const it = this.sel; if (!it || it.kind !== 'text') return;
+        f.querySelectorAll('[data-td]').forEach(el => { const k = el.dataset.td, v = it[map[k]] ?? (k === 'alpha' ? 1 : 0); el.value = v; f.querySelector(`[data-tdo="${k}"]`).textContent = fmtT[k](v); el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%'); });
+        f.querySelectorAll('[data-talign]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.talign === it.align)));
+        const on = { ul: it.ul, outline: it.outline, bold: it.weight >= 600, italic: it.italic, upper: it.upper };
+        f.querySelectorAll('[data-ttoggle]').forEach(b => b.setAttribute('aria-pressed', String(!!on[b.dataset.ttoggle])));
+        ctx('size').value = it.size; ctx('size').nextElementSibling.textContent = String(it.size); };
+      f.querySelectorAll('[data-td]').forEach(el => { el.addEventListener('input', () => { const it = this.sel; if (!it || it.kind !== 'text') return; it[map[el.dataset.td]] = +el.value; it.edited = true; this.place(it); this.syncText(); }); el.addEventListener('change', () => this.commit()); });
+      f.querySelectorAll('[data-talign]').forEach(b => b.addEventListener('click', () => { const it = this.sel; if (!it) return; it.align = b.dataset.talign; this.place(it); this.syncText(); this.commit(); }));
+      f.querySelectorAll('[data-ttoggle]').forEach(b => b.addEventListener('click', () => { const it = this.sel; if (!it) return; const k = b.dataset.ttoggle; if (k === 'bold') it.weight = it.weight >= 600 ? 400 : 700; else it[k] = !it[k]; this.place(it); this.syncText(); this.commit(); }));
+    }
     ctx('fill').oninput = e => { const it = this.sel; if (it && it.decor) { it.fill = e.target.value; if (it.st && !it.st.fillOn) it.st.lineColor = it.fill; this.place(it); this.renderLayers(); } };
     ctx('opacity').oninput = e => { const it = this.sel; if (it && it.decor) { it.opacity = +e.target.value; e.target.nextElementSibling.textContent = `${Math.round(it.opacity * 100)}%`; this.place(it); } };
     ['fill', 'opacity'].forEach(k => ctx(k).addEventListener('change', () => this.commit()));
@@ -8292,7 +8357,7 @@ class CoreStudio {
     if (kind === 'stroke' && !o.strokes && o.pts) { o = { ...o, strokes: [{ pts: o.pts, color: (o.st && o.st.lineColor) || o.fill || '#ffffff', size: (o.st && o.st.lineW) || 4, opacity: o.opacity ?? 1, dash: (o.st && o.st.dash) || 'solid' }] }; delete o.pts; }
     const W = innerWidth, H = innerHeight, side = .2;
     const it = { id: ++this.itemId, kind, x: .5, y: .45, w: side * Math.min(1, H / W), h: side * Math.min(1, W / H), locked: false,
-      content: 'Your text', font: 'display', size: Math.round(clamp(W * .05, 32, 72)), color: '#ffffff', weight: 400, ls: 0, upper: false, align: 'c', role: null, ...o };
+      content: 'Your text', font: 'display', size: Math.round(clamp(W * .05, 32, 72)), color: '#ffffff', weight: 400, ls: 0, kern: 0, lead: 1.02, base: 0, ul: false, outline: false, italic: false, upper: false, align: 'c', role: null, ...o };
     if (kind !== 'text') {
       it.w = o.w ?? .32; it.h = o.h ?? .32; if (kind === 'stroke') { it.w0 = o.w0 ?? it.w; it.h0 = o.h0 ?? it.h; }
       if (it.decor) { it.fill = o.fill ?? '#ff3d8a'; it.opacity = o.opacity ?? .85; }
@@ -8351,8 +8416,8 @@ class CoreStudio {
     el.classList.toggle('is-locked', it.locked);
     if (it.kind === 'text') {
       const family = { display: '"Bebas Neue",var(--f-display)', sans: 'var(--f-sans)', cond: 'var(--f-cond)', mono: 'var(--f-num)', valorant: '"Valorant",var(--f-display)' };
-      Object.assign(el.style, { left: `${it.x * 100}%`, top: `${it.y * 100}%`, fontFamily: family[it.font], fontSize: `${it.size}px`, color: it.color, fontWeight: it.weight, letterSpacing: `${it.ls}em`, textTransform: it.upper ? 'uppercase' : 'none', textAlign: { l: 'left', c: 'center', r: 'right' }[it.align] });
-      el.style.setProperty('--ax', { l: '0%', c: '-50%', r: '-100%' }[it.align]);
+      Object.assign(el.style, { left: `${it.x * 100}%`, top: `${it.y * 100}%`, fontFamily: family[it.font], fontSize: `${it.size}px`, color: it.color, fontWeight: it.weight, letterSpacing: `${it.ls}em`, wordSpacing: `${it.kern || 0}em`, lineHeight: String(it.lead || 1.02), fontStyle: it.italic ? 'italic' : 'normal', textDecoration: it.ul ? 'underline' : 'none', webkitTextStroke: it.outline ? `${Math.max(1, it.size / 40)}px ${it.color}` : '0', webkitTextFillColor: it.outline ? 'transparent' : '', textTransform: it.upper ? 'uppercase' : 'none', textAlign: { l: 'left', c: 'center', r: 'right', j: 'justify' }[it.align], textAlignLast: it.align === 'j' ? 'justify' : 'auto' });
+      el.style.setProperty('--ax', { l: '0%', c: '-50%', r: '-100%', j: '0%' }[it.align]); el.style.setProperty('--by', (it.base || 0) + 'px');
     } else { const U = this.U(); Object.assign(el.style, { left: `${it.x * W - it.w * U / 2}px`, top: `${it.y * H - it.h * U / 2}px`, width: `${it.w * U}px`, height: `${it.h * U}px` }); if (it.decor) { el.style.color = it.fill; el.style.setProperty('--op', it.opacity); } this.drawShapeSvg(it, it.w * U, it.h * U); }
     el.hidden = !!this.isHid(it); el.style.opacity = (it.alpha ?? 1) * (it.ref ? .45 : 1); el.style.mixBlendMode = it.blend && it.blend !== 'normal' ? it.blend : ''; el.style.pointerEvents = it.ref ? 'none' : ''; el.classList.toggle('is-ref', !!it.ref); el.style.setProperty('--rot', (it.rot || 0) + 'deg'); if (it === this.sel) this.updateRotHandle();
     const lock = el.querySelector('.st-lock');
@@ -8919,7 +8984,6 @@ class CoreStudio {
       if (it.mask && it.mask.on) item('Delete Mask', () => { it.mask = null; if (this.maskEdit === it) this.setDrawing(false); this.place(it); this.commit(); });
       item('Drawing Assist', () => { it.assist = !it.assist; if (it.assist) this.armAssist(it); this.commit(); this.renderLayers(); }, { on: !!it.assist, off: !strokeish, tag: strokeish ? (it.assist ? 'on' : '') : 'drawings' });
       item('Invert', () => this.invertLayer(it));
-      item('Reference', () => { it.ref = !it.ref; if (it.ref && this.sel === it) this.select(null); this.place(it); this.updateFocus(); this.commit(); this.renderLayers(); }, { on: !!it.ref, tag: it.ref ? 'on' : '' });
       item('Delete', () => this.removeItem(it));
       item('Blend mode', () => this.openLayerMenu(it, li, 'blend'), { keep: true, tag: (BL.find(b => b[0] === (it.blend || 'normal')) || [0, 'Normal'])[1] + ' ›' });
     }
@@ -9045,6 +9109,16 @@ class CoreStudio {
     const c = this.fxBg; if (c.width !== this.bg.width || c.height !== this.bg.height) { c.width = this.bg.width; c.height = this.bg.height; }
     const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(this.bg, 0, 0);
   }
+  exportProject() {
+    const data = JSON.stringify({ app: 'cerebra-studio', v: 1, subject: this.subject, preset: this.preset, state: this.snapshot() });
+    const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([data], { type: 'application/json' })); link.download = `cerebra-${this.preset}.cerebra`;
+    document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(link.href), 4000);
+  }
+  importProject(file) {
+    const r = new FileReader();
+    r.onload = () => { try { const d = JSON.parse(r.result); if (d.app !== 'cerebra-studio') throw Error('Not a Cerebra project'); this.setSubject(d.subject ?? -1); this.restore(d.state); this.commit(); } catch (e) { console.error(e); alert('This file is not a Cerebra project.'); } };
+    r.readAsText(file);
+  }
   async composePoster(scale = 2) {
     if(this.sel)this.select(null);
       const {blob,width,height}=await this.app.capture({type:'image/png',scale,transparent:false});
@@ -9065,11 +9139,11 @@ class CoreStudio {
       if(this.fxLive()&&this.effect!=='off'&&this.effectAmount>0){g.save();g.globalAlpha=(this.fxItem('colour')||{alpha:1}).alpha;g.drawImage(this.vfx,0,0,width,height);g.restore();}
       const drawText=(el,rot,gx)=>{
         const style=getComputedStyle(el);let r=el.getBoundingClientRect();if(!r.width||!r.height)return;
-        gx.save();if(rot){const cx=r.left+r.width/2,cy=r.top+r.height/2,cw=el.offsetWidth,ch=el.offsetHeight;r={left:cx-cw/2,top:cy-ch/2,width:cw,height:ch,right:cx+cw/2};gx.translate(cx*sx,cy*sy);gx.rotate(rot*Math.PI/180);gx.translate(-cx*sx,-cy*sy);}gx.fillStyle=style.color;gx.globalAlpha=+style.opacity||1;gx.font=`${style.fontWeight} ${parseFloat(style.fontSize)*sy}px ${style.fontFamily}`;
+        gx.save();if(rot){const cx=r.left+r.width/2,cy=r.top+r.height/2,cw=el.offsetWidth,ch=el.offsetHeight;r={left:cx-cw/2,top:cy-ch/2,width:cw,height:ch,right:cx+cw/2};gx.translate(cx*sx,cy*sy);gx.rotate(rot*Math.PI/180);gx.translate(-cx*sx,-cy*sy);}gx.fillStyle=style.color;gx.globalAlpha=+style.opacity||1;gx.font=`${style.fontStyle==='italic'?'italic ':''}${style.fontWeight} ${parseFloat(style.fontSize)*sy}px ${style.fontFamily}`;if('wordSpacing' in gx)gx.wordSpacing=`${(parseFloat(style.wordSpacing)||0)*sx}px`;const stroked=parseFloat(style.webkitTextStrokeWidth)>0&&/transparent|rgba\(0, 0, 0, 0\)/.test(style.webkitTextFillColor||'');
         if('letterSpacing' in gx)gx.letterSpacing=`${(parseFloat(style.letterSpacing)||0)*sx}px`;
         gx.textBaseline='top';const upper=style.textTransform==='uppercase',pad=parseFloat(style.paddingLeft)||0,lines=el.innerText.split(/\n/);let yy=(r.top+(parseFloat(style.paddingTop)||0))*sy;
         for(const raw of lines){const line=upper?raw.toUpperCase():raw;gx.textAlign=style.textAlign==='right'?'right':style.textAlign==='center'?'center':'left';
-          const xx=gx.textAlign==='right'?(r.right-pad)*sx:gx.textAlign==='center'?(r.left+r.width/2)*sx:(r.left+pad)*sx;gx.fillText(line,xx,yy);yy+=(parseFloat(style.lineHeight)||parseFloat(style.fontSize)*1.05)*sy;}
+          const xx=gx.textAlign==='right'?(r.right-pad)*sx:gx.textAlign==='center'?(r.left+r.width/2)*sx:(r.left+pad)*sx;if(stroked){gx.strokeStyle=style.color;gx.lineWidth=parseFloat(style.webkitTextStrokeWidth)*sx;gx.lineJoin='round';gx.strokeText(line,xx,yy);}else gx.fillText(line,xx,yy);if(/underline/.test(style.textDecorationLine||style.textDecoration)){const wl=gx.measureText(line).width,x0=gx.textAlign==='right'?xx-wl:gx.textAlign==='center'?xx-wl/2:xx,fs=parseFloat(style.fontSize)*sy;gx.fillRect(x0,yy+fs*.98,wl,Math.max(1,fs*.06));}yy+=(parseFloat(style.lineHeight)||parseFloat(style.fontSize)*1.05)*sy;}
         gx.restore();
       };
       this.items.filter(i=>!this.isHid(i)).forEach(i=>{
@@ -9090,12 +9164,13 @@ class CoreStudio {
   }
   async exportPoster(type = 'image/png', scale = 2) {
     if (!this.active || this.exporting || this.app.cap) return;
+    if(type==='application/x-cerebra'){this.exportProject();return;}
     const button=this.el.querySelector('[data-studio-export]'),label=button.querySelector('[data-export-label]');this.exporting=true;button.disabled=true;label.textContent='Rendering…';if(this.sel)this.select(null);
     try {
       const fin=await this.composePoster(scale);
-      const final=await new Promise(resolve=>fin.toBlob(resolve,type,.93));
-      if(!final)throw Error('PNG encoding failed');
-      const link=document.createElement('a');link.href=URL.createObjectURL(final);link.download=`cerebra-${this.preset}-${fin.width}x${fin.height}.${{'image/jpeg':'jpg','image/webp':'webp'}[type]||'png'}`;
+      const final=await encodePoster(fin,type);
+      if(!final)throw Error('Encoding failed');
+      const link=document.createElement('a');link.href=URL.createObjectURL(final);link.download=`cerebra-${this.preset}-${fin.width}x${fin.height}.${{'image/jpeg':'jpg','image/webp':'webp','application/pdf':'pdf','image/tiff':'tif','image/vnd.adobe.photoshop':'psd'}[type]||'png'}`;
       document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(link.href),4000);
     }catch(err){console.error('Studio export failed',err);label.textContent='Export failed';setTimeout(()=>label.textContent='Save PNG',2500);}
     finally{this.exporting=false;button.disabled=false;if(label.textContent==='Rendering…')label.textContent='Save PNG';}

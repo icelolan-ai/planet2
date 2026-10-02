@@ -926,7 +926,7 @@ body.studio-on #studio{display:block}
 #studio .studio-preset[aria-pressed=true]{border:2px solid #ff4655;box-shadow:0 0 0 3px #ff465533}
 .studio-stage{position:absolute;inset:0;z-index:0;pointer-events:none;transition:transform .35s cubic-bezier(.3,.7,.2,1)}
 .st-item{position:absolute;pointer-events:auto;touch-action:none}
-.st-text{transform:translate(var(--ax,-50%),-50%) rotate(var(--rot,0deg));white-space:pre;cursor:grab;padding:4px 6px;line-height:1.02;border-radius:4px;outline:1px dashed transparent;outline-offset:2px;text-shadow:0 2px 14px #0004}
+.st-text{transform:translate(var(--ax,-50%),calc(-50% + var(--by,0px))) rotate(var(--rot,0deg));white-space:pre;cursor:grab;padding:4px 6px;line-height:1.02;border-radius:4px;outline:1px dashed transparent;outline-offset:2px;text-shadow:0 2px 14px #0004}
 .st-text:hover{outline-color:#ffffff40}
 .st-text.is-selected{outline:1px solid #ff4655}
 .st-text[contenteditable=true]{cursor:text;outline:1px solid #fff;background:#0005}
@@ -1359,6 +1359,12 @@ html,body{touch-action:pan-x pan-y}
 #studio .st-assist.is-mask .st-mask-note{display:block}
 .st-item.is-ref{outline:1px dashed #ffffff55}
 #studio .st-save[hidden]{display:none!important}
+.st-td-al,.st-td-tg{display:flex;gap:6px;margin-top:8px}
+.st-td-al button,.st-td-tg button{flex:1;min-height:42px;border:0;border-radius:12px;background:#ffffff14;color:#e8ecf4;font:600 14px var(--f-sans);cursor:pointer}
+.st-td-al button[aria-pressed=true],.st-td-tg button[aria-pressed=true]{background:var(--cyg);color:#fff;box-shadow:0 0 14px #8b5cf666}
+.st-td-al .st-i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.td-o{-webkit-text-stroke:1px currentColor;-webkit-text-fill-color:transparent;font-weight:700}
+#studio .st-context{flex-wrap:wrap;row-gap:8px;height:auto!important;min-height:0;justify-content:center;max-width:min(920px,calc(100% - 24px))}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -2141,6 +2147,6 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.2423d43201.js", 507756]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.b9fca31395.js", 516672]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>
