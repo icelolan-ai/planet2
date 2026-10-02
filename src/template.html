@@ -1015,6 +1015,9 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 .gateway-orb{transition:transform .25s ease-out}
 .atelier-copy.mb{border-radius:18px}
 @media(prefers-reduced-motion:reduce){.mb-p,.mb-r{display:none}}
+.st-save-planet{flex:1 1 100%;display:grid;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.14)}
+.st-save-planet input{font:inherit;font-size:13px;padding:8px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:inherit;min-width:0}
+.st-save-planet small{font-size:11px;opacity:.7;line-height:1.35}
 .st-lib{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;justify-content:center;gap:18px;background:#07080dcc;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);pointer-events:auto}
 .st-lib[hidden]{display:none}
 .st-lib-head{display:flex;align-items:center;gap:14px;padding:0 max(24px,6vw)}
@@ -3120,6 +3123,7 @@ const WorldTune = (() => {
       }
     };
     restore();
+    window.CerebraTune = { snapshot, apply };   // Studio 'Save planet' and the World Atelier reuse the core's own save / restore
 
     /* ---- named presets ---- */
     const PKEY = 'cerebra.presets.v1';
@@ -7645,6 +7649,17 @@ function netBackdrop() {
   btn.addEventListener('click', () => { at.hidden = !at.hidden; btn.setAttribute('aria-expanded', String(!at.hidden)); });
   document.querySelectorAll('.net-host, #at-net').forEach(h => NET.bind(h));
 }
+/** Planets the user made in Studio ('Save planet'): the Cerebra core's Tune settings + Surface/Burst effects, newest first. */
+const PLANETS = {
+  KEY: 'cerebra.planets.v1',
+  list() { try { const l = JSON.parse(localStorage.getItem(this.KEY) || '[]'); return Array.isArray(l) ? l : []; } catch (e) { return []; } },
+  add(p) { const l = this.list(); l.unshift(p); try { localStorage.setItem(this.KEY, JSON.stringify(l.slice(0, 12))); } catch (e) { return false; } return true; },
+  fx(studio) { const t = studio && studio.coreFxObj && studio.coreFxObj(), o = {}; if (t) Object.keys(t.tune).forEach(k => { if (/^[sb]_/.test(k)) o[k] = t.tune[k]; }); return o; },
+  show(studio, snap, fx) {   // put a planet's look on the core (not persisted)
+    try { if (snap && window.CerebraTune) window.CerebraTune.apply(snap); } catch (e) {}
+    try { const t = studio && studio.coreFxObj && studio.coreFxObj(); if (t && fx) Object.keys(fx).forEach(k => Effects.set(t, k, fx[k])); } catch (e) {}
+  },
+};
 /** A second route with its own scroll and camera; it borrows the seven world models without duplicating assets. */
 class WorldAtelier {
   constructor(app) {
@@ -7652,15 +7667,9 @@ class WorldAtelier {
     this.track = this.el.querySelector('[data-at-track]'); this.active = false; this.pending = false; this.progress = 0; this.index = 0;
     this.sun = new THREE.Vector3(4, 2, 7); this.saved = null;
     const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-    const stages = [{ name: 'Cerebra', accent: '#ff4655', kicker: 'The living planet', lede: 'A core that rebuilds itself while you watch.' }, ...WORLDS];
-    this.track.innerHTML = stages.map((d, i) => `<article class="atelier-stop" style="--a:${esc(d.accent)};--val:${esc(d.accent)}" aria-label="${esc(d.name)}">
-      ${i ? `<div class="atelier-spin" data-at-spin="${i}" aria-label="Drag to rotate ${esc(d.name)}" hidden></div>` : ''}
-      <div class="atelier-copy"><b>${i ? 'World ' + String(i).padStart(2, '0') : 'Core'} / ${String(stages.length).padStart(2, '0')}</b><h2 aria-label="${esc(d.name)}">${d.name.split(' ').map((word, wi) => `<span class="atelier-word">${Array.from(word).map((ch, k) => `<span class="ch" aria-hidden="true" style="--i:${wi + k}">${esc(ch)}</span>`).join('')}</span>`).join(' ')}</h2><p>${esc(d.kicker)} · ${esc(d.lede)}</p><div class="atelier-actions"><button type="button" data-at-tune="${i}">Tune ${i ? 'this world' : 'the core'} →</button><button type="button" class="atelier-studio" data-at-studio="${i}">Studio mode →</button></div></div>
-    </article>`).join('');
-    this.spinTargets = [...this.track.querySelectorAll('[data-at-spin]')];
+    this.esc = esc; this.S = 0; this.coreShown = null; this.stamp = '';
     const dots = this.el.querySelector('[data-rail-dots]'); this.dots = dots;
-    dots.innerHTML = stages.map((d, i) => `<button type="button" role="tab" data-rail="${i}" data-name="${esc(d.name)}" aria-label="${esc(d.name)}" style="--c:${esc(d.accent)}"><i></i></button>`).join('');
-    const total = stages.length, jump = i => { i = (i + total) % total; this.nav = i; this.navUntil = performance.now() + 1800; this.track.scrollTo({ top: i * this.track.clientHeight, behavior: this.app.reduced ? 'instant' : 'smooth' }); this.select(i); };
+    const total = () => this.stops.length, jump = i => { i = (i + total()) % total(); this.nav = i; this.navUntil = performance.now() + 1800; this.track.scrollTo({ top: i * this.track.clientHeight, behavior: this.app.reduced ? 'instant' : 'smooth' }); this.select(i); };
     this.jump = jump;
     dots.addEventListener('click', e => { const b = e.target.closest('[data-rail]'); if (b) jump(+b.dataset.rail); });
     let scrub = false;   // dragging along the dot column scrubs through the worlds
@@ -7672,6 +7681,7 @@ class WorldAtelier {
     this.el.querySelector('[data-rail-prev]').addEventListener('click', () => jump(this.index - 1));
     this.el.querySelector('[data-rail-next]').addEventListener('click', () => jump(this.index + 1));
     addEventListener('keydown', e => { if (!this.active || e.target.closest('input,textarea,select')) return; if (e.key === 'ArrowDown' || e.key === 'PageDown') { jump(this.index + 1); e.preventDefault(); } else if (e.key === 'ArrowUp' || e.key === 'PageUp') { jump(this.index - 1); e.preventDefault(); } });
+    this.build();
     this.selectedRoute = 'atelier'; this.entering = false; const nets = this.choice.querySelectorAll('.gateway-net');
     const netList = [...nets].map((cv, i) => {
       const orb = cv.parentNode.querySelector('.gateway-orb');
@@ -7680,7 +7690,6 @@ class WorldAtelier {
     RB.galaxy(this.choice); RB.ribbons(); RB.sparks();
     this.choice.querySelectorAll('.gateway-enter').forEach(b => b.classList.add('rb-star'));
     MagicBento.apply('.gateway-choice', { tilt: 10, magnet: 14, target: '.gateway-orb', particles: true });
-    MagicBento.apply('.atelier-copy', { ripple: true, particles: true });
     netList.forEach(n => n.watch(this.choice, () => !this.choice.hidden, ['hidden']));
     this.choice.querySelectorAll('[data-route]').forEach((card, i) => card.addEventListener('pointerdown', e => {
       if (e.target.closest('button')) return;
@@ -7718,34 +7727,27 @@ class WorldAtelier {
     this.backButton.addEventListener('click', () => this.backFromOrbit());
     this.el.querySelector('[data-at-back]').addEventListener('click', () => this.back());
     this.el.querySelector('[data-at-orbit]').addEventListener('click', () => this.orbit());
-    this.track.querySelectorAll('[data-at-tune]').forEach(b => b.addEventListener('click', () => {
-      this.track.scrollTo({ top: +b.dataset.atTune * this.track.clientHeight, behavior: 'instant' });
-      this.select(+b.dataset.atTune);
-      if (+b.dataset.atTune === 0) dispatchEvent(new Event('cerebra:tune'));
-      else WorldTune.open(true, 'world');
-    }));
-    this.track.querySelectorAll('[data-at-studio]').forEach(b => b.addEventListener('click', () => this.openStudio(+b.dataset.atStudio)));
     this.worldDrag = null;
     RB.pressure(this.track, 'h2 .ch');
     // Infinite scroll: pushing past the last world wraps to the first, and back.
     let wrapLock = 0;
     const wrap = dir => { if (!this.active || performance.now() < wrapLock) return; const max = this.track.scrollHeight - this.track.clientHeight;
       if (dir > 0 && this.track.scrollTop >= max - 2) { wrapLock = performance.now() + 900; this.track.scrollTo({ top: 0, behavior: 'instant' }); this.progress = 0; this.select(0); }
-      else if (dir < 0 && this.track.scrollTop <= 2) { wrapLock = performance.now() + 900; this.track.scrollTo({ top: max, behavior: 'instant' }); this.progress = WORLDS.length; this.select(WORLDS.length); } };
+      else if (dir < 0 && this.track.scrollTop <= 2) { wrapLock = performance.now() + 900; this.track.scrollTo({ top: max, behavior: 'instant' }); this.progress = this.stops.length - 1; this.select(this.stops.length - 1); } };
     this.track.addEventListener('wheel', e => { if (Math.abs(e.deltaY) > 20) wrap(Math.sign(e.deltaY)); }, { passive: true });
     let ty = null; this.track.addEventListener('touchstart', e => { ty = e.touches[0].clientY; }, { passive: true });
     this.track.addEventListener('touchend', e => { if (ty == null) return; const dy = ty - e.changedTouches[0].clientY; ty = null; if (Math.abs(dy) > 60) wrap(Math.sign(dy)); }, { passive: true });
     this.track.addEventListener('pointerdown', e => {
-      if (!this.active || this.index === 0 || e.button !== 0 || e.target.closest('[data-at-spin]')?.dataset.atSpin !== String(this.index)) return;
+      if (!this.active || this.index <= this.S || e.button !== 0 || e.target.closest('[data-at-spin]')?.dataset.atSpin !== String(this.index)) return;
       this.worldDrag = { id: e.pointerId, x: e.clientX, t: performance.now() };
       this.track.setPointerCapture(e.pointerId);
-      this.app.orrery.worlds[this.index - 1].userVel = 0;
+      this.app.orrery.worlds[this.index - this.S - 1].userVel = 0;
       e.preventDefault();
     });
     this.track.addEventListener('pointermove', e => {
       const drag = this.worldDrag;
       if (!drag || drag.id !== e.pointerId) return;
-      const w = this.app.orrery.worlds[this.index - 1];
+      const w = this.app.orrery.worlds[this.index - this.S - 1];
       const dt = Math.max(1 / 240, (performance.now() - drag.t) / 1000), delta = (e.clientX - drag.x) * 0.0065;
       w.userRot += delta; w.userVel = damp(w.userVel, delta / dt, 18, dt);
       drag.x = e.clientX; drag.t = performance.now();
@@ -7754,6 +7756,36 @@ class WorldAtelier {
     this.track.addEventListener('pointerup', endDrag);
     this.track.addEventListener('pointercancel', endDrag);
     this.track.addEventListener('lostpointercapture', endDrag);
+  }
+  // (Re)build the stops: the user's saved planets first (newest on top), then Cerebra, then the worlds.
+  build() {
+    const esc = this.esc, planets = PLANETS.list(); this.planets = planets; this.S = planets.length;
+    this.stamp = planets.map(p => p.id).join(',');
+    const when = t => { try { return new Date(t).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); } catch (e) { return ''; } };
+    this.stops = [...planets.map(p => ({ name: p.name, accent: '#ffb04a', kicker: 'Your planet', lede: 'Saved ' + when(p.t) + ' from Studio.' })),
+      { name: 'Cerebra', accent: '#ff4655', kicker: 'The living planet', lede: 'A core that rebuilds itself while you watch.' }, ...WORLDS];
+    const S = this.S, stages = this.stops;
+    this.track.innerHTML = stages.map((d, i) => `<article class="atelier-stop" style="--a:${esc(d.accent)};--val:${esc(d.accent)}" aria-label="${esc(d.name)}">
+      ${i > S ? `<div class="atelier-spin" data-at-spin="${i}" aria-label="Drag to rotate ${esc(d.name)}" hidden></div>` : ''}
+      <div class="atelier-copy"><b>${i < S ? 'Yours' : i === S ? 'Core' : 'World ' + String(i - S).padStart(2, '0')} / ${String(stages.length).padStart(2, '0')}</b><h2 aria-label="${esc(d.name)}">${d.name.split(' ').map((word, wi) => `<span class="atelier-word">${Array.from(word).map((ch, k) => `<span class="ch" aria-hidden="true" style="--i:${wi + k}">${esc(ch)}</span>`).join('')}</span>`).join(' ')}</h2><p>${esc(d.kicker)} · ${esc(d.lede)}</p><div class="atelier-actions"><button type="button" data-at-tune="${i}">Tune ${i > S ? 'this world' : 'the core'} →</button><button type="button" class="atelier-studio" data-at-studio="${i}">Studio mode →</button></div></div>
+    </article>`).join('');
+    this.spinTargets = [...this.track.querySelectorAll('[data-at-spin]')];
+    this.dots.innerHTML = stages.map((d, i) => `<button type="button" role="tab" data-rail="${i}" data-name="${esc(d.name)}" aria-label="${esc(d.name)}" style="--c:${esc(d.accent)}"><i></i></button>`).join('');
+    MagicBento.apply('.atelier-copy', { ripple: true, particles: true });
+    this.track.querySelectorAll('[data-at-tune]').forEach(b => b.addEventListener('click', () => {
+      const i = +b.dataset.atTune;
+      this.track.scrollTo({ top: i * this.track.clientHeight, behavior: 'instant' });
+      this.select(i);
+      if (i <= this.S) dispatchEvent(new Event('cerebra:tune'));
+      else WorldTune.open(true, 'world');
+    }));
+    this.track.querySelectorAll('[data-at-studio]').forEach(b => b.addEventListener('click', () => this.openStudio(+b.dataset.atStudio)));
+  }
+  // The core is shared by the saved planets and Cerebra, so swap its look when the stop on screen changes.
+  showCore(i) {
+    if (i > this.S || this.coreShown === i) return; this.coreShown = i;
+    const st = this.app.studio;
+    if (i < this.S) { const p = this.planets[i]; PLANETS.show(st, p.snap, p.fx); } else if (this.live) PLANETS.show(st, this.live.snap, this.live.fx);
   }
   open() {
     this.choice.hidden = false; document.body.classList.add('route-choose'); document.documentElement.classList.add('route-lock');
@@ -7791,6 +7823,9 @@ class WorldAtelier {
     const a = this.app;
     if (!a.orrery.worlds.length) { this.choice.querySelector('[data-route-status]').textContent = 'Worlds unavailable. Explore the system instead.'; return; }
     this.choice.hidden = true; document.body.classList.remove('route-choose'); document.body.classList.add('atelier-on');
+    const st = a.studio, cur = () => ({ snap: window.CerebraTune && window.CerebraTune.snapshot(), fx: PLANETS.fx(st) });
+    this.live = cur(); this.coreShown = null;   // Cerebra as the user left it; restored when its own stop is on screen or the atelier closes
+    if (PLANETS.list().map(p => p.id).join(',') !== this.stamp) this.build();
     this.el.hidden = false; this.track.scrollTop = 0; this.progress = 0; this.select(0);
     this.saved = new Map(); a.stage.scene.traverse(o => this.saved.set(o, o.visible));
     if (a.ambient) a.ambient.points.visible = false;
@@ -7801,15 +7836,17 @@ class WorldAtelier {
     this.el.querySelector('[data-at-back]').focus({ preventScroll: true });
   }
   select(i) {
-    this.index = clamp(i, 0, this.app.orrery.worlds.length);
-    if (this.index > 0) this.app.detail.index = this.index - 1;
-    this.el.querySelector('[data-at-count]').textContent = `${String(this.index + 1).padStart(2, '0')} / ${String(WORLDS.length + 1).padStart(2, '0')}`;
+    this.index = clamp(i, 0, this.app.orrery.worlds.length + this.S);
+    if (this.index > this.S) this.app.detail.index = this.index - this.S - 1;
+    if (this.active) this.showCore(this.index);
+    this.el.querySelector('[data-at-count]').textContent = `${String(this.index + 1).padStart(2, '0')} / ${String(this.stops.length).padStart(2, '0')}`;
     this.track.querySelectorAll('.atelier-stop').forEach((stop, k) => { stop.classList.toggle('is-current', k === this.index); });
     this.dots?.querySelectorAll('[data-rail]').forEach((b, k) => { b.classList.toggle('on', k === this.index); b.setAttribute('aria-selected', k === this.index); });
     RB.decrypt(this.track.querySelectorAll('.atelier-stop')[this.index]?.querySelectorAll('h2 .ch'));
   }
   openStudio(i) {
     if (!this.app.studio || !this.app.worldsReady) return;
+    const mine = i < this.S ? this.planets[i] : null;
     this.leave();
     this.choice.hidden = true;
     document.documentElement.classList.remove('route-lock');
@@ -7817,13 +7854,15 @@ class WorldAtelier {
     this.app.studio.open();
     if (this.app.studio.active) {
       this.app.studio.returnToAtelier = i;
-      this.app.studio.setSubject(i - 1);
+      this.app.studio.setSubject(Math.max(-1, i - this.S - 1));
+      if (mine) PLANETS.show(this.app.studio, mine.snap, mine.fx);
     }
   }
   leave() {
     if (!this.active) return;
     WorldTune.open(false); document.querySelector('[data-tune-close]').click();
-    this.active = false; this.worldDrag = null; this.el.hidden = true; document.body.classList.remove('atelier-on');
+    if (this.live) { PLANETS.show(this.app.studio, this.live.snap, this.live.fx); this.live = null; }
+    this.coreShown = null; this.active = false; this.worldDrag = null; this.el.hidden = true; document.body.classList.remove('atelier-on');
     if (this.saved) this.saved.forEach((on, o) => { o.visible = on; });
     this.app.orrery.worlds.forEach(w => { w.solo = false; });
     this.saved = null; this.app.scroll.jumpTo(0);
@@ -7852,7 +7891,7 @@ class WorldAtelier {
     if (!this.choice.hidden) return true;
     if (!this.active) return false;
     const a = this.app, worlds = a.orrery.worlds, h = this.track.clientHeight || innerHeight;
-    const target = clamp(this.track.scrollTop / h, 0, worlds.length);
+    const S = this.S, target = clamp(this.track.scrollTop / h, 0, worlds.length + S);
     this.progress = a.reduced ? target : damp(this.progress, target, 7, dt);
     const nearest = Math.round(target);
     const tuning = document.getElementById('wtune').dataset.open === 'true' || document.getElementById('tune').dataset.open === 'true';
@@ -7865,20 +7904,20 @@ class WorldAtelier {
     const baseY = portrait || mobilePreview ? 2.15 : 0, spacing = portrait ? 4.5 : 4.15;
     const radius = mobilePreview ? Math.min(1.15, Math.tan(THREE.MathUtils.degToRad(16)) * 14 * cam.aspect * .74) : portrait ? Math.min(1.55, Math.tan(THREE.MathUtils.degToRad(16)) * 14 * cam.aspect * .74) : 1.7;
     const x = portrait || mobilePreview ? 0 : 1.5;
-    const coreDist = Math.abs(this.progress);
+    const coreDist = Math.max(0, this.progress - S);   // saved planets and Cerebra share one core, which only moves on once past them
     if (coreDist < 1.55) {
       const near = .43 + .57 * Math.exp(-coreDist * coreDist * 1.4);
-      a.core.update(a.reduced ? 0 : dt, a.simTime, { expand:0,separation:0,stack:0,morph:0,flatten:0,intro:1,motion:a.reduced?0:1,reduced:a.reduced,focus:0,focusLayer:-1,rippleT:-1,pointer:a.pointerWorld,pull:0,x,y:baseY + this.progress * spacing,scale:radius / 1.6 * near,G:0,rotX:0,rotY:0,sun:0,spinVel:a.reduced?0:.07,pixelRatio:a.stage.pixelRatio,sizeScale:1 });
+      a.core.update(a.reduced ? 0 : dt, a.simTime, { expand:0,separation:0,stack:0,morph:0,flatten:0,intro:1,motion:a.reduced?0:1,reduced:a.reduced,focus:0,focusLayer:-1,rippleT:-1,pointer:a.pointerWorld,pull:0,x,y:baseY + coreDist * spacing,scale:radius / 1.6 * near,G:0,rotX:0,rotY:0,sun:0,spinVel:a.reduced?0:.07,pixelRatio:a.stage.pixelRatio,sizeScale:1 });
       a.core.orbit.group.visible = false;
     }
     a.core.group.visible = coreDist < 1.55;
     worlds.forEach((w, i) => {
-      const dist = Math.abs(i + 1 - this.progress);
+      const dist = Math.abs(i + S + 1 - this.progress);
       if (dist >= 1.55 || w.solo) { w.group.visible = false; return; }
-      w.reveal = 1; w.hover = 0; w.focus = i + 1 === this.index ? 1 : 0;
-      w.update(a.reduced ? 0 : dt, a.simTime, { G: 1, sun: this.sun, boost: 1, pixelRatio: a.stage.pixelRatio, reduced: a.reduced, orbitVis: !!this.worldDrag, active: this.index - 1 });
+      w.reveal = 1; w.hover = 0; w.focus = i + S + 1 === this.index ? 1 : 0;
+      w.update(a.reduced ? 0 : dt, a.simTime, { G: 1, sun: this.sun, boost: 1, pixelRatio: a.stage.pixelRatio, reduced: a.reduced, orbitVis: !!this.worldDrag, active: this.index - S - 1 });
       const near = .43 + .57 * Math.exp(-dist * dist * 1.4);
-      w.group.position.set(x, baseY + (this.progress - i - 1) * spacing, -Math.min(2, dist * .6));
+      w.group.position.set(x, baseY + (this.progress - i - S - 1) * spacing, -Math.min(2, dist * .6));
       w.group.scale.setScalar(radius / w.def.radius * near * w.tune.size);
       w.U.uKyCenter.value.copy(w.group.position);
       w.orbitLine.visible = false;
@@ -7886,7 +7925,7 @@ class WorldAtelier {
     });
     this.spinTargets.forEach((target, i) => {
       const w = worlds[i];
-      if (i !== this.index - 1 || !w.group.visible) { target.hidden = true; return; }
+      if (i !== this.index - S - 1 || !w.group.visible) { target.hidden = true; return; }
       w.group.updateWorldMatrix(true, false);
       const center = w.group.getWorldPosition(new THREE.Vector3());
       const projected = center.clone().project(cam);
@@ -8588,7 +8627,8 @@ class CoreStudio {
         <label>Format<select data-save-type><option value="image/png">PNG</option><option value="image/jpeg">JPEG</option><option value="application/pdf">PDF</option><option value="image/webp">WebP</option></select></label>
         <label>Size<select data-save-scale><option value="1">1× screen</option><option value="2" selected>2× (sharp)</option><option value="3">3× (print)</option></select></label>
         <label class="st-save-grain"><input type="checkbox" data-save-grain> Film grain</label>
-                <button type="button" class="st-btn is-primary" data-save-go>Download</button></div>
+                <button type="button" class="st-btn is-primary" data-save-go>Download</button>
+        <div class="st-save-planet"><span class="st-ctx-kind">Save planet</span><input type="text" data-planet-name maxlength="24" placeholder="Name your planet" aria-label="Planet name"><button type="button" class="st-btn" data-planet-save>Save planet</button><small data-planet-msg role="status">Keeps your Cerebra core look and shows it first in World Atelier.</small></div></div>
       <div class="st-lib" data-studio-library hidden><div class="st-lib-head"><b>Library</b><span data-lib-count></span><button type="button" class="st-btn" data-lib-mode aria-pressed="false">Circular</button><button type="button" class="st-btn" data-lib-close aria-label="Close library">✕</button></div>
         <div class="st-lib-track" data-lib-track></div><p class="st-lib-empty" data-lib-empty>Nothing kept yet. Press Keep in the toolbar to save this composition.</p></div>
       <div class="st-dock st-glass" data-tray="dock" role="toolbar" aria-label="Studio"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button>
@@ -8860,6 +8900,16 @@ class CoreStudio {
     saveBtn.onclick = () => { saveMenu.hidden = !saveMenu.hidden; saveBtn.setAttribute('aria-expanded', String(!saveMenu.hidden)); if (!saveMenu.hidden) this.select(null); };
     document.addEventListener('pointerdown', e => { if (!saveMenu.hidden && !e.target.closest('.st-save,[data-studio-export]')) { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); } }, true);
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !saveMenu.hidden) { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); } });
+    {
+      const nm = saveMenu.querySelector('[data-planet-name]'), msg = saveMenu.querySelector('[data-planet-msg]');
+      saveMenu.querySelector('[data-planet-save]').onclick = () => {
+        const snap = window.CerebraTune && window.CerebraTune.snapshot();
+        if (!snap) { msg.textContent = 'The core is not ready yet. Try again in a moment.'; return; }
+        const n = PLANETS.list().length + 1, name = nm.value.trim() || 'My planet ' + String(n).padStart(2, '0');
+        const ok = PLANETS.add({ id: Date.now().toString(36), name, t: Date.now(), snap, fx: PLANETS.fx(this) });
+        msg.textContent = ok ? `Saved “${name}”. It is now the first planet in World Atelier.` : 'Could not save (browser storage is full or blocked).'; if (ok) nm.value = '';
+      };
+    }
     const gcb = saveMenu.querySelector('[data-save-grain]'); saveBtn.addEventListener('click', () => { gcb.checked = !!(this.grain && this.fxVisible('grain')); }, true);
     this.el.querySelector('[data-save-go]').onclick = () => { this.exportGrain = gcb.checked; saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); this.exportPoster(saveMenu.querySelector('[data-save-type]').value, +saveMenu.querySelector('[data-save-scale]').value); };
     const ctx = k => this.ctx.querySelector(`[data-ctx-${k}]`), withText = f => e => { const it = this.sel; if (it && it.kind === 'text') { f(it, e.target); it.edited = true; this.place(it); } };
