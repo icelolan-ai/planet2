@@ -946,7 +946,7 @@ body.studio-on #studio{display:block}
 .st-shape.is-selected:not(.is-locked) .st-handle{display:block}
 #studio .st-lock{position:absolute;top:-16px;right:-16px;width:32px;height:32px;min-height:0;min-width:0;padding:0;border-radius:50%;border:1px solid #ffffff40;background:#0d1018e6;color:#fff;display:none;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto}
 #studio .st-lock svg.st-i{width:16px;height:16px}
-#studio .st-shape.is-selected .st-lock,#studio .st-shape.is-locked .st-lock{display:flex}
+#studio .st-shape.is-selected .st-lock,#studio .st-shape.is-locked .st-lock{display:none}
 .st-shape.is-locked{pointer-events:none;cursor:default}
 .st-shape.is-locked svg.st-outline{opacity:.35}
 body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.st-context){display:none}
@@ -1341,6 +1341,9 @@ html,body{touch-action:pan-x pan-y}
 .st-llock.is-on,.st-glock.is-on{color:#ff8f98}
 .is-drop-in{outline:2px solid #8b5cf6;outline-offset:1px;background:#8b5cf633}
 .is-drop-above{box-shadow:0 -3px 0 #8b5cf6}.is-drop-below{box-shadow:0 3px 0 #8b5cf6}
+#studio .st-edit-mini{width:32px;height:32px;margin:-16px 0 0 -16px;background:#0d1018e6;border-width:1px;box-shadow:0 4px 12px #0008}
+#studio .st-edit-mini svg.st-i{width:16px;height:16px}
+#studio .st-edit-del:hover{background:#7a1f2b;border-color:#ff6b78}
 #studio .st-edit{position:absolute;z-index:7;width:34px;height:34px;margin:-17px 0 0 -17px;padding:0;border-radius:50%;border:1.5px solid #ffffff66;background:#0d1018eb;color:#fff;display:grid;place-items:center;pointer-events:auto;cursor:pointer;box-shadow:0 4px 14px #0009,0 0 0 3px #8b5cf633}
 #studio .st-edit svg.st-i{width:17px;height:17px}
 @media(pointer:coarse){#studio .st-edit{width:42px;height:42px;margin:-21px 0 0 -21px}#studio .st-edit svg.st-i{width:20px;height:20px}}
@@ -1700,6 +1703,13 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .cfx-col input[type=color]{width:100%;height:42px;padding:3px;border:1px solid #ffffff2a;border-radius:12px;background:#0000003a;cursor:pointer}
 #studio .cfx-sub{margin:18px 0 4px;padding-top:12px;border-top:1px solid #ffffff14;font:600 11px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:#d9ccff}
 #studio .cfx-reset{width:100%;justify-content:center;margin-top:16px}
+#studio .studio-sub{margin:14px 0 6px;border:1px solid #ffffff1c;border-radius:14px;background:#00000024;overflow:hidden}
+#studio .studio-sub>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;font:600 11px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:#d9ccff}
+#studio .studio-sub>summary::-webkit-details-marker{display:none}
+#studio .studio-sub>summary::after{content:"";width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform .2s}
+#studio .studio-sub[open]>summary::after{transform:rotate(-135deg)}
+#studio .studio-sub>:not(summary){margin-left:12px;margin-right:12px}
+#studio .studio-sub>.studio-preset-grid{margin-bottom:12px}
 </style>
 </head>
 <body class="is-loading">
@@ -8576,7 +8586,7 @@ class CoreStudio {
         <div class="st-group st-more" data-grp="more"><button type="button" class="st-btn" data-grp-btn aria-expanded="false" aria-label="More menu"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span class="st-label">More</span><i class="st-caret" aria-hidden="true"></i></button><div class="st-sub st-sub-wide" hidden></div></div></div>
       <aside id="studio-tools" class="studio-panel st-glass" data-tray="panel" aria-label="Studio settings" hidden><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-panel-fold aria-expanded="true"><h2>Cerebra, in focus.</h2><span class="st-chev" aria-hidden="true"></span></button>
       <h3>Surface style</h3><div class="studio-corefx" data-studio-corefx></div>
-      <h3>Poster presets</h3><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-preset="ember" style="--p1:#0c1625;--p2:#d26448">Ember dossier</button><button type="button" class="studio-preset" data-studio-preset="monolith" style="--p1:#e0e4e3;--p2:#666e72">Monolith</button><button type="button" class="studio-preset" data-studio-preset="blueprint" style="--p1:#f4f5f3;--p2:#becbd2">Orbital grid</button><button type="button" class="studio-preset" data-studio-preset="bio" style="--p1:#1a0b3a;--p2:#7b2fa8">Biocomputer</button><button type="button" class="studio-preset" data-studio-preset="mineral" style="--p1:#0b0c0e;--p2:#a4aab0">Mineral</button><button type="button" class="studio-preset" data-studio-preset="infinity" style="--p1:#05090b;--p2:#72b4b4">Infinity noir</button><button type="button" class="studio-preset" data-studio-preset="monoPoster" style="--p1:#f3f3f0;--p2:#8c8c86">Mono poster</button><button type="button" class="studio-preset" data-studio-preset="goldHud" style="--p1:#06070a;--p2:#c9a24a">Gold HUD</button><button type="button" class="studio-preset" data-studio-preset="glowOrbit" style="--p1:#02030a;--p2:#3558d8">Glow orbit</button><button type="button" class="studio-preset" data-studio-preset="neonCell" style="--p1:#040907;--p2:#22c58a">Neon cell</button><button type="button" class="studio-preset" data-studio-preset="astrolabe" style="--p1:#1a140e;--p2:#b89560">Astrolabe</button><button type="button" class="studio-preset" data-studio-preset="dataFlow" style="--p1:#090b13;--p2:#4a5ad8">Data flow</button></div><h3>Layout templates</h3><div class="studio-preset-grid" data-tpl-grid><button type="button" class="studio-preset" data-studio-template="editorial" style="--p1:#f3f3f0;--p2:#9a9a94">Editorial calendar</button><button type="button" class="studio-preset" data-studio-template="cyclical" style="--p1:#02030a;--p2:#4a6ae8">Cyclical</button><button type="button" class="studio-preset" data-studio-template="physics" style="--p1:#090b13;--p2:#7a86e8">Physics series</button><button type="button" class="studio-preset" data-studio-template="dashboard" style="--p1:#06070a;--p2:#e8c872">Dashboard</button><button type="button" class="studio-preset" data-studio-template="radial" style="--p1:#1a140e;--p2:#d8a868">Cropped radial</button></div><p class="studio-note">Tap any poster text to edit it, drag to move it. Add shapes from the left to keep an area sharp and blur the rest.</p>
+      <h3>Poster presets</h3><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-preset="ember" style="--p1:#0c1625;--p2:#d26448">Ember dossier</button><button type="button" class="studio-preset" data-studio-preset="monolith" style="--p1:#e0e4e3;--p2:#666e72">Monolith</button><button type="button" class="studio-preset" data-studio-preset="blueprint" style="--p1:#f4f5f3;--p2:#becbd2">Orbital grid</button><button type="button" class="studio-preset" data-studio-preset="bio" style="--p1:#1a0b3a;--p2:#7b2fa8">Biocomputer</button><button type="button" class="studio-preset" data-studio-preset="mineral" style="--p1:#0b0c0e;--p2:#a4aab0">Mineral</button><button type="button" class="studio-preset" data-studio-preset="infinity" style="--p1:#05090b;--p2:#72b4b4">Infinity noir</button><button type="button" class="studio-preset" data-studio-preset="monoPoster" style="--p1:#f3f3f0;--p2:#8c8c86">Mono poster</button><button type="button" class="studio-preset" data-studio-preset="goldHud" style="--p1:#06070a;--p2:#c9a24a">Gold HUD</button><button type="button" class="studio-preset" data-studio-preset="glowOrbit" style="--p1:#02030a;--p2:#3558d8">Glow orbit</button><button type="button" class="studio-preset" data-studio-preset="neonCell" style="--p1:#040907;--p2:#22c58a">Neon cell</button><button type="button" class="studio-preset" data-studio-preset="astrolabe" style="--p1:#1a140e;--p2:#b89560">Astrolabe</button><button type="button" class="studio-preset" data-studio-preset="dataFlow" style="--p1:#090b13;--p2:#4a5ad8">Data flow</button></div><details class="studio-sub" data-tpl-sub><summary>Layout templates</summary><p class="studio-note">A scene look plus ready-made Kit items. Pick another preset or template to swap them.</p><div class="studio-preset-grid" data-tpl-grid><button type="button" class="studio-preset" data-studio-template="editorial" style="--p1:#f3f3f0;--p2:#9a9a94">Editorial calendar</button><button type="button" class="studio-preset" data-studio-template="cyclical" style="--p1:#02030a;--p2:#4a6ae8">Cyclical</button><button type="button" class="studio-preset" data-studio-template="physics" style="--p1:#090b13;--p2:#7a86e8">Physics series</button><button type="button" class="studio-preset" data-studio-template="dashboard" style="--p1:#06070a;--p2:#e8c872">Dashboard</button><button type="button" class="studio-preset" data-studio-template="radial" style="--p1:#1a140e;--p2:#d8a868">Cropped radial</button></div></details><p class="studio-note">Tap any poster text to edit it, drag to move it. Add shapes from the left to keep an area sharp and blur the rest.</p>
       <h3>Background</h3><select data-studio-background aria-label="Studio background"><option value="space">Space</option><option value="white">White</option><option value="studio">Studio light</option><option value="model">Model workspace</option><option value="solid">Solid colour</option><option value="gradient">Gradient</option><option value="points">Colour points</option></select>
       <div class="st-cpts-ed" data-cpts-ed hidden><p class="studio-note">Colour A is the base. Drag the dots on the canvas to place each colour.</p><div data-cpts-list></div><button type="button" class="st-btn" data-cpts-add>+ Add colour</button></div>
       <div class="studio-two"><label>Colour A<input type="color" data-studio-bg-a value="#111727"></label><label>Colour B<input type="color" data-studio-bg-b value="#274052"></label></div>
@@ -8704,7 +8714,7 @@ class CoreStudio {
     this.cptLayer = document.createElement('div'); this.cptLayer.className = 'st-cpts'; this.stage.after(this.cptLayer);
     this.el.querySelector('[data-cpts-add]').onclick = () => { this.cpts.push({ c: '#ffb04a', x: .5, y: .5 }); this.paintBackground(); this.renderCpts(); this.commit(); };
     this.el.querySelector('[data-studio-subject]').onchange = e => this.setSubject(+e.target.value);
-    this.el.querySelectorAll('[data-studio-preset]').forEach(b => b.onclick = () => this.applyPreset(b.dataset.studioPreset));
+    this.el.querySelectorAll('[data-studio-preset]').forEach(b => b.onclick = () => { this.items.filter(i => i.tpl).forEach(i => this.removeItem(i, true)); this.applyPreset(b.dataset.studioPreset); });
     this.el.querySelectorAll('[data-studio-template]').forEach(b => b.onclick = () => this.applyTemplate(b.dataset.studioTemplate));
     this.el.querySelectorAll('[data-studio-add]').forEach(b => b.onclick = () => this.addItem(b.dataset.studioAdd));
     this.el.querySelectorAll('[data-studio-decor]').forEach(b => b.onclick = () => this.addItem(b.dataset.studioDecor, { decor: true, fill: this.decorFill, opacity: this.decorOpacity }));
@@ -9350,26 +9360,44 @@ class CoreStudio {
   // Small wrench at the top-right of the selected item; the selection bar only opens when it is pressed.
   updateEditBtn() {
     if (!this.editBtn) {
-      const b = this.editBtn = document.createElement('button'); b.type = 'button'; b.className = 'st-edit'; b.hidden = true; b.setAttribute('aria-label', 'Edit this item'); b.innerHTML = this.icons.wrench.replace('class="st-i"', 'class="st-i"');
-      b.addEventListener('pointerdown', e => e.stopPropagation());
-      b.addEventListener('click', e => { e.stopPropagation(); this.openCtxBar(); });
-      this.el.append(b);
+      const mk = (cls, label, svg, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'st-edit ' + cls; b.hidden = true; b.setAttribute('aria-label', label); b.innerHTML = svg; b.addEventListener('pointerdown', e => e.stopPropagation()); b.addEventListener('click', e => { e.stopPropagation(); fn(); }); this.el.append(b); return b; };
+      this.editBtn = mk('', 'Edit this item', this.icons.wrench, () => this.openCtxBar());
+      this.lockBtn = mk('st-edit-mini', 'Lock', this.icons.unlock, () => { const it = this.sel; if (it) { this.lockItem(it, !it.locked); this.updateEditBtn(); } });
+      this.delBtn = mk('st-edit-mini st-edit-del', 'Delete this item', this.icons.trash, () => { const it = this.sel; if (it) this.removeItem(it); });
     }
-    const b = this.editBtn, it = this.sel;
-    const show = !!(this.active && it && it.kind !== 'fx' && !this.ctxOpen && !this.isHid(it) && this.tool === 'move' && !this.drawing && !it.el.isContentEditable);
-    b.hidden = !show; if (!show) return;
-    const r = it.el.getBoundingClientRect(), a = (it.rot || 0) * Math.PI / 180, w = it.el.offsetWidth, h = it.el.offsetHeight, cx = r.left + r.width / 2, cy = r.top + r.height / 2, sh = it.kind === 'text' ? 0 : 42, ca = Math.cos(a), sa = Math.sin(a);
-    b.style.left = clamp(cx + w / 2 * ca + h / 2 * sa - sh * ca, 20, innerWidth - 20) + 'px'; b.style.top = clamp(cy + w / 2 * sa - h / 2 * ca - sh * sa, 20, innerHeight - 20) + 'px';
+    const b = this.editBtn, lb = this.lockBtn, db = this.delBtn, it = this.sel;
+    const base = !!(this.active && it && it.kind !== 'fx' && !this.isHid(it) && this.tool === 'move' && !this.drawing && !it.el.isContentEditable);
+    b.hidden = !(base && !this.ctxOpen); lb.hidden = db.hidden = !base; if (!base) return;
+    lb.innerHTML = it.locked ? this.icons.lock : this.icons.unlock; lb.setAttribute('aria-label', it.locked ? 'Unlock' : 'Lock');
+    // Preferred spot: the item's top-right corner. A very large item can push it off screen or under a menu: then try the other corners,
+    // then any free spot on the visible part of the item, so the Edit, Lock and Delete buttons can always be reached.
+    const r = it.el.getBoundingClientRect(), a = (it.rot || 0) * Math.PI / 180, w = it.el.offsetWidth, h = it.el.offsetHeight, cx = r.left + r.width / 2, cy = r.top + r.height / 2, sh = 90, ca = Math.cos(a), sa = Math.sin(a);
+    const corner = (sx, sy) => { const lx = sx * w / 2, ly = sy * h / 2; return [cx + lx * ca - ly * sa, cy + lx * sa + ly * ca]; };
+    const spot = this.freeSpot([corner(1, -1), corner(-1, -1), corner(1, 1), corner(-1, 1)], r, true), dir = spot[2];
+    // The row sits just outside the corner: Edit, Lock, Delete running away from the item (right) or back over it (left) when there is no room.
+    const place = (el, k) => { el.style.left = (spot[0] + dir * 42 * k) + 'px'; el.style.top = spot[1] + 'px'; };
+    place(b, 0); place(lb, 1); place(db, 2); this.editSpot = spot;
   }
-  openCtxBar() { if (!this.sel || this.sel.kind === 'fx') return; this.ctxOpen = true; this.ctx.hidden = false; this.updateRotHandle(); }
-  closeCtxBar() { this.ctxOpen = false; this.ctx.hidden = true; if (this.closeFly) this.closeFly(); this.updateRotHandle(); }
+  // First candidate point that is on screen and not under a menu; else scan the item's visible area; else clamp to the screen edge.
+  // With `row` it also needs room for the two extra buttons beside it (to the right, else to the left); returns [x, y, dir].
+  freeSpot(cands, r, row) {
+    const pad = 22, obs = [...this.el.querySelectorAll('[data-tray],.st-context')].filter(e => !e.hidden && e.offsetParent !== null).map(e => e.getBoundingClientRect()).filter(q => q.width > 0 && q.height > 0);
+    const f1 = p => p[0] >= pad && p[0] <= innerWidth - pad && p[1] >= pad && p[1] <= innerHeight - pad && !obs.some(q => p[0] > q.left - 14 && p[0] < q.right + 14 && p[1] > q.top - 14 && p[1] < q.bottom + 14);
+    const dirOf = p => !row ? 1 : [1, -1].find(d => [0, 1, 2].every(k => f1([p[0] + d * 42 * k, p[1]]))) || 0;
+    for (const c of cands) { const d = dirOf(c); if (d) return [c[0], c[1], d]; }
+    const x0 = Math.max(pad, r.left), x1 = Math.min(innerWidth - pad, r.right), y0 = Math.max(pad, r.top), y1 = Math.min(innerHeight - pad, r.bottom);
+    if (x1 > x0 && y1 > y0) for (let y = y0 + 20; y <= y1 - 10; y += 36) for (let x = x1 - 20; x >= x0 + 10; x -= 36) { const d = dirOf([x, y]); if (d) return [x, y, d]; }
+    const c = cands[0]; return [clamp(c[0], pad, innerWidth - pad - 84), clamp(c[1], pad, innerHeight - pad), 1];
+  }
   updateRotHandle() {
     this.updateEditBtn();
     const h = this.rotH; if (!h) return; const it = this.sel;
     const show = !!(this.active && it && it.kind !== 'fx' && !it.locked && !this.isHid(it) && this.tool === 'move' && !this.drawing && !it.el.isContentEditable);
     h.hidden = !show; if (!show) return;
     const r = it.el.getBoundingClientRect(), a = (it.rot || 0) * Math.PI / 180, d = it.el.offsetHeight / 2 + 40;
-    h.style.left = (r.left + r.width / 2 + Math.sin(a) * d) + 'px'; h.style.top = (r.top + r.height / 2 - Math.cos(a) * d) + 'px';
+    const p = [r.left + r.width / 2 + Math.sin(a) * d, r.top + r.height / 2 - Math.cos(a) * d], e = this.editSpot || [p[0], p[1]];
+    const ok = p[0] >= 22 && p[0] <= innerWidth - 22 && p[1] >= 22 && p[1] <= innerHeight - 22, sp = ok ? p : this.freeSpot([[e[0], e[1] + 48], [e[0] + 48, e[1] + 48], [e[0] - 48, e[1] + 48]], r);
+    h.style.left = sp[0] + 'px'; h.style.top = sp[1] + 'px';
   }
   isHid(it) { return !!it.hide || (it.group != null && this.groups.some(g => g.id === it.group && g.hide)); }
   select(it) {
