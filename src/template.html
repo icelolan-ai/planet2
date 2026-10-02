@@ -8920,13 +8920,13 @@ class CoreStudio {
   applyTemplate(name) {
     const W = innerWidth, H = innerHeight, U = this.U(), m = Math.min(W, H), S = f => f * m / U, sc = clamp(m / 900, .55, 1.3), px = n => Math.round(n * sc), wide = W > H;
     const months = 'JAN\nFEB\nMAR\nAPR\nMAY\nJUN\nJUL\nAUG\nSEP\nOCT\nNOV\nDEC';
-    const kit = (k, x, y, size, p = {}, o = {}) => ['kit', { kit: k, x, y, w: S(size), h: S(o.ar ? size * o.ar : size), p, ...o }];
+    const kit = (k, x, y, size, p = {}, o = {}) => { const d = KIT[k].defaults, { ar, ...rest } = o; if (d.size != null) p = { ...p, size: Math.max(7, Math.round((p.size ?? d.size) * sc)) }; return ['kit', { kit: k, x, y, w: S(size), h: S(ar ? size * ar : size), p, ...rest }]; };
     const txt = (content, x, y, size, o = {}) => ['text', { content, x, y, size: px(size), align: 'l', font: 'display', upper: true, ...o }];
     const defs = {
       editorial: { scene: 'monoPoster', items: [
         kit('scaleRing', .5, .5, .98, { n: 120, major: 10, numbers: true, size: 11, majorLen: 14, minorLen: 6 }),
-        kit('labelRing', .5, .5, .7, { items: months, size: 13, inner: .62, ticks: 'ticks' }),
-        kit('arcText', .5, .5, .56, { text: 'CEREBRA · STUDIO STUDY · 2026 · ', size: 14 }),
+        kit('labelRing', .5, .5, .7, { items: months, size: 13, inner: .72, ticks: 'ticks' }),
+        kit('arcText', .5, .5, .46, { text: 'CEREBRA · STUDIO STUDY · 2026 · ', size: 13 }),
         txt('Cerebra / Calendar', .06, .08, 13, { font: 'cond', weight: 600, ls: .3 }), txt('2026', .06, .9, 120, { size: px(120) })] },
       cyclical: { scene: 'glowOrbit', items: [
         kit('rings', .5, .5, 1, { n: 11, fade: .75, inner: .1, gaps: .5 }), kit('arc', .5, .5, .8, { n: 5, lw: 5, inner: .4 }),
