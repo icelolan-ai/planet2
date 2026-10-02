@@ -7795,7 +7795,7 @@ class WorldAtelier {
 const mulberry32 = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const KIT_ANIM = new WeakMap();
 const kitEsc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const KIT_MAX = { rings: 40, radial: 400, arc: 12, label: 120, ticks: 720, dots: 6000, bars: 200, tracks: 16 };
+const KIT_MAX = { hud: 64, rings: 40, radial: 400, arc: 12, label: 120, ticks: 720, dots: 6000, bars: 200, tracks: 16 };
 const KIT_FONTS = { display: '"Bebas Neue","Oswald",Impact,sans-serif', sans: '"Barlow",system-ui,sans-serif', cond: '"Barlow Condensed","Barlow",sans-serif', mono: '"Geist Mono",ui-monospace,Menlo,monospace', valorant: '"Valorant","Bebas Neue",sans-serif' };
 const KIT_FONT_OPTS = [['mono', 'Geist Mono'], ['sans', 'Barlow'], ['cond', 'Barlow Condensed'], ['display', 'Bebas Neue'], ['valorant', 'Valorant']];
 const KIT_WEIGHTS = [['400', 'Regular'], ['500', 'Medium'], ['700', 'Bold']];
@@ -7804,6 +7804,80 @@ const kitFont = (p, px) => `${p.weight || 500} ${px}px ${KIT_FONTS[p.font] || KI
 const kitFontWait = it => { const f = it.p && it.p.font ? kitFont(it.p, 16) : null; return f && document.fonts && !document.fonts.check(f) ? document.fonts.load(f).then(() => true, () => false) : Promise.resolve(false); };
 const KIT_DASH = [['solid', 'Solid'], ['dashed', 'Dashed'], ['dotted', 'Dotted'], ['mixed', 'Mixed']];
 const KIT = {
+  hud: {
+    label: 'HUD', defaults: { glyph: 'brackets', lw: 1.2, n: 8, len: .22, c2: '#ff4655', mix: .2, size: .6, angle: 45 }, thumbK: .6,
+    ui: [{ k: 'glyph', t: 'select', label: 'Symbol', opts: [['brackets', 'Corner brackets'], ['dots', 'Dot matrix'], ['hatch', 'Diagonal hatch'], ['plusMinus', 'Plus / minus'], ['reticle', 'Target reticle'], ['diamonds', 'Diamond row'], ['warning', 'Warning sign'], ['star4', 'Four-point star'], ['barGrad', 'Gradient bars'], ['angleLine', 'Angle bracket line']] },
+      { k: 'lw', t: 'range', label: 'Line width', min: .4, max: 6, step: .2, unit: 'px', when: ['glyph', ['brackets', 'hatch', 'plusMinus', 'reticle', 'diamonds', 'warning', 'angleLine']] },
+      { k: 'n', t: 'range', label: 'Count', min: 2, max: KIT_MAX.hud, step: 1, when: ['glyph', ['dots', 'hatch', 'plusMinus', 'diamonds', 'barGrad']] },
+      { k: 'len', t: 'range', label: 'Corner length', min: .05, max: .5, step: .01, pct: 1, when: ['glyph', ['brackets', 'angleLine']] },
+      { k: 'size', t: 'range', label: 'Symbol size', min: .1, max: 1, step: .05, pct: 1, when: ['glyph', ['dots', 'plusMinus', 'diamonds', 'reticle', 'star4', 'warning']] },
+      { k: 'angle', t: 'range', label: 'Angle', min: 0, max: 180, step: 5, unit: '°', when: ['glyph', 'hatch'] },
+      { k: 'mix', t: 'range', label: 'Accent share', min: 0, max: 1, step: .05, pct: 1, when: ['glyph', ['dots', 'plusMinus', 'diamonds', 'barGrad', 'hatch']] }, { k: 'c2', t: 'color', label: 'Accent colour' }],
+    draw(g, it, x, y, w, h, k) {
+      const p = it.p, r = mulberry32(it.seed), cx = x + w / 2, cy = y + h / 2, m = Math.min(w, h), lw = Math.max(.5, p.lw * k), n = Math.max(2, Math.min(KIT_MAX.hud, p.n | 0)), pad = lw;
+      g.strokeStyle = g.fillStyle = it.fill; g.lineWidth = lw; g.lineCap = 'butt'; g.lineJoin = 'miter';
+      const pick = () => r() < p.mix ? p.c2 : it.fill, tau = Math.PI * 2;
+      switch (p.glyph) {
+        case 'brackets': {
+          const a = m * p.len, L = x + pad / 2, T = y + pad / 2, R = x + w - pad / 2, B = y + h - pad / 2;
+          g.beginPath(); g.moveTo(L, T + a); g.lineTo(L, T); g.lineTo(L + a, T); g.moveTo(R - a, T); g.lineTo(R, T); g.lineTo(R, T + a);
+          g.moveTo(R, B - a); g.lineTo(R, B); g.lineTo(R - a, B); g.moveTo(L + a, B); g.lineTo(L, B); g.lineTo(L, B - a); g.stroke(); break;
+        }
+        case 'dots': {
+          const cols = n, rows = Math.max(1, Math.round(n * h / w)), sx = w / cols, sy = h / rows, d = Math.min(sx, sy) * p.size / 2;
+          for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) { g.fillStyle = pick(); g.beginPath(); g.arc(x + (i + .5) * sx, y + (j + .5) * sy, Math.max(.4, d), 0, tau); g.fill(); }
+          break;
+        }
+        case 'hatch': {
+          g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
+          const a = p.angle * Math.PI / 180, c = Math.cos(a), s = Math.sin(a), diag = Math.hypot(w, h), st = diag / n;
+          for (let i = 0; i <= n; i++) { const o = -diag / 2 + i * st; g.strokeStyle = pick(); g.beginPath(); g.moveTo(cx - s * o - c * diag, cy + c * o - s * diag); g.lineTo(cx - s * o + c * diag, cy + c * o + s * diag); g.stroke(); }
+          g.restore(); break;
+        }
+        case 'plusMinus': {
+          const sx = w / n, d = Math.min(sx, h) * p.size / 2; g.lineCap = 'square';
+          for (let i = 0; i < n; i++) {
+            const px = x + (i + .5) * sx; g.strokeStyle = pick(); g.beginPath(); g.moveTo(px - d, cy); g.lineTo(px + d, cy); if (i % 2 === 0) { g.moveTo(px, cy - d); g.lineTo(px, cy + d); } g.stroke();
+          }
+          break;
+        }
+        case 'reticle': {
+          const R = m / 2 - pad, rr = R * (.35 + .65 * p.size), tk = R * .22;
+          g.beginPath(); g.arc(cx, cy, rr, 0, tau); g.stroke();
+          g.beginPath(); for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2, c = Math.cos(a), s = Math.sin(a); g.moveTo(cx + c * (rr - tk), cy + s * (rr - tk)); g.lineTo(cx + c * R, cy + s * R); }
+          g.stroke(); g.fillStyle = p.c2; g.beginPath(); g.arc(cx, cy, Math.max(2 * k, lw * 2), 0, tau); g.fill(); break;
+        }
+        case 'diamonds': {
+          const sx = w / n, d = Math.min(sx, h) * p.size / 2;
+          for (let i = 0; i < n; i++) {
+            const px = x + (i + .5) * sx, f = r() < p.mix; g.strokeStyle = g.fillStyle = f ? p.c2 : it.fill;
+            g.beginPath(); g.moveTo(px, cy - d); g.lineTo(px + d, cy); g.lineTo(px, cy + d); g.lineTo(px - d, cy); g.closePath(); if (i % 2 === 0 || f) g.fill(); else g.stroke();
+          }
+          break;
+        }
+        case 'warning': {
+          const R = m / 2 * (.35 + .65 * p.size) - pad, bx = R * .98, by = cy + R * .72; g.lineJoin = 'round';
+          g.beginPath(); g.moveTo(cx, cy - R * .95); g.lineTo(cx + bx, by); g.lineTo(cx - bx, by); g.closePath(); g.stroke();
+          g.fillStyle = p.c2; g.fillRect(cx - R * .06, cy - R * .35, R * .12, R * .6); g.fillRect(cx - R * .06, cy + R * .35, R * .12, R * .12); break;
+        }
+        case 'star4': {
+          const R = m / 2 * (.3 + .7 * p.size) - pad, ri = R * .16; g.beginPath();
+          for (let i = 0; i < 8; i++) { const a = -Math.PI / 2 + i * Math.PI / 4, rr = i % 2 ? ri : R; g[i ? 'lineTo' : 'moveTo'](cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); }
+          g.closePath(); g.fill(); break;
+        }
+        case 'barGrad': {
+          const gp = w / n * .3, bw = w / n - gp, a0 = g.globalAlpha;
+          for (let i = 0; i < n; i++) { const t = (i + 1) / n, bh = (h - pad * 2) * (.15 + .85 * t); g.globalAlpha = a0 * (.25 + .75 * t); g.fillStyle = pick(); g.fillRect(x + i * (bw + gp) + gp / 2, y + h - pad - bh, bw, bh); }
+          g.globalAlpha = a0; break;
+        }
+        case 'angleLine': {
+          const a = Math.min(m * p.len, h - pad * 2), L = x + pad, R = x + w - pad, B = y + h - pad, T = B - a;
+          g.beginPath(); g.moveTo(L, B); g.lineTo(R - a * 1.6, B); g.lineTo(R - a * .6, T); g.lineTo(R, T); g.stroke();
+          g.fillStyle = p.c2; g.fillRect(R - lw * 2, T - lw * 2, lw * 4, lw * 4); break;
+        }
+      }
+    },
+  },
   rings: {
     label: 'Rings', defaults: { n: 7, inner: .18, lw: 1.2, dash: 'solid', fade: .5, gaps: .35 },
     ui: [{ k: 'n', t: 'range', label: 'Rings', min: 1, max: KIT_MAX.rings, step: 1 }, { k: 'inner', t: 'range', label: 'Inner size', min: 0, max: .9, step: .02, pct: 1 }, { k: 'lw', t: 'range', label: 'Line width', min: .4, max: 8, step: .2, unit: 'px' },
@@ -9261,7 +9335,7 @@ class CoreStudio {
     const it = this.sel, f = this.el.querySelector('[data-kit-panel]'); if (!it || it.kind !== 'kit') return;
     const def = KIT[it.kit], fmt = (u, v) => u.pct ? `${Math.round(v * 100)}%` : u.unit ? `${+v.toFixed(1)}${u.unit}` : String(v);
     const spin = it.spin || 0;
-    const shown = def.ui.filter(u => !u.when || it.p[u.when[0]] === u.when[1]);
+    const shown = def.ui.filter(u => !u.when || [].concat(u.when[1]).includes(it.p[u.when[0]]));
     f.innerHTML = `<b class="st-fly-title">${def.label}</b>`
       + `<label class="st-fly-row"><span>Opacity</span><output>${Math.round((it.opacity ?? 1) * 100)}%</output><input type="range" min="0.05" max="1" step="0.05" value="${it.opacity ?? 1}" data-kop></label>`
       + `<label class="st-fly-row st-fly-check"><span>Spin</span><input type="checkbox" data-kspin-on${it.spinOn ? ' checked' : ''}></label>`
