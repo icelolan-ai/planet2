@@ -3,6 +3,27 @@
 แผนนี้ออกแบบให้โมเดลที่ทำงานต่อ (เช่น Sonnet) หยิบไปทำทีละ Phase ได้โดยไม่ต้องย้อนอ่านบทสนทนา
 ทุก Phase = 1 branch + 1 PR + merge + ตรวจเว็บจริง ตาม `CLAUDE.md`
 
+## สถานะจริง (อัปเดตหลัง Phase 13)
+
+| Phase | สถานะ | PR | หมายเหตุที่ต้องรู้ |
+|---|---|---|---|
+| 1–3 | เสร็จ | #160–#164 | Kit engine, curved text, label ring, scale/dot rings, radial bars |
+| 4 HUD | เสร็จ | #168 | 10 สัญลักษณ์ในชนิดเดียว (`hud`) |
+| 5 Typography | เสร็จบางส่วน | #173 | Chip, outline width, vertical (หมุน -90°), ขนาด ≤600. **ยังไม่มีฟอนต์ตัวบางกว้าง** (ไม่มีไฟล์ฟอนต์ลิขสิทธิ์เปิดใน repo) |
+| 6 Glass/Widget | เสร็จ | #174 | glass label เบลอจริงทั้งจอและ Save; Spin ของ glass ไม่หมุนกล่องบนจอ |
+| 7 Textures | เสร็จ | #175 | paper, grain, crumple, scratches, vignette |
+| 8 Network | เสร็จ | #177 | โมดูล `L2` (cap เส้น: คอม 3000 / มือถือ 800), 6 ชนิด; ไม่มี gradient ต่อเส้น (ใช้ 2 สี) |
+| 9 Flow/Spiral | เสร็จ | #178 | flowField, circularFlow, spiral |
+| Motion (นอกแผน) | เสร็จ | #179 | ทุก Kit มี Motion (it.mOn/mAmt/mSpd) นาฬิกา ~30fps; Save จับเฟรมบนจอ |
+| 10 Orbit pattern | เสร็จ | #180 | ลากปุ่มไปวางทดสอบใน headless ไม่ได้ (Comet เดิมก็ไม่ติด) ทดสอบผ่าน API เท่านั้น |
+| 11 Surface styles | เสร็จ | #181 | `src/effects/surface.js`; ยังไม่มี "เศษชิ้นส่วนขอบ" ของ wire; วัด FPS จริงไม่ได้ |
+| 12 Burst/Ring | เสร็จ | #182 | `src/effects/burst.js` |
+| 13 Presets/Templates | เสร็จ | #183, #184 | 6 scene presets + 5 layout templates (`applyTemplate`) |
+| 14 GPU path | **ยังไม่เริ่ม — ห้ามเริ่มจนกว่าผู้ใช้สั่ง** | – | ต้องรับผล `chrome://gpu` (หรือรุ่น iPad/iPadOS) จากผู้ใช้ก่อน |
+
+ข้อควรจำ: ทุก Phase ทดสอบด้วย Chromium จำลอง (CPU render) เท่านั้น **ยังไม่เคยทดสอบบน iPad/iPhone จริง** และยังวัด FPS จริงไม่ได้
+เรื่องค้างรอผู้ใช้: ภาพ Save เบลอบน iPad (ตรงไหน, ขนาด Save, รุ่น iPad/iPadOS)
+
 ## กติกาที่ใช้ทุก Phase
 
 1. แก้เฉพาะ `src/template.html`, `src/effects/*.js`, `src/worlds.json` แล้วรัน `python3 src/build_web.py` ห้ามแก้ `index.html` / `assets/` เอง
