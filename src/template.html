@@ -2482,6 +2482,8 @@ const WorldTune = (() => {
       b.setHaze(s.haze); setRange(haze, s.haze, pct);
       b.setFlare(s.frate, s.famt); if (s.fcolor) { b.setFlareColor(s.fcolor); flareC.set(s.fcolor); } setRange(frate, s.frate, times); setRange(famt, s.famt, times);
       b.setPointer(s.ptr, s.ptrs); ptr.set(s.ptr); setRange(ptrs, s.ptrs, times);
+      // One-time reset: older saves carried a strong colour split; start everyone from Off.
+      try { if (!localStorage.getItem('cerebra-aberr-reset-v2')) { s.aberr = 0; localStorage.setItem('cerebra-aberr-reset-v2', '1'); } } catch (e) {}
       if (s.aberr != null) {
         LENS_U.uLensOn.value = s.lens; LENS_U.uLensAberr.value = s.aberr; LENS_U.uLensBlur.value = s.blur; LENS_U.uLensBloom.value = s.bloom; LENS_U.user = true;
         lens.set(s.lens); setRange(aberr, s.aberr, f3); setRange(blur, s.blur, f2); setRange(bloom, s.bloom, f2);
@@ -7033,7 +7035,7 @@ class CoreStudio {
         <button type="button" class="st-btn" data-studio-reset-all aria-label="Reset everything">${I('<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/>')}<span class="st-label">Reset all</span></button>
         <button type="button" class="st-btn" data-studio-tools aria-expanded="false" aria-controls="studio-tools" aria-label="Settings">${I('<path d="M4 6h16M4 12h16M4 18h16"/>')}<span class="st-label">Settings</span></button></div>
       <aside id="studio-tools" class="studio-panel st-glass" data-tray="panel" aria-label="Studio settings" hidden><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-panel-fold aria-expanded="true"><h2>Cerebra, in focus.</h2><span class="st-chev" aria-hidden="true"></span></button>
-      <h3>Poster presets</h3><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-preset="ember" style="--p1:#0c1625;--p2:#d26448">Ember dossier</button><button type="button" class="studio-preset" data-studio-preset="monolith" style="--p1:#e0e4e3;--p2:#666e72">Monolith</button><button type="button" class="studio-preset" data-studio-preset="blueprint" style="--p1:#f4f5f3;--p2:#becbd2">Orbital grid</button><button type="button" class="studio-preset" data-studio-preset="infinity" style="--p1:#05090b;--p2:#72b4b4">Infinity noir</button></div><p class="studio-note">Tap any poster text to edit it, drag to move it. Add shapes from the left to keep an area sharp and blur the rest.</p>
+      <h3>Poster presets</h3><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-preset="ember" style="--p1:#0c1625;--p2:#d26448">Ember dossier</button><button type="button" class="studio-preset" data-studio-preset="monolith" style="--p1:#e0e4e3;--p2:#666e72">Monolith</button><button type="button" class="studio-preset" data-studio-preset="blueprint" style="--p1:#f4f5f3;--p2:#becbd2">Orbital grid</button><button type="button" class="studio-preset" data-studio-preset="bio" style="--p1:#1a0b3a;--p2:#7b2fa8">Biocomputer</button><button type="button" class="studio-preset" data-studio-preset="infinity" style="--p1:#05090b;--p2:#72b4b4">Infinity noir</button></div><p class="studio-note">Tap any poster text to edit it, drag to move it. Add shapes from the left to keep an area sharp and blur the rest.</p>
       <h3>Background</h3><select data-studio-background aria-label="Studio background"><option value="space">Space</option><option value="white">White</option><option value="studio">Studio light</option><option value="model">Model workspace</option><option value="solid">Solid colour</option><option value="gradient">Gradient</option></select>
       <div class="studio-two"><label>Colour A<input type="color" data-studio-bg-a value="#111727"></label><label>Colour B<input type="color" data-studio-bg-b value="#274052"></label></div>
       <label class="studio-control"><span>Gradient angle</span><input type="range" min="0" max="360" value="115" data-studio-angle><output>115°</output></label><label class="studio-control"><span>Grid</span><select data-studio-gridmode aria-label="Grid"><option value="always">Always</option><option value="focus">Only with a focus shape</option><option value="off">Off</option></select></label><input type="checkbox" data-studio-grid hidden checked>
@@ -7235,6 +7237,7 @@ class CoreStudio {
       ember:{background:'gradient',a:'#111726',b:'#7b3c33',angle:120,grid:true,light:1,lightX:4,shadow:.8,soft:.55,effect:'off',amount:4,ink:'#e9ecf2'},
       monolith:{background:'gradient',a:'#d9dddc',b:'#879096',angle:150,grid:false,light:1.35,lightX:-2,shadow:.72,soft:.45,effect:'off',amount:0,ink:'#0b0e12'},
       blueprint:{background:'gradient',a:'#f7f8f6',b:'#dae1e6',angle:75,grid:true,light:1.15,lightX:3,shadow:.5,soft:.7,effect:'off',amount:0,ink:'#0d111c'},
+      bio:{background:'gradient',a:'#1a0b3a',b:'#4a1d6e',angle:160,grid:false,light:1.1,lightX:3,shadow:.5,soft:.8,effect:'off',amount:4,ink:'#f4ecff'},
       infinity:{background:'gradient',a:'#050809',b:'#20292a',angle:145,grid:false,light:1.2,lightX:-4,shadow:.75,soft:.8,effect:'off',amount:4,ink:'#e7f2f1'}
     };
     const p = presets[name]; if (!p) return;
@@ -7264,6 +7267,7 @@ class CoreStudio {
       ember: [['kicker', 'l', L, top], ['tech', 'r', R, top], ['title', 'l', L, low], ['index', 'r', R, low + .02]],
       monolith: [['title', 'l', L, top + .08, 1.2], ['kicker', 'l', L, top + .2], ['index', 'r', R, low + .02]],
       blueprint: [['kicker', 'l', L, top], ['index', 'r', R, top], ['title', 'l', L, low]],
+      bio: [['kicker', 'l', L, top + .12], ['title', 'l', L, top + .24, .9], ['index', 'r', R, top]],
       infinity: [['kicker', 'l', L, top], ['tech', 'r', R, top], ['title', 'l', L, .5, .7], ['index', 'r', R, low + .02]]
     }[name];
     layout.filter(([role]) => W >= 600 || role !== 'tech').forEach(([role, align, x, y, k = 1]) => this.addItem('text', { ...T[role], role, align, x, y, size: Math.round(T[role].size * k), color: ink, silent: true }));
