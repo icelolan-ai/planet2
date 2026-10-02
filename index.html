@@ -1338,6 +1338,9 @@ html,body{touch-action:pan-x pan-y}
 .st-rotbox label{display:inline-flex;align-items:center;gap:5px;font:600 10px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;color:#cfd6e2}
 .st-rotbox input[type=number]{width:62px;height:36px;border-radius:10px!important;border:1px solid #ffffff2e;background:#0000003a;color:#fff;padding:0 6px;font:600 13px var(--f-num)}
 .st-rotbox select{min-height:36px!important;height:36px;padding:0 8px!important}
+.st-item.is-selected{z-index:6}
+.st-handle::after{content:"";position:absolute;inset:-14px;border-radius:50%}
+@media(pointer:coarse){.st-handle{width:28px;height:28px;right:-14px;bottom:-14px}}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
