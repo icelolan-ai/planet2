@@ -1053,6 +1053,38 @@ body.studio-on:has(#studio.tool-hand) #gl{cursor:grab!important}body.studio-on:h
 .st-cpts-ed[hidden]{display:none}
 .studio-section[open]>summary{color:#ff6571;box-shadow:inset 3px 0 0 #ff4655;padding-left:12px;margin-left:-12px;transition:color .2s,padding .2s}
 .studio-section[open]{background:linear-gradient(90deg,#ff46550d,transparent 70%)}
+/* Tune panels inside the studio share the studio's frosted-glass look; some sliders become rotary knobs. */
+body.studio-on :is(#tune,#wtune){top:14px;bottom:14px;left:14px;height:auto;border-radius:26px;border:1px solid #ffffff1c;background:linear-gradient(150deg,#1c2029c4,#0d1016d6)!important;backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);box-shadow:inset 1px 1px 0 #ffffff1a,0 24px 60px #0009;scrollbar-width:none}
+body.studio-on :is(#tune,#wtune)::-webkit-scrollbar{display:none}
+body.studio-on :is(#tune,#wtune) .tune-h{border-left:0;padding-left:0}
+body.studio-on :is(#tune,#wtune) .tune-x{border-radius:50%;background:#ffffff0d;border:1px solid #ffffff1c}
+body.studio-on :is(#tune,#wtune) .tune-tabs{gap:6px;border:0;padding:4px;margin-bottom:18px;background:#0000002e;border-radius:16px;scrollbar-width:none}
+body.studio-on :is(#tune,#wtune) .tune-tabs::-webkit-scrollbar{display:none}
+body.studio-on :is(#tune,#wtune) .tune-tabs button{border:0!important;border-radius:12px;min-height:38px;padding:8px 12px;margin:0}
+body.studio-on :is(#tune,#wtune) .tune-tabs button[aria-selected=true]{background:linear-gradient(150deg,#ff6b78,#e8364a);color:#fff;box-shadow:0 0 16px #ff465555}
+body.studio-on :is(#tune,#wtune) .tune-seg{border-radius:14px;border-color:#ffffff1c;background:#00000026;padding:3px;gap:3px}
+body.studio-on :is(#tune,#wtune) .tune-seg button{border:0!important;border-radius:11px}
+body.studio-on :is(#tune,#wtune) .tune-seg button[aria-pressed=true]{background:linear-gradient(150deg,#ff6b78,#e8364a);color:#fff}
+body.studio-on :is(#tune,#wtune) :is(.tune-btn,.tune-reset){border-radius:14px;clip-path:none!important}
+body.studio-on :is(#tune,#wtune) .tune-btn{background:linear-gradient(150deg,#ff6b78,#e8364a);color:#fff;box-shadow:0 0 18px #ff465544}
+body.studio-on :is(#tune,#wtune) .tune-reset{background:#ffffff0a;border-color:#ffffff1f}
+body.studio-on :is(#tune,#wtune) .tune-row{margin-bottom:6px}
+body.studio-on :is(#tune,#wtune) [class*=theme] button,body.studio-on :is(#tune,#wtune) .tune-chips button{border-radius:12px}
+body.studio-on :is(#tune,#wtune) input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:4px}
+body.studio-on :is(#tune,#wtune) input[type=range]::-webkit-slider-thumb{width:18px;height:18px;margin-top:-7px;border-radius:50%;transform:none!important;box-shadow:0 0 0 3px #ff465533,0 2px 6px #0008}
+body.studio-on :is(#tune,#wtune) input[type=range]::-moz-range-thumb{border-radius:50%}
+.st-knob{display:inline-grid;place-items:center;width:62px;height:62px;position:relative;cursor:ns-resize;touch-action:none;user-select:none}
+.st-knob svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.st-knob .kt{fill:none;stroke:#ffffff1f;stroke-width:5;stroke-linecap:round}
+.st-knob .kv{fill:none;stroke:#ff4655;stroke-width:5;stroke-linecap:round;filter:drop-shadow(0 0 4px #ff465599)}
+.st-knob .kd{fill:linear-gradient(#000,#000);fill:#1b1f29;stroke:#ffffff26}
+.st-knob .kp{stroke:#fff;stroke-width:2.5;stroke-linecap:round}
+.st-knob:focus-visible{outline:2px solid #ff6571;border-radius:50%}
+body.studio-on .tune-row:has(.st-knob) input[type=range]{display:none}
+body:not(.studio-on) .st-knob{display:none}
+.studio-panel .studio-control:has(.st-knob) input[type=range]{display:none}
+.studio-panel .studio-control:has(.st-knob){grid-template-columns:1fr auto auto}
+.studio-panel .studio-control .st-knob{grid-row:1;grid-column:3}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -7344,6 +7376,7 @@ class CoreStudio {
     });
     document.addEventListener('pointerdown', e => { if (!e.target.closest('.st-fly,[data-flyout]')) this.closeFly(); }, true);
     this.initDraw();
+    ['[data-t-aberr]', '[data-t-blur]', '[data-t-bloom]', '[data-studio-light]', '[data-studio-light-x]', '[data-studio-shadow-soft]'].forEach(s => this.knobify(document.querySelector(s)));
     this.tool = 'move';
     this.setTool = tool => { if (tool !== 'draw' && this.drawing) this.setDrawing(false); this.tool = tool === 'hand' ? 'hand' : 'move'; this.el.classList.toggle('tool-hand', this.tool === 'hand');
       this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioTool === this.tool && !this.drawing))); if (this.tool === 'hand') this.select(null); };
@@ -7912,6 +7945,26 @@ class CoreStudio {
     this.placeCpts();
   }
   placeCpts() { this.cptLayer.querySelectorAll('.st-cpt').forEach(b => { const p = this.cpts[+b.dataset.cp]; if (!p) return; b.style.left = p.x * 100 + '%'; b.style.top = p.y * 100 + '%'; b.style.background = p.c; }); }
+  // Rotary knob that drives an existing range input (drag up/down or sideways, wheel, arrow keys).
+  knobify(input) {
+    if (!input || input._knob) return; input._knob = 1;
+    const k = document.createElement('span'); k.className = 'st-knob'; k.tabIndex = 0; k.setAttribute('role', 'slider');
+    k.innerHTML = '<svg viewBox="0 0 62 62"><path class="kt"/><path class="kv"/><circle class="kd" cx="31" cy="31" r="19"/><line class="kp" x1="31" y1="31" x2="31" y2="16"/></svg>';
+    input.after(k);
+    const A0 = -135, A1 = 135, arc = (a0, a1) => { const p = a => [31 + 27 * Math.sin(a * Math.PI / 180), 31 - 27 * Math.cos(a * Math.PI / 180)], [x0, y0] = p(a0), [x1, y1] = p(a1); return `M${x0} ${y0}A27 27 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1} ${y1}`; };
+    const kv = k.querySelector('.kv'), kp = k.querySelector('.kp'); k.querySelector('.kt').setAttribute('d', arc(A0, A1));
+    const lo = +input.min, hi = +input.max, st = +input.step || (hi - lo) / 100;
+    const draw = () => { const f = (input.value - lo) / (hi - lo), a = A0 + f * (A1 - A0); kv.setAttribute('d', f > .001 ? arc(A0, a) : ''); kp.setAttribute('transform', `rotate(${a} 31 31)`); k.setAttribute('aria-valuenow', input.value); };
+    const set = v => { input.value = clamp(Math.round((v - lo) / st) * st + lo, lo, hi); input.dispatchEvent(new Event('input', { bubbles: true })); draw(); };
+    let drag = null;
+    k.addEventListener('pointerdown', e => { e.preventDefault(); k.setPointerCapture(e.pointerId); drag = { y: e.clientY, x: e.clientX, v: +input.value }; });
+    k.addEventListener('pointermove', e => { if (!drag) return; set(drag.v + ((drag.y - e.clientY) + (e.clientX - drag.x)) / 160 * (hi - lo)); });
+    const end = () => { if (drag) input.dispatchEvent(new Event('change', { bubbles: true })); drag = null; };
+    k.addEventListener('pointerup', end); k.addEventListener('pointercancel', end);
+    k.addEventListener('wheel', e => { e.preventDefault(); set(+input.value - Math.sign(e.deltaY) * st * 2); }, { passive: false });
+    k.addEventListener('keydown', e => { const d = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key]; if (d) { e.preventDefault(); set(+input.value + d * st); } });
+    input.addEventListener('input', draw); new MutationObserver(draw).observe(input, { attributes: true }); draw();
+  }
   label(it) { return it.kind === 'text' ? 'Text' : it.kind === 'stroke' ? 'Drawing' : (it.decor ? '' : 'Focus ') + { tri: 'triangle', rect: 'square', circle: 'circle' }[it.kind]; }
   // Photoshop-style layer list: top of the list is the front. Drag ⋮⋮ to restack, the eye hides, a tap selects.
   renderLayers() {

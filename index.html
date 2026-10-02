@@ -1061,6 +1061,38 @@ body.studio-on:has(#studio.tool-hand) #gl{cursor:grab!important}body.studio-on:h
 .st-cpts-ed[hidden]{display:none}
 .studio-section[open]>summary{color:#ff6571;box-shadow:inset 3px 0 0 #ff4655;padding-left:12px;margin-left:-12px;transition:color .2s,padding .2s}
 .studio-section[open]{background:linear-gradient(90deg,#ff46550d,transparent 70%)}
+/* Tune panels inside the studio share the studio's frosted-glass look; some sliders become rotary knobs. */
+body.studio-on :is(#tune,#wtune){top:14px;bottom:14px;left:14px;height:auto;border-radius:26px;border:1px solid #ffffff1c;background:linear-gradient(150deg,#1c2029c4,#0d1016d6)!important;backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);box-shadow:inset 1px 1px 0 #ffffff1a,0 24px 60px #0009;scrollbar-width:none}
+body.studio-on :is(#tune,#wtune)::-webkit-scrollbar{display:none}
+body.studio-on :is(#tune,#wtune) .tune-h{border-left:0;padding-left:0}
+body.studio-on :is(#tune,#wtune) .tune-x{border-radius:50%;background:#ffffff0d;border:1px solid #ffffff1c}
+body.studio-on :is(#tune,#wtune) .tune-tabs{gap:6px;border:0;padding:4px;margin-bottom:18px;background:#0000002e;border-radius:16px;scrollbar-width:none}
+body.studio-on :is(#tune,#wtune) .tune-tabs::-webkit-scrollbar{display:none}
+body.studio-on :is(#tune,#wtune) .tune-tabs button{border:0!important;border-radius:12px;min-height:38px;padding:8px 12px;margin:0}
+body.studio-on :is(#tune,#wtune) .tune-tabs button[aria-selected=true]{background:linear-gradient(150deg,#ff6b78,#e8364a);color:#fff;box-shadow:0 0 16px #ff465555}
+body.studio-on :is(#tune,#wtune) .tune-seg{border-radius:14px;border-color:#ffffff1c;background:#00000026;padding:3px;gap:3px}
+body.studio-on :is(#tune,#wtune) .tune-seg button{border:0!important;border-radius:11px}
+body.studio-on :is(#tune,#wtune) .tune-seg button[aria-pressed=true]{background:linear-gradient(150deg,#ff6b78,#e8364a);color:#fff}
+body.studio-on :is(#tune,#wtune) :is(.tune-btn,.tune-reset){border-radius:14px;clip-path:none!important}
+body.studio-on :is(#tune,#wtune) .tune-btn{background:linear-gradient(150deg,#ff6b78,#e8364a);color:#fff;box-shadow:0 0 18px #ff465544}
+body.studio-on :is(#tune,#wtune) .tune-reset{background:#ffffff0a;border-color:#ffffff1f}
+body.studio-on :is(#tune,#wtune) .tune-row{margin-bottom:6px}
+body.studio-on :is(#tune,#wtune) [class*=theme] button,body.studio-on :is(#tune,#wtune) .tune-chips button{border-radius:12px}
+body.studio-on :is(#tune,#wtune) input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:4px}
+body.studio-on :is(#tune,#wtune) input[type=range]::-webkit-slider-thumb{width:18px;height:18px;margin-top:-7px;border-radius:50%;transform:none!important;box-shadow:0 0 0 3px #ff465533,0 2px 6px #0008}
+body.studio-on :is(#tune,#wtune) input[type=range]::-moz-range-thumb{border-radius:50%}
+.st-knob{display:inline-grid;place-items:center;width:62px;height:62px;position:relative;cursor:ns-resize;touch-action:none;user-select:none}
+.st-knob svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.st-knob .kt{fill:none;stroke:#ffffff1f;stroke-width:5;stroke-linecap:round}
+.st-knob .kv{fill:none;stroke:#ff4655;stroke-width:5;stroke-linecap:round;filter:drop-shadow(0 0 4px #ff465599)}
+.st-knob .kd{fill:linear-gradient(#000,#000);fill:#1b1f29;stroke:#ffffff26}
+.st-knob .kp{stroke:#fff;stroke-width:2.5;stroke-linecap:round}
+.st-knob:focus-visible{outline:2px solid #ff6571;border-radius:50%}
+body.studio-on .tune-row:has(.st-knob) input[type=range]{display:none}
+body:not(.studio-on) .st-knob{display:none}
+.studio-panel .studio-control:has(.st-knob) input[type=range]{display:none}
+.studio-panel .studio-control:has(.st-knob){grid-template-columns:1fr auto auto}
+.studio-panel .studio-control .st-knob{grid-row:1;grid-column:3}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -1807,6 +1839,6 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.a311f42865.js", 446234]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.8a1ec28593.js", 448047]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>
