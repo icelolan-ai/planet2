@@ -1337,6 +1337,9 @@ html,body{touch-action:pan-x pan-y}
 .st-llock.is-on,.st-glock.is-on{color:#ff8f98}
 .is-drop-in{outline:2px solid #8b5cf6;outline-offset:1px;background:#8b5cf633}
 .is-drop-above{box-shadow:0 -3px 0 #8b5cf6}.is-drop-below{box-shadow:0 3px 0 #8b5cf6}
+#studio .st-edit{position:absolute;z-index:7;width:34px;height:34px;margin:-17px 0 0 -17px;padding:0;border-radius:50%;border:1.5px solid #ffffff66;background:#0d1018eb;color:#fff;display:grid;place-items:center;pointer-events:auto;cursor:pointer;box-shadow:0 4px 14px #0009,0 0 0 3px #8b5cf633}
+#studio .st-edit svg.st-i{width:17px;height:17px}
+@media(pointer:coarse){#studio .st-edit{width:42px;height:42px;margin:-21px 0 0 -21px}#studio .st-edit svg.st-i{width:20px;height:20px}}
 #studio .st-roth{position:absolute;z-index:7;width:38px;height:38px;margin:-19px 0 0 -19px;border-radius:50%;border:2px solid #fff;background:var(--cyg);color:#fff;display:grid;place-items:center;pointer-events:auto;touch-action:none;cursor:grab;box-shadow:0 4px 16px #0008;padding:0}
 #studio .st-roth[hidden]{display:none}
 #studio .st-roth .st-i{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -7967,7 +7970,7 @@ class CoreStudio {
     const eye = '<svg class="studio-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg>';
     const names = { shells: 'Shells', rings: 'Rings', bands: 'Metal bands', particles: 'Inner particles', comets: 'Comets', energy: 'Energy lines', dust: 'Dust', glass: 'Glass' };
     const I = d => `<svg class="st-i" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
-    this.icons = { text: I('<path d="M5 6h14M12 6v13"/>'), tri: I('<path d="M12 4l9 16H3z"/>'), rect: I('<rect x="4" y="4" width="16" height="16" rx="1"/>'), circle: I('<circle cx="12" cy="12" r="8.5"/>'), kit: I('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/>'),
+    this.icons = { text: I('<path d="M5 6h14M12 6v13"/>'), tri: I('<path d="M12 4l9 16H3z"/>'), rect: I('<rect x="4" y="4" width="16" height="16" rx="1"/>'), circle: I('<circle cx="12" cy="12" r="8.5"/>'), wrench: I('<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'), kit: I('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/>'),
       lock: I('<rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'), unlock: I('<rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 7.6-1.8"/>'),
       trash: I('<path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/>'), stroke: I('<path d="M4 20l4-1L19 8l-3-3L5 16z"/><path d="M14 7l3 3"/>') };
     this.fxBg = document.createElement('canvas'); this.fxGl = document.createElement('canvas'); this.fx.append(this.fxBg, this.fxGl);
@@ -8042,7 +8045,7 @@ class CoreStudio {
         <label data-ctx-for="shape">Outside blur<input type="range" min="0" max="30" data-ctx-blur><output></output></label>
         <button type="button" class="st-btn st-fly-btn" data-flyout="style" data-ctx-for-shape aria-expanded="false">Style<i class="st-caret"></i></button><button type="button" class="st-btn st-fly-btn" data-flyout="kitdesign" data-ctx-for-kit aria-expanded="false" hidden>Design<i class="st-caret"></i></button>
         <span class="st-rotbox"><label>Rotate<input type="number" step="1" min="-360" max="360" data-ctx-rot aria-label="Rotation in degrees"><i>°</i></label><label>Snap<select data-ctx-rsnap aria-label="Rotation snap"><option value="0">Free</option><option value="15">15°</option><option value="45">45°</option><option value="90">90°</option><option value="180">180°</option><option value="custom">Custom…</option></select></label><input type="number" min="1" max="180" step="1" data-ctx-rsnap-n hidden placeholder="°" aria-label="Custom snap degrees"></span>
-        <button type="button" class="st-btn" data-ctx-lock></button><button type="button" class="st-btn" data-ctx-dup aria-label="Duplicate"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg><span>Copy</span></button><button type="button" class="st-btn" data-ctx-delete aria-label="Delete">${this.icons.trash}</button></div>
+        <button type="button" class="st-btn" data-ctx-lock></button><button type="button" class="st-btn" data-ctx-dup aria-label="Duplicate"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg><span>Copy</span></button><button type="button" class="st-btn" data-ctx-delete aria-label="Delete">${this.icons.trash}</button><button type="button" class="st-btn" data-ctx-close aria-label="Close editor">${I('<path d="M6 6l12 12M18 6L6 18"/>')}</button></div>
       <div class="st-save st-glass" data-studio-save hidden><span class="st-ctx-kind">Save image</span>
         <label>Format<select data-save-type><option value="image/png">PNG</option><option value="image/jpeg">JPEG</option><option value="application/pdf">PDF</option><option value="image/webp">WebP</option></select></label>
         <label>Size<select data-save-scale><option value="1">1× screen</option><option value="2" selected>2× (sharp)</option><option value="3">3× (print)</option></select></label>
@@ -8321,6 +8324,7 @@ class CoreStudio {
     ctx('blur').oninput = e => { this.blur = +e.target.value; e.target.nextElementSibling.textContent = `${this.blur}px`; this.updateFocus(); };
     ctx('lock').onclick = () => { if (this.sel) this.lockItem(this.sel, !this.sel.locked); };
     ctx('dup').onclick = () => { if (this.sel) this.dupItem(this.sel); };
+    ctx('close').onclick = () => this.closeCtxBar();
     ctx('delete').onclick = () => { if (this.sel) this.removeItem(this.sel); };
     this.el.querySelector('[data-studio-gravity]').onclick = e => { this.gravity = !this.gravity; e.currentTarget.setAttribute('aria-pressed', String(this.gravity)); };
     this.el.querySelector('[data-studio-home]').onclick = () => this.home();
@@ -8659,7 +8663,7 @@ class CoreStudio {
     return it;
   }
   editText(it) {
-    if (matchMedia('(pointer: coarse)').matches) { const f = this.ctx.querySelector('[data-ctx-content]'); this.el.classList.add('st-typing'); setTimeout(() => { f.focus({ preventScroll: true }); f.setSelectionRange(f.value.length, f.value.length); }, 80); return; }
+    if (matchMedia('(pointer: coarse)').matches) { this.openCtxBar(); const f = this.ctx.querySelector('[data-ctx-content]'); this.el.classList.add('st-typing'); setTimeout(() => { f.focus({ preventScroll: true }); f.setSelectionRange(f.value.length, f.value.length); }, 80); return; }
     const el = it.el; el.contentEditable = 'true'; el.focus();
     const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r);
   }
@@ -8699,7 +8703,24 @@ class CoreStudio {
     h.addEventListener('pointerup', end); h.addEventListener('pointercancel', end);
     addEventListener('resize', () => this.updateRotHandle());
   }
+  // Small wrench at the top-right of the selected item; the selection bar only opens when it is pressed.
+  updateEditBtn() {
+    if (!this.editBtn) {
+      const b = this.editBtn = document.createElement('button'); b.type = 'button'; b.className = 'st-edit'; b.hidden = true; b.setAttribute('aria-label', 'Edit this item'); b.innerHTML = this.icons.wrench.replace('class="st-i"', 'class="st-i"');
+      b.addEventListener('pointerdown', e => e.stopPropagation());
+      b.addEventListener('click', e => { e.stopPropagation(); this.openCtxBar(); });
+      this.el.append(b);
+    }
+    const b = this.editBtn, it = this.sel;
+    const show = !!(this.active && it && it.kind !== 'fx' && !this.ctxOpen && !this.isHid(it) && this.tool === 'move' && !this.drawing && !it.el.isContentEditable);
+    b.hidden = !show; if (!show) return;
+    const r = it.el.getBoundingClientRect(), a = (it.rot || 0) * Math.PI / 180, w = it.el.offsetWidth, h = it.el.offsetHeight, cx = r.left + r.width / 2, cy = r.top + r.height / 2, sh = it.kind === 'text' ? 0 : 42, ca = Math.cos(a), sa = Math.sin(a);
+    b.style.left = clamp(cx + w / 2 * ca + h / 2 * sa - sh * ca, 20, innerWidth - 20) + 'px'; b.style.top = clamp(cy + w / 2 * sa - h / 2 * ca - sh * sa, 20, innerHeight - 20) + 'px';
+  }
+  openCtxBar() { if (!this.sel || this.sel.kind === 'fx') return; this.ctxOpen = true; this.ctx.hidden = false; this.updateRotHandle(); }
+  closeCtxBar() { this.ctxOpen = false; this.ctx.hidden = true; if (this.closeFly) this.closeFly(); this.updateRotHandle(); }
   updateRotHandle() {
+    this.updateEditBtn();
     const h = this.rotH; if (!h) return; const it = this.sel;
     const show = !!(this.active && it && it.kind !== 'fx' && !it.locked && !this.isHid(it) && this.tool === 'move' && !this.drawing && !it.el.isContentEditable);
     h.hidden = !show; if (!show) return;
@@ -8709,8 +8730,9 @@ class CoreStudio {
   isHid(it) { return !!it.hide || (it.group != null && this.groups.some(g => g.id === it.group && g.hide)); }
   select(it) {
     if (this.sel && this.sel !== it && this.sel.el.isContentEditable) this.sel.el.blur();
-    this.sel = it; this.items.forEach(i => i.el.classList.toggle('is-selected', i === it)); this.renderLayers(); this.updateRotHandle();
-    const c = this.ctx; c.hidden = !it || it.kind === 'fx'; if (this.closeFly) this.closeFly(); if (!it || it.kind === 'fx') return;
+    const prev = this.sel; this.sel = it; this.items.forEach(i => i.el.classList.toggle('is-selected', i === it)); this.renderLayers();
+    const c = this.ctx, usable = !!it && it.kind !== 'fx'; if (!(usable && prev === it && this.ctxOpen)) this.ctxOpen = false;
+    c.hidden = !(usable && this.ctxOpen); if (this.closeFly) this.closeFly(); if (!usable) { this.updateRotHandle(); return; }
     const text = it.kind === 'text';
     const group = text ? 'text' : it.decor ? 'decor' : 'shape';
     const kit = it.kind === 'kit'; c.querySelector('[data-ctx-for-shape]').hidden = text || kit; c.querySelectorAll('[data-ctx-for-kit]').forEach(n => { n.hidden = !kit; });
