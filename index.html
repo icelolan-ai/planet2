@@ -1069,6 +1069,7 @@ body.studio-on:has(#studio.tool-hand) #gl{cursor:grab!important}body.studio-on:h
 .studio-section[open]{background:linear-gradient(90deg,#ff46550d,transparent 70%)}
 /* Tune panels inside the studio share the studio's frosted-glass look; some sliders become rotary knobs. */
 body.studio-on :is(#tune,#wtune){top:14px;bottom:14px;left:14px;height:auto;border-radius:26px;border:1px solid #ffffff1c;background:linear-gradient(150deg,#1c2029c4,#0d1016d6)!important;backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);box-shadow:inset 1px 1px 0 #ffffff1a,0 24px 60px #0009;scrollbar-width:none}
+@media (max-width:760px){body.studio-on :is(#tune,#wtune),body.studio-on :is(#tune,#wtune)[data-side=right]{top:auto;bottom:0;left:0;right:0;width:auto;height:var(--sheet-height,68dvh);max-height:calc(100dvh - env(safe-area-inset-top,0px) - 12px);border-radius:24px 24px 0 0}}
 body.studio-on :is(#tune,#wtune)::-webkit-scrollbar{display:none}
 body.studio-on :is(#tune,#wtune) .tune-h{border-left:0;padding-left:0}
 body.studio-on :is(#tune,#wtune) .tune-x{border-radius:50%;background:#ffffff0d;border:1px solid #ffffff1c}
