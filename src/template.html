@@ -830,6 +830,9 @@ body.studio-on #studio{display:block}
 #studio .st-btn:hover{background:#ffffff14;border-color:#ffffff40}
 #studio .st-rail.st-rail-decor{left:calc(var(--st-gap) * 1.5 + var(--st-rail))}
 .st-decor{color:#ff3d8a}
+#studio .st-kitc{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:block}
+#studio [data-kit-types] .st-btn canvas{width:44px;height:44px;display:block;margin:0 auto 2px}
+#studio .st-kit-shuffle{width:100%;justify-content:center;margin-top:4px}
 #studio .st-decor svg.st-outline{filter:none}
 .st-layers{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .st-layer{display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-height:46px;padding:0 6px 0 4px;border:1px solid #ffffff14;border-radius:12px;background:#ffffff06;cursor:pointer;transition:transform .15s;position:relative}
@@ -7744,6 +7747,58 @@ class WorldAtelier {
   }
 }
 
+/* Visual kit: procedural overlays for the studio. One draw() serves the screen and the saved poster, seeded so every redraw looks identical. */
+const mulberry32 = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const KIT_MAX = { rings: 40, radial: 400, arc: 12 };
+const KIT_DASH = [['solid', 'Solid'], ['dashed', 'Dashed'], ['dotted', 'Dotted'], ['mixed', 'Mixed']];
+const KIT = {
+  rings: {
+    label: 'Rings', defaults: { n: 7, inner: .18, lw: 1.2, dash: 'solid', fade: .5, gaps: .35 },
+    ui: [{ k: 'n', t: 'range', label: 'Rings', min: 1, max: KIT_MAX.rings, step: 1 }, { k: 'inner', t: 'range', label: 'Inner size', min: 0, max: .9, step: .02, pct: 1 }, { k: 'lw', t: 'range', label: 'Line width', min: .4, max: 8, step: .2, unit: 'px' },
+      { k: 'dash', t: 'select', label: 'Line type', opts: KIT_DASH }, { k: 'fade', t: 'range', label: 'Fade outward', min: 0, max: .95, step: .05, pct: 1 }, { k: 'gaps', t: 'range', label: 'Broken rings', min: 0, max: 1, step: .05, pct: 1 }],
+    draw(g, it, x, y, w, h, k) {
+      const p = it.p, r = mulberry32(it.seed), n = Math.min(KIT_MAX.rings, p.n | 0), cx = x + w / 2, cy = y + h / 2, rx = w / 2 - p.lw * k, ry = h / 2 - p.lw * k, a0 = g.globalAlpha;
+      g.strokeStyle = it.fill; g.lineWidth = p.lw * k;
+      for (let i = 0; i < n; i++) {
+        const t = n === 1 ? 1 : i / (n - 1), sc = p.inner + (1 - p.inner) * t, u = r(), v = r(), q = r(), mode = p.dash === 'mixed' ? ['solid', 'dashed', 'dotted'][Math.floor(q * 3)] : p.dash;
+        g.globalAlpha = a0 * (1 - p.fade * t); g.lineCap = mode === 'dotted' ? 'round' : 'butt';
+        g.setLineDash(mode === 'dashed' ? [p.lw * 6 * k, p.lw * 4 * k] : mode === 'dotted' ? [.01, p.lw * 3 * k] : []);
+        const part = u < p.gaps, s0 = v * Math.PI * 2, len = Math.PI * 2 * (.3 + .55 * q);
+        g.beginPath(); g.ellipse(cx, cy, Math.max(.5, rx * sc), Math.max(.5, ry * sc), 0, part ? s0 : 0, part ? s0 + len : Math.PI * 2); g.stroke();
+      }
+      g.setLineDash([]); g.globalAlpha = a0;
+    },
+  },
+  radial: {
+    label: 'Rays', defaults: { n: 72, inner: .22, spread: .6, lw: 1, dot: 3, c2: '#ffb04a', c3: '#7cc4ff', mix: .25 },
+    ui: [{ k: 'n', t: 'range', label: 'Rays', min: 4, max: KIT_MAX.radial, step: 1 }, { k: 'inner', t: 'range', label: 'Start radius', min: 0, max: .9, step: .02, pct: 1 }, { k: 'spread', t: 'range', label: 'Length variety', min: 0, max: 1, step: .05, pct: 1 }, { k: 'lw', t: 'range', label: 'Line width', min: .4, max: 6, step: .2, unit: 'px' },
+      { k: 'dot', t: 'range', label: 'End dots', min: 0, max: 10, step: .5, unit: 'px' }, { k: 'mix', t: 'range', label: 'Accent dots', min: 0, max: 1, step: .05, pct: 1 }, { k: 'c2', t: 'color', label: 'Accent 1' }, { k: 'c3', t: 'color', label: 'Accent 2' }],
+    draw(g, it, x, y, w, h, k) {
+      const p = it.p, r = mulberry32(it.seed), n = Math.min(KIT_MAX.radial, p.n | 0), cx = x + w / 2, cy = y + h / 2, dr = p.dot * k, rx = w / 2 - dr - 1, ry = h / 2 - dr - 1;
+      g.lineWidth = p.lw * k; g.lineCap = 'round';
+      for (let i = 0; i < n; i++) {
+        const a = i / n * Math.PI * 2 + (r() - .5) * .6 / n * 2 * Math.PI / 6, len = 1 - p.spread * r(), e = p.inner + (1 - p.inner) * len, c = Math.cos(a), sn = Math.sin(a), rr = r();
+        const col = rr < p.mix * .5 ? p.c2 : rr < p.mix ? p.c3 : it.fill;
+        g.strokeStyle = g.fillStyle = col; g.beginPath(); g.moveTo(cx + c * rx * p.inner, cy + sn * ry * p.inner); g.lineTo(cx + c * rx * e, cy + sn * ry * e); g.stroke();
+        if (dr > 0) { g.beginPath(); g.arc(cx + c * rx * e, cy + sn * ry * e, dr * (col === it.fill ? .7 : 1.2), 0, Math.PI * 2); g.fill(); }
+      }
+    },
+  },
+  arc: {
+    label: 'Arcs', defaults: { n: 4, inner: .35, lw: 8, round: true, c2: '#ffffff' },
+    ui: [{ k: 'n', t: 'range', label: 'Arcs', min: 1, max: KIT_MAX.arc, step: 1 }, { k: 'inner', t: 'range', label: 'Inner size', min: 0, max: .9, step: .02, pct: 1 }, { k: 'lw', t: 'range', label: 'Thickness', min: 1, max: 40, step: 1, unit: 'px' },
+      { k: 'round', t: 'check', label: 'Round ends' }, { k: 'c2', t: 'color', label: 'Second colour' }],
+    draw(g, it, x, y, w, h, k) {
+      const p = it.p, r = mulberry32(it.seed), n = Math.min(KIT_MAX.arc, p.n | 0), cx = x + w / 2, cy = y + h / 2, rx = w / 2 - p.lw * k / 2, ry = h / 2 - p.lw * k / 2;
+      g.lineWidth = p.lw * k; g.lineCap = p.round ? 'round' : 'butt';
+      for (let i = 0; i < n; i++) {
+        const t = n === 1 ? 1 : i / (n - 1), sc = p.inner + (1 - p.inner) * t, s0 = r() * Math.PI * 2, len = Math.PI * 2 * (.15 + .55 * r());
+        g.strokeStyle = i % 2 ? p.c2 : it.fill; g.beginPath(); g.ellipse(cx, cy, Math.max(.5, rx * sc), Math.max(.5, ry * sc), 0, s0, s0 + len); g.stroke();
+      }
+    },
+  },
+};
+
 class CoreStudio {
   constructor(app) {
     this.app = app; this.active = false; this.pending = false;
@@ -7762,7 +7817,7 @@ class CoreStudio {
     const eye = '<svg class="studio-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg>';
     const names = { shells: 'Shells', rings: 'Rings', bands: 'Metal bands', particles: 'Inner particles', comets: 'Comets', energy: 'Energy lines', dust: 'Dust', glass: 'Glass' };
     const I = d => `<svg class="st-i" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
-    this.icons = { text: I('<path d="M5 6h14M12 6v13"/>'), tri: I('<path d="M12 4l9 16H3z"/>'), rect: I('<rect x="4" y="4" width="16" height="16" rx="1"/>'), circle: I('<circle cx="12" cy="12" r="8.5"/>'),
+    this.icons = { text: I('<path d="M5 6h14M12 6v13"/>'), tri: I('<path d="M12 4l9 16H3z"/>'), rect: I('<rect x="4" y="4" width="16" height="16" rx="1"/>'), circle: I('<circle cx="12" cy="12" r="8.5"/>'), kit: I('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/>'),
       lock: I('<rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'), unlock: I('<rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 7.6-1.8"/>'),
       trash: I('<path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/>'), stroke: I('<path d="M4 20l4-1L19 8l-3-3L5 16z"/><path d="M14 7l3 3"/>') };
     this.fxBg = document.createElement('canvas'); this.fxGl = document.createElement('canvas'); this.fx.append(this.fxBg, this.fxGl);
@@ -7772,7 +7827,7 @@ class CoreStudio {
       <nav class="st-rail st-glass" data-tray="add" aria-label="Add to poster"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><span class="st-rail-label">Tools</span><button type="button" class="st-btn" data-studio-tool="move" aria-pressed="true" title="Move (V)">${I('<path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>')}Move</button><button type="button" class="st-btn" data-studio-tool="hand" aria-pressed="false" title="Hand: rotate the subject (H)">${I('<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12M11 11.5v-7a1.5 1.5 0 0 1 3 0v7M14 11.5v-5a1.5 1.5 0 0 1 3 0v7c0 4-2.5 7-6.5 7-3 0-4.5-1.6-6-4.4L3 13.4a1.5 1.5 0 0 1 2.6-1.5L8 15"/>')}Hand</button><span class="st-rail-sep"></span><span class="st-rail-label">Add</span>
         <button type="button" class="st-btn" data-studio-add="text">${this.icons.text}Text</button><button type="button" class="st-btn st-fly-btn" data-flyout="focus" aria-expanded="false">${this.icons.tri}Focus<i class="st-caret"></i></button><button type="button" class="st-btn st-fly-btn" data-flyout="draw" data-studio-draw aria-pressed="false" aria-expanded="false">${this.icons.stroke}Draw<i class="st-caret"></i></button></nav>
       <nav class="st-rail st-rail-decor st-glass" data-tray="decor" aria-label="Add decoration"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><span class="st-rail-label">Decor</span>
-        <button type="button" class="st-btn st-fly-btn" data-flyout="decor" aria-expanded="false">${this.icons.circle}Shapes<i class="st-caret"></i></button><span class="st-rail-sep"></span>
+        <button type="button" class="st-btn st-fly-btn" data-flyout="decor" aria-expanded="false">${this.icons.circle}Shapes<i class="st-caret"></i></button><button type="button" class="st-btn st-fly-btn" data-flyout="kit" aria-expanded="false">${this.icons.kit}Kit<i class="st-caret"></i></button><span class="st-rail-sep"></span>
         <button type="button" class="st-btn" data-studio-undo aria-label="Undo" disabled>${I('<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>')}Undo</button><button type="button" class="st-btn" data-studio-redo aria-label="Redo" disabled>${I('<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/>')}Redo</button>
       </nav>
       <div class="st-fly st-glass" data-fly="focus" hidden><b class="st-fly-title">Focus shape</b><p class="st-fly-note">Keeps an area sharp and blurs the rest.</p>
@@ -7790,6 +7845,10 @@ class CoreStudio {
         <div class="st-fly-shapes"><button type="button" class="st-btn" data-studio-decor="tri">${this.icons.tri}Triangle</button><button type="button" class="st-btn" data-studio-decor="rect">${this.icons.rect}Square</button><button type="button" class="st-btn" data-studio-decor="circle">${this.icons.circle}Circle</button></div>
         <label class="st-fly-row"><span>Colour</span><input type="color" data-fset="decorFill"></label>
         <label class="st-fly-row"><span>Opacity</span><output data-fo="decorOpacity"></output><input type="range" min="0.05" max="1" step="0.05" data-fset="decorOpacity"></label></div>
+      <div class="st-fly st-glass" data-fly="kit" hidden><b class="st-fly-title">Kit</b><p class="st-fly-note">Rings, rays and arcs for poster layouts. Add one, then fine-tune it with Design.</p>
+        <div class="st-fly-shapes" data-kit-types></div>
+        <label class="st-fly-row"><span>Colour</span><input type="color" data-fset="decorFill"></label></div>
+      <div class="st-fly st-glass" data-fly="kitdesign" hidden data-kit-panel></div>
       <div class="st-fly st-glass" data-fly="draw" hidden><b class="st-fly-title">Pencil</b><p class="st-fly-note">Draw on the canvas. Hold still at the end of a stroke to turn it into a straight line or a circle, then keep holding and move to adjust it.</p>
         <label class="st-fly-row"><span>Colour</span><input type="color" data-dset="color"></label>
         <label class="st-fly-row"><span>Size</span><output data-do="size"></output><input type="range" min="1" max="40" step="1" data-dset="size"></label>
@@ -7831,7 +7890,7 @@ class CoreStudio {
         <span data-ctx-for="text"><input type="color" data-ctx-color aria-label="Text colour"></span>
         <span data-ctx-for="decor"><input type="color" data-ctx-fill aria-label="Shape colour"></span><label data-ctx-for="decor">Opacity<input type="range" min="0.05" max="1" step="0.05" data-ctx-opacity><output></output></label>
         <label data-ctx-for="shape">Outside blur<input type="range" min="0" max="30" data-ctx-blur><output></output></label>
-        <button type="button" class="st-btn st-fly-btn" data-flyout="style" data-ctx-for-shape aria-expanded="false">Style<i class="st-caret"></i></button>
+        <button type="button" class="st-btn st-fly-btn" data-flyout="style" data-ctx-for-shape aria-expanded="false">Style<i class="st-caret"></i></button><button type="button" class="st-btn st-fly-btn" data-flyout="kitdesign" data-ctx-for-kit aria-expanded="false" hidden>Design<i class="st-caret"></i></button>
         <span class="st-rotbox"><label>Rotate<input type="number" step="1" min="-360" max="360" data-ctx-rot aria-label="Rotation in degrees"><i>°</i></label><label>Snap<select data-ctx-rsnap aria-label="Rotation snap"><option value="0">Free</option><option value="15">15°</option><option value="45">45°</option><option value="90">90°</option><option value="180">180°</option><option value="custom">Custom…</option></select></label><input type="number" min="1" max="180" step="1" data-ctx-rsnap-n hidden placeholder="°" aria-label="Custom snap degrees"></span>
         <button type="button" class="st-btn" data-ctx-lock></button><button type="button" class="st-btn" data-ctx-dup aria-label="Duplicate"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg><span>Copy</span></button><button type="button" class="st-btn" data-ctx-delete aria-label="Delete">${this.icons.trash}</button></div>
       <div class="st-save st-glass" data-studio-save hidden><span class="st-ctx-kind">Save image</span>
@@ -8007,6 +8066,7 @@ class CoreStudio {
     this.el.querySelectorAll('[data-studio-preset]').forEach(b => b.onclick = () => this.applyPreset(b.dataset.studioPreset));
     this.el.querySelectorAll('[data-studio-add]').forEach(b => b.onclick = () => this.addItem(b.dataset.studioAdd));
     this.el.querySelectorAll('[data-studio-decor]').forEach(b => b.onclick = () => this.addItem(b.dataset.studioDecor, { decor: true, fill: this.decorFill, opacity: this.decorOpacity }));
+    this.initKit();
     this.dim = 0; this.focusInv = 0; this.focusScene = true; this.focusText = false; this.focusObj = false; this.guides = true; this.decorFill = '#ff3d8a'; this.decorOpacity = .85;
     const flys = [...this.el.querySelectorAll('[data-fly]')], fmt = { blur: v => `${v}px`, dim: v => `${Math.round(v * 100)}%`, decorOpacity: v => `${Math.round(v * 100)}%` };
     this.syncStyle = () => { const it = this.sel; if (!it || !it.st) return; const f = this.el.querySelector('[data-fly="style"]');
@@ -8027,7 +8087,7 @@ class CoreStudio {
     this.closeFly = () => { flys.forEach(f => { f.hidden = true; }); this.el.querySelectorAll('[data-flyout]').forEach(b => b.setAttribute('aria-expanded', 'false')); };
     this.el.querySelectorAll('[data-flyout]').forEach(b => b.onclick = e => {
       e.stopPropagation(); const f = this.el.querySelector(`[data-fly="${b.dataset.flyout}"]`), open = f.hidden; this.closeFly(); if (!open) return;
-      if (b.dataset.flyout === 'style') this.syncStyle(); else if (b.dataset.flyout === 'textdesign') this.syncText(); else this.select(null); this.syncFly(); f.hidden = false; b.setAttribute('aria-expanded', 'true');
+      if (b.dataset.flyout === 'style') this.syncStyle(); else if (b.dataset.flyout === 'textdesign') this.syncText(); else if (b.dataset.flyout === 'kitdesign') this.syncKit(); else this.select(null); this.syncFly(); f.hidden = false; b.setAttribute('aria-expanded', 'true');
       const r = b.getBoundingClientRect(), W = innerWidth, H = innerHeight, fw = f.offsetWidth, fh = f.offsetHeight;
       let x = r.right + 12, y = r.top; if (x + fw > W - 8) x = r.left - fw - 12; if (x < 8) { x = clamp(r.left + r.width / 2 - fw / 2, 8, W - fw - 8); y = r.top - fh - 12; if (y < 8) y = r.bottom + 12; }
       f.style.left = `${x}px`; f.style.top = `${clamp(y, 8, H - fh - 8)}px`;
@@ -8399,6 +8459,7 @@ class CoreStudio {
     if (kind !== 'text') {
       it.w = o.w ?? .32; it.h = o.h ?? .32; if (kind === 'stroke') { it.w0 = o.w0 ?? it.w; it.h0 = o.h0 ?? it.h; }
       if (it.decor) { it.fill = o.fill ?? '#ff3d8a'; it.opacity = o.opacity ?? .85; }
+      if (kind === 'kit') { it.decor = true; it.kit = KIT[o.kit] ? o.kit : 'rings'; it.p = { ...KIT[it.kit].defaults, ...(o.p || {}) }; it.seed = o.seed ?? (Math.random() * 1e9 | 0); it.fill = o.fill ?? '#e8ecf5'; it.opacity = o.opacity ?? 1; it.w = o.w ?? .38; it.h = o.h ?? .38; }
       it.st = { fillOn: false, lineOn: !!it.decor, lineColor: it.decor ? (it.fill || '#ffffff') : '#ffffff', lineW: 3, dash: 'solid', pattern: 'none', ...(o.st || {}) };
     }
     const el = document.createElement('div'); it.el = el;
@@ -8406,7 +8467,7 @@ class CoreStudio {
     else {
       el.className = 'st-item st-shape' + (it.decor ? ' st-decor' : '');
       const outline = kind === 'tri' ? '<path d="M50 0L100 100H0Z"/>' : kind === 'circle' ? '<ellipse cx="50" cy="50" rx="50" ry="50"/>' : '<rect width="100" height="100"/>';
-      el.innerHTML = `<svg class="st-outline" aria-hidden="true"></svg><span class="st-handle" aria-hidden="true"></span><button type="button" class="st-lock"></button>`;
+      el.innerHTML = `${kind === 'kit' ? '<canvas class="st-kitc" aria-hidden="true"></canvas>' : ''}<svg class="st-outline" aria-hidden="true"></svg><span class="st-handle" aria-hidden="true"></span><button type="button" class="st-lock"></button>`;
       el.querySelector('.st-lock').addEventListener('click', e => { e.stopPropagation(); this.lockItem(it, !it.locked); });
     }
     this.stage.append(el); this.items.push(it); this.place(it); this.renderLayers();
@@ -8498,7 +8559,7 @@ class CoreStudio {
     const c = this.ctx; c.hidden = !it || it.kind === 'fx'; if (this.closeFly) this.closeFly(); if (!it || it.kind === 'fx') return;
     const text = it.kind === 'text';
     const group = text ? 'text' : it.decor ? 'decor' : 'shape';
-    c.querySelector('[data-ctx-for-shape]').hidden = text;
+    const kit = it.kind === 'kit'; c.querySelector('[data-ctx-for-shape]').hidden = text || kit; c.querySelectorAll('[data-ctx-for-kit]').forEach(n => { n.hidden = !kit; });
     c.querySelectorAll('[data-ctx-for]').forEach(n => { n.hidden = n.dataset.ctxFor !== group; });
     c.querySelector('[data-ctx-kind]').textContent = this.label(it);
     if (it.decor) { c.querySelector('[data-ctx-fill]').value = it.fill; c.querySelector('[data-ctx-opacity]').value = it.opacity; c.querySelector('[data-ctx-opacity]').nextElementSibling.textContent = `${Math.round(it.opacity * 100)}%`; }
@@ -8547,6 +8608,7 @@ class CoreStudio {
   maskD(pts, w, h, x = 0, y = 0) { if (!pts.length) return ''; if (pts.length === 1) return `M${x + pts[0][0] * w} ${y + pts[0][1] * h}l0.01 0`; return 'M' + pts.map(q => `${x + q[0] * w} ${y + q[1] * h}`).join('L'); }
   drawShapeSvg(it, w, h) {
     const svg = it.el.querySelector('svg.st-outline'); if (!svg) return;
+    if (it.kind === 'kit') { svg.setAttribute('viewBox', `0 0 ${w} ${h}`); svg.innerHTML = `<path class="st-guide" d="M0 0H${w}V${h}H0Z"/>`; this.drawKit(it, w, h); return; }
     const mk = this.maskSvg(it, w, h), wrapO = mk ? `<g mask="url(#mk${it.id})">` : '', wrapC = mk ? '</g>' : '';
     if (it.kind === 'stroke' && it.strokes) {
       svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
@@ -8580,6 +8642,7 @@ class CoreStudio {
     g.save(); g.globalCompositeOperation = this.blendOp(it); rot(g, c => this.drawShapeCanvas0(c, it, x, y, w, h, k)); g.restore();
   }
   drawShapeCanvas0(g, it, x, y, w, h, k) {
+    if (it.kind === 'kit') { g.save(); g.globalAlpha = (it.opacity ?? 1) * (it.alpha ?? 1); KIT[it.kit].draw(g, it, x, y, w, h, k); g.restore(); return; }
     if (it.kind === 'stroke' && it.strokes) {
       g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
       const one = (c, st) => { c.globalAlpha = st.opacity * (it.alpha ?? 1); c.strokeStyle = st.color; c.lineWidth = st.size * k; c.setLineDash(this.dashArr({ lineW: st.size, dash: st.dash }).map(v => v * k)); c.stroke(new Path2D(this.strokeD(it, w, h, x, y, st.pts))); };
@@ -8900,7 +8963,7 @@ class CoreStudio {
     this.paintVfx();
   }
   fxName(it) { return it.fxType === 'colour' ? `Effect · ${({ chromatic: 'Chromatic', rgb: 'RGB split', color: 'Colour split', vhs: 'VHS', glitch: 'Glitch' })[this.effect] || 'Colour'}` : it.fxType === 'grain' ? 'Film grain' : 'Network'; }
-  label(it) { if (it.name) return it.name; return it.kind === 'fx' ? this.fxName(it) : it.kind === 'text' ? 'Text' : it.kind === 'stroke' ? 'Drawing' : (it.decor ? '' : 'Focus ') + { tri: 'triangle', rect: 'square', circle: 'circle' }[it.kind]; }
+  label(it) { if (it.name) return it.name; return it.kind === 'fx' ? this.fxName(it) : it.kind === 'kit' ? KIT[it.kit].label : it.kind === 'text' ? 'Text' : it.kind === 'stroke' ? 'Drawing' : (it.decor ? '' : 'Focus ') + { tri: 'triangle', rect: 'square', circle: 'circle' }[it.kind]; }
   // Photoshop-style layer list: top of the list is the front. Drag ⋮⋮ to restack, the eye hides, a tap selects.
   renderLayers() {
     const ul = this.el.querySelector('[data-studio-objects]'); if (!ul || this.dragLayer) return;
@@ -8989,6 +9052,40 @@ class CoreStudio {
       grip.addEventListener('pointerup', drop); grip.addEventListener('pointercancel', drop);
     });
   }
+  drawKit(it, w, h) {
+    const c = it.el.querySelector('canvas.st-kitc'); if (!c) return;
+    const d = Math.min(2, window.devicePixelRatio || 1), W = Math.max(1, Math.round(w * d)), H = Math.max(1, Math.round(h * d));
+    if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
+    const g = c.getContext('2d'); g.clearRect(0, 0, W, H); g.globalAlpha = 1; KIT[it.kit].draw(g, it, 0, 0, W, H, d); c.style.opacity = it.opacity ?? 1;
+  }
+  // Kit menu: pick a type to add it; Design (in the selection bar) builds one slider per parameter of that type.
+  initKit() {
+    const box = this.el.querySelector('[data-kit-types]');
+    Object.entries(KIT).forEach(([key, def]) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'st-btn'; b.dataset.studioKit = key; b.innerHTML = `<canvas width="88" height="88"></canvas>${def.label}`;
+      def.draw(b.firstChild.getContext('2d'), { fill: '#e8ecf5', p: def.defaults, seed: 7 }, 0, 0, 88, 88, 1);
+      b.onclick = () => { this.closeFly(); this.addItem('kit', { decor: true, kit: key, fill: this.decorFill, opacity: 1 }); };
+      box.append(b);
+    });
+  }
+  syncKit() {
+    const it = this.sel, f = this.el.querySelector('[data-kit-panel]'); if (!it || it.kind !== 'kit') return;
+    const def = KIT[it.kit], fmt = (u, v) => u.pct ? `${Math.round(v * 100)}%` : u.unit ? `${+v.toFixed(1)}${u.unit}` : String(v);
+    f.innerHTML = `<b class="st-fly-title">${def.label}</b>` + def.ui.map(u => {
+      const v = it.p[u.k];
+      if (u.t === 'range') return `<label class="st-fly-row"><span>${u.label}</span><output>${fmt(u, v)}</output><input type="range" min="${u.min}" max="${u.max}" step="${u.step}" value="${v}" data-kp="${u.k}"></label>`;
+      if (u.t === 'select') return `<label class="st-fly-row"><span>${u.label}</span><select data-kp="${u.k}">${u.opts.map(([o, n]) => `<option value="${o}"${o === v ? ' selected' : ''}>${n}</option>`).join('')}</select></label>`;
+      if (u.t === 'check') return `<label class="st-fly-row st-fly-check"><span>${u.label}</span><input type="checkbox" data-kp="${u.k}"${v ? ' checked' : ''}></label>`;
+      return `<label class="st-fly-row"><span>${u.label}</span><input type="color" value="${v}" data-kp="${u.k}"></label>`;
+    }).join('') + '<button type="button" class="st-btn st-kit-shuffle" data-kit-shuffle>Shuffle pattern</button>';
+    f.querySelectorAll('[data-kp]').forEach(el => {
+      const u = def.ui.find(x => x.k === el.dataset.kp);
+      el.addEventListener('input', () => { it.p[u.k] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value; const o = el.parentNode.querySelector('output'); if (o) o.textContent = fmt(u, it.p[u.k]); this.place(it); });
+      el.addEventListener('change', () => this.commit());
+      if (el.type === 'range') rangeFill(el);
+    });
+    f.querySelector('[data-kit-shuffle]').onclick = () => { it.seed = Math.random() * 1e9 | 0; this.place(it); this.commit(); };
+  }
   dupItem(it) {
     if (it.kind === 'fx') return null;
     const { el, id, drawCur, ...rest } = it, o = JSON.parse(JSON.stringify(rest));
@@ -9028,12 +9125,12 @@ class CoreStudio {
       const h = document.createElement('div'); h.className = 'st-lm-h'; h.innerHTML = '<button type="button">‹ Back</button><b>Blend mode</b>'; h.firstChild.onclick = () => this.openLayerMenu(it, li); m.append(h);
       BL.forEach(([v, n]) => item(n, () => { it.blend = v === 'normal' ? null : v; this.place(it); this.commit(); this.renderLayers(); }, { on: (it.blend || 'normal') === v }));
     } else {
-      const strokeish = it.kind === 'stroke', maskable = it.kind !== 'text';
+      const strokeish = it.kind === 'stroke', maskable = it.kind !== 'text' && it.kind !== 'kit';
       item('Rename', () => this.renameLayer(it));
       item('Select', () => { this.select(it); });
       item('Copy', () => this.dupItem(it));
       item('Fill Layer', () => this.fillLayer(it), { tag: 'current colour' });
-      item('Clear', () => this.clearLayer(it));
+      item('Clear', () => this.clearLayer(it), { off: it.kind === 'kit' });
       item('Alpha Lock', () => { it.alphaLock = !it.alphaLock; if (it.alphaLock) this.armDrawOn(it); this.commit(); this.renderLayers(); }, { on: !!it.alphaLock, off: !strokeish, tag: strokeish ? (it.alphaLock ? 'on' : '') : 'drawings' });
       item(it.mask && it.mask.on ? 'Edit Mask' : 'Mask', () => this.editMask(it), { off: !maskable, tag: it.mask && it.mask.on ? 'on' : '' });
       if (it.mask && it.mask.on) item('Delete Mask', () => { it.mask = null; if (this.maskEdit === it) this.setDrawing(false); this.place(it); this.commit(); });
