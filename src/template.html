@@ -7751,6 +7751,7 @@ class WorldAtelier {
 
 /* Visual kit: procedural overlays for the studio. One draw() serves the screen and the saved poster, seeded so every redraw looks identical. */
 const mulberry32 = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const KIT_ANIM = new WeakMap();
 const kitEsc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const KIT_MAX = { rings: 40, radial: 400, arc: 12, label: 120 };
 const KIT_FONTS = { display: '"Bebas Neue","Oswald",Impact,sans-serif', sans: '"Barlow",system-ui,sans-serif', cond: '"Barlow Condensed","Barlow",sans-serif', mono: '"Geist Mono",ui-monospace,Menlo,monospace', valorant: '"Valorant","Bebas Neue",sans-serif' };
@@ -8543,6 +8544,7 @@ class CoreStudio {
       el.addEventListener('input', () => { it.content = el.innerText; it.edited = true; this.ctx.querySelector('[data-ctx-content]').value = it.content; });
       el.addEventListener('blur', () => { if (el.isContentEditable) { el.contentEditable = 'false'; it.content = el.innerText; this.commit(); } });
     }
+    if (kind === 'kit') this.applyKitMotion(it);
     if (!o.silent) { this.select(it); this.commit(); }
     if (kind !== 'text') this.updateFocus();
     return it;
@@ -8685,7 +8687,7 @@ class CoreStudio {
     g.save(); g.globalCompositeOperation = this.blendOp(it); rot(g, c => this.drawShapeCanvas0(c, it, x, y, w, h, k)); g.restore();
   }
   drawShapeCanvas0(g, it, x, y, w, h, k) {
-    if (it.kind === 'kit') { g.save(); g.globalAlpha = (it.opacity ?? 1) * (it.alpha ?? 1); KIT[it.kit].draw(g, it, x, y, w, h, k); g.restore(); return; }
+    if (it.kind === 'kit') { g.save(); g.globalAlpha = (it.opacity ?? 1) * (it.alpha ?? 1); const ang = this.kitAngle(it); if (ang) { g.translate(x + w / 2, y + h / 2); g.rotate(ang * Math.PI / 180); g.translate(-(x + w / 2), -(y + h / 2)); } KIT[it.kit].draw(g, it, x, y, w, h, k); g.restore(); return; }
     if (it.kind === 'stroke' && it.strokes) {
       g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
       const one = (c, st) => { c.globalAlpha = st.opacity * (it.alpha ?? 1); c.strokeStyle = st.color; c.lineWidth = st.size * k; c.setLineDash(this.dashArr({ lineW: st.size, dash: st.dash }).map(v => v * k)); c.stroke(new Path2D(this.strokeD(it, w, h, x, y, st.pts))); };
@@ -9102,6 +9104,15 @@ class CoreStudio {
     const g = c.getContext('2d'); g.clearRect(0, 0, W, H); g.globalAlpha = 1; KIT[it.kit].draw(g, it, 0, 0, W, H, d); c.style.opacity = it.opacity ?? 1;
     kitFontWait(it).then(ok => { if (ok && this.items.includes(it)) this.drawKit(it, w, h); });
   }
+  // Spin: a compositor-side CSS/WAAPI rotation of the kit canvas. `ang` is the resting angle, `spin` deg/s (negative = anticlockwise), `spinOn` plays it.
+  kitAngle(it) { const a = KIT_ANIM.get(it), base = it.ang || 0; if (!a || !it.spinOn || !it.spin) return base; return (((base + (a.currentTime || 0) / 1000 * it.spin) % 360) + 360) % 360; }
+  applyKitMotion(it) {
+    const c = it.el.querySelector('canvas.st-kitc'); if (!c) return;
+    const old = KIT_ANIM.get(it); if (old) { old.cancel(); KIT_ANIM.delete(it); }
+    const a0 = it.ang || 0; c.style.transform = `rotate(${a0}deg)`;
+    if (it.spinOn && it.spin && c.animate) KIT_ANIM.set(it, c.animate([{ transform: `rotate(${a0}deg)` }, { transform: `rotate(${a0 + 360 * Math.sign(it.spin)}deg)` }], { duration: 360000 / Math.abs(it.spin), iterations: Infinity }));
+  }
+  setKitSpin(it, patch) { it.ang = this.kitAngle(it); Object.assign(it, patch); this.applyKitMotion(it); }
   // Kit menu: pick a type to add it; Design (in the selection bar) builds one slider per parameter of that type.
   initKit() {
     const box = this.el.querySelector('[data-kit-types]');
@@ -9116,7 +9127,12 @@ class CoreStudio {
   syncKit() {
     const it = this.sel, f = this.el.querySelector('[data-kit-panel]'); if (!it || it.kind !== 'kit') return;
     const def = KIT[it.kit], fmt = (u, v) => u.pct ? `${Math.round(v * 100)}%` : u.unit ? `${+v.toFixed(1)}${u.unit}` : String(v);
-    f.innerHTML = `<b class="st-fly-title">${def.label}</b>` + def.ui.map(u => {
+    const spin = it.spin || 0;
+    f.innerHTML = `<b class="st-fly-title">${def.label}</b>`
+      + `<label class="st-fly-row"><span>Opacity</span><output>${Math.round((it.opacity ?? 1) * 100)}%</output><input type="range" min="0.05" max="1" step="0.05" value="${it.opacity ?? 1}" data-kop></label>`
+      + `<label class="st-fly-row st-fly-check"><span>Spin</span><input type="checkbox" data-kspin-on${it.spinOn ? ' checked' : ''}></label>`
+      + `<label class="st-fly-row"><span>Spin speed</span><output>${spin ? `${spin}°/s` : 'still'}</output><input type="range" min="-120" max="120" step="1" value="${spin}" data-kspin></label>`
+      + def.ui.map(u => {
       const v = it.p[u.k];
       if (u.t === 'range') return `<label class="st-fly-row"><span>${u.label}</span><output>${fmt(u, v)}</output><input type="range" min="${u.min}" max="${u.max}" step="${u.step}" value="${v}" data-kp="${u.k}"></label>`;
       if (u.t === 'select') return `<label class="st-fly-row"><span>${u.label}</span><select data-kp="${u.k}">${u.opts.map(([o, n]) => `<option value="${o}"${o === v ? ' selected' : ''}>${n}</option>`).join('')}</select></label>`;
@@ -9125,6 +9141,11 @@ class CoreStudio {
       if (u.t === 'check') return `<label class="st-fly-row st-fly-check"><span>${u.label}</span><input type="checkbox" data-kp="${u.k}"${v ? ' checked' : ''}></label>`;
       return `<label class="st-fly-row"><span>${u.label}</span><input type="color" value="${v}" data-kp="${u.k}"></label>`;
     }).join('') + (def.noShuffle ? '' : '<button type="button" class="st-btn st-kit-shuffle" data-kit-shuffle>Shuffle pattern</button>');
+    const op = f.querySelector('[data-kop]'), sOn = f.querySelector('[data-kspin-on]'), sp = f.querySelector('[data-kspin]');
+    op.addEventListener('input', () => { it.opacity = +op.value; op.parentNode.querySelector('output').textContent = `${Math.round(it.opacity * 100)}%`; const co = this.ctx.querySelector('[data-ctx-opacity]'); co.value = it.opacity; co.nextElementSibling.textContent = `${Math.round(it.opacity * 100)}%`; this.place(it); });
+    sp.addEventListener('input', () => { const v = +sp.value; sp.parentNode.querySelector('output').textContent = v ? `${v}°/s` : 'still'; if (v && !it.spinOn) { sOn.checked = true; this.setKitSpin(it, { spin: v, spinOn: true }); } else this.setKitSpin(it, { spin: v }); });
+    sOn.addEventListener('change', () => { if (sOn.checked && !it.spin) { it.spin = 20; sp.value = 20; sp.parentNode.querySelector('output').textContent = '20°/s'; rangeFill(sp); } this.setKitSpin(it, { spinOn: sOn.checked }); });
+    [op, sp, sOn].forEach(el => el.addEventListener('change', () => this.commit()));
     f.querySelectorAll('[data-kp]').forEach(el => {
       const u = def.ui.find(x => x.k === el.dataset.kp);
       el.addEventListener('input', () => { it.p[u.k] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value; const o = el.parentNode.querySelector('output'); if (o) o.textContent = fmt(u, it.p[u.k]); this.place(it); });
@@ -9132,6 +9153,7 @@ class CoreStudio {
       if (el.type === 'text' || el.tagName === 'TEXTAREA') el.addEventListener('keydown', e => e.stopPropagation());
       if (el.type === 'range') rangeFill(el);
     });
+    f.querySelectorAll('[data-kop],[data-kspin]').forEach(rangeFill);
     const sh = f.querySelector('[data-kit-shuffle]'); if (sh) sh.onclick = () => { it.seed = Math.random() * 1e9 | 0; this.place(it); this.commit(); };
   }
   dupItem(it) {
