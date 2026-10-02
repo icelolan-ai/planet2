@@ -1054,6 +1054,7 @@ body.studio-on:has(#studio.tool-hand) #gl{cursor:grab!important}body.studio-on:h
 .studio-section[open]>summary{color:#ff6571;box-shadow:inset 3px 0 0 #ff4655;padding-left:12px;margin-left:-12px;transition:color .2s,padding .2s}
 .studio-section[open]{background:linear-gradient(90deg,#ff46550d,transparent 70%)}
 /* Movable trays */
+#studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
 .st-edge-hint[hidden]{display:none}
 .st-edge-hint[data-edge=left]{left:2px;top:8px;bottom:8px;width:4px}.st-edge-hint[data-edge=right]{right:2px;top:8px;bottom:8px;width:4px}
@@ -7391,7 +7392,7 @@ class CoreStudio {
       [['[data-studio-freeze]', 'false'], ['[data-studio-show]', 'true'], ['[data-studio-fx]', 'false']].forEach(([s, v]) => this.el.querySelector(s).setAttribute('aria-pressed', v));
       this.el.querySelector('[data-freeze-label]').textContent = 'Stop';
       this.el.querySelectorAll('[data-studio-layer],[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioLayer !== 'dust')));
-      this.home(); this.applyPreset('ember'); this.paintVfx();
+      this.home(); this.applyPreset('ember'); this.paintVfx(); this.resetTrays();
     };
     this.frozen = false; this.lensOn = false; this.grain = false; this.grainAmt = .1;
     this.grainEl = document.createElement('div'); this.grainEl.className = 'st-grain'; this.grainEl.hidden = true; this.stage.after(this.grainEl);
@@ -7553,7 +7554,7 @@ class CoreStudio {
       g.addEventListener('pointermove', e => {
         const d = this.trayDrag; if (!d || d.id !== e.pointerId) return;
         el.style.transform = `translate(${e.clientX - d.x0}px,${e.clientY - d.y0}px)`;
-        const tgt = this.trayTarget(name, e.clientX, e.clientY); this.layoutTrays(tgt); this.edgeHint.dataset.edge = this.trayEdge || ''; this.edgeHint.hidden = !this.trayEdge; el.style.transform = `translate(${e.clientX - d.x0}px,${e.clientY - d.y0}px)`;
+        const tgt = this.trayTarget(name, e.clientX, e.clientY); this.layoutTrays(tgt); this.edgeHint.dataset.edge = this.trayEdge || ''; this.edgeHint.hidden = !this.trayEdge; el.style.transform = this.traySnap ? `translate(${e.clientX - d.x0}px,${e.clientY - d.y0}px)` : '';
       });
       const end = e => {
         const d = this.trayDrag; if (!d || d.id !== e.pointerId) return; this.trayDrag = null;
@@ -7563,6 +7564,11 @@ class CoreStudio {
       };
       g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
     });
+  }
+  resetTrays() {
+    try { localStorage.removeItem('cerebra-studio-trays2-' + (this.trayWide ? 'w' : 'n')); } catch (e) {}
+    const wide = innerWidth > 900; this.trayCfg = wide ? { left: ['add', 'decor'], right: ['layers', 'panel'], bottom: ['dock'], top: [], free: {} } : { left: ['add'], right: ['decor'], bottom: ['dock', 'layers', 'panel'], top: [], free: {} };
+    Object.values(this.trays).forEach(el => { el.style.transform = ''; el.classList.remove('is-dragging'); }); this.layoutTrays();
   }
   // Nearest edge to the pointer, and the slot among that edge's trays (0 = against the edge).
   trayTarget(name, x, y) {
@@ -7617,6 +7623,7 @@ class CoreStudio {
       used[e] += (h || el.offsetHeight) + gap;
     });
     Object.entries(cfg.free || {}).filter(([n]) => this.trays[n] && vis(n)).forEach(([n, pos]) => {
+      const el0 = this.trays[n], bw = el0.offsetWidth || 80, bh = el0.offsetHeight || 80; pos = { x: clamp(pos.x, gap / W, Math.max(gap / W, (W - bw - gap) / W)), y: clamp(pos.y, gap / H, Math.max(gap / H, (H - Math.min(bh, H - 2 * gap) - gap) / H)) };
       const el = this.trays[n], horiz = n === 'dock';
       el.classList.toggle('is-h', horiz); el.classList.toggle('is-v', !horiz);
       const w = n === 'panel' || n === 'layers' ? Math.min(340, W - 2 * gap) : horiz ? null : (small ? 60 : 72);
