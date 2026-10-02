@@ -1190,6 +1190,10 @@ body .dial-body:not(.many) input[type=range],body .dial-body:not(.many) b[data-o
 body .dial-body.many{display:block;padding:4px 12px 14px}
 body .dial-body.many .st-knob{display:none}
 body .dial-body.many .tune-row:has(.st-knob) input[type=range]{display:block}
+body .dial-body.many .studio-control:has(.st-knob) input[type=range]{display:block}
+body .dial-body.many .studio-control:has(.st-knob) output{display:inline}
+body .dial-body.many .studio-control{display:grid;width:100%;grid-template-columns:minmax(0,1fr) auto;margin:10px 0;padding:0 4px;background:none;box-shadow:none}
+body .dial-body.many .studio-control>input[type=range]{grid-column:1/-1;grid-row:2}
 body .dial-body.many .tune-row:has(.st-knob) b[data-out]{display:inline}
 body .dial-body.one{display:flex;justify-content:center;padding:10px 10px 22px}
 body .dial-body.one>.tune-row,body .dial-body.one>.studio-control{width:auto}
