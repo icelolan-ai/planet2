@@ -7853,7 +7853,7 @@ const kitRR = (g, x, y, w, h, r) => { r = Math.max(0, Math.min(r, w / 2, h / 2))
 // "Label: 40", "Label | 40" or "Label<tab>40" per line -> [label, value]
 const kitRows = t => String(t).split('\n').map(l => l.trim()).filter(Boolean).slice(0, KIT_MAX.rows).map(l => { const m = l.match(/^(.*?)\s*(?:[:|\t])\s*(.*)$/); return m ? [m[1], m[2]] : [l, '']; });
 // numbers in the data widget drift a little while Motion is on (keeps prefix/suffix and decimals)
-const kitLive = (val, M, i) => { const s = String(val); return M.a ? s.replace(/-?\d+(?:\.\d+)?/, m => (parseFloat(m) * (1 + M.a * .04 * Math.sin(M.t * 1.7 + i * 2.1))).toFixed((m.split('.')[1] || '').length)) : s; };
+const kitLive = (val, M, i, ease) => { const s = String(val); return M.a ? s.replace(/-?\d+(?:\.\d+)?/, m => (parseFloat(m) * (ease != null ? ease : 1 + M.a * .04 * Math.sin(M.t * 1.7 + i * 2.1))).toFixed((m.split('.')[1] || '').length)) : s; };
 const kitNum = v => { const n = parseFloat(String(v).replace(/[^0-9.\-]/g, '')); return isFinite(n) ? n : 0; };
 const kitFit = (g, t, max) => { while (t.length > 1 && g.measureText(t).width > max) t = t.slice(0, -1); return t; };
 const GLASS = {
@@ -7903,7 +7903,7 @@ const KIT = {
     draw(g, it, x, y, w, h, k) {
       const p = it.p, M = kitM(it), b = GLASS.geom(p, w, h), bx = x + b.x, by = y + b.y, lw = Math.max(.6, p.lw * k), a0 = g.globalAlpha, px = p.size * k;
       kitRR(g, bx + lw / 2, by + lw / 2, b.w - lw, b.h - lw, b.r); g.globalAlpha = a0 * p.tint; g.fillStyle = '#ffffff'; g.fill();
-      g.globalAlpha = a0 * p.border; g.strokeStyle = it.fill; g.lineWidth = lw; g.stroke(); g.globalAlpha = a0;
+      g.globalAlpha = Math.min(1, a0 * p.border * (p.mstyle === 'pulse' ? 1 + M.a * .9 * Math.sin(M.t * 2.5) : 1)); g.strokeStyle = it.fill; g.lineWidth = lw; g.stroke(); g.globalAlpha = a0;
       g.strokeStyle = g.fillStyle = it.fill; g.lineCap = 'butt';
       if (p.brackets) { const a = Math.min(b.w, b.h) * .16, m = lw * 3 + Math.min(b.w, b.h) * .04; g.lineWidth = lw; g.beginPath();
         [[1, 1], [-1, 1], [-1, -1], [1, -1]].forEach(([sx, sy]) => { const cx = sx > 0 ? bx + m : bx + b.w - m, cy = sy > 0 ? by + m : by + b.h - m; g.moveTo(cx, cy + sy * a); g.lineTo(cx, cy); g.lineTo(cx + sx * a, cy); }); g.stroke(); }
@@ -7911,7 +7911,7 @@ const KIT = {
       const sub = String(p.sub || ''), room = b.w - pad * 2;
       g.font = kitFont(p, px * 1.25); g.fillText(kitFit(g, String(p.title || ''), room), bx + pad, by + b.h / 2 + (sub ? -px * .1 : px * .4));
       if (sub) { g.globalAlpha = a0 * .7; g.font = kitFont({ ...p, weight: '400' }, px * .8); g.fillText(kitFit(g, sub, room), bx + pad, by + b.h / 2 + px * 1.15); g.globalAlpha = a0; }
-      if (M.a) { g.save(); kitRR(g, bx, by, b.w, b.h, b.r); g.clip(); const bxp = bx + ((M.a * M.t * .35) % 1.4 - .2) * b.w, gr = g.createLinearGradient(bxp - b.w * .12, 0, bxp + b.w * .12, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.5, 'rgba(255,255,255,.22)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.globalAlpha = a0 * Math.min(1, M.a * 1.4); g.fillStyle = gr; g.fillRect(bx, by, b.w, b.h); g.restore(); g.globalAlpha = a0; g.fillStyle = it.fill; }
+      if (M.a && p.mstyle !== 'pulse') { g.save(); kitRR(g, bx, by, b.w, b.h, b.r); g.clip(); const bxp = bx + ((M.a * M.t * .35) % 1.4 - .2) * b.w, gr = g.createLinearGradient(bxp - b.w * .12, 0, bxp + b.w * .12, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.5, 'rgba(255,255,255,.22)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.globalAlpha = a0 * Math.min(1, M.a * 1.4); g.fillStyle = gr; g.fillRect(bx, by, b.w, b.h); g.restore(); g.globalAlpha = a0; g.fillStyle = it.fill; }
       if (p.pointer !== 'none') {
         const ex = p.pointer === 'left' ? x + lw : p.pointer === 'right' ? x + w - lw : bx + b.w / 2, ey = p.pointer === 'top' ? y + lw : p.pointer === 'bottom' ? y + h - lw : by + b.h / 2;
         const sx0 = p.pointer === 'left' ? bx : p.pointer === 'right' ? bx + b.w : ex, sy0 = p.pointer === 'top' ? by : p.pointer === 'bottom' ? by + b.h : ey;
@@ -7926,29 +7926,29 @@ const KIT = {
       { k: 'font', t: 'select', label: 'Font', opts: KIT_FONT_OPTS }, { k: 'weight', t: 'select', label: 'Weight', opts: KIT_WEIGHTS }, { k: 'size', t: 'range', label: 'Text size', min: 7, max: 40, step: 1, unit: 'px' },
       { k: 'lw', t: 'range', label: 'Line width', min: .4, max: 5, step: .2, unit: 'px' }, { k: 'grid', t: 'check', label: 'Grid lines', when: ['mode', ['radar', 'bars']] }, { k: 'fillArea', t: 'check', label: 'Filled shape', when: ['mode', 'radar'] }, { k: 'c2', t: 'color', label: 'Accent colour' }],
     draw(g, it, x, y, w, h, k) {
-      const p = it.p, rows = kitRows(p.data), n = rows.length, px = p.size * k, lw = Math.max(.5, p.lw * k), a0 = g.globalAlpha, pad = px * .6, M = kitM(it), act = M.a && n ? Math.floor(M.t * 1.1) % n : -1, hl = i => i === (act < 0 ? 0 : act);
+      const p = it.p, rows = kitRows(p.data), n = rows.length, px = p.size * k, lw = Math.max(.5, p.lw * k), a0 = g.globalAlpha, pad = px * .6, M = kitM(it), act = M.a && n ? Math.floor(M.t * 1.1) % n : -1, hl = i => i === (act < 0 ? 0 : act), wms = p.mstyle || 'live', loopP = M.a && (wms === 'count' || wms === 'draw') ? Math.min(1, (M.t * .35) % 1.6) : 1, ease = 1 - Math.pow(1 - loopP, 3), live = wms === 'live', cnt = wms === 'count' ? ease : null;
       if (!n) return; g.strokeStyle = g.fillStyle = it.fill; g.lineWidth = lw; g.lineCap = 'butt'; g.textBaseline = 'alphabetic';
       if (p.mode === 'stat') {
         const cw = w / n;
         rows.forEach(([lab, val], i) => { const cx = x + i * cw + cw / 2, big = Math.min(cw * .9 / Math.max(2, String(val).length * .62), h * .55);
-          g.textAlign = 'center'; g.font = kitFont(p, big); g.fillStyle = hl(i) ? p.c2 : it.fill; g.fillText(kitFit(g, kitLive(val, M, i), cw - pad), cx, y + h / 2 + big * .3);
+          g.textAlign = 'center'; g.font = kitFont(p, big); g.fillStyle = hl(i) ? p.c2 : it.fill; g.fillText(kitFit(g, kitLive(val, M, i, cnt), cw - pad), cx, y + h / 2 + big * .3);
           g.fillStyle = it.fill; g.globalAlpha = a0 * .75; g.font = kitFont({ ...p, weight: '400' }, px * .85); g.fillText(kitFit(g, lab.toUpperCase(), cw - pad), cx, y + h / 2 + big * .3 + px * 1.5); g.globalAlpha = a0;
           if (i) { g.beginPath(); g.moveTo(x + i * cw, y + h * .2); g.lineTo(x + i * cw, y + h * .8); g.stroke(); } });
       } else if (p.mode === 'table') {
         const rh = h / n; g.font = kitFont(p, px);
-        rows.forEach(([lab, val], i) => { const yy = y + i * rh + rh / 2 + px * .35; g.textAlign = 'left'; g.globalAlpha = a0 * .75; g.fillText(kitFit(g, lab.toUpperCase(), w * .55), x + pad, yy); g.globalAlpha = a0; g.textAlign = 'right'; g.fillStyle = hl(i) ? p.c2 : it.fill; g.fillText(kitFit(g, kitLive(val, M, i), w * .4), x + w - pad, yy); g.fillStyle = it.fill;
+        rows.forEach(([lab, val], i) => { const yy = y + i * rh + rh / 2 + px * .35; g.textAlign = 'left'; g.globalAlpha = a0 * .75; g.fillText(kitFit(g, lab.toUpperCase(), w * .55), x + pad, yy); g.globalAlpha = a0; g.textAlign = 'right'; g.fillStyle = hl(i) ? p.c2 : it.fill; g.fillText(kitFit(g, kitLive(val, M, i, cnt), w * .4), x + w - pad, yy); g.fillStyle = it.fill;
           g.globalAlpha = a0 * .4; g.beginPath(); g.moveTo(x, y + (i + 1) * rh); g.lineTo(x + w, y + (i + 1) * rh); g.stroke(); g.globalAlpha = a0; });
       } else if (p.mode === 'bars') {
         const rh = h / n, lblw = w * .32, mx = Math.max(100, ...rows.map(r => kitNum(r[1]))); g.font = kitFont(p, px);
-        rows.forEach(([lab, val], i) => { const yy = y + i * rh + rh / 2, bh = Math.min(rh * .42, px * 1.2), len = (w - lblw - pad * 3 - px * 2.5) * clamp(kitNum(val) / mx + M.a * .12 * Math.sin(M.t * 1.8 + i * 1.3), 0, 1), bx = x + lblw + pad;
+        rows.forEach(([lab, val], i) => { const yy = y + i * rh + rh / 2, bh = Math.min(rh * .42, px * 1.2), len = (w - lblw - pad * 3 - px * 2.5) * clamp(kitNum(val) / mx + (live ? M.a * .12 * Math.sin(M.t * 1.8 + i * 1.3) : 0), 0, 1) * (wms === 'draw' ? ease : 1), bx = x + lblw + pad;
           g.textAlign = 'left'; g.textBaseline = 'middle'; g.globalAlpha = a0 * .8; g.fillText(kitFit(g, lab.toUpperCase(), lblw - pad), x + pad, yy); g.globalAlpha = a0;
           if (p.grid) { g.globalAlpha = a0 * .25; g.fillRect(bx, yy - bh / 2, w - lblw - pad * 3 - px * 2.5, bh); g.globalAlpha = a0; }
-          g.fillStyle = hl(i) ? p.c2 : it.fill; g.fillRect(bx, yy - bh / 2, Math.max(lw, len), bh); g.fillStyle = it.fill; g.textAlign = 'right'; g.fillText(kitLive(val, M, i), x + w - pad, yy); });
+          g.fillStyle = hl(i) ? p.c2 : it.fill; g.fillRect(bx, yy - bh / 2, Math.max(lw, len), bh); g.fillStyle = it.fill; g.textAlign = 'right'; g.fillText(kitLive(val, M, i, cnt), x + w - pad, yy); });
       } else if (p.mode === 'radar') {
         const m = Math.max(3, n), cx = x + w / 2, cy = y + h / 2, R = Math.min(w, h) / 2 - px * 2.4, ang = i => -Math.PI / 2 + i * Math.PI * 2 / m;
         if (p.grid) { g.globalAlpha = a0 * .35; for (let r = 1; r <= 4; r++) { g.beginPath(); for (let i = 0; i < m; i++) { const q = R * r / 4; g[i ? 'lineTo' : 'moveTo'](cx + Math.cos(ang(i)) * q, cy + Math.sin(ang(i)) * q); } g.closePath(); g.stroke(); }
           g.beginPath(); for (let i = 0; i < m; i++) { g.moveTo(cx, cy); g.lineTo(cx + Math.cos(ang(i)) * R, cy + Math.sin(ang(i)) * R); } g.stroke(); g.globalAlpha = a0; }
-        const pts = Array.from({ length: m }, (_, i) => { const v = clamp((rows[i] ? kitNum(rows[i][1]) : 0) / 100 + M.a * .1 * Math.sin(M.t * 1.6 + i * 1.7), 0, 1); return [cx + Math.cos(ang(i)) * R * v, cy + Math.sin(ang(i)) * R * v]; });
+        const pts = Array.from({ length: m }, (_, i) => { const v = clamp((rows[i] ? kitNum(rows[i][1]) : 0) / 100 + (live ? M.a * .1 * Math.sin(M.t * 1.6 + i * 1.7) : 0), 0, 1) * (wms === 'draw' ? ease : 1); return [cx + Math.cos(ang(i)) * R * v, cy + Math.sin(ang(i)) * R * v]; });
         g.beginPath(); pts.forEach((q, i) => g[i ? 'lineTo' : 'moveTo'](q[0], q[1])); g.closePath();
         if (p.fillArea) { g.globalAlpha = a0 * .25; g.fillStyle = p.c2; g.fill(); g.globalAlpha = a0; } g.strokeStyle = p.c2; g.lineWidth = lw * 1.3; g.stroke();
         g.fillStyle = p.c2; pts.forEach(q => { g.beginPath(); g.arc(q[0], q[1], Math.max(2 * k, lw * 1.6), 0, Math.PI * 2); g.fill(); });
@@ -7971,7 +7971,7 @@ const KIT = {
       { k: 'folds', t: 'range', label: 'Folds', min: 8, max: 200, step: 1, when: ['type', 'crumple'] }, { k: 'count', t: 'range', label: 'Scratches', min: 5, max: 300, step: 1, when: ['type', 'scratches'] },
       { k: 'reach', t: 'range', label: 'Clear centre', min: 0, max: .9, step: .05, pct: 1, when: ['type', 'vignette'] }, { k: 'c2', t: 'color', label: 'Shade colour', when: ['type', ['vignette', 'crumple']] }],
     draw(g, it, x, y, w, h, k) {
-      const p = it.p, M = kitM(it), W = Math.max(1, Math.round(w)), H = Math.max(1, Math.round(h)), a0 = g.globalAlpha, seedE = it.seed + (M.a && p.type !== 'crumple' && p.type !== 'vignette' ? Math.floor(M.t * 10) : 0);
+      const p = it.p, M = kitM(it), W = Math.max(1, Math.round(w)), H = Math.max(1, Math.round(h)), a0 = g.globalAlpha, seedE = it.seed + (M.a && p.mstyle === 'flicker' && p.type !== 'crumple' && p.type !== 'vignette' ? Math.floor(M.t * 10) : 0);
       if (p.type === 'vignette') { const R = Math.hypot(w, h) / 2, gr = g.createRadialGradient(x + w / 2, y + h / 2, R * p.reach * .9, x + w / 2, y + h / 2, R * 1.02); const c = p.c2; gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, c); g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip(); g.globalAlpha = Math.min(1, a0 * p.amount * (1 + M.a * .25 * Math.sin(M.t * 1.3))); g.fillStyle = gr; g.fillRect(x, y, w, h); g.restore(); return; }
       const key = JSON.stringify([p, seedE, it.fill, W, H, k]); let c = KIT_TEX.get(it);
       if (!c || c.key !== key) {
@@ -7998,16 +7998,18 @@ const KIT = {
         }
         c = { key, cv: oc }; KIT_TEX.set(it, c);
       }
-      g.drawImage(c.cv, x, y, w, h);
+      if (M.a && p.mstyle === 'drift') { const ox = (M.a * M.t * w * .03) % w; g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip(); g.drawImage(c.cv, x + ox, y, w, h); g.drawImage(c.cv, x + ox - w, y, w, h); g.restore(); return; }
+      if (M.a && p.mstyle === 'pulse') g.globalAlpha = a0 * (1 - M.a * .55 * (.5 + .5 * Math.sin(M.t * 1.5)));
+      g.drawImage(c.cv, x, y, w, h); g.globalAlpha = a0;
     },
   },
   hubNetwork: {
     label: 'Hub network', defaults: { hubs: 3, branches: 120, reach: .9, curve: .5, dot: 2.4, lw: .8, glow: .5, mix: .2, c2: '#35c9ff' }, thumbK: .6,
     ui: [{ k: 'hubs', t: 'range', label: 'Hubs', min: 1, max: 8, step: 1 }, { k: 'branches', t: 'range', label: 'Lines per hub', min: 5, max: 600, step: 1 }, { k: 'reach', t: 'range', label: 'Reach', min: .2, max: 1.4, step: .05, pct: 1 }, { k: 'curve', t: 'range', label: 'Curve', min: 0, max: 1.5, step: .05, pct: 1 }, { k: 'dot', t: 'range', label: 'Node size', min: 0, max: 8, step: .2, unit: 'px' }, { k: 'lw', t: 'range', label: 'Line width', min: .3, max: 4, step: .1, unit: 'px' }, { k: 'glow', t: 'range', label: 'Glow', min: 0, max: 1, step: .05, pct: 1 }, { k: 'mix', t: 'range', label: 'Accent share', min: 0, max: 1, step: .05, pct: 1 }, { k: 'c2', t: 'color', label: 'Accent colour' }],
     draw(g, it, x, y, w, h, k) { L2.cached(g, it, x, y, w, h, k, L2.cap(), (o, W, H) => {
-      const p = it.p, r = mulberry32(it.seed), M = kitM(it), m = Math.min(W, H), cx = W / 2, cy = H / 2, nh = p.hubs | 0, per = Math.min(p.branches | 0, Math.floor(L2.cap() / nh)), segs = [], dots = [], TAU = Math.PI * 2;
-      const hubs = Array.from({ length: nh }, (_, i) => nh === 1 ? [cx, cy] : [cx + Math.cos(i / nh * TAU + .6) * m * .24 * (.7 + r() * .6), cy + Math.sin(i / nh * TAU + .6) * m * .24 * (.7 + r() * .6)]).map(([hx, hy], i) => [hx + M.a * m * .035 * Math.sin(M.t * .6 + i * 2.1), hy + M.a * m * .035 * Math.cos(M.t * .5 + i * 1.3)]);
-      hubs.forEach(([hx, hy], hi) => { for (let j = 0; j < per; j++) { const a0 = r() * TAU, d0 = (.1 + Math.pow(r(), .7) * p.reach) * m / 2, id = j + hi * 997, a = a0 + M.a * .2 * Math.sin(M.t * .8 + kitHash(id, 1) * TAU), d = d0 * (1 + M.a * .1 * Math.sin(M.t * 1.1 + kitHash(id, 2) * TAU)), tx = hx + Math.cos(a) * d, ty = hy + Math.sin(a) * d, off = (r() - .5) * d * p.curve * 2, mx = (hx + tx) / 2 - Math.sin(a) * off, my = (hy + ty) / 2 + Math.cos(a) * off, c = r() < p.mix ? 1 : 0; segs.push({ pts: [hx, hy, mx, my, tx, ty], c }); dots.push([tx, ty, p.dot * (.4 + r() * .6), c]); } });
+      const p = it.p, r = mulberry32(it.seed), M = kitM(it), ms = p.mstyle, m = Math.min(W, H), cx = W / 2, cy = H / 2, nh = p.hubs | 0, per = Math.min(p.branches | 0, Math.floor(L2.cap() / nh)), segs = [], dots = [], TAU = Math.PI * 2;
+      const hubs = Array.from({ length: nh }, (_, i) => nh === 1 ? [cx, cy] : [cx + Math.cos(i / nh * TAU + .6) * m * .24 * (.7 + r() * .6), cy + Math.sin(i / nh * TAU + .6) * m * .24 * (.7 + r() * .6)]).map(([hx, hy], i) => { if (ms === 'spin') { const an = M.a * M.t * .12, dx = hx - cx, dy = hy - cy; return [cx + dx * Math.cos(an) - dy * Math.sin(an), cy + dx * Math.sin(an) + dy * Math.cos(an)]; } return [hx + M.a * m * .035 * Math.sin(M.t * .6 + i * 2.1), hy + M.a * m * .035 * Math.cos(M.t * .5 + i * 1.3)]; });
+      hubs.forEach(([hx, hy], hi) => { for (let j = 0; j < per; j++) { const a0 = r() * TAU, d0 = (.1 + Math.pow(r(), .7) * p.reach) * m / 2, id = j + hi * 997, a = a0 + (ms === 'spin' ? M.a * M.t * .15 : ms === 'pulse' ? 0 : M.a * .2 * Math.sin(M.t * .8 + kitHash(id, 1) * TAU)), d = d0 * (1 + (ms === 'pulse' ? M.a * .2 * Math.sin(M.t * 1.7 - d0 / (m / 2) * 6) : ms === 'spin' ? 0 : M.a * .1 * Math.sin(M.t * 1.1 + kitHash(id, 2) * TAU))), tx = hx + Math.cos(a) * d, ty = hy + Math.sin(a) * d, off = (r() - .5) * d * p.curve * 2, mx = (hx + tx) / 2 - Math.sin(a) * off, my = (hy + ty) / 2 + Math.cos(a) * off, c = r() < p.mix ? 1 : 0; segs.push({ pts: [hx, hy, mx, my, tx, ty], c }); dots.push([tx, ty, p.dot * (.4 + r() * .6), c]); } });
       L2.lines(o, segs, it, k, p.lw, p.glow); L2.dots(o, dots, it, k, p.glow); L2.dots(o, hubs.map(q => [q[0], q[1], p.dot * 2.4, 1]), it, k, p.glow);
     }); },
   },
@@ -8017,7 +8019,7 @@ const KIT = {
     draw(g, it, x, y, w, h, k) { L2.cached(g, it, x, y, w, h, k, L2.cap(), (o, W, H) => {
       const p = it.p, r = mulberry32(it.seed), M = kitM(it), n = Math.min(400, p.n | 0), m = Math.min(W, H), pts = [], segs = [], dots = [], pad = p.dot * k * 2, TAU = Math.PI * 2, am = M.a * m * .07;
       for (let i = 0; i < n; i++) { let px, py; if (p.shape === 'circle') { const a = r() * TAU, d = Math.sqrt(r()) * (m / 2 - pad); px = W / 2 + Math.cos(a) * d; py = H / 2 + Math.sin(a) * d; } else { px = pad + r() * (W - pad * 2); py = pad + r() * (H - pad * 2); }
-        px += am * Math.sin(M.t * (.35 + kitHash(i, 1) * .5) + kitHash(i, 2) * TAU); py += am * Math.cos(M.t * (.3 + kitHash(i, 3) * .5) + kitHash(i, 4) * TAU); pts.push([px, py]); dots.push([px, py, p.dot * (.5 + r() * .8), r() < p.mix ? 1 : 0]); }
+        if (p.mstyle === 'swirl') { const an = M.a * M.t * .18, dx = px - W / 2, dy = py - H / 2; px = W / 2 + dx * Math.cos(an) - dy * Math.sin(an); py = H / 2 + dx * Math.sin(an) + dy * Math.cos(an); } else if (p.mstyle === 'wave') { py += am * 1.4 * Math.sin(M.t * 1.6 + px / m * 9); px += am * .6 * Math.cos(M.t * 1.2 + py / m * 7); } else { px += am * Math.sin(M.t * (.35 + kitHash(i, 1) * .5) + kitHash(i, 2) * TAU); py += am * Math.cos(M.t * (.3 + kitHash(i, 3) * .5) + kitHash(i, 4) * TAU); } pts.push([px, py]); dots.push([px, py, p.dot * (.5 + r() * .8), r() < p.mix ? 1 : 0]); }
       const L = p.link * m, cap = L2.cap();
       for (let i = 0; i < n && segs.length < cap; i++) for (let j = i + 1; j < n && segs.length < cap; j++) if (Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]) < L) segs.push({ pts: [pts[i][0], pts[i][1], pts[j][0], pts[j][1]], c: kitHash(i * 401 + j, 9) < p.mix * .6 ? 1 : 0 });
       L2.lines(o, segs, it, k, p.lw, p.glow); L2.dots(o, dots, it, k, p.glow);
@@ -8028,9 +8030,9 @@ const KIT = {
     ui: [{ k: 'items', t: 'area', label: 'Categories (one per line)' }, { k: 'links', t: 'range', label: 'Chords', min: 5, max: 600, step: 1 }, { k: 'tension', t: 'range', label: 'Pull to centre', min: 0, max: .9, step: .05, pct: 1 }, { k: 'gap', t: 'range', label: 'Gap between groups', min: 0, max: 30, step: 1, unit: '°' }, { k: 'ring', t: 'check', label: 'Outer ring' },
       { k: 'font', t: 'select', label: 'Font', opts: KIT_FONT_OPTS }, { k: 'size', t: 'range', label: 'Label size', min: 6, max: 30, step: 1, unit: 'px' }, { k: 'lw', t: 'range', label: 'Line width', min: .3, max: 4, step: .1, unit: 'px' }, { k: 'glow', t: 'range', label: 'Glow', min: 0, max: 1, step: .05, pct: 1 }, { k: 'mix', t: 'range', label: 'Accent share', min: 0, max: 1, step: .05, pct: 1 }, { k: 'c2', t: 'color', label: 'Accent colour' }],
     draw(g, it, x, y, w, h, k) { L2.cached(g, it, x, y, w, h, k, [L2.cap(), document.fonts && it.p.font ? document.fonts.check(kitFont(it.p, 16)) : 0], (o, W, H) => {
-      const p = it.p, r = mulberry32(it.seed), M = kitM(it), names = String(p.items).split('\n').map(t => t.trim()).filter(Boolean).slice(0, 24), n = Math.max(2, names.length), px = p.size * k, cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - px * 5 - k * 4, TAU = Math.PI * 2, gap = p.gap * Math.PI / 180, span = TAU / n - gap, segs = [], ten = Math.min(.9, p.tension * (1 + M.a * .5 * Math.sin(M.t * .8)));
-      const at = (i, t) => -Math.PI / 2 + i * TAU / n + gap / 2 + t * span;
-      for (let q = 0; q < Math.min(p.links | 0, L2.cap()); q++) { const i = r() * n | 0; let j = r() * n | 0; if (j === i) j = (j + 1) % n; const t1 = r(), t2 = r(), a = at(i, clamp(t1 + M.a * .3 * Math.sin(M.t * .7 + kitHash(q, 1) * TAU), 0, 1)), b = at(j, clamp(t2 + M.a * .3 * Math.sin(M.t * .6 + kitHash(q, 2) * TAU), 0, 1)), mid = [(Math.cos(a) + Math.cos(b)) / 2 * R, (Math.sin(a) + Math.sin(b)) / 2 * R]; segs.push({ pts: [cx + Math.cos(a) * R, cy + Math.sin(a) * R, cx + mid[0] * (1 - ten) * .55, cy + mid[1] * (1 - ten) * .55, cx + Math.cos(b) * R, cy + Math.sin(b) * R], c: r() < p.mix ? 1 : 0 }); }
+      const p = it.p, r = mulberry32(it.seed), M = kitM(it), names = String(p.items).split('\n').map(t => t.trim()).filter(Boolean).slice(0, 24), n = Math.max(2, names.length), px = p.size * k, cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - px * 5 - k * 4, TAU = Math.PI * 2, gap = p.gap * Math.PI / 180, span = TAU / n - gap, segs = [], ms = p.mstyle || 'slide', rotc = ms === 'rotate' ? M.a * M.t * .15 : 0, ten = Math.min(.9, p.tension * (ms === 'pulse' ? 1 + M.a * .9 * Math.sin(M.t * 1.4) : 1 + M.a * .5 * Math.sin(M.t * .8)));
+      const at = (i, t) => -Math.PI / 2 + i * TAU / n + gap / 2 + t * span + rotc;
+      for (let q = 0; q < Math.min(p.links | 0, L2.cap()); q++) { const i = r() * n | 0; let j = r() * n | 0; if (j === i) j = (j + 1) % n; const t1 = r(), t2 = r(), a = at(i, clamp(t1 + (ms === 'slide' ? M.a * .3 * Math.sin(M.t * .7 + kitHash(q, 1) * TAU) : 0), 0, 1)), b = at(j, clamp(t2 + (ms === 'slide' ? M.a * .3 * Math.sin(M.t * .6 + kitHash(q, 2) * TAU) : 0), 0, 1)), mid = [(Math.cos(a) + Math.cos(b)) / 2 * R, (Math.sin(a) + Math.sin(b)) / 2 * R]; segs.push({ pts: [cx + Math.cos(a) * R, cy + Math.sin(a) * R, cx + mid[0] * (1 - ten) * .55, cy + mid[1] * (1 - ten) * .55, cx + Math.cos(b) * R, cy + Math.sin(b) * R], c: r() < p.mix ? 1 : 0 }); }
       L2.lines(o, segs, it, k, p.lw, p.glow);
       o.strokeStyle = it.fill; o.lineWidth = Math.max(1, k * 2); o.lineCap = 'butt';
       if (p.ring) for (let i = 0; i < n; i++) { o.beginPath(); o.arc(cx, cy, R + k * 3, at(i, 0), at(i, 1)); o.stroke(); }
@@ -8045,7 +8047,7 @@ const KIT = {
       const p = it.p, r = mulberry32(it.seed), M = kitM(it), A = M.a, T = M.t, n = Math.min(p.n | 0, L2.cap()), pad = p.dot * k * 2 + k * 2, segs = [], dots = [], cy = H / 2, TAU = Math.PI * 2, ms = p.mstyle;
       const yy = i => cy + ((n === 1 ? .5 : i / (n - 1)) - .5) * (H - pad * 2) * p.spread + (r() - .5) * 2 * k;
       // motion: every line's loose end moves (wave = travelling ripple, random = its own random direction, breathe = fan opens and closes)
-      const mv = (i, bx, by) => { if (!A) return [bx, by]; if (ms === 'random') { const th = kitHash(i, 11) * TAU, d = A * H * .13 * Math.sin(T * (.7 + kitHash(i, 13) * 1.6) + kitHash(i, 12) * TAU); return [bx + Math.cos(th) * d * .5, by + Math.sin(th) * d]; } if (ms === 'breathe') return [bx, cy + (by - cy) * (1 + A * .3 * Math.sin(T * 1.2))]; return [bx, by + A * H * .07 * Math.sin(T * 1.6 + i * .22)]; };
+      const mv = (i, bx, by) => { if (!A) return [bx, by]; if (ms === 'random') { const th = kitHash(i, 11) * TAU, d = A * H * .13 * Math.sin(T * (.7 + kitHash(i, 13) * 1.6) + kitHash(i, 12) * TAU); return [bx + Math.cos(th) * d * .5, by + Math.sin(th) * d]; } if (ms === 'breathe') return [bx, cy + (by - cy) * (1 + A * .3 * Math.sin(T * 1.2))]; if (ms === 'sweep') return [bx + (bx > W / 2 ? -1 : 1) * A * W * .1 * Math.max(0, Math.sin(T * 1.6 - i * .09)), by]; if (ms === 'twist') { const an = A * .5 * Math.sin(T * .9); return [bx - (by - cy) * Math.sin(an) * .3, cy + (by - cy) * Math.cos(an)]; } return [bx, by + A * H * .07 * Math.sin(T * 1.6 + i * .22)]; };
       const f = p.bundle * (1 + A * .12 * Math.sin(T * .9));
       const cu = (ax, ay, bx, by, c) => { segs.push({ pts: [ax, ay, ax + (bx - ax) * .5, ay + (by - ay) * (1 - f), bx - (bx - ax) * .35, by, bx, by], c }); };
       if (p.mode === 'twin') { for (let i = 0; i < n; i++) { const [tx, ty] = mv(i, W / 2, yy(i)), c = r() < p.mix ? 1 : 0; cu(pad, cy, tx, ty, c); cu(W - pad, cy, tx, ty, c); dots.push([tx, ty, p.dot * .8, c]); } dots.push([pad, cy, p.dot * 2.4, 1], [W - pad, cy, p.dot * 2.4, 1]); }
@@ -8058,7 +8060,7 @@ const KIT = {
     label: 'Neural branches', defaults: { roots: 1, origin: 'bottom', depth: 12, fork: .6, step: 8, wander: .7, up: .6, lw: .9, glow: .45, mix: .2, c2: '#a78bfa' }, thumbK: .6,
     ui: [{ k: 'origin', t: 'select', label: 'Grows from', opts: [['bottom', 'Bottom'], ['centre', 'Centre']] }, { k: 'roots', t: 'range', label: 'Roots', min: 1, max: 8, step: 1 }, { k: 'depth', t: 'range', label: 'Branch levels', min: 3, max: 14, step: 1 }, { k: 'fork', t: 'range', label: 'Fork chance', min: .1, max: .9, step: .05, pct: 1 }, { k: 'step', t: 'range', label: 'Step length', min: 6, max: 60, step: 1, unit: 'px' }, { k: 'wander', t: 'range', label: 'Wander', min: 0, max: 1.5, step: .05, pct: 1 }, { k: 'lw', t: 'range', label: 'Line width', min: .3, max: 4, step: .1, unit: 'px' }, { k: 'glow', t: 'range', label: 'Glow', min: 0, max: 1, step: .05, pct: 1 }, { k: 'mix', t: 'range', label: 'Accent share', min: 0, max: 1, step: .05, pct: 1 }, { k: 'c2', t: 'color', label: 'Accent colour' }],
     draw(g, it, x, y, w, h, k) { L2.cached(g, it, x, y, w, h, k, L2.cap(), (o, W, H) => {
-      const p = it.p, r = mulberry32(it.seed), M = kitM(it), segs = [], dots = [], cap = L2.cap(), stack = []; const nr = p.roots | 0;
+      const p = it.p, r = mulberry32(it.seed), M = kitM(it), ms = p.mstyle || 'sway', segs = [], dots = [], cap = L2.cap(), stack = []; const nr = p.roots | 0;
       for (let i = 0; i < nr; i++) { if (p.origin === 'centre') stack.push({ x: W / 2, y: H / 2, a: i / nr * Math.PI * 2 + r(), d: 0 }); else stack.push({ x: W * (nr === 1 ? .5 : .15 + .7 * i / (nr - 1)), y: H - 2 * k, a: -Math.PI / 2, d: 0 }); }
       while (stack.length && segs.length < cap) {
         const b = stack.pop(); let { x: bx, y: by, a, d } = b; const len = p.step * k * Math.pow(.92, d);
@@ -8070,8 +8072,9 @@ const KIT = {
         if (d < p.depth) { stack.push({ x: bx, y: by, a: a + (r() - .5) * .3, d: d + 1 }); if (r() < p.fork) stack.push({ x: bx, y: by, a: a + (r() < .5 ? -1 : 1) * (.4 + r() * .8), d: d + 1 }); }
       }
       // motion: the whole tree sways like in wind, more at the tips than at the roots
-      const ox = W / 2, oy = p.origin === 'centre' ? H / 2 : H, wp = M.a ? (px, py) => { const dd = Math.min(1, Math.hypot(px - ox, py - oy) / (Math.max(W, H) * .65)), am = M.a * 20 * k * dd * dd; return [px + Math.sin(M.t * 1.1 + py * .012) * am, py + Math.cos(M.t * .8 + px * .01) * am * .4]; } : null;
-      L2.lines(o, segs, it, k, p.lw, p.glow, wp); L2.dots(o, wp ? dots.map(q => [...wp(q[0], q[1]), q[2], q[3]]) : dots, it, k, p.glow);
+      const ox = W / 2, oy = p.origin === 'centre' ? H / 2 : H, wp = M.a && ms === 'shiver' ? (px, py) => [px + Math.sin(M.t * 11 + py * .31) * M.a * 1.6 * k, py + Math.cos(M.t * 9 + px * .27) * M.a * 1.6 * k] : M.a && ms === 'sway' ? (px, py) => { const dd = Math.min(1, Math.hypot(px - ox, py - oy) / (Math.max(W, H) * .65)), am = M.a * 20 * k * dd * dd; return [px + Math.sin(M.t * 1.1 + py * .012) * am, py + Math.cos(M.t * .8 + px * .01) * am * .4]; } : null;
+      const gro = M.a && ms === 'grow' ? Math.min(1, (M.t * .25) % 1.35) : 1, sg = gro < 1 ? segs.slice(0, Math.max(1, Math.floor(gro * segs.length))) : segs, dd = gro < 1 ? dots.slice(0, Math.max(1, Math.floor(gro * dots.length))) : dots;
+      L2.lines(o, sg, it, k, p.lw, p.glow, wp); L2.dots(o, wp ? dd.map(q => [...wp(q[0], q[1]), q[2], q[3]]) : dd, it, k, p.glow);
     }); },
   },
   cellCluster: {
@@ -8084,7 +8087,9 @@ const KIT = {
         if (cells.every(c => Math.hypot(c[0] - cx, c[1] - cy) > (c[2] + rad) * 1.02)) cells.push([cx, cy, rad, r() < p.mix ? 1 : 0]);
       }
       // motion: each cell floats on its own slow loop and/or breathes; links follow the moving cells
-      const fl = p.mstyle !== 'pulse', pu = p.mstyle !== 'float', live = cells.map((c, i) => { const rd = c[2] * .6 + 6 * k; return [c[0] + (fl ? M.a * rd * Math.sin(M.t * (.45 + kitHash(i, 1) * .7) + kitHash(i, 2) * TAU) : 0), c[1] + (fl ? M.a * rd * Math.cos(M.t * (.4 + kitHash(i, 3) * .7) + kitHash(i, 4) * TAU) : 0), c[2] * (pu ? 1 + M.a * .12 * Math.sin(M.t * 1.4 + kitHash(i, 5) * TAU) : 1), c[3]]; });
+      const fl = p.mstyle === 'both' || p.mstyle === 'float', pu = p.mstyle === 'both' || p.mstyle === 'pulse', cmx = W / 2, cmy = H / 2, live = cells.map((c, i) => { const rd = c[2] * .6 + 6 * k; let px = c[0] + (fl ? M.a * rd * Math.sin(M.t * (.45 + kitHash(i, 1) * .7) + kitHash(i, 2) * TAU) : 0), py = c[1] + (fl ? M.a * rd * Math.cos(M.t * (.4 + kitHash(i, 3) * .7) + kitHash(i, 4) * TAU) : 0);
+        if (p.mstyle === 'swirl') { const an = M.a * M.t * .2, dx = c[0] - cmx, dy = c[1] - cmy; px = cmx + dx * Math.cos(an) - dy * Math.sin(an); py = cmy + dx * Math.sin(an) + dy * Math.cos(an); } else if (p.mstyle === 'swarm') { const sc = 1 + M.a * .2 * Math.sin(M.t * 1.2 + kitHash(i, 6) * 1.5); px = cmx + (c[0] - cmx) * sc; py = cmy + (c[1] - cmy) * sc; }
+        return [px, py, c[2] * (pu ? 1 + M.a * .12 * Math.sin(M.t * 1.4 + kitHash(i, 5) * TAU) : 1), c[3]]; });
       const segs = []; cells.forEach((c, i) => { for (let j = i + 1; j < cells.length; j++) { const d = Math.hypot(c[0] - cells[j][0], c[1] - cells[j][1]); if (d < (c[2] + cells[j][2]) * (1 + p.links * .5)) segs.push({ pts: [live[i][0], live[i][1], live[j][0], live[j][1]], c: c[3] }); } });
       L2.lines(o, segs, it, k, p.lw * .8, p.glow);
       for (const c of live) { o.strokeStyle = o.shadowColor = c[3] ? p.c2 : it.fill; o.shadowBlur = p.glow * 10 * k; o.lineWidth = Math.max(.5, p.lw * k); o.beginPath(); o.arc(c[0], c[1], c[2], 0, TAU); o.stroke(); o.shadowBlur = 0; o.globalAlpha = .6; o.beginPath(); o.arc(c[0], c[1], c[2] * .72, 0, TAU); o.stroke(); o.globalAlpha = 1; if (p.nucleus) { o.fillStyle = c[3] ? p.c2 : it.fill; o.beginPath(); o.arc(c[0] + c[2] * .1, c[1] - c[2] * .05, c[2] * .22, 0, TAU); o.fill(); } }
@@ -8094,11 +8099,12 @@ const KIT = {
     label: 'Flow field', defaults: { lines: 500, len: 90, scale: 2.2, twist: 1.4, shape: 'circle', lw: .6, glow: .3, mix: .15, c2: '#ff7a59' }, thumbK: .6,
     ui: [{ k: 'shape', t: 'select', label: 'Area', opts: [['circle', 'Circle'], ['rect', 'Rectangle']] }, { k: 'lines', t: 'range', label: 'Lines', min: 20, max: 3000, step: 10 }, { k: 'len', t: 'range', label: 'Line length', min: 10, max: 300, step: 5 }, { k: 'scale', t: 'range', label: 'Swirl size', min: .5, max: 8, step: .1 }, { k: 'twist', t: 'range', label: 'Swirl strength', min: .2, max: 4, step: .1 }, { k: 'lw', t: 'range', label: 'Line width', min: .3, max: 4, step: .1, unit: 'px' }, { k: 'glow', t: 'range', label: 'Glow', min: 0, max: 1, step: .05, pct: 1 }, { k: 'mix', t: 'range', label: 'Accent share', min: 0, max: 1, step: .05, pct: 1 }, { k: 'c2', t: 'color', label: 'Accent colour' }],
     draw(g, it, x, y, w, h, k) { L2.cached(g, it, x, y, w, h, k, L2.cap(), (o, W, H) => {
-      const p = it.p, r = mulberry32(it.seed), M = kitM(it), nz = kitNoise(it.seed ^ 0x9e3779b9), m = Math.min(W, H), cx = W / 2, cy = H / 2, R = m / 2 - 2 * k, n = Math.min(p.lines | 0, L2.cap()), segs = [], st = Math.max(1.5 * k, m / 160), inside = (px, py) => p.shape === 'circle' ? Math.hypot(px - cx, py - cy) < R : px > 0 && px < W && py > 0 && py < H;
+      const p = it.p, r = mulberry32(it.seed), M = kitM(it), ms = p.mstyle || 'scroll', nz = kitNoise(it.seed ^ 0x9e3779b9), m = Math.min(W, H), cx = W / 2, cy = H / 2, R = m / 2 - 2 * k, n = Math.min(p.lines | 0, L2.cap()), segs = [], st = Math.max(1.5 * k, m / 160), inside = (px, py) => p.shape === 'circle' ? Math.hypot(px - cx, py - cy) < R : px > 0 && px < W && py > 0 && py < H;
       for (let i = 0; i < n; i++) {
         let px, py; if (p.shape === 'circle') { const a = r() * Math.PI * 2, d = Math.sqrt(r()) * R; px = cx + Math.cos(a) * d; py = cy + Math.sin(a) * d; } else { px = r() * W; py = r() * H; }
-        const pts = [px, py], steps = Math.round(p.len * (.4 + r() * .6));
-        for (let s = 0; s < steps; s++) { const ang = nz(px / m * p.scale + M.a * M.t * .12, py / m * p.scale) * Math.PI * 2 * p.twist; px += Math.cos(ang) * st; py += Math.sin(ang) * st; if (!inside(px, py)) break; pts.push(px, py); }
+        let pts = [px, py]; const steps = Math.round(p.len * (.4 + r() * .6));
+        for (let s = 0; s < steps; s++) { const ang = nz(px / m * p.scale + (ms === 'scroll' ? M.a * M.t * .12 : 0), py / m * p.scale) * Math.PI * 2 * p.twist * (ms === 'pulse' ? 1 + M.a * .5 * Math.sin(M.t * 1.2) : 1); px += Math.cos(ang) * st; py += Math.sin(ang) * st; if (!inside(px, py)) break; pts.push(px, py); }
+        if (ms === 'flow' && M.a && pts.length >= 12) { const tot = pts.length / 2 | 0, win = Math.max(3, Math.floor(tot * .35)), st = Math.floor(((M.t * .5 + kitHash(i, 2)) % 1) * (tot - win)); pts = pts.slice(st * 2, (st + win) * 2); }
         if (pts.length >= 6) segs.push({ pts, c: r() < p.mix ? 1 : 0 });
       }
       L2.lines(o, segs, it, k, p.lw, p.glow);
@@ -8109,11 +8115,11 @@ const KIT = {
     ui: [{ k: 'curves', t: 'range', label: 'Lines', min: 5, max: 300, step: 1 }, { k: 'inner', t: 'range', label: 'Inner size', min: 0, max: .8, step: .02, pct: 1 }, { k: 'wave', t: 'range', label: 'Wave size', min: 0, max: .6, step: .01, pct: 1 }, { k: 'freq', t: 'range', label: 'Waves around', min: 1, max: 12, step: 1 }, { k: 'drift', t: 'range', label: 'Wobble', min: 0, max: 2, step: .05, pct: 1 }, { k: 'phase', t: 'range', label: 'Colour turn', min: 0, max: 360, step: 5, unit: '°' },
       { k: 'lw', t: 'range', label: 'Line width', min: .3, max: 4, step: .1, unit: 'px' }, { k: 'glow', t: 'range', label: 'Glow', min: 0, max: 1, step: .05, pct: 1 }, { k: 'c2', t: 'color', label: 'Second colour' }],
     draw(g, it, x, y, w, h, k) { L2.cached(g, it, x, y, w, h, k, 0, (o, W, H) => {
-      const p = it.p, r = mulberry32(it.seed), M = kitM(it), nz = kitNoise(it.seed ^ 0x51ed270b), cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 3 * k, n = Math.min(p.curves | 0, 300), TAU = Math.PI * 2, seg = 96, ph = p.phase * Math.PI / 180 + M.a * M.t * .45;
+      const p = it.p, r = mulberry32(it.seed), M = kitM(it), cms = p.mstyle || 'travel', nz = kitNoise(it.seed ^ 0x51ed270b), cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 3 * k, n = Math.min(p.curves | 0, 300), TAU = Math.PI * 2, seg = 96, ph = p.phase * Math.PI / 180 + M.a * M.t * .45;
       o.lineCap = 'round'; o.lineWidth = Math.max(.4, p.lw * k);
       const cols = Array.from({ length: seg }, (_, s) => kitMix(it.fill, p.c2, (1 + Math.cos(s / seg * TAU - ph)) / 2));
       for (let i = 0; i < n; i++) {
-        const t = n === 1 ? 1 : i / (n - 1), base = R * (p.inner + (1 - p.inner) * t * .78), amp = R * p.wave * (.35 + t * .65), f = p.freq, off = r() * TAU + M.a * M.t * (.6 + t * .8), pts = [];
+        const t = n === 1 ? 1 : i / (n - 1), base = R * (p.inner + (1 - p.inner) * t * .78) * (cms === 'ripple' ? 1 + M.a * .05 * Math.sin(M.t * 2 - i * .12) : 1), amp = R * p.wave * (.35 + t * .65) * (cms === 'breathe' ? 1 + M.a * .5 * Math.sin(M.t * 1.3) : 1), f = p.freq, off = r() * TAU + (cms === 'travel' ? M.a * M.t * (.6 + t * .8) : 0), pts = [];
         for (let s = 0; s <= seg; s++) { const a = s / seg * TAU, rr = base + amp * (Math.sin(a * f + off + t * 3) * .6 + (nz(Math.cos(a) * 1.4 + i * .08 * p.drift + 5 + M.a * M.t * .1, Math.sin(a) * 1.4 + 5) - .5) * p.drift); pts.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]); }
         for (let s = 0; s < seg; s++) { o.strokeStyle = cols[s]; if (p.glow > 0 && !M.a) { o.shadowColor = cols[s]; o.shadowBlur = p.glow * 8 * k; } o.beginPath(); o.moveTo(pts[s][0], pts[s][1]); o.lineTo(pts[s + 1][0], pts[s + 1][1]); o.stroke(); }
       }
@@ -8124,11 +8130,11 @@ const KIT = {
     label: 'Spiral', defaults: { arms: 5, turns: 4, tight: 1, grow: 1.1, wobble: .15, hilite: 1, lw: .9, glow: .4, mix: .25, c2: '#ff4655' }, thumbK: .6,
     ui: [{ k: 'arms', t: 'range', label: 'Spirals', min: 1, max: 40, step: 1 }, { k: 'turns', t: 'range', label: 'Turns', min: .5, max: 10, step: .25 }, { k: 'grow', t: 'range', label: 'Growth curve', min: .4, max: 2.4, step: .05 }, { k: 'wobble', t: 'range', label: 'Wobble', min: 0, max: 1, step: .02, pct: 1 }, { k: 'hilite', t: 'range', label: 'Accent lines', min: 0, max: 6, step: 1 }, { k: 'lw', t: 'range', label: 'Line width', min: .3, max: 4, step: .1, unit: 'px' }, { k: 'glow', t: 'range', label: 'Glow', min: 0, max: 1, step: .05, pct: 1 }, { k: 'mix', t: 'range', label: 'Accent share', min: 0, max: 1, step: .05, pct: 1 }, { k: 'c2', t: 'color', label: 'Accent colour' }],
     draw(g, it, x, y, w, h, k) { L2.cached(g, it, x, y, w, h, k, L2.cap(), (o, W, H) => {
-      const p = it.p, r = mulberry32(it.seed), M = kitM(it), cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 3 * k, TAU = Math.PI * 2, n = Math.min(p.arms | 0, 40), segs = [], pts_n = 160, hi = new Set();
+      const p = it.p, r = mulberry32(it.seed), M = kitM(it), sms = p.mstyle || 'twist', lim = M.a && sms === 'unwind' ? Math.min(1, (M.t * .25) % 1.35) : 1, cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 3 * k, TAU = Math.PI * 2, n = Math.min(p.arms | 0, 40), segs = [], pts_n = 160, hi = new Set();
       while (hi.size < Math.min(n, p.hilite | 0)) hi.add(r() * n | 0);
       for (let a = 0; a < n; a++) {
         const a0 = a / n * TAU, wob = r() * 6, pts = [];
-        for (let s = 0; s <= pts_n; s++) { const t = s / pts_n, rr = R * Math.pow(t, p.grow) * (1 + Math.sin(t * 9 + wob + M.a * M.t * 1.2) * p.wobble * .12), ang = a0 + M.a * M.t * .12 + t * p.turns * TAU + M.a * Math.sin(M.t * .6 + a * .4) * .5 * (1 - t); pts.push(cx + Math.cos(ang) * rr, cy + Math.sin(ang) * rr); }
+        for (let s = 0; s <= pts_n; s++) { const t = s / pts_n * lim, rr = R * Math.pow(t, p.grow) * (1 + Math.sin(t * 9 + wob + M.a * M.t * 1.2) * p.wobble * .12), ang = a0 + (sms === 'twist' ? M.a * M.t * .12 : 0) + t * p.turns * (sms === 'breathe' ? 1 + M.a * .25 * Math.sin(M.t * 1.1) : 1) * TAU + (sms === 'twist' ? M.a * Math.sin(M.t * .6 + a * .4) * .5 * (1 - t) : 0); pts.push(cx + Math.cos(ang) * rr, cy + Math.sin(ang) * rr); }
         segs.push({ pts, c: hi.has(a) || r() < p.mix * .4 ? 1 : 0 });
       }
       L2.lines(o, segs, it, k, p.lw, p.glow);
@@ -8220,7 +8226,7 @@ const KIT = {
         g.globalAlpha = a0 * (1 - p.fade * t); g.lineCap = mode === 'dotted' ? 'round' : 'butt';
         g.setLineDash(mode === 'dashed' ? [p.lw * 6 * k, p.lw * 4 * k] : mode === 'dotted' ? [.01, p.lw * 3 * k] : []);
         const part = u < p.gaps, s0 = v * Math.PI * 2, len = Math.PI * 2 * (.3 + .55 * q);
-        const pul = 1 + M.a * .06 * Math.sin(M.t * 1.6 - i * .8), rot = M.a * M.t * (.25 + q * .5) * (i % 2 ? 1 : -1); g.lineDashOffset = M.a ? -M.t * M.a * 18 * k * (i % 2 ? 1 : -1) : 0; g.beginPath(); g.ellipse(cx, cy, Math.max(.5, rx * sc * pul), Math.max(.5, ry * sc * pul), 0, part ? s0 + rot : 0, part ? s0 + rot + len : Math.PI * 2); g.stroke();
+        const ms = p.mstyle, pul = ms === 'crawl' ? 1 : 1 + M.a * (ms === 'breathe' ? .09 : .06) * Math.sin(M.t * 1.6 - (ms === 'breathe' ? 0 : i * .8)), rot = M.a * M.t * (.25 + q * .5) * (i % 2 ? 1 : -1), ox = ms === 'wobble' ? M.a * rx * .06 * Math.sin(M.t * 1.1 + i * .7) : 0, oy = ms === 'wobble' ? M.a * ry * .06 * Math.cos(M.t * .9 + i * .7) : 0; g.lineDashOffset = M.a ? -M.t * M.a * (ms === 'crawl' ? 34 : 18) * k * (i % 2 ? 1 : -1) : 0; g.beginPath(); g.ellipse(cx + ox, cy + oy, Math.max(.5, rx * sc * pul), Math.max(.5, ry * sc * pul), 0, part ? s0 + rot : 0, part ? s0 + rot + len : Math.PI * 2); g.stroke();
       }
       g.setLineDash([]); g.lineDashOffset = 0; g.globalAlpha = a0;
     },
@@ -8233,7 +8239,7 @@ const KIT = {
       const p = it.p, r = mulberry32(it.seed), n = Math.min(KIT_MAX.radial, p.n | 0), M = kitM(it), cx = x + w / 2, cy = y + h / 2, dr = p.dot * k, rx = w / 2 - dr - 1, ry = h / 2 - dr - 1;
       g.lineWidth = p.lw * k; g.lineCap = 'round';
       for (let i = 0; i < n; i++) {
-        const a = i / n * Math.PI * 2 + (r() - .5) * .6 / n * 2 * Math.PI / 6 + M.a * M.t * .05, len = clamp(1 - p.spread * r() + M.a * .3 * Math.sin(M.t * 1.7 + kitHash(i, 3) * 6.283), .05, 1), e = p.inner + (1 - p.inner) * len, c = Math.cos(a), sn = Math.sin(a), rr = r();
+        const a = i / n * Math.PI * 2 + (r() - .5) * .6 / n * 2 * Math.PI / 6 + M.a * M.t * .05, len = clamp(1 - p.spread * r() + M.a * (p.mstyle === 'sweep' ? .4 * Math.sin(M.t * 2 - i / n * 12.566) : p.mstyle === 'pulse' ? .3 * Math.sin(M.t * 1.6) : .3 * Math.sin(M.t * 1.7 + kitHash(i, 3) * 6.283)), .05, 1), e = p.inner + (1 - p.inner) * len, c = Math.cos(a), sn = Math.sin(a), rr = r();
         const col = rr < p.mix * .5 ? p.c2 : rr < p.mix ? p.c3 : it.fill;
         g.strokeStyle = g.fillStyle = col; g.beginPath(); g.moveTo(cx + c * rx * p.inner, cy + sn * ry * p.inner); g.lineTo(cx + c * rx * e, cy + sn * ry * e); g.stroke();
         if (dr > 0) { g.beginPath(); g.arc(cx + c * rx * e, cy + sn * ry * e, dr * (col === it.fill ? .7 : 1.2), 0, Math.PI * 2); g.fill(); }
@@ -8245,10 +8251,10 @@ const KIT = {
     ui: [{ k: 'n', t: 'range', label: 'Arcs', min: 1, max: KIT_MAX.arc, step: 1 }, { k: 'inner', t: 'range', label: 'Inner size', min: 0, max: .9, step: .02, pct: 1 }, { k: 'lw', t: 'range', label: 'Thickness', min: 1, max: 40, step: 1, unit: 'px' },
       { k: 'round', t: 'check', label: 'Round ends' }, { k: 'c2', t: 'color', label: 'Second colour' }],
     draw(g, it, x, y, w, h, k) {
-      const p = it.p, r = mulberry32(it.seed), n = Math.min(KIT_MAX.arc, p.n | 0), M = kitM(it), cx = x + w / 2, cy = y + h / 2, rx = w / 2 - p.lw * k / 2, ry = h / 2 - p.lw * k / 2;
+      const p = it.p, r = mulberry32(it.seed), n = Math.min(KIT_MAX.arc, p.n | 0), M = kitM(it), ms = p.mstyle, cx = x + w / 2, cy = y + h / 2, rx = w / 2 - p.lw * k / 2, ry = h / 2 - p.lw * k / 2;
       g.lineWidth = p.lw * k; g.lineCap = p.round ? 'round' : 'butt';
       for (let i = 0; i < n; i++) {
-        const t = n === 1 ? 1 : i / (n - 1), sc = p.inner + (1 - p.inner) * t, s0 = r() * Math.PI * 2 + M.a * M.t * (kitHash(i, 5) - .5) * 1.8, len = Math.PI * 2 * (.15 + .55 * r()) * (1 + M.a * .25 * Math.sin(M.t * .9 + i));
+        const t = n === 1 ? 1 : i / (n - 1), sc = p.inner + (1 - p.inner) * t, s0 = r() * Math.PI * 2 + (ms === 'pendulum' ? M.a * .9 * Math.sin(M.t * (.6 + kitHash(i, 5) * .6) + i) * (i % 2 ? 1 : -1) : ms === 'grow' ? 0 : M.a * M.t * (kitHash(i, 5) - .5) * 1.8), len = Math.PI * 2 * (.15 + .55 * r()) * (1 + M.a * (ms === 'grow' ? .6 : .25) * Math.sin(M.t * (ms === 'grow' ? 1.3 : .9) + i * (ms === 'grow' ? .9 : 1)));
         g.strokeStyle = i % 2 ? p.c2 : it.fill; g.beginPath(); g.ellipse(cx, cy, Math.max(.5, rx * sc), Math.max(.5, ry * sc), 0, s0, s0 + len); g.stroke();
       }
     },
@@ -8259,13 +8265,13 @@ const KIT = {
       { k: 'upper', t: 'check', label: 'Capitals' }, { k: 'fit', t: 'check', label: 'Fill the arc' }, { k: 'ls', t: 'range', label: 'Letter spacing', min: 0, max: 2, step: .05, unit: 'em' },
       { k: 'start', t: 'range', label: 'Start angle', min: -180, max: 180, step: 1, unit: '°' }, { k: 'span', t: 'range', label: 'Arc length', min: 30, max: 360, step: 5, unit: '°' }, { k: 'flip', t: 'check', label: 'Reverse (inside, reads anticlockwise)' }],
     draw(g, it, x, y, w, h, k) {
-      const p = it.p, M = kitM(it), px = p.size * k, chars = [...(p.upper ? String(p.text).toUpperCase() : String(p.text))]; if (!chars.length) return;
+      const p = it.p, M = kitM(it), ms = p.mstyle, px = p.size * k, chars = [...(p.upper ? String(p.text).toUpperCase() : String(p.text))]; if (!chars.length) return;
       const cx = x + w / 2, cy = y + h / 2, R = Math.max(4, Math.min(w, h) / 2 - (p.flip ? px * .15 : px * .9));
       g.font = kitFont(p, px); g.fillStyle = it.fill; g.textBaseline = 'alphabetic'; g.textAlign = 'center';
       const ws = chars.map(c => g.measureText(c).width), sum = ws.reduce((a, b) => a + b, 0), span = p.span * Math.PI / 180, full = p.span >= 359.5;
-      const gap = p.fit ? Math.max(0, (span * R - sum) / (full ? chars.length : Math.max(1, chars.length - 1))) : p.ls * px, dir = p.flip ? -1 : 1, a0 = p.start * Math.PI / 180 + M.a * M.t * .3 * dir;
+      const gap = p.fit ? Math.max(0, (span * R - sum) / (full ? chars.length : Math.max(1, chars.length - 1))) : p.ls * px, dir = p.flip ? -1 : 1, a0 = p.start * Math.PI / 180 + (ms === 'pendulum' ? M.a * .5 * Math.sin(M.t * .8) : ms === 'wave' ? 0 : M.a * M.t * .3 * dir);
       let acc = 0;
-      chars.forEach((c, i) => { const a = a0 + dir * (acc + ws[i] / 2) / R; acc += ws[i] + gap; g.save(); g.translate(cx + R * Math.cos(a), cy + R * Math.sin(a)); g.rotate(a + dir * Math.PI / 2); g.fillText(c, 0, 0); g.restore(); });
+      chars.forEach((c, i) => { const a = a0 + dir * (acc + ws[i] / 2) / R; acc += ws[i] + gap; const Rb = R + (ms === 'wave' ? M.a * px * .5 * Math.sin(M.t * 2.2 + i * .55) : 0); g.save(); g.translate(cx + Rb * Math.cos(a), cy + Rb * Math.sin(a)); g.rotate(a + dir * Math.PI / 2); g.fillText(c, 0, 0); g.restore(); });
     },
   },
   labelRing: {
@@ -8276,15 +8282,17 @@ const KIT = {
       { k: 'start', t: 'range', label: 'Start angle', min: -180, max: 180, step: 1, unit: '°' }, { k: 'span', t: 'range', label: 'Arc length', min: 30, max: 360, step: 5, unit: '°' }, { k: 'readable', t: 'check', label: 'Keep text upright' }],
     draw(g, it, x, y, w, h, k) {
       const p = it.p, lines = String(p.items).split('\n').map(t => t.trim()).filter(Boolean).slice(0, KIT_MAX.label), n = lines.length; if (!n) return;
-      const cx = x + w / 2, cy = y + h / 2, R = Math.min(w, h) / 2 - k, r0 = R * p.inner, px = p.size * k, span = p.span * Math.PI / 180, full = p.span >= 359.5, a0 = p.start * Math.PI / 180 + kitM(it).a * kitM(it).t * .12, pad = px * .6;
+      const cx = x + w / 2, cy = y + h / 2, R = Math.min(w, h) / 2 - k, r0 = R * p.inner, px = p.size * k, span = p.span * Math.PI / 180, full = p.span >= 359.5, a0 = p.start * Math.PI / 180 + (p.mstyle === 'pendulum' ? kitM(it).a * .4 * Math.sin(kitM(it).t * .7) : p.mstyle === 'highlight' ? 0 : kitM(it).a * kitM(it).t * .12), pad = px * .6, ga = g.globalAlpha, hl = p.mstyle === 'highlight' && kitM(it).a > 0, act = hl ? Math.floor(kitM(it).t * 1.2) % n : -1;
       g.fillStyle = g.strokeStyle = it.fill; g.font = kitFont(p, px); g.textBaseline = 'middle'; g.lineWidth = Math.max(.5, p.lw * k); g.lineCap = 'round';
       if (p.ring) { g.beginPath(); g.arc(cx, cy, r0, a0, a0 + (full ? Math.PI * 2 : span)); g.stroke(); }
       lines.forEach((t, i) => {
+        if (hl) g.globalAlpha = ga * (i === act ? 1 : .35);
         const a = a0 + (full ? i / n : n === 1 ? 0 : i / (n - 1)) * span, c = Math.cos(a), sn = Math.sin(a), back = p.readable && c < -1e-6;
         if (p.ticks === 'ticks') { g.beginPath(); g.moveTo(cx + c * (r0 - 7 * k), cy + sn * (r0 - 7 * k)); g.lineTo(cx + c * r0, cy + sn * r0); g.stroke(); }
         else if (p.ticks === 'dots') { g.beginPath(); g.arc(cx + c * r0, cy + sn * r0, Math.max(1.2, p.lw * 1.6) * k, 0, Math.PI * 2); g.fill(); }
         g.save(); g.translate(cx, cy); g.rotate(a + (back ? Math.PI : 0)); g.textAlign = back ? 'right' : 'left'; g.fillText(p.upper ? t.toUpperCase() : t, back ? -(r0 + pad) : r0 + pad, 0); g.restore();
       });
+      g.globalAlpha = ga;
     },
   },
   scaleRing: {
@@ -8294,13 +8302,13 @@ const KIT = {
       { k: 'font', t: 'select', label: 'Font', opts: KIT_FONT_OPTS, when: ['numbers', true] }, { k: 'size', t: 'range', label: 'Number size', min: 6, max: 40, step: 1, unit: 'px', when: ['numbers', true] },
       { k: 'start', t: 'range', label: 'Start angle', min: -180, max: 180, step: 1, unit: '°' }, { k: 'span', t: 'range', label: 'Arc length', min: 30, max: 360, step: 5, unit: '°' }],
     draw(g, it, x, y, w, h, k) {
-      const p = it.p, M = kitM(it), n = Math.min(KIT_MAX.ticks, p.n | 0), cx = x + w / 2, cy = y + h / 2, out = p.side === 'out', px = p.size * k, span = p.span * Math.PI / 180, full = p.span >= 359.5, a0 = p.start * Math.PI / 180, maj = Math.max(1, p.major | 0);
+      const p = it.p, M = kitM(it), n = Math.min(KIT_MAX.ticks, p.n | 0), cx = x + w / 2, cy = y + h / 2, out = p.side === 'out', px = p.size * k, span = p.span * Math.PI / 180, full = p.span >= 359.5, a0 = p.start * Math.PI / 180 + (p.mstyle === 'rotate' ? M.a * M.t * .35 : 0), maj = Math.max(1, p.major | 0);
       const R = Math.max(4, Math.min(w, h) / 2 - k - (out ? (p.majorLen + (p.numbers ? p.size * 1.5 : 0)) * k : 0)), dir = out ? 1 : -1;
       g.strokeStyle = g.fillStyle = it.fill; g.lineWidth = Math.max(.5, p.lw * k); g.lineCap = 'butt';
       if (p.ring) { g.beginPath(); g.arc(cx, cy, R, a0, a0 + (full ? Math.PI * 2 : span)); g.stroke(); }
       if (p.numbers) { g.font = kitFont(p, px); g.textAlign = 'center'; g.textBaseline = 'middle'; }
       for (let i = 0; i < n; i++) {
-        const a = a0 + (full ? i / n : n === 1 ? 0 : i / (n - 1)) * span, c = Math.cos(a), sn = Math.sin(a), big = i % maj === 0, len = (big ? p.majorLen : p.minorLen) * k * (1 + M.a * 1.2 * Math.pow(Math.max(0, Math.cos(a - M.a * M.t * 1.4)), 10));
+        const a = a0 + (full ? i / n : n === 1 ? 0 : i / (n - 1)) * span, c = Math.cos(a), sn = Math.sin(a), big = i % maj === 0, len = (big ? p.majorLen : p.minorLen) * k * (1 + M.a * (p.mstyle === 'pulse' ? .9 * (.5 + .5 * Math.sin(M.t * 3 - i * .35)) : p.mstyle === 'rotate' ? 0 : 1.2 * Math.pow(Math.max(0, Math.cos(a - M.a * M.t * 1.4)), 10)));
         g.beginPath(); g.moveTo(cx + c * R, cy + sn * R); g.lineTo(cx + c * (R + dir * len), cy + sn * (R + dir * len)); g.stroke();
         if (p.numbers && big) { const rr = R + dir * (p.majorLen * k + px * .8); g.save(); g.translate(cx + c * rr, cy + sn * rr); g.rotate(a + (sn > 0 ? -Math.PI / 2 : Math.PI / 2)); g.fillText(String(i), 0, 0); g.restore(); }
       }
@@ -8318,10 +8326,10 @@ const KIT = {
       for (let i = 0; i < N; i++) { const t = N === 1 ? 1 : i / (N - 1), sc = p.inner + (1 - p.inner) * t; rad.push([t, sc]); const c = Math.max(6, Math.round(2 * Math.PI * Math.min(rx, ry) * sc / sp)); counts.push(c); total += c; }
       const f = total > KIT_MAX.dots ? KIT_MAX.dots / total : 1;
       for (let i = 0; i < N; i++) {
-        const [t, sc] = rad[i], c = Math.max(6, Math.round(counts[i] * f)), tw = p.twist * i * Math.PI / 180 + M.a * M.t * .22 * (i % 2 ? 1 : -1) * (.3 + t), grow = p.grade === 'out' ? t : p.grade === 'in' ? 1 - t : .5, dr = (p.min + (p.max - p.min) * grow) * k / 2 * (1 + M.a * .25 * Math.sin(M.t * 2 + i * .6));
+        const [t, sc] = rad[i], c = Math.max(6, Math.round(counts[i] * f)), tw = p.twist * i * Math.PI / 180 + (p.mstyle === 'breathe' || p.mstyle === 'wave' ? 0 : M.a * M.t * .22 * (i % 2 ? 1 : -1) * (.3 + t)), grow = p.grade === 'out' ? t : p.grade === 'in' ? 1 - t : .5, dr = (p.min + (p.max - p.min) * grow) * k / 2 * (1 + M.a * .25 * Math.sin(M.t * 2 + i * .6));
         for (let j = 0; j < c; j++) {
           const q = r(), q2 = r(), q3 = r(); if (q < p.dropout) continue;
-          const a = tw + (j + (q2 - .5) * p.jitter) / c * Math.PI * 2, rr = sc * (1 + (q3 - .5) * p.jitter * .1);
+          const a = tw + (j + (q2 - .5) * p.jitter) / c * Math.PI * 2, rr = sc * (1 + (q3 - .5) * p.jitter * .1) * (p.mstyle === 'breathe' ? 1 + M.a * .06 * Math.sin(M.t * 1.5 - i * .5) : p.mstyle === 'wave' ? 1 + M.a * .05 * Math.sin(M.t * 2 + a * 4) : 1);
           g.fillStyle = r() < p.mix ? p.c2 : it.fill; g.beginPath(); g.arc(cx + Math.cos(a) * rx * rr, cy + Math.sin(a) * ry * rr, Math.max(.3, dr), 0, Math.PI * 2); g.fill();
         }
       }
@@ -8338,7 +8346,7 @@ const KIT = {
       if (p.mode === 'bars') {
         const n = Math.min(KIT_MAX.bars, p.bars | 0), r0 = R * p.inner, nums = String(p.values).split(/[\s,;]+/).map(Number).filter(v => isFinite(v) && String(v) !== ''), step = TAU / n, half = step * (1 - p.gap) / 2;
         for (let i = 0; i < n; i++) {
-          const rv = r(), rc = r(), v = nums.length ? clamp(nums[i % nums.length] / 100, 0, 1) : Math.pow(rv, 1.4), len = p.minLen + (1 - p.minLen) * clamp(v + M.a * .35 * Math.sin(M.t * 2.2 + kitHash(i, 7) * TAU), 0, 1), r1 = r0 + (R - r0) * len, a = -Math.PI / 2 + i * step;
+          const rv = r(), rc = r(), v = nums.length ? clamp(nums[i % nums.length] / 100, 0, 1) : Math.pow(rv, 1.4), len = p.minLen + (1 - p.minLen) * clamp(v + M.a * (p.mstyle === 'sweep' ? .4 * Math.sin(M.t * 2 - i / n * TAU * 2) : p.mstyle === 'grow' ? .6 * ((((M.t * .4 - i / n) % 1) + 1) % 1) - .3 : .35 * Math.sin(M.t * 2.2 + kitHash(i, 7) * TAU)), 0, 1), r1 = r0 + (R - r0) * len, a = -Math.PI / 2 + i * step;
           g.fillStyle = rc < p.mix ? p.c2 : it.fill; g.beginPath(); g.arc(cx, cy, r1, a - half, a + half); g.arc(cx, cy, r0, a + half, a - half, true); g.closePath(); g.fill();
         }
         return;
@@ -8356,6 +8364,55 @@ const KIT = {
   },
 };
 Object.values(KIT).forEach(d => { d.anim = true; });
+
+// Extra motion (it.mFx): a second movement that works on any Kit and stacks with the Kit's own Motion style.
+const KIT_FX = {
+  breathe: (g, M, cx, cy) => { const s = 1 + M.a * .07 * Math.sin(M.t * 1.6); g.translate(cx, cy); g.scale(s, s); g.translate(-cx, -cy); },
+  swing: (g, M, cx, cy) => { g.translate(cx, cy); g.rotate(M.a * .35 * Math.sin(M.t * .9)); g.translate(-cx, -cy); },
+  drift: (g, M, cx, cy, w, h) => { g.translate(M.a * w * .035 * Math.sin(M.t * .7), M.a * h * .035 * Math.cos(M.t * .55)); },
+  turn: (g, M, cx, cy) => { g.translate(cx, cy); g.scale(1 - M.a * .5 * (.5 - .5 * Math.cos(M.t * 1.1)), 1); g.translate(-cx, -cy); },
+  zoom: (g, M, cx, cy) => { const s = 1 + M.a * .3 * (.5 - .5 * Math.cos(M.t * .8)); g.translate(cx, cy); g.scale(s, s); g.translate(-cx, -cy); },
+  glitch: (g, M, cx, cy, w, h) => { const st = Math.floor(M.t * 10); if (kitHash(st, 1) > .6) g.translate((kitHash(st, 2) - .5) * w * .1 * M.a, (kitHash(st, 3) - .5) * h * .03 * M.a); },
+  blink: (g, M) => { if (Math.sin(M.t * 3.2) <= .2) g.globalAlpha *= 1 - .75 * M.a; },
+};
+const KIT_FX_OPTS = [['none', 'None'], ['breathe', 'Breathe (grow and shrink)'], ['swing', 'Swing (pendulum)'], ['drift', 'Drift (float around)'], ['turn', 'Turn (turntable squeeze)'], ['zoom', 'Zoom in and out'], ['glitch', 'Glitch jitter'], ['blink', 'Blink']];
+Object.values(KIT).forEach(d => {
+  const f = d.draw;
+  d.draw = function (g, it, x, y, w, h, k) {
+    const M = kitM(it), fx = M.a && KIT_FX[it.mFx];
+    if (!fx) return f.call(this, g, it, x, y, w, h, k);
+    g.save(); fx(g, M, x + w / 2, y + h / 2, w, h);
+    try { f.call(this, g, it, x, y, w, h, k); } finally { g.restore(); }
+  };
+});
+// Motion style per Kit: the first option is the original behaviour (default).
+const KIT_MSTYLE = {
+  rings: [['ripple', 'Ripple outward'], ['breathe', 'Breathe together'], ['wobble', 'Wobble off-centre'], ['crawl', 'Dashes crawl']],
+  radial: [['shimmer', 'Shimmer'], ['sweep', 'Wave around the circle'], ['pulse', 'Pulse together']],
+  arc: [['spin', 'Spin separately'], ['pendulum', 'Swing back and forth'], ['grow', 'Grow and shrink']],
+  arcText: [['scroll', 'Scroll round'], ['pendulum', 'Swing back and forth'], ['wave', 'Letters bob in a wave']],
+  labelRing: [['scroll', 'Scroll round'], ['pendulum', 'Swing back and forth'], ['highlight', 'Highlight one at a time']],
+  scaleRing: [['sweep', 'Radar sweep'], ['pulse', 'Wave along the ticks'], ['rotate', 'Rotate the scale']],
+  dotRing: [['twist', 'Counter-rotate'], ['breathe', 'Rings breathe'], ['wave', 'Dots ripple']],
+  radialBars: [['equalizer', 'Equaliser'], ['sweep', 'Wave around'], ['grow', 'Grow in turn']],
+  widget: [['live', 'Live (values wobble)'], ['count', 'Count up and repeat'], ['draw', 'Draw in and repeat']],
+  glassLabel: [['shimmer', 'Light sweep'], ['pulse', 'Glowing edge']],
+  texture: [['flicker', 'Film flicker'], ['drift', 'Slow drift'], ['pulse', 'Breathing strength']],
+  hubNetwork: [['sway', 'Sway'], ['pulse', 'Pulse outward'], ['spin', 'Whirl around']],
+  plexus2d: [['drift', 'Drift'], ['swirl', 'Swirl round'], ['wave', 'Travelling wave']],
+  chord: [['slide', 'Chords slide'], ['rotate', 'Ring turns'], ['pulse', 'Pull to centre pulses']],
+  bundle: [['wave', 'Ripple wave'], ['random', 'Random directions'], ['breathe', 'Fan opens and closes'], ['sweep', 'Pulses shoot along'], ['twist', 'Twist']],
+  neural: [['sway', 'Sway in wind'], ['grow', 'Grow and repeat'], ['shiver', 'Shiver']],
+  cellCluster: [['both', 'Float and breathe'], ['float', 'Float around'], ['pulse', 'Breathe in place'], ['swirl', 'Swirl round'], ['swarm', 'Swarm in and out']],
+  flowField: [['scroll', 'Field scrolls'], ['flow', 'Particles stream'], ['pulse', 'Swirl strength pulses']],
+  circularFlow: [['travel', 'Waves travel'], ['breathe', 'Breathe'], ['ripple', 'Rings ripple']],
+  spiral: [['twist', 'Twist'], ['unwind', 'Unwind and repeat'], ['breathe', 'Turns breathe']],
+};
+Object.entries(KIT_MSTYLE).forEach(([key, opts]) => {
+  const d = KIT[key]; if (!d) return;
+  if (!opts.some(o => o[0] === d.defaults.mstyle)) d.defaults.mstyle = opts[0][0];
+  const ui = d.ui.find(u => u.k === 'mstyle'); if (ui) ui.opts = opts; else d.ui.unshift({ k: 'mstyle', t: 'select', label: 'Motion style', opts });
+});
 
 class CoreStudio {
   constructor(app) {
@@ -9825,7 +9882,8 @@ class CoreStudio {
       + `<label class="st-fly-row"><span>Spin speed</span><output>${spin ? `${spin}°/s` : 'still'}</output><input type="range" min="-120" max="120" step="1" value="${spin}" data-kspin></label>`
       + (def.anim ? `<label class="st-fly-row st-fly-check"><span>Motion (parts move)</span><input type="checkbox" data-kmo-on${it.mOn ? ' checked' : ''}></label>`
         + `<label class="st-fly-row"><span>Motion amount</span><output>${Math.round((it.mAmt ?? .6) * 100)}%</output><input type="range" min="0.05" max="1" step="0.05" value="${it.mAmt ?? .6}" data-kmo-amt></label>`
-        + `<label class="st-fly-row"><span>Motion speed</span><output>${(it.mSpd ?? 1).toFixed(1)}×</output><input type="range" min="0.2" max="3" step="0.1" value="${it.mSpd ?? 1}" data-kmo-spd></label>` : '')
+        + `<label class="st-fly-row"><span>Motion speed</span><output>${(it.mSpd ?? 1).toFixed(1)}×</output><input type="range" min="0.2" max="3" step="0.1" value="${it.mSpd ?? 1}" data-kmo-spd></label>`
+        + `<label class="st-fly-row"><span>Extra motion</span><select data-kmo-fx>${KIT_FX_OPTS.map(([v, n]) => `<option value="${v}"${(it.mFx || 'none') === v ? ' selected' : ''}>${n}</option>`).join('')}</select></label>` : '')
       + shown.map(u => {
       const v = it.p[u.k];
       if (u.t === 'range') return `<label class="st-fly-row"><span>${u.label}</span><output>${fmt(u, v)}</output><input type="range" min="${u.min}" max="${u.max}" step="${u.step}" value="${v}" data-kp="${u.k}"></label>`;
@@ -9845,7 +9903,8 @@ class CoreStudio {
       mOn.addEventListener('change', () => { it.mOn = mOn.checked; this.place(it); });
       mAmt.addEventListener('input', () => { it.mAmt = +mAmt.value; mAmt.parentNode.querySelector('output').textContent = `${Math.round(it.mAmt * 100)}%`; if (!it.mOn) { it.mOn = true; mOn.checked = true; } this.place(it); });
       mSpd.addEventListener('input', () => { it.mSpd = +mSpd.value; mSpd.parentNode.querySelector('output').textContent = `${it.mSpd.toFixed(1)}×`; });
-      [mOn, mAmt, mSpd].forEach(el => el.addEventListener('change', () => this.commit()));
+      const mFx = f.querySelector('[data-kmo-fx]'); mFx.addEventListener('change', () => { it.mFx = mFx.value; if (it.mFx !== 'none' && !it.mOn) { it.mOn = true; mOn.checked = true; } this.place(it); });
+      [mOn, mAmt, mSpd, mFx].forEach(el => el.addEventListener('change', () => this.commit()));
     }
     f.querySelectorAll('[data-kp]').forEach(el => {
       const u = def.ui.find(x => x.k === el.dataset.kp), drives = def.ui.some(x => x.when && x.when[0] === u.k);
