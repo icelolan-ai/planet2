@@ -8909,7 +8909,7 @@ class CoreStudio {
     const c = a.core, p = c.planet, L = this.layers;
     if(this.subject < 0){
       c.group.visible=true;
-      a.core.update(dt, a.simTime, { expand:0,separation:0,stack:0,morph:0,flatten:0,intro:1,motion:a.reduced?0:1,reduced:a.reduced,focus:0,focusLayer:-1,rippleT:-1,pointer:a.pointerWorld,pull:0,x:x+this.x,y:y+this.y,scale,G:0,rotX:0,rotY:0,sun:0,spinVel:a.reduced?0:.07,pixelRatio:a.stage.pixelRatio,sizeScale:a.rig.baseZ/7.2 });
+      a.core.update(dt, a.simTime, { expand:0,separation:0,stack:0,morph:0,flatten:0,intro:1,motion:a.reduced?0:1,reduced:a.reduced,focus:0,focusLayer:-1,rippleT:-1,pointer:a.pointerWorld,pull:0,x:x+this.x,y:y+this.y,scale,G:0,rotX:0,rotY:0,sun:0,spinVel:a.reduced?0:.07,pixelRatio:a.stage.pixelRatio,sizeScale:1.6*scale*a.core.planet.zoom/1.55 });
       this.coreLayers.forEach((on,i)=>{LAYER_U.uStudioLayerVisible.value[i]=on?1:0;});
       c.shells.group.visible=L.shells;c.rings.group.visible=L.rings;
       if(!L.rings&&this.ringsWasOn)p.runners.forEach(rn=>this.ringVisibility.set(rn,rn.pivot.visible));
