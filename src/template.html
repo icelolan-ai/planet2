@@ -7660,7 +7660,7 @@ class WorldAtelier {
     this.spinTargets = [...this.track.querySelectorAll('[data-at-spin]')];
     const dots = this.el.querySelector('[data-rail-dots]'); this.dots = dots;
     dots.innerHTML = stages.map((d, i) => `<button type="button" role="tab" data-rail="${i}" data-name="${esc(d.name)}" aria-label="${esc(d.name)}" style="--c:${esc(d.accent)}"><i></i></button>`).join('');
-    const total = stages.length, jump = i => { i = (i + total) % total; this.track.scrollTo({ top: i * this.track.clientHeight, behavior: this.app.reduced ? 'instant' : 'smooth' }); this.select(i); };
+    const total = stages.length, jump = i => { i = (i + total) % total; this.nav = i; this.navUntil = performance.now() + 1800; this.track.scrollTo({ top: i * this.track.clientHeight, behavior: this.app.reduced ? 'instant' : 'smooth' }); this.select(i); };
     this.jump = jump;
     dots.addEventListener('click', e => { const b = e.target.closest('[data-rail]'); if (b) jump(+b.dataset.rail); });
     let scrub = false;   // dragging along the dot column scrubs through the worlds
@@ -7855,7 +7855,8 @@ class WorldAtelier {
     this.progress = a.reduced ? target : damp(this.progress, target, 7, dt);
     const nearest = Math.round(target);
     const tuning = document.getElementById('wtune').dataset.open === 'true' || document.getElementById('tune').dataset.open === 'true';
-    if (nearest !== this.index && !tuning) this.select(nearest);
+    if (this.nav != null && (nearest === this.nav || performance.now() > this.navUntil)) this.nav = null;   // a rail jump is still scrolling: don't snap the index back
+    if (nearest !== this.index && !tuning && this.nav == null) this.select(nearest);
     a.simTime += a.reduced ? 0 : dt; a.shared.uTime.value = a.simTime; a.shared.uMotion.value = a.reduced ? 0 : 1;
     const cam = a.rig.camera, portrait = a.stage.width < a.stage.height * .9;
     const mobilePreview = tuning && a.stage.width <= 760;
