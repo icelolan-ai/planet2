@@ -1350,6 +1350,7 @@ html,body{touch-action:pan-x pan-y}
 .st-mask-note{display:none;font:600 11px var(--f-cond);letter-spacing:.06em;text-transform:uppercase;color:#33e0a0;text-align:center}
 #studio .st-assist.is-mask .st-mask-note{display:block}
 .st-item.is-ref{outline:1px dashed #ffffff55}
+#studio .st-save[hidden]{display:none!important}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -8004,6 +8005,8 @@ class CoreStudio {
     this.el.querySelector('[data-studio-bg-b]').oninput = e => { this.bgB = e.target.value; this.paintBackground(); };
     const saveMenu = this.el.querySelector('[data-studio-save]'), saveBtn = this.el.querySelector('[data-studio-export]');
     saveBtn.onclick = () => { saveMenu.hidden = !saveMenu.hidden; saveBtn.setAttribute('aria-expanded', String(!saveMenu.hidden)); if (!saveMenu.hidden) this.select(null); };
+    document.addEventListener('pointerdown', e => { if (!saveMenu.hidden && !e.target.closest('.st-save,[data-studio-export]')) { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); } }, true);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !saveMenu.hidden) { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); } });
     this.el.querySelector('[data-save-go]').onclick = () => { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); this.exportPoster(saveMenu.querySelector('[data-save-type]').value, +saveMenu.querySelector('[data-save-scale]').value); };
     const ctx = k => this.ctx.querySelector(`[data-ctx-${k}]`), withText = f => e => { const it = this.sel; if (it && it.kind === 'text') { f(it, e.target); it.edited = true; this.place(it); } };
     ctx('content').oninput = withText((it, el) => { it.content = el.value; it.el.textContent = el.value; this.renderLayers(); });
