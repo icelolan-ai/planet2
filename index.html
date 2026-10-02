@@ -1588,6 +1588,16 @@ html.has-cursor body.atelier-on .atelier-spin:active{cursor:grabbing!important}
 .atelier-net-btn[aria-expanded=true]{border-color:#ff4655!important;color:#ff4655!important}
 .atelier-bar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 18px);left:clamp(16px,4vw,64px);right:clamp(16px,4vw,64px);display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:auto}
 .atelier-bar span{font:500 12px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;color:#c3cad8}
+.atelier-rail{pointer-events:auto;position:absolute;right:clamp(8px,2vw,28px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:5;padding:8px 5px;border-radius:999px;background:rgba(10,12,20,.55);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.atelier-rail button{all:unset;cursor:pointer;color:#bac3d2;font-size:11px;width:28px;height:28px;display:grid;place-items:center;border-radius:50%}
+.atelier-rail button:hover,.atelier-rail button:focus-visible{background:rgba(255,255,255,.14);color:#fff}
+.atelier-rail-dots{display:flex;flex-direction:column;gap:2px;touch-action:none}
+.atelier-rail-dots button{width:26px;height:22px;position:relative}
+.atelier-rail-dots button i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35);transition:transform .2s,background .2s,box-shadow .2s}
+.atelier-rail-dots button.on i{background:var(--c,#ff4655);transform:scale(1.7);box-shadow:0 0 10px var(--c,#ff4655)}
+.atelier-rail-dots button::after{content:attr(data-name);position:absolute;right:30px;top:50%;transform:translateY(-50%);white-space:nowrap;font:11px var(--f-mono);padding:3px 8px;border-radius:6px;background:rgba(10,12,20,.85);color:#fff;opacity:0;pointer-events:none;transition:opacity .15s}
+.atelier-rail-dots button:hover::after,.atelier-rail-dots button:focus-visible::after{opacity:1}
+body.atelier-on:is(.wtune-open,.tune-open) .atelier-rail{opacity:0;visibility:hidden;pointer-events:none}
 .atelier-count{position:absolute;right:clamp(16px,4vw,64px);bottom:24px;font:12px var(--f-mono);color:#bac3d2}
 body.route-choose> :not(#gl):not(#net-bg):not(#gateway):not(script),body.atelier-on> :not(#gl):not(#net-bg):not(#atelier):not(#wtune):not(#tune):not(script){visibility:hidden!important;pointer-events:none!important}
 html.has-cursor body.route-choose,html.has-cursor body.route-choose *{cursor:auto!important}
@@ -1769,6 +1779,7 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
   <div class="atelier-bar"><button type="button" data-at-back>← Choose mode</button><span>World atelier · scroll to choose</span><div class="atelier-bar-r"><button type="button" class="atelier-net-btn" data-net-toggle aria-expanded="false" aria-controls="at-net">Network</button> <button type="button" data-at-orbit>Explore system →</button></div></div>
   <div class="net-panel" id="at-net" aria-label="Network backdrop" hidden></div>
   <span class="atelier-count" data-at-count>01 / 08</span>
+  <nav class="atelier-rail" data-at-rail aria-label="Jump between worlds"><button type="button" data-rail-prev aria-label="Previous world">▲</button><div class="atelier-rail-dots" data-rail-dots role="tablist"></div><button type="button" data-rail-next aria-label="Next world">▼</button></nav>
 </section>
 <button type="button" id="route-back" hidden>← Choose mode</button>
 
@@ -2280,6 +2291,6 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.67747f2b53.js", 635154]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.58fb6ef67c.js", 636943]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>

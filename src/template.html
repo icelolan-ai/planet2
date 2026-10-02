@@ -1580,6 +1580,16 @@ html.has-cursor body.atelier-on .atelier-spin:active{cursor:grabbing!important}
 .atelier-net-btn[aria-expanded=true]{border-color:#ff4655!important;color:#ff4655!important}
 .atelier-bar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 18px);left:clamp(16px,4vw,64px);right:clamp(16px,4vw,64px);display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:auto}
 .atelier-bar span{font:500 12px var(--f-cond);letter-spacing:.2em;text-transform:uppercase;color:#c3cad8}
+.atelier-rail{pointer-events:auto;position:absolute;right:clamp(8px,2vw,28px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:5;padding:8px 5px;border-radius:999px;background:rgba(10,12,20,.55);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.atelier-rail button{all:unset;cursor:pointer;color:#bac3d2;font-size:11px;width:28px;height:28px;display:grid;place-items:center;border-radius:50%}
+.atelier-rail button:hover,.atelier-rail button:focus-visible{background:rgba(255,255,255,.14);color:#fff}
+.atelier-rail-dots{display:flex;flex-direction:column;gap:2px;touch-action:none}
+.atelier-rail-dots button{width:26px;height:22px;position:relative}
+.atelier-rail-dots button i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35);transition:transform .2s,background .2s,box-shadow .2s}
+.atelier-rail-dots button.on i{background:var(--c,#ff4655);transform:scale(1.7);box-shadow:0 0 10px var(--c,#ff4655)}
+.atelier-rail-dots button::after{content:attr(data-name);position:absolute;right:30px;top:50%;transform:translateY(-50%);white-space:nowrap;font:11px var(--f-mono);padding:3px 8px;border-radius:6px;background:rgba(10,12,20,.85);color:#fff;opacity:0;pointer-events:none;transition:opacity .15s}
+.atelier-rail-dots button:hover::after,.atelier-rail-dots button:focus-visible::after{opacity:1}
+body.atelier-on:is(.wtune-open,.tune-open) .atelier-rail{opacity:0;visibility:hidden;pointer-events:none}
 .atelier-count{position:absolute;right:clamp(16px,4vw,64px);bottom:24px;font:12px var(--f-mono);color:#bac3d2}
 body.route-choose> :not(#gl):not(#net-bg):not(#gateway):not(script),body.atelier-on> :not(#gl):not(#net-bg):not(#atelier):not(#wtune):not(#tune):not(script){visibility:hidden!important;pointer-events:none!important}
 html.has-cursor body.route-choose,html.has-cursor body.route-choose *{cursor:auto!important}
@@ -1761,6 +1771,7 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
   <div class="atelier-bar"><button type="button" data-at-back>← Choose mode</button><span>World atelier · scroll to choose</span><div class="atelier-bar-r"><button type="button" class="atelier-net-btn" data-net-toggle aria-expanded="false" aria-controls="at-net">Network</button> <button type="button" data-at-orbit>Explore system →</button></div></div>
   <div class="net-panel" id="at-net" aria-label="Network backdrop" hidden></div>
   <span class="atelier-count" data-at-count>01 / 08</span>
+  <nav class="atelier-rail" data-at-rail aria-label="Jump between worlds"><button type="button" data-rail-prev aria-label="Previous world">▲</button><div class="atelier-rail-dots" data-rail-dots role="tablist"></div><button type="button" data-rail-next aria-label="Next world">▼</button></nav>
 </section>
 <button type="button" id="route-back" hidden>← Choose mode</button>
 
@@ -7647,6 +7658,20 @@ class WorldAtelier {
       <div class="atelier-copy"><b>${i ? 'World ' + String(i).padStart(2, '0') : 'Core'} / ${String(stages.length).padStart(2, '0')}</b><h2 aria-label="${esc(d.name)}">${d.name.split(' ').map((word, wi) => `<span class="atelier-word">${Array.from(word).map((ch, k) => `<span class="ch" aria-hidden="true" style="--i:${wi + k}">${esc(ch)}</span>`).join('')}</span>`).join(' ')}</h2><p>${esc(d.kicker)} · ${esc(d.lede)}</p><div class="atelier-actions"><button type="button" data-at-tune="${i}">Tune ${i ? 'this world' : 'the core'} →</button><button type="button" class="atelier-studio" data-at-studio="${i}">Studio mode →</button></div></div>
     </article>`).join('');
     this.spinTargets = [...this.track.querySelectorAll('[data-at-spin]')];
+    const dots = this.el.querySelector('[data-rail-dots]'); this.dots = dots;
+    dots.innerHTML = stages.map((d, i) => `<button type="button" role="tab" data-rail="${i}" data-name="${esc(d.name)}" aria-label="${esc(d.name)}" style="--c:${esc(d.accent)}"><i></i></button>`).join('');
+    const total = stages.length, jump = i => { i = (i + total) % total; this.nav = i; this.navUntil = performance.now() + 1800; this.track.scrollTo({ top: i * this.track.clientHeight, behavior: this.app.reduced ? 'instant' : 'smooth' }); this.select(i); };
+    this.jump = jump;
+    dots.addEventListener('click', e => { const b = e.target.closest('[data-rail]'); if (b) jump(+b.dataset.rail); });
+    let scrub = false;   // dragging along the dot column scrubs through the worlds
+    const scrubTo = e => { const bs = [...dots.children], r = dots.getBoundingClientRect(); const k = clamp(Math.floor((e.clientY - r.top) / r.height * bs.length), 0, bs.length - 1); if (k !== this.index) { this.track.scrollTo({ top: k * this.track.clientHeight, behavior: 'instant' }); this.select(k); } };
+    let sy = 0, moved = false;
+    dots.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button !== 0) return; scrub = true; moved = false; sy = e.clientY; });
+    dots.addEventListener('pointermove', e => { if (!scrub || !e.buttons) return; if (!moved && Math.abs(e.clientY - sy) < 6) return; if (!moved) { moved = true; dots.setPointerCapture(e.pointerId); } scrubTo(e); });
+    const stop = () => { scrub = false; }; dots.addEventListener('pointerup', stop); dots.addEventListener('pointercancel', stop);
+    this.el.querySelector('[data-rail-prev]').addEventListener('click', () => jump(this.index - 1));
+    this.el.querySelector('[data-rail-next]').addEventListener('click', () => jump(this.index + 1));
+    addEventListener('keydown', e => { if (!this.active || e.target.closest('input,textarea,select')) return; if (e.key === 'ArrowDown' || e.key === 'PageDown') { jump(this.index + 1); e.preventDefault(); } else if (e.key === 'ArrowUp' || e.key === 'PageUp') { jump(this.index - 1); e.preventDefault(); } });
     this.selectedRoute = 'atelier'; this.entering = false; const nets = this.choice.querySelectorAll('.gateway-net');
     const netList = [...nets].map((cv, i) => {
       const orb = cv.parentNode.querySelector('.gateway-orb');
@@ -7780,6 +7805,7 @@ class WorldAtelier {
     if (this.index > 0) this.app.detail.index = this.index - 1;
     this.el.querySelector('[data-at-count]').textContent = `${String(this.index + 1).padStart(2, '0')} / ${String(WORLDS.length + 1).padStart(2, '0')}`;
     this.track.querySelectorAll('.atelier-stop').forEach((stop, k) => { stop.classList.toggle('is-current', k === this.index); });
+    this.dots?.querySelectorAll('[data-rail]').forEach((b, k) => { b.classList.toggle('on', k === this.index); b.setAttribute('aria-selected', k === this.index); });
     RB.decrypt(this.track.querySelectorAll('.atelier-stop')[this.index]?.querySelectorAll('h2 .ch'));
   }
   openStudio(i) {
@@ -7830,7 +7856,8 @@ class WorldAtelier {
     this.progress = a.reduced ? target : damp(this.progress, target, 7, dt);
     const nearest = Math.round(target);
     const tuning = document.getElementById('wtune').dataset.open === 'true' || document.getElementById('tune').dataset.open === 'true';
-    if (nearest !== this.index && !tuning) this.select(nearest);
+    if (this.nav != null && (nearest === this.nav || performance.now() > this.navUntil)) this.nav = null;   // a rail jump is still scrolling: don't snap the index back
+    if (nearest !== this.index && !tuning && this.nav == null) this.select(nearest);
     a.simTime += a.reduced ? 0 : dt; a.shared.uTime.value = a.simTime; a.shared.uMotion.value = a.reduced ? 0 : 1;
     const cam = a.rig.camera, portrait = a.stage.width < a.stage.height * .9;
     const mobilePreview = tuning && a.stage.width <= 760;
