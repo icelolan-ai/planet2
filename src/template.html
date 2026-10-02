@@ -2438,20 +2438,6 @@ async function encodePoster(c, type) {
   const blob = (t, q) => new Promise(r => c.toBlob(r, t, q));
   if (type === 'image/png' || type === 'image/webp' || type === 'image/jpeg') return blob(type, .95);
   const w = c.width, h = c.height, px = c.getContext('2d').getImageData(0, 0, w, h).data;
-  if (type === 'image/tiff') {
-    const n = w * h * 4, ifdN = 12, ifd = 8, bps = ifd + 2 + ifdN * 12 + 4, data = bps + 8, buf = new ArrayBuffer(data + n), v = new DataView(buf);
-    v.setUint16(0, 0x4949, true); v.setUint16(2, 42, true); v.setUint32(4, 8, true); v.setUint16(ifd, ifdN, true);
-    const tag = (i, t, ty, cnt, val) => { const o = ifd + 2 + i * 12; v.setUint16(o, t, true); v.setUint16(o + 2, ty, true); v.setUint32(o + 4, cnt, true); if (ty === 3 && cnt === 1) v.setUint16(o + 8, val, true); else v.setUint32(o + 8, val, true); };
-    tag(0, 256, 4, 1, w); tag(1, 257, 4, 1, h); tag(2, 258, 3, 4, bps); tag(3, 259, 3, 1, 1); tag(4, 262, 3, 1, 2); tag(5, 273, 4, 1, data); tag(6, 277, 3, 1, 4); tag(7, 278, 4, 1, h); tag(8, 279, 4, 1, n); tag(9, 284, 3, 1, 1); tag(10, 338, 3, 1, 2); tag(11, 305, 2, 0, 0);
-    v.setUint32(ifd + 2 + ifdN * 12, 0, true); for (let i = 0; i < 4; i++) v.setUint16(bps + i * 2, 8, true);
-    new Uint8Array(buf, data).set(px); return new Blob([buf], { type: 'image/tiff' });
-  }
-  if (type === 'image/vnd.adobe.photoshop') {
-    const plane = w * h, buf = new ArrayBuffer(26 + 4 + 4 + 4 + 2 + plane * 3), v = new DataView(buf), u = new Uint8Array(buf);
-    u.set([0x38, 0x42, 0x50, 0x53], 0); v.setUint16(4, 1); v.setUint16(12, 3); v.setUint32(14, h); v.setUint32(18, w); v.setUint16(22, 8); v.setUint16(24, 3);
-    let o = 26 + 12 + 2; for (let ch = 0; ch < 3; ch++) for (let i = 0; i < plane; i++) u[o++] = px[i * 4 + ch];
-    return new Blob([buf], { type: 'image/vnd.adobe.photoshop' });
-  }
   if (type === 'application/pdf') {
     const jpg = new Uint8Array(await (await blob('image/jpeg', .95)).arrayBuffer()), pw = (w * .5).toFixed(2), ph = (h * .5).toFixed(2), enc = new TextEncoder(), parts = [], off = []; let len = 0;
     const push = b => { const x = typeof b === 'string' ? enc.encode(b) : b; parts.push(x); len += x.length; };
@@ -7837,11 +7823,10 @@ class CoreStudio {
         <span class="st-rotbox"><label>Rotate<input type="number" step="1" min="-360" max="360" data-ctx-rot aria-label="Rotation in degrees"><i>°</i></label><label>Snap<select data-ctx-rsnap aria-label="Rotation snap"><option value="0">Free</option><option value="15">15°</option><option value="45">45°</option><option value="90">90°</option><option value="180">180°</option><option value="custom">Custom…</option></select></label><input type="number" min="1" max="180" step="1" data-ctx-rsnap-n hidden placeholder="°" aria-label="Custom snap degrees"></span>
         <button type="button" class="st-btn" data-ctx-lock></button><button type="button" class="st-btn" data-ctx-dup aria-label="Duplicate"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg><span>Copy</span></button><button type="button" class="st-btn" data-ctx-delete aria-label="Delete">${this.icons.trash}</button></div>
       <div class="st-save st-glass" data-studio-save hidden><span class="st-ctx-kind">Save image</span>
-        <label>Format<select data-save-type><option value="image/png">PNG</option><option value="image/jpeg">JPEG</option><option value="application/pdf">PDF</option><option value="image/tiff">TIFF</option><option value="image/vnd.adobe.photoshop">PSD</option><option value="image/webp">WebP</option><option value="application/x-cerebra">Cerebra project</option></select></label>
+        <label>Format<select data-save-type><option value="image/png">PNG</option><option value="image/jpeg">JPEG</option><option value="application/pdf">PDF</option><option value="image/webp">WebP</option></select></label>
         <label>Size<select data-save-scale><option value="1">1× screen</option><option value="2" selected>2× (sharp)</option><option value="3">3× (print)</option></select></label>
         <label class="st-save-grain"><input type="checkbox" data-save-grain> Film grain</label>
-        <button type="button" class="st-btn" data-save-import>Import project</button><input type="file" accept=".cerebra,.json,application/json" data-save-file hidden>
-        <button type="button" class="st-btn is-primary" data-save-go>Download</button></div>
+                <button type="button" class="st-btn is-primary" data-save-go>Download</button></div>
       <div class="st-lib" data-studio-library hidden><div class="st-lib-head"><b>Library</b><span data-lib-count></span><button type="button" class="st-btn" data-lib-mode aria-pressed="false">Circular</button><button type="button" class="st-btn" data-lib-close aria-label="Close library">✕</button></div>
         <div class="st-lib-track" data-lib-track></div><p class="st-lib-empty" data-lib-empty>Nothing kept yet. Press Keep in the toolbar to save this composition.</p></div>
       <div class="st-dock st-glass" data-tray="dock" role="toolbar" aria-label="Studio"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button>
@@ -8080,7 +8065,6 @@ class CoreStudio {
     saveBtn.onclick = () => { saveMenu.hidden = !saveMenu.hidden; saveBtn.setAttribute('aria-expanded', String(!saveMenu.hidden)); if (!saveMenu.hidden) this.select(null); };
     document.addEventListener('pointerdown', e => { if (!saveMenu.hidden && !e.target.closest('.st-save,[data-studio-export]')) { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); } }, true);
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !saveMenu.hidden) { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); } });
-    const fileIn = this.el.querySelector('[data-save-file]'); this.el.querySelector('[data-save-import]').onclick = () => fileIn.click(); fileIn.onchange = () => { if (fileIn.files[0]) this.importProject(fileIn.files[0]); fileIn.value = ''; saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); };
     const gcb = saveMenu.querySelector('[data-save-grain]'); saveBtn.addEventListener('click', () => { gcb.checked = !!(this.grain && this.fxVisible('grain')); }, true);
     this.el.querySelector('[data-save-go]').onclick = () => { this.exportGrain = gcb.checked; saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); this.exportPoster(saveMenu.querySelector('[data-save-type]').value, +saveMenu.querySelector('[data-save-scale]').value); };
     const ctx = k => this.ctx.querySelector(`[data-ctx-${k}]`), withText = f => e => { const it = this.sel; if (it && it.kind === 'text') { f(it, e.target); it.edited = true; this.place(it); } };
@@ -9245,7 +9229,6 @@ class CoreStudio {
   }
   async exportPoster(type = 'image/png', scale = 2) {
     if (!this.active || this.exporting || this.app.cap) return;
-    if(type==='application/x-cerebra'){this.exportProject();return;}
     const button=this.el.querySelector('[data-studio-export]'),label=button.querySelector('[data-export-label]');this.exporting=true;button.disabled=true;label.textContent='Rendering…';if(this.sel)this.select(null);
     try {
       const fin=await this.composePoster(scale);
