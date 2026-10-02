@@ -1010,6 +1010,19 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 .st-lib-info b{font:600 16px var(--f-sans)}.st-lib-info small{color:#97a1b3}
 .st-lib-info div{display:flex;gap:8px;margin-top:8px}
 .st-lib-empty{text-align:center;color:#97a1b3}
+.rb-ribbons{position:fixed;inset:0;width:100%;height:100%;z-index:40;pointer-events:none;mix-blend-mode:screen}
+.rb-galaxy{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;mix-blend-mode:screen}
+.rb-spark{position:fixed;width:0;height:0;z-index:200;pointer-events:none}
+.rb-spark i{position:absolute;left:-1px;top:-1px;width:2px;height:10px;background:#ff6571;border-radius:2px;transform:rotate(var(--a)) translateY(-6px);transform-origin:1px 1px;animation:rbs .45s ease-out forwards}
+@keyframes rbs{to{transform:rotate(var(--a)) translateY(-24px);opacity:0;height:3px}}
+.gateway-mark{background:linear-gradient(110deg,currentColor 40%,#fff 50%,currentColor 60%) 0 0/250% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:rbshine 3.2s linear infinite}
+@keyframes rbshine{from{background-position:100% 0}to{background-position:-150% 0}}
+#studio .st-dock .st-btn,#studio .st-dock select{transition:transform .18s ease-out}
+#studio .st-dock.is-v .st-btn{transform:none!important}
+.st-lib.is-circular .st-lib-track{gap:0;perspective:1100px}
+.st-lib.is-circular .st-lib-card{flex-basis:min(56vw,320px)}
+@supports (backdrop-filter:url(#x)){@media(pointer:fine){#studio .studio-panel.st-glass,#studio .st-dock.st-glass{backdrop-filter:url(#rb-glass) blur(16px) saturate(1.5)}}}
+@media(prefers-reduced-motion:reduce){.gateway-mark{animation:none}}
 /* Movable trays */
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
 .st-edge-hint[hidden]{display:none}
@@ -1268,6 +1281,7 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
   <div class="ld-status sr-only" data-status aria-live="polite">Starting</div>
 </div>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="rb-glass"><feTurbulence type="fractalNoise" baseFrequency=".012" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="18" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
 <section id="gateway" aria-label="Choose your experience" data-sel="none" hidden>
   <article class="gateway-choice gw-a" data-route="atelier" tabindex="0" aria-label="Select world atelier"><canvas class="gateway-net" aria-hidden="true"></canvas><div class="gw-deco" aria-hidden="true"><b class="gw-letter">S</b><p class="gw-words"><span>S H A P E</span><span>A</span><span class="dim">W O R L D</span><span>T U N E</span><span class="dim">I T</span></p><span class="gw-bar gw-bar-p"></span><span class="gw-bar gw-bar-c"></span><span class="gw-side gw-side-l">Cerebra · world atelier</span><span class="gw-num">001</span></div><span class="gateway-mark">01 / Create</span><button type="button" class="gateway-back" data-gateway-back>← Back</button><span class="gateway-orb" aria-hidden="true"></span><div class="gateway-copy"><strong data-split>Shape a world</strong><small>Choose Cerebra or a planet, bring it closer, and tune its colour, atmosphere and motion.</small><button type="button" class="gateway-enter" data-enter="atelier">Enter world atelier →</button></div></article>
   <article class="gateway-choice" data-route="orbit" tabindex="0" aria-label="Select solar system"><canvas class="gateway-net" aria-hidden="true"></canvas><span class="gateway-mark">02 / Explore</span><button type="button" class="gateway-back" data-gateway-back>← Back</button><span class="gateway-orb" aria-hidden="true"></span><div class="gateway-copy"><strong data-split>Explore the system</strong><small>Travel through Cerebra and its seven worlds in the original journey.</small><button type="button" class="gateway-enter" data-enter="orbit">Enter the solar system →</button></div></article>
@@ -6670,6 +6684,66 @@ const NET = (() => {
     rgb(hex) { const n = parseInt(hex.slice(1), 16); return `${n >> 16},${n >> 8 & 255},${n & 255}`; }
   };
 })();
+/* reactbits-style extras: cursor ribbons, galaxy field, dock magnification, click sparks. Vanilla and lightweight. */
+const RB = (() => {
+  const fine = matchMedia('(pointer: fine)').matches, still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Ribbons: a soft glowing trail that follows the cursor (explore view only).
+  const ribbons = () => {
+    if (!fine || still) return;
+    const c = document.createElement('canvas'); c.className = 'rb-ribbons'; c.setAttribute('aria-hidden', 'true'); document.body.append(c);
+    const g = c.getContext('2d'), pts = []; let w, h, raf = 0, last = 0;
+    const size = () => { const d = Math.min(devicePixelRatio || 1, 1.5); w = innerWidth; h = innerHeight; c.width = w * d; c.height = h * d; g.setTransform(d, 0, 0, d, 0, 0); };
+    size(); addEventListener('resize', size);
+    const on = () => !document.body.matches('.route-choose,.atelier-on,.studio-on');
+    addEventListener('pointermove', e => { if (!on()) return; pts.push({ x: e.clientX, y: e.clientY, t: performance.now() }); last = performance.now(); if (!raf) raf = requestAnimationFrame(draw); }, { passive: true });
+    const draw = now => {
+      while (pts.length && now - pts[0].t > 420) pts.shift();
+      g.clearRect(0, 0, w, h);
+      if (pts.length > 1) for (const [col, wid, lag] of [['255,70,85', 6, 0], ['120,170,255', 3, 2]]) {
+        g.beginPath(); pts.forEach((p, i) => { const q = pts[Math.max(0, i - lag)]; i ? g.lineTo(q.x, q.y) : g.moveTo(q.x, q.y); });
+        g.strokeStyle = `rgba(${col},.55)`; g.lineWidth = wid; g.lineCap = g.lineJoin = 'round'; g.shadowBlur = 18; g.shadowColor = `rgb(${col})`; g.stroke();
+      }
+      raf = pts.length || now - last < 500 ? requestAnimationFrame(draw) : 0;
+    };
+  };
+  // Galaxy: layered twinkling stars that drift with the pointer, behind the chooser.
+  const galaxy = host => {
+    const c = document.createElement('canvas'); c.className = 'rb-galaxy'; c.setAttribute('aria-hidden', 'true'); host.append(c);
+    const g = c.getContext('2d'); let w, h, stars = [], raf = 0, mx = 0, my = 0;
+    const size = () => { w = c.clientWidth; h = c.clientHeight; c.width = w; c.height = h; stars = Array.from({ length: Math.round(w * h / 2600) }, () => ({ x: Math.random() * w, y: Math.random() * h, z: Math.random(), p: Math.random() * 6.28 })); };
+    host.addEventListener('pointermove', e => { mx = e.clientX / w - .5; my = e.clientY / h - .5; }, { passive: true });
+    const tick = now => {
+      raf = requestAnimationFrame(tick); if (host.hidden) return; if (!w) size();
+      g.clearRect(0, 0, w, h); const t = still ? 0 : now / 1000;
+      for (const s of stars) {
+        const x = (s.x - mx * 40 * s.z + w) % w, y = (s.y - my * 40 * s.z + h) % h, a = .25 + .75 * (.5 + .5 * Math.sin(t * (1 + s.z * 2) + s.p)) * s.z;
+        g.fillStyle = `rgba(${200 + s.z * 55 | 0},${190 + s.z * 40 | 0},255,${a})`; g.fillRect(x, y, s.z > .85 ? 2 : 1, s.z > .85 ? 2 : 1);
+      }
+    };
+    addEventListener('resize', () => { w = 0; });
+    new MutationObserver(() => { if (host.hidden) { cancelAnimationFrame(raf); raf = 0; } else if (!raf) raf = requestAnimationFrame(tick); }).observe(host, { attributes: true, attributeFilter: ['hidden'] });
+    if (!host.hidden) raf = requestAnimationFrame(tick);
+  };
+  // Dock: macOS-style magnification of buttons near the pointer.
+  const dock = el => {
+    if (!fine || still) return;
+    el.addEventListener('pointermove', e => {
+      if (el.classList.contains('is-v')) return;
+      el.querySelectorAll('.st-btn,select').forEach(b => { const r = b.getBoundingClientRect(), d = Math.abs(e.clientX - (r.left + r.width / 2)); b.style.transform = `translateY(${-Math.max(0, 1 - d / 160) * 8}px) scale(${1 + Math.max(0, 1 - d / 160) * .22})`; });
+    });
+    el.addEventListener('pointerleave', () => el.querySelectorAll('.st-btn,select').forEach(b => { b.style.transform = ''; }));
+  };
+  // Click spark: a burst of short lines from any button press.
+  const sparks = () => {
+    if (still) return;
+    addEventListener('pointerdown', e => {
+      if (!e.target.closest('button,.gateway-choice,.st-lib-card')) return;
+      const s = document.createElement('div'); s.className = 'rb-spark'; s.style.left = e.clientX + 'px'; s.style.top = e.clientY + 'px';
+      s.innerHTML = Array.from({ length: 8 }, (_, i) => `<i style="--a:${i * 45}deg"></i>`).join(''); document.body.append(s); setTimeout(() => s.remove(), 500);
+    }, { passive: true });
+  };
+  return { ribbons, galaxy, dock, sparks };
+})();
 /* Magic Bento (after reactbits.dev): a spotlight and glowing border that follow the pointer, optional tilt and
    magnetism, a few drifting particles on hover and a ripple on click. Vanilla, applied by selector. */
 const MagicBento = (() => {
@@ -6805,6 +6879,7 @@ class WorldAtelier {
       const orb = cv.parentNode.querySelector('.gateway-orb');
       return new GatewayNet(cv, i ? '255,40,50' : '255,120,190', () => { const a = orb.getBoundingClientRect(), b = cv.getBoundingClientRect(); return { x: a.left + a.width / 2 - b.left, y: a.top + a.height / 2 - b.top, r: Math.max(40, a.width / 2) }; }, () => ({ density: i ? 70 : 55 }));
     });
+    RB.galaxy(this.choice); RB.ribbons(); RB.sparks();
     MagicBento.apply('.gateway-choice', { tilt: 10, magnet: 14, target: '.gateway-orb', particles: true });
     MagicBento.apply('.atelier-copy', { ripple: true, particles: true });
     netList.forEach(n => n.watch(this.choice, () => !this.choice.hidden, ['hidden']));
@@ -7081,7 +7156,7 @@ class CoreStudio {
         <label>Format<select data-save-type><option value="image/png">PNG</option><option value="image/jpeg">JPG</option><option value="image/webp">WebP</option></select></label>
         <label>Size<select data-save-scale><option value="1">1× screen</option><option value="2" selected>2× (sharp)</option><option value="3">3× (print)</option></select></label>
         <button type="button" class="st-btn is-primary" data-save-go>Download</button></div>
-      <div class="st-lib" data-studio-library hidden><div class="st-lib-head"><b>Library</b><span data-lib-count></span><button type="button" class="st-btn" data-lib-close aria-label="Close library">✕</button></div>
+      <div class="st-lib" data-studio-library hidden><div class="st-lib-head"><b>Library</b><span data-lib-count></span><button type="button" class="st-btn" data-lib-mode aria-pressed="false">Circular</button><button type="button" class="st-btn" data-lib-close aria-label="Close library">✕</button></div>
         <div class="st-lib-track" data-lib-track></div><p class="st-lib-empty" data-lib-empty>Nothing kept yet. Press Keep in the toolbar to save this composition.</p></div>
       <div class="st-dock st-glass" data-tray="dock" role="toolbar" aria-label="Studio"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button>
         <button type="button" class="st-btn st-dock-fold" data-dock-fold aria-expanded="true" aria-label="Fold toolbar"><span class="st-chev" aria-hidden="true"></span></button>
@@ -7132,7 +7207,7 @@ class CoreStudio {
     const fold = (btn, box, label) => btn.onclick = () => { const f = box.classList.toggle('is-folded'); btn.setAttribute('aria-expanded', String(!f)); if (label) btn.setAttribute('aria-label', (f ? 'Unfold ' : 'Fold ') + label); this.layoutTrays(); };
     fold(this.el.querySelector('[data-panel-fold]'), this.panel);
     fold(this.el.querySelector('[data-layers-fold]'), this.el.querySelector('[data-tray="layers"]'));
-    this.initTrays();
+    this.initTrays(); RB.dock(this.el.querySelector('.st-dock'));
     MagicBento.apply('#studio .st-glass', { ripple: true }); MagicBento.apply('#studio .studio-preset', { tilt: 8, magnet: 4, ripple: true, particles: true });
     fold(this.el.querySelector('[data-dock-fold]'), this.el.querySelector('.st-dock'), 'toolbar');
     this.el.querySelector('[data-studio-tools]').onclick = () => {
@@ -7226,6 +7301,7 @@ class CoreStudio {
     this.el.querySelector('[data-studio-lib-save]').onclick = () => this.libSave();
     this.el.querySelector('[data-studio-lib]').onclick = () => this.libOpen(true);
     this.el.querySelector('[data-lib-close]').onclick = () => this.libOpen(false);
+    this.el.querySelector('[data-lib-mode]').onclick = e => { const on = this.lib.classList.toggle('is-circular'); e.currentTarget.setAttribute('aria-pressed', String(on)); this.libParallax(); };
     this.el.querySelector('[data-lib-track]').addEventListener('scroll', () => this.libParallax(), { passive: true });
     this.el.querySelector('[data-studio-lens]').onchange = e => { this.lensOn = e.target.checked; };
     this.el.querySelector('[data-studio-freeze]').onclick = e => { this.frozen = !this.frozen; const b = e.currentTarget; b.setAttribute('aria-pressed', String(this.frozen)); b.setAttribute('aria-label', this.frozen ? 'Resume motion' : 'Freeze motion'); b.querySelector('[data-freeze-label]').textContent = this.frozen ? 'Play' : 'Stop'; };
@@ -7596,7 +7672,8 @@ class CoreStudio {
     tr.querySelectorAll('.st-lib-card').forEach(c => {
       const r = c.getBoundingClientRect(), d = clamp((r.left + r.width / 2 - mid) / tr.clientWidth, -1, 1);
       c.querySelector('.st-lib-img').style.backgroundPosition = `${50 + d * 40}% 50%`;
-      c.style.transform = `scale(${1 - Math.abs(d) * .12})`; c.style.opacity = 1 - Math.abs(d) * .45;
+      const circ = this.lib.classList.contains('is-circular');
+      c.style.transform = circ ? `perspective(1100px) rotateY(${-d * 55}deg) translateZ(${-Math.abs(d) * 160}px) translateY(${Math.abs(d) * 50}px)` : `scale(${1 - Math.abs(d) * .12})`; c.style.opacity = 1 - Math.abs(d) * (circ ? .3 : .45);
     });
   }
   label(it) { return it.kind === 'text' ? 'Text' : (it.decor ? '' : 'Focus ') + { tri: 'triangle', rect: 'square', circle: 'circle' }[it.kind]; }
