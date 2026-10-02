@@ -1600,6 +1600,7 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
     <button type="button" style="--c:#9dff6a" data-hue="60" aria-label="Lime"></button>
   </div></div>
   <label class="tune-row"><span>Atmosphere</span><input type="range" min="0" max="3" step="0.05" data-wt="atmo"><b data-out></b></label>
+  <label class="tune-row"><span>Atmosphere shape</span><select data-wt="atmoShape" aria-label="Atmosphere shape"><option value="sphere">Sphere</option><option value="ball">Football (pentagons)</option><option value="dodeca">Pentagon solid</option><option value="ico">Geodesic ball</option><option value="cube">Cube</option><option value="pyramid">Pyramid</option><option value="octa">Diamond</option><option value="torus">Ring</option></select></label>
   <p class="tune-sub">Motion</p>
   <label class="tune-row"><span>Spin</span><input type="range" min="0" max="6" step="0.05" data-wt="spin"><b data-out></b></label>
   <div class="tune-row"><span>Direction</span><div class="tune-seg" data-wt-seg="dir"><button type="button" data-v="1">&#8635; Forward</button><button type="button" data-v="-1">&#8634; Reverse</button></div></div>
@@ -1763,6 +1764,10 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
       </div></div>
     <p class="tune-hint">Comets fall in on long ellipses, whip round the core (through the glass when Plunge is low) and fly back out.</p>
     <div class="tune-row"><span>Inner orb</span><div class="tune-seg" data-t-inner><button type="button" data-v="1" aria-pressed="true">On</button><button type="button" data-v="0" aria-pressed="false">Off</button></div></div>
+    <p class="tune-sub">Shell shapes</p>
+    <label class="tune-row"><span>3 · Outer shell</span><select data-t-shape-outer aria-label="3 · Outer shell shape"><option value="sphere">Sphere</option><option value="ball">Football (pentagons)</option><option value="dodeca">Pentagon solid</option><option value="ico">Geodesic ball</option><option value="cube">Cube</option><option value="pyramid">Pyramid</option><option value="octa">Diamond</option><option value="torus">Ring</option><option value="off">Hidden</option></select></label>
+    <label class="tune-row"><span>2 · Inner shell</span><select data-t-shape-inner aria-label="2 · Inner shell shape"><option value="sphere">Sphere</option><option value="ball">Football (pentagons)</option><option value="dodeca">Pentagon solid</option><option value="ico">Geodesic ball</option><option value="cube">Cube</option><option value="pyramid">Pyramid</option><option value="octa">Diamond</option><option value="torus">Ring</option><option value="off">Hidden</option></select></label>
+    <label class="tune-row"><span>1 · Nucleus</span><select data-t-shape-nucleus aria-label="1 · Nucleus shape"><option value="sphere">Sphere</option><option value="ball">Football (pentagons)</option><option value="dodeca">Pentagon solid</option><option value="ico">Geodesic ball</option><option value="cube">Cube</option><option value="pyramid">Pyramid</option><option value="octa">Diamond</option><option value="torus">Ring</option><option value="off">Hidden</option></select></label>
     <p class="tune-sub">Dust &amp; flares</p>
     <label class="tune-row"><span>Dust</span><input type="range" min="0" max="3" step="0.05" value="0.45" data-t-haze><b data-out>45%</b></label>
     <label class="tune-row"><span>Flare rate</span><input type="range" min="0" max="3" step="0.05" value="1" data-t-frate><b data-out>1.0x</b></label>
@@ -2377,6 +2382,7 @@ const WorldTune = (() => {
     P.querySelector('[data-wt-name]').textContent = w.def.name;
     P.querySelectorAll('input[data-wt]').forEach(el => { el.value = el.type === 'color' ? (w.tune[el.dataset.wt] || w.def.accent) : w.tune[el.dataset.wt]; if (el.type !== 'color') out(el); });
     P.querySelectorAll('[data-wt-seg]').forEach(g => g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === w.tune[g.dataset.wtSeg]))));
+    P.querySelectorAll('select[data-wt]').forEach(el => { el.value = w.tune[el.dataset.wt] || 'sphere'; });
   };
   const set = (k, v) => { if (!w) return; w.setTune(k, v); (store[w.def.id] = store[w.def.id] || {})[k] = v; save(); if (['hue','sat','bright','colorize','allColor'].includes(k)) syncAccent(); };
   const tab = id => {
@@ -2427,6 +2433,7 @@ const WorldTune = (() => {
     P.querySelector('[data-wt-close]').addEventListener('click', () => open(false));
     P.querySelectorAll('[data-wt-tab]').forEach(t => t.addEventListener('click', () => tab(t.dataset.wtTab)));
     P.querySelectorAll('input[data-wt]').forEach(el => el.addEventListener('input', () => { set(el.dataset.wt, el.type === 'color' ? el.value : +el.value); if (el.type !== 'color') out(el); }));
+    P.querySelectorAll('select[data-wt]').forEach(el => el.addEventListener('change', () => set(el.dataset.wt, el.value)));
     P.querySelectorAll('[data-wt-seg]').forEach(g => g.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
       g.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); set(g.dataset.wtSeg, +b.dataset.v);
     })));
@@ -2565,6 +2572,8 @@ const WorldTune = (() => {
     const dir = seg('[data-t-dir]', v => call('setDirection', v));
     const band = seg('[data-t-band]', v => call('setBand', !!v, null));
     const inner = seg('[data-t-inner]', v => call('setInner', !!v));
+    const shellSel = k => q(`[data-t-shape-${k}]`);
+    ['outer', 'inner', 'nucleus'].forEach(k => shellSel(k).addEventListener('change', e => { const b = body(); if (!b) return; b.setShell(k, e.target.value); if (k === 'inner') inner.set(e.target.value === 'off' ? 0 : 1); save(); }));
     const ptr = seg('[data-t-ptr]', v => call('setPointer', v, null));
     const micNote = q('[data-t-mic-note]');
     const mic = seg('[data-t-mic]', async v => {
@@ -2750,7 +2759,7 @@ const WorldTune = (() => {
       return { density: b.density, structure: LAYER_U.uStructure.value, speed: b.speed, dir: b.dir, shape: b.shape, neon: hex(b.uNeon.value), theme: b.theme || 'nebula',
         rings: b.ringCount, layers: LAYER_U.uLayerCol.value.map(c => '#' + c.getHexString()), layerVisible: [...LAYER_U.uLayerVisible.value], layerValues: Object.fromEntries(Object.entries(layerKey).map(([k, u]) => [k, [...LAYER_U[u].value]])), comets: b.cometState(), bands: b.bandCount, swarm: b.swarmAmt, swsize: b.swarmMat.uniforms.uSize.value, swcolor: hex(b.swarmMat.uniforms.uColor.value), band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
         clarity: +clar.value, rim: +rim.value, inner: b.inner.show, haze: b.hazeDensity, frate: b.uFlareRate.value, famt: b.uFlareAmt.value, fcolor: '#' + b.uFlareColor.value.getHexString(),
-        ptr: b.ptrMode, ptrs: b.ptrStrength,
+        ptr: b.ptrMode, ptrs: b.ptrStrength, shells: { ...b.shellKind },
         lens: LENS_U.uLensOn.value, aberr: LENS_U.uLensAberr.value, blur: LENS_U.uLensBlur.value, bloom: LENS_U.uLensBloom.value };
     }
     function save() { const s = snapshot(); if (s) try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {} }
@@ -2774,6 +2783,7 @@ const WorldTune = (() => {
       if (s.swarm != null) { b.setSwarm(s.swarm, s.swsize, s.swcolor); setRange(swarm, s.swarm, pct); setRange(swsize, s.swsize, times); swarmC.set(s.swcolor); }
       b.setGlass(s.clarity, s.rim); setRange(clar, s.clarity, times); setRange(rim, s.rim, v => v.toFixed(2));
       b.setInner(s.inner); inner.set(s.inner ? 1 : 0);
+      if (s.shells) ['outer', 'inner', 'nucleus'].forEach(k => { if (s.shells[k]) { b.setShell(k, s.shells[k]); shellSel(k).value = s.shells[k]; } });
       b.setHaze(s.haze); setRange(haze, s.haze, pct);
       b.setFlare(s.frate, s.famt); if (s.fcolor) { b.setFlareColor(s.fcolor); flareC.set(s.fcolor); } setRange(frate, s.frate, times); setRange(famt, s.famt, times);
       b.setPointer(s.ptr, s.ptrs); ptr.set(s.ptr); setRange(ptrs, s.ptrs, times);
@@ -3007,6 +3017,38 @@ const rawColor = css => new THREE.Color().setStyle(css, THREE.LinearSRGBColorSpa
 
 /* Mirrors the radius maths in the particle shader, so DOM callouts can find each layer. */
 /* Per-layer particle colours (Layer 0 nucleus .. Layer 4 perimeter). They start as the ink colour. */
+const SHELL_SHAPES = [['sphere', 'Sphere'], ['ball', 'Football (pentagons)'], ['dodeca', 'Pentagon solid'], ['ico', 'Geodesic ball'], ['cube', 'Cube'], ['pyramid', 'Pyramid'], ['octa', 'Diamond'], ['torus', 'Ring']];
+/* Shell shapes: the clear shells around Cerebra (and a planet's atmosphere) can be any of these solids. */
+const ShellGeo = (() => {
+  const cache = {}, v3 = (x, y, z) => new THREE.Vector3(x, y, z);
+  const flat = g => { const n = g.index ? g.toNonIndexed() : g; n.computeVertexNormals(); return n; };
+  const ball = () => {
+    const t = (1 + Math.sqrt(5)) / 2;
+    const V = [[-1, t, 0], [1, t, 0], [-1, -t, 0], [1, -t, 0], [0, -1, t], [0, 1, t], [0, -1, -t], [0, 1, -t], [t, 0, -1], [t, 0, 1], [-t, 0, -1], [-t, 0, 1]].map(a => v3(...a).normalize());
+    const F = [[0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11], [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8], [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9], [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]];
+    const tp = (a, b) => V[a].clone().lerp(V[b], 1 / 3).normalize(), out = [];
+    const fan = pts => { const c = pts.reduce((m, q) => m.add(q), v3(0, 0, 0)).multiplyScalar(1 / pts.length); for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; out.push(c.x, c.y, c.z, a.x, a.y, a.z, b.x, b.y, b.z); } };
+    F.forEach(([a, b, c]) => fan([tp(a, b), tp(b, a), tp(b, c), tp(c, b), tp(c, a), tp(a, c)]));
+    const nb = V.map(() => new Set()); F.forEach(([a, b, c]) => { [[a, b], [b, c], [c, a]].forEach(([x, y]) => { nb[x].add(y); nb[y].add(x); }); });
+    V.forEach((v, i) => {
+      const ref = Math.abs(v.y) < .9 ? v3(0, 1, 0) : v3(1, 0, 0), u = v3().crossVectors(v, ref).normalize(), w = v3().crossVectors(v, u);
+      const pts = [...nb[i]].map(j => tp(i, j)).sort((p, q) => Math.atan2(p.dot(w), p.dot(u)) - Math.atan2(q.dot(w), q.dot(u)));
+      fan(pts);
+    });
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(out, 3)); g.computeVertexNormals(); return g;
+  };
+  const make = k => {
+    if (k === 'ball') return ball();
+    if (k === 'dodeca') return flat(new THREE.DodecahedronGeometry(1));
+    if (k === 'ico') return flat(new THREE.IcosahedronGeometry(1, 1));
+    if (k === 'cube') return flat(new THREE.BoxGeometry(1.7, 1.7, 1.7));
+    if (k === 'pyramid') { const g = new THREE.TetrahedronGeometry(1.3); return flat(g); }
+    if (k === 'octa') return flat(new THREE.OctahedronGeometry(1.15));
+    if (k === 'torus') { const g = new THREE.TorusGeometry(.78, .3, 28, 72); g.rotateX(Math.PI / 2); return g; }
+    return new THREE.SphereGeometry(1, 64, 48);
+  };
+  return { get(kind, r) { const g = (cache[kind] || (cache[kind] = make(kind))).clone(); g.scale(r, r, r); return g; } };
+})();
 const LAYER_NAMES = ['Nucleus', 'Memory', 'Flow field', 'Lattice', 'Perimeter'];
 const LAYER_DEFAULT = '#dfe4ea';
 const CORE_DEFAULTS = { density: 0.55, rings: 4, swarm: 0.35, haze: 0.45, comets: 1, structure: 0.55, layerDensity: 0.6 };
@@ -4244,6 +4286,8 @@ class PlanetBody {
     };
     this.outer = glass(1.3, 0.55, 'Glass shell');
     this.inner = glass(0.64, 0.4, 'Inner sphere');
+    this.nucleus = glass(0.3, 0.5, 'Nucleus'); this.nucleus.show = false; this.nucleus.alpha = 0.8;
+    this.shells = [this.outer, this.inner, this.nucleus]; this.shellKind = { outer: 'sphere', inner: 'sphere', nucleus: 'off' };
 
     this.blockMat = new THREE.ShaderMaterial({
       uniforms: { uColor: { value: new THREE.Color('#c9ccd6') }, uHiColor: this.uHiColor, uOpacity: { value: 0 }, uHi: { value: 0 } },
@@ -4573,9 +4617,14 @@ class PlanetBody {
     if (size != null) this.swarmMat.uniforms.uSize.value = size;
     if (hex) this.swarmMat.uniforms.uColor.value.set(hex);
   }
-  setInner(show) { this.inner.show = show; }
+  setInner(show) { this.inner.show = show; if (!show) this.shellKind.inner = 'off'; else if (this.shellKind.inner === 'off') this.shellKind.inner = 'sphere'; }
+  setShell(key, kind) {
+    const it = { outer: this.outer, inner: this.inner, nucleus: this.nucleus }[key]; if (!it) return;
+    this.shellKind[key] = kind; it.show = kind !== 'off';
+    if (kind !== 'off') { it.mesh.geometry.dispose(); it.mesh.geometry = ShellGeo.get(kind, it.radius); }
+  }
   setGlass(clarity, rim) {
-    [this.outer, this.inner].forEach(it => {
+    this.shells.forEach(it => {
       if (clarity != null) it.mat.uniforms.uClarity.value = clarity;
       if (rim != null) it.mat.uniforms.uRim.value = rim * (it === this.inner ? 0.73 : 1);
     });
@@ -4586,7 +4635,7 @@ class PlanetBody {
     this.setNeon(t.neon);
     this.hazeMat.uniforms.uBlue.value.set(t.haze);
     this.setMetal(t.metal);
-    [this.outer, this.inner].forEach(it => it.mat.uniforms.uColor.value.set(t.glass));
+    this.shells.forEach(it => it.mat.uniforms.uColor.value.set(t.glass));
     this.uTint.value.set(t.tint); this.uTintAmt.value = t.tintAmt;
     this.runners.forEach(rn => { rn.common.uTint.value.set(t.tint); rn.common.uTintAmt.value = t.tintAmt; rn.tinted = false; });
     this.theme = name;
@@ -4726,8 +4775,9 @@ class PlanetBody {
 
     // Highlights ease in and out.
     const hiOf = it => (it === this.selected ? 1 : it === this.hover ? 0.6 : 0);
-    [this.outer, this.inner].forEach(it => {
+    this.shells.forEach(it => {
       it.hi = damp1(it.hi, hiOf(it), 10);
+      if (this.shellKind[it === this.outer ? 'outer' : it === this.inner ? 'inner' : 'nucleus'] !== 'sphere') it.mesh.rotation.y = performance.now() * 0.00012 * (it === this.inner ? -1 : 1);
       it.mat.uniforms.uHi.value = it.hi;
       it.mesh.visible = it.show;
       it.mat.uniforms.uOpacity.value = on * it.alpha;
@@ -4780,7 +4830,7 @@ class PlanetBody {
   }
   dispose() {
     this.stopAudio();
-    [this.outer, this.inner].forEach(it => { it.mesh.geometry.dispose(); it.mat.dispose(); });
+    this.shells.forEach(it => { it.mesh.geometry.dispose(); it.mat.dispose(); });
     this.swarmGeom.dispose(); this.swarmMat.dispose(); this.cometGeom.dispose(); this.cometMat.dispose(); this.extraBands.forEach(e => e.m.dispose());
     this.box.dispose(); this.blockMat.dispose(); this.axis.geometry.dispose(); this.axisMat.dispose();
     this.runners.forEach(rn => { rn.lineMat.dispose(); rn.g.dispose(); rn.mat.dispose(); });
@@ -5412,7 +5462,7 @@ class World {
 
   get radius() { return this.def.radius * this.group.scale.x; }
 
-  static TUNE_DEFAULT = { hue: 0, sat: 1, bright: 1, colorize: 0, allColor: null, atmo: 1, halo: 1.8, haloSpeed: 1, dustSpread: 1, dustSize: 1, dustColor: null, spin: 1, dir: 1, size: 1, orbit: 1, orbitSpeed: 1, ring: 0, line: 1 };
+  static TUNE_DEFAULT = { atmoShape: 'sphere', hue: 0, sat: 1, bright: 1, colorize: 0, allColor: null, atmo: 1, halo: 1.8, haloSpeed: 1, dustSpread: 1, dustSize: 1, dustColor: null, spin: 1, dir: 1, size: 1, orbit: 1, orbitSpeed: 1, ring: 0, line: 1 };
   /* Colour tuning shifts the surface in the shader and every accent-derived colour here, so the page matches. */
   applyColor() {
     const t = this.tune, d = this.def;
@@ -5438,6 +5488,7 @@ class World {
     if (Effects.set(this, k, v)) return;
     this.tune[k] = v;
     if (k === 'hue' || k === 'sat' || k === 'bright' || k === 'colorize' || k === 'allColor') this.applyColor();
+    if (k === 'atmoShape') { const g = ShellGeo.get(v || 'sphere', this.def.radius * 1.16); this.atmo.geometry = g; this.atmoGeom.dispose(); this.atmoGeom = g; }
     if (k === 'halo') this.haloGeom.setDrawRange(0, Math.round(this.haloN * clamp(v, 0, 3) / 3));
     if (k === 'dustSpread') this.haloMat.uniforms.uDustSpread.value = clamp(v, .7, 1.7);
     if (k === 'dustSize') this.haloMat.uniforms.uDustSize.value = clamp(v, .5, 2.5);
@@ -8663,7 +8714,7 @@ class CoreStudio {
       c.field.points.visible=L.particles;p.swarm.visible=L.particles;
       p.comets.visible=L.comets;c.energy.group.visible=L.energy;
       p.haze.visible=L.dust;p.debris.visible=L.dust;
-      p.outer.mesh.visible=p.outer.show&&L.glass;p.inner.mesh.visible=p.inner.show&&L.glass;
+      p.outer.mesh.visible=p.outer.show&&L.glass;p.inner.mesh.visible=p.inner.show&&L.glass;p.nucleus.mesh.visible=p.nucleus.show&&L.glass;
       c.orbit.group.visible=false;p.axis.visible=false;
       a.orrery.group.visible=this.background==='space';
       if(a.orrery.group.visible)a.orrery.group.children.forEach(o=>o.visible=o===a.orrery.stars.points);
