@@ -7812,6 +7812,9 @@ class CoreStudio {
         <div class="st-td-al" role="group" aria-label="Alignment"><button type="button" data-talign="l" aria-label="Align left"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 10h10M4 14h16M4 18h10"/></svg></button><button type="button" data-talign="c" aria-label="Align centre"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 10h10M4 14h16M7 18h10"/></svg></button><button type="button" data-talign="r" aria-label="Align right"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M10 10h10M4 14h16M10 18h10"/></svg></button><button type="button" data-talign="j" aria-label="Align justify"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg></button></div>
         <div class="st-td-tg" role="group" aria-label="Text style"><button type="button" data-ttoggle="ul" aria-pressed="false" aria-label="Underline"><u>U</u></button><button type="button" data-ttoggle="outline" aria-pressed="false" aria-label="Outline"><span class="td-o">O</span></button><button type="button" data-ttoggle="bold" aria-pressed="false" aria-label="Bold"><b>B</b></button><button type="button" data-ttoggle="italic" aria-pressed="false" aria-label="Italic"><i>I</i></button><button type="button" data-ttoggle="upper" aria-pressed="false" aria-label="All caps">TT</button></div></div>
       <div class="st-fly st-glass" data-fly="style" hidden><b class="st-fly-title">Shape style</b>
+        <div class="st-rad" data-srad hidden><b class="st-fly-sub">Corner radius</b>
+          <label class="st-fly-row st-fly-check"><span>All corners together</span><input type="checkbox" data-rad-link></label>
+          <label class="st-fly-row"><span>Top left</span><output data-rado="0"></output><input type="range" min="0" max="1" step="0.01" data-rad="0"></label><label class="st-fly-row"><span>Top right</span><output data-rado="1"></output><input type="range" min="0" max="1" step="0.01" data-rad="1"></label><label class="st-fly-row"><span>Bottom right</span><output data-rado="2"></output><input type="range" min="0" max="1" step="0.01" data-rad="2"></label><label class="st-fly-row"><span>Bottom left</span><output data-rado="3"></output><input type="range" min="0" max="1" step="0.01" data-rad="3"></label></div>
         <label class="st-fly-row st-fly-check" data-sfor="decor"><span>Fill colour</span><input type="checkbox" data-sset="fillOn"></label>
         <label class="st-fly-row st-fly-check"><span>Outline</span><input type="checkbox" data-sset="lineOn"></label>
         <label class="st-fly-row" data-sfor="focus"><span>Line colour</span><input type="color" data-sset="lineColor"></label>
@@ -8008,7 +8011,11 @@ class CoreStudio {
     this.syncStyle = () => { const it = this.sel; if (!it || !it.st) return; const f = this.el.querySelector('[data-fly="style"]');
       f.querySelectorAll('[data-sfor]').forEach(n => { n.hidden = n.dataset.sfor !== (it.decor ? 'decor' : 'focus'); });
       f.querySelectorAll('[data-sset]').forEach(el => { const v = it.st[el.dataset.sset]; if (el.type === 'checkbox') el.checked = v; else el.value = v; });
-      f.querySelector('[data-so="lineW"]').textContent = `${it.st.lineW}px`; };
+      f.querySelector('[data-so="lineW"]').textContent = `${it.st.lineW}px`;
+      const sr = f.querySelector('[data-srad]'); sr.hidden = it.kind !== 'rect'; if (it.kind === 'rect') { it.rad = it.rad || [0, 0, 0, 0]; sr.querySelectorAll('[data-rad]').forEach(el => { const i = +el.dataset.rad; el.value = it.rad[i]; sr.querySelector(`[data-rado="${i}"]`).textContent = Math.round(it.rad[i] * 100) + '%'; el.style.setProperty('--p', (it.rad[i] * 100) + '%'); }); sr.querySelector('[data-rad-link]').checked = this.radLink !== false; } };
+    this.radLink = true;
+    this.el.querySelectorAll('[data-rad]').forEach(el => { el.addEventListener('input', () => { const it = this.sel; if (!it || it.kind !== 'rect') return; it.rad = it.rad || [0, 0, 0, 0]; const v = +el.value; if (this.radLink !== false) it.rad = [v, v, v, v]; else it.rad[+el.dataset.rad] = v; this.syncStyle(); this.place(it); this.updateFocus(); }); el.addEventListener('change', () => this.commit()); });
+    this.el.querySelector('[data-rad-link]').addEventListener('change', e => { this.radLink = e.target.checked; });
     this.el.querySelectorAll('[data-sset]').forEach(el => {
       el.addEventListener('input', () => { const it = this.sel; if (!it || !it.st) return; const k = el.dataset.sset; it.st[k] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value; if (it.kind === 'stroke' && it.strokes) it.strokes.forEach(sk => { if (k === 'lineColor') sk.color = it.st.lineColor; if (k === 'lineW') sk.size = it.st.lineW; if (k === 'dash') sk.dash = it.st.dash; }); this.syncStyle(); this.place(it); });
       el.addEventListener('change', () => this.commit());
@@ -8508,6 +8515,7 @@ class CoreStudio {
     const p = new Path2D();
     if (kind === 'circle') p.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
     else if (kind === 'tri') { p.moveTo(x + w / 2, y); p.lineTo(x + w, y + h); p.lineTo(x, y + h); p.closePath(); }
+    else if (it && it.rad && it.rad.some(v => v > 0)) return new Path2D(this.roundedD(w / 2, h / 2, it.rad, (u, v) => [x + w / 2 + u, y + h / 2 + v]));
     else p.rect(x, y, w, h);
     return p;
   }
@@ -8521,7 +8529,15 @@ class CoreStudio {
     for (let i = 1; i < P.length - 1; i++) d += `Q${P[i][0]} ${P[i][1]} ${(P[i][0] + P[i + 1][0]) / 2} ${(P[i][1] + P[i + 1][1]) / 2}`;
     return d + `L${P[P.length - 1][0]} ${P[P.length - 1][1]}`;
   }
-  shapeD(kind, w, h, it) { if (kind === 'stroke') return this.strokeD(it, w, h); return kind === 'circle' ? `M0 ${h / 2}A${w / 2} ${h / 2} 0 1 0 ${w} ${h / 2}A${w / 2} ${h / 2} 0 1 0 0 ${h / 2}Z` : kind === 'tri' ? `M${w / 2} 0L${w} ${h}L0 ${h}Z` : `M0 0H${w}V${h}H0Z`; }
+  // Rounded rectangle path. P maps centred local coords (u,v) to output coords; r = 4 radii (TL,TR,BR,BL) as 0..1 of half the short side.
+  roundedD(hw, hh, rad, P) {
+    const m = Math.min(hw, hh), r = (rad || [0, 0, 0, 0]).map(v => Math.max(0, Math.min(1, v || 0)) * m), [a, b, c, d] = r, q = (u, v) => P(u, v).join(' ');
+    let o = `M${q(-hw + a, -hh)}L${q(hw - b, -hh)}`; if (b) o += `A${b} ${b} 0 0 1 ${q(hw, -hh + b)}`;
+    o += `L${q(hw, hh - c)}`; if (c) o += `A${c} ${c} 0 0 1 ${q(hw - c, hh)}`;
+    o += `L${q(-hw + d, hh)}`; if (d) o += `A${d} ${d} 0 0 1 ${q(-hw, hh - d)}`;
+    o += `L${q(-hw, -hh + a)}`; if (a) o += `A${a} ${a} 0 0 1 ${q(-hw + a, -hh)}`; return o + 'Z';
+  }
+  shapeD(kind, w, h, it) { if (kind === 'stroke') return this.strokeD(it, w, h); return kind === 'circle' ? `M0 ${h / 2}A${w / 2} ${h / 2} 0 1 0 ${w} ${h / 2}A${w / 2} ${h / 2} 0 1 0 0 ${h / 2}Z` : kind === 'tri' ? `M${w / 2} 0L${w} ${h}L0 ${h}Z` : (it && it.rad && it.rad.some(v => v > 0)) ? this.roundedD(w / 2, h / 2, it.rad, (u, v) => [w / 2 + u, h / 2 + v]) : `M0 0H${w}V${h}H0Z`; }
   dashArr(s) { const w = s.lineW; return s.dash === 'dashed' ? [w * 4, w * 3] : s.dash === 'dotted' ? [0.01, w * 2.2] : []; }
   maskSvg(it, w, h) {
     if (!it.mask || !it.mask.on) return '';
@@ -9157,6 +9173,7 @@ class CoreStudio {
       const ang = (s.rot || 0), ra = ang * Math.PI / 180, ca = Math.cos(ra), sa = Math.sin(ra), cx = x + w / 2, cy = y + h / 2, P = (u, v) => `${f(cx + u * ca - v * sa)} ${f(cy + u * sa + v * ca)}`;
       if (s.kind === 'circle') return `M${P(-w / 2, 0)}A${f(w / 2)} ${f(h / 2)} ${f(ang)} 1 0 ${P(w / 2, 0)}A${f(w / 2)} ${f(h / 2)} ${f(ang)} 1 0 ${P(-w / 2, 0)}Z`;
       const pts = s.kind === 'tri' ? [[0, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]] : [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]];
+      if (s.kind === 'rect' && s.rad && s.rad.some(v => v > 0)) return this.roundedD(w / 2, h / 2, s.rad, (u, v) => [+(cx + u * ca - v * sa).toFixed(1), +(cy + u * sa + v * ca).toFixed(1)]);
       return 'M' + pts.map(([u, v]) => P(u, v)).join('L') + 'Z';
     }).join('');
     this.fx.style.clipPath = this.fx.style.webkitClipPath = `path('${d}')`;
@@ -9204,9 +9221,9 @@ class CoreStudio {
         const blurred=document.createElement('canvas');blurred.width=width;blurred.height=height;
         const b=blurred.getContext('2d');b.drawImage(softBlur(out,this.blur*Math.max(sx,sy)),0,0);if(this.dim>0){b.fillStyle=`rgba(0,0,0,${this.dim})`;b.fillRect(0,0,width,height);}
         b.globalCompositeOperation=this.focusInv?'destination-in':'destination-out';b.beginPath();
-        shapes.forEach(s=>{const x=s.x*width,y=s.y*height,rx=s.w*U*sx/2,ry=s.h*U*sy/2,a=(s.rot||0)*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a),P=(u,v)=>[x+u*ca-v*sa,y+u*sa+v*ca];b.moveTo(x+rx,y);
+        const roundedList=[];shapes.forEach(s=>{const x=s.x*width,y=s.y*height,rx=s.w*U*sx/2,ry=s.h*U*sy/2,a=(s.rot||0)*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a),P=(u,v)=>[x+u*ca-v*sa,y+u*sa+v*ca];b.moveTo(x+rx,y);
           if(s.kind==='circle')b.ellipse(x,y,rx,ry,a,0,Math.PI*2);
-          else{const pts=s.kind==='tri'?[[0,-ry],[rx,ry],[-rx,ry]]:[[-rx,-ry],[rx,-ry],[rx,ry],[-rx,ry]];pts.forEach(([u,v],i)=>{const q=P(u,v);i?b.lineTo(q[0],q[1]):b.moveTo(q[0],q[1]);});b.closePath();}});
+          else if(s.kind==='rect'&&s.rad&&s.rad.some(v=>v>0)){roundedList.push(new Path2D(this.roundedD(rx,ry,s.rad,(u,v)=>{const q=P(u,v);return [q[0],q[1]];})));}else{const pts=s.kind==='tri'?[[0,-ry],[rx,ry],[-rx,ry]]:[[-rx,-ry],[rx,-ry],[rx,ry],[-rx,ry]];pts.forEach(([u,v],i)=>{const q=P(u,v);i?b.lineTo(q[0],q[1]):b.moveTo(q[0],q[1]);});b.closePath();}});roundedList.forEach(pp=>b.fill(pp));
         b.fill();b.globalCompositeOperation='source-over';if(this.focusInv){g.save();g.drawImage(blurred,0,0);g.restore();}else g.drawImage(blurred,0,0);
       }
       if(this.fxLive()&&this.effect!=='off'&&this.effectAmount>0){g.save();g.globalAlpha=(this.fxItem('colour')||{alpha:1}).alpha;g.drawImage(this.vfx,0,0,width,height);g.restore();}
