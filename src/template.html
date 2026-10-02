@@ -1171,6 +1171,21 @@ body .tune-row:has(.st-knob),.studio-panel .studio-control:has(.st-knob){align-i
 .studio-section[open]>summary{color:#8b5cf6;box-shadow:inset 3px 0 0 #8b5cf6}
 .studio-section[open]{background:linear-gradient(90deg,#8b5cf60d,transparent 70%)}
 #studio .st-panel-head h2,.tune-h{color:#fff}
+/* ===== Dial deck: big dials folded into dropdown groups ===== */
+.dial-hide{display:none}
+.dial-grp{margin:10px 0;border-radius:16px;background:linear-gradient(145deg,#2f2c39,#24222c);box-shadow:5px 6px 14px #00000066,-3px -3px 9px #ffffff08}
+.dial-grp>summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;align-items:center;gap:10px;font:600 11px var(--f-sans);letter-spacing:.16em;text-transform:uppercase;color:#d9ccff;user-select:none}
+.dial-grp>summary::-webkit-details-marker{display:none}
+.dial-grp>summary i{font:600 10px var(--f-num);font-style:normal;letter-spacing:0;padding:2px 8px;border-radius:99px;background:var(--cyg);color:#fff;margin-left:auto}
+.dial-grp>summary::after{content:"";width:7px;height:7px;border-right:2px solid #c9a8ff;border-bottom:2px solid #c9a8ff;transform:rotate(45deg);transition:transform .2s;margin:-3px 2px 0 6px}
+.dial-grp[open]>summary::after{transform:rotate(225deg);margin-top:3px}
+.dial-grp[open]>summary{box-shadow:inset 3px 0 0 #8b5cf6;border-radius:16px 16px 0 0}
+body .dial-body{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px 6px;padding:6px 10px 16px;justify-items:center}
+body .dial-body>.tune-row,body .dial-body>.studio-control{display:flex;flex-direction:column;align-items:center;gap:2px;margin:0;padding:0;background:none;box-shadow:none;width:100%;min-width:0}
+body .dial-body>[hidden]{display:none}
+body .dial-body .st-knob{order:1;width:100px;height:100px;grid-column:auto;justify-self:auto}
+body .dial-body>*>span:first-child{order:2;font:600 10px/1.25 var(--f-sans);letter-spacing:.1em;text-transform:uppercase;color:#aeb4c4;text-align:center}
+body .dial-body input[type=range],body .dial-body b[data-out],body .dial-body output{display:none}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -7537,6 +7552,8 @@ class CoreStudio {
     document.addEventListener('pointerdown', e => { if (!e.target.closest('.st-fly,[data-flyout]')) this.closeFly(); }, true);
     this.initDraw();
     ['[data-t-aberr]', '[data-t-blur]', '[data-t-bloom]', '[data-t-speed]', '[data-t-zoom]', '[data-t-density]', '[data-t-thick]', '[data-t-rim]', '[data-t-haze]', '[data-t-frate]', '[data-t-famt]', '[data-t-ptrs]', '[data-t-gain]', '[data-studio-light]', '[data-studio-light-x]', '[data-studio-shadow]', '[data-studio-shadow-soft]', '[data-studio-angle]', '[data-studio-blur]', '[data-studio-effect-amount]'].forEach(s => this.knobify(document.querySelector(s)));
+    document.querySelectorAll('#tune,#wtune,#obuild').forEach(el => this.dialDeck(el, '.tune-row', true));
+    this.el.querySelectorAll('.studio-panel').forEach(el => this.dialDeck(el, '.studio-control', false));
     this.tool = 'move';
     this.setTool = tool => { if (tool !== 'draw' && this.drawing) this.setDrawing(false); this.tool = tool === 'hand' ? 'hand' : 'move'; this.el.classList.toggle('tool-hand', this.tool === 'hand');
       this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioTool === this.tool && !this.drawing))); if (this.tool === 'hand') this.select(null); };
@@ -8119,6 +8136,33 @@ class CoreStudio {
   }
   placeCpts() { this.cptLayer.querySelectorAll('.st-cpt').forEach(b => { const p = this.cpts[+b.dataset.cp]; if (!p) return; b.style.left = p.x * 100 + '%'; b.style.top = p.y * 100 + '%'; b.style.background = p.c; }); }
   // Neumorphic rotary dial that drives an existing range input (drag up/down or sideways, wheel, arrow keys).
+  dialDeck(root, rowSel, fold) {
+    if (!root || root._deck) return; root._deck = 1;
+    const ok = r => r && r.matches && r.matches(rowSel) && !r.closest('.dial-body') && r.querySelectorAll('input').length === 1 && r.querySelector('input[type=range]');
+    const build = () => {
+      [...root.querySelectorAll(rowSel)].forEach(r => {
+        if (!ok(r)) return;
+        let key = r.previousElementSibling; while (key && !key.classList.contains('tune-sub') && !key.classList.contains('dial-grp') && !key.matches(rowSel)) key = key.previousElementSibling;
+        while (key && !key.classList.contains('tune-sub')) { if (key.classList.contains('dial-grp')) { key = key._tsub || null; break; } key = key.previousElementSibling; }
+        const holder = key || r.parentElement; let g = holder._dg;
+        if (!g) {
+          const body = document.createElement('div'); body.className = 'dial-body'; let host = body, cnt = null;
+          if (fold) {
+            host = document.createElement('details'); host.className = 'dial-grp'; host._tsub = key;
+            const sm = document.createElement('summary'); sm.innerHTML = '<span></span><i>0</i>'; const pn = r.closest('[data-pane]'); sm.firstChild.textContent = key ? key.textContent : pn ? pn.dataset.pane : 'Dials'; cnt = sm.lastChild;
+            if (key) key.classList.add('dial-hide');
+            host.append(sm, body);
+          }
+          r.before(host); g = holder._dg = { host, body, cnt, n: 0 };
+          if (fold) host.open = !host.parentElement.querySelector(':scope>.dial-grp[open]');
+        }
+        g.body.append(r); g.n++; if (g.cnt) g.cnt.textContent = g.n;
+        this.knobify(r.querySelector('input[type=range]'));
+      });
+    };
+    let t = 0; new MutationObserver(() => { cancelAnimationFrame(t); t = requestAnimationFrame(build); }).observe(root, { childList: true, subtree: true });
+    build();
+  }
   knobify(input) {
     if (!input || input._knob) return; input._knob = 1;
     const k = document.createElement('span'); k.className = 'st-knob'; k.tabIndex = 0; k.setAttribute('role', 'slider');
