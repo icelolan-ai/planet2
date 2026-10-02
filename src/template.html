@@ -832,7 +832,10 @@ body.studio-on #studio{display:block}
 .st-decor{color:#ff3d8a}
 #studio .st-kitc{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:block}
 #studio [data-kit-types] .st-btn canvas{width:44px;height:44px;display:block;margin:0 auto 2px}
-#studio [data-kit-panel]{max-height:min(52vh,520px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#studio [data-kit-panel]{width:min(340px,calc(100vw - 16px));grid-template-columns:minmax(0,1fr);max-height:min(52vh,520px);overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;scrollbar-width:thin}
+#studio [data-kit-panel] .st-fly-row,#studio [data-kit-panel] .st-fly-row>*{min-width:0}
+#studio [data-kit-panel] select{max-width:100%;min-height:40px}
+#studio [data-kit-panel] .st-fly-row>span{overflow-wrap:anywhere}
 #studio .st-kit-area{grid-template-columns:1fr}#studio [data-kit-panel] textarea,#studio [data-kit-panel] input[type=text]{width:100%;box-sizing:border-box;background:#ffffff14;border:1px solid #ffffff26;border-radius:10px;color:#fff;font:13px var(--f-sans);padding:8px 10px;resize:vertical}
 #studio .st-kit-shuffle{width:100%;justify-content:center;margin-top:4px}
 #studio .st-decor svg.st-outline{filter:none}
@@ -872,6 +875,9 @@ body.studio-on #studio{display:block}
 .st-context{position:absolute;left:var(--lay-l,16px);right:var(--lay-r,16px);width:fit-content;max-width:calc(100% - var(--lay-l,16px) - var(--lay-r,16px));margin:0 auto;bottom:var(--lay-b,96px);display:flex;align-items:center;gap:10px;padding:8px 10px;pointer-events:auto;flex-wrap:wrap;justify-content:center}
 .st-context[hidden],.st-context [hidden]{display:none!important}
 .st-context input[type=text]{min-height:40px;width:180px;padding:0 12px;border:1px solid #ffffff2a;border-radius:10px;background:#ffffff0a;color:#fff}
+#studio .st-context .st-fly-btn{min-height:46px;padding:0 18px;flex:0 0 auto;font-size:14px;letter-spacing:.06em}
+#studio .st-context [data-ctx-for-kit]{background:var(--cyg);color:#fff;border-color:transparent;box-shadow:0 0 16px #8b5cf655}
+@media(pointer:coarse){#studio .st-context .st-fly-btn{min-height:52px;padding:0 22px;font-size:15px}}
 #studio .st-context select{min-height:40px;padding:0 10px;border:1px solid #ffffff2a;border-radius:10px;background:#141822;color:#fff}
 .st-context label{display:flex;align-items:center;gap:8px;font:600 11px var(--f-cond);letter-spacing:.1em;text-transform:uppercase;color:#aab3c4}
 .st-context input[type=range]{width:110px;accent-color:#ff4655}
@@ -944,7 +950,7 @@ body.studio-on #studio{display:block}
 .st-shape.is-locked{pointer-events:none;cursor:default}
 .st-shape.is-locked svg.st-outline{opacity:.35}
 body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.st-context){display:none}
-.st-fly{position:absolute;z-index:6;width:min(280px,calc(100vw - 16px));padding:16px;display:grid;gap:12px;pointer-events:auto}
+.st-fly{position:absolute;z-index:9;width:min(280px,calc(100vw - 16px));padding:16px;display:grid;gap:12px;pointer-events:auto}
 .st-fly[hidden]{display:none}
 .st-fly-title{font:600 12px var(--f-cond);letter-spacing:.16em;text-transform:uppercase;color:#ff8f98}
 .st-fly-note{margin:-6px 0 0;font:12px/1.45 var(--f-body);color:#97a1b3}
@@ -1285,6 +1291,9 @@ html,body{touch-action:pan-x pan-y}
 /* Eraser + layer controls in the drawing bar */
 #studio .st-assist-r0{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between}
 #studio .st-assist-r0 .st-esize{display:none;flex:1 1 140px}
+#studio .st-assist-rp{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:center}
+#studio .st-assist-rp input[type=color]{width:46px;height:46px;padding:3px;border:1px solid #ffffff2a;border-radius:12px;background:none}
+#studio .st-assist.is-erase .st-assist-rp{display:none}
 #studio .st-assist.is-erase .st-esize{display:grid}
 #studio .st-assist-new{min-height:38px;padding:0 14px;border:0;border-radius:11px;background:#ffffff1c;color:#fff;font:600 11px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:1px solid #ffffff2e}
 #studio .st-assist-seg button[data-atool].is-on{background:var(--cyg);color:#fff;box-shadow:0 0 14px #8b5cf666}
@@ -8200,7 +8209,9 @@ class CoreStudio {
     this.el.querySelectorAll('[data-flyout]').forEach(b => b.onclick = e => {
       e.stopPropagation(); const f = this.el.querySelector(`[data-fly="${b.dataset.flyout}"]`), open = f.hidden; this.closeFly(); if (!open) return;
       if (b.dataset.flyout === 'style') this.syncStyle(); else if (b.dataset.flyout === 'textdesign') this.syncText(); else if (b.dataset.flyout === 'kitdesign') this.syncKit(); else this.select(null); this.syncFly(); f.hidden = false; b.setAttribute('aria-expanded', 'true');
-      const r = b.getBoundingClientRect(), W = innerWidth, H = innerHeight, fw = f.offsetWidth, fh = f.offsetHeight;
+      const r = b.getBoundingClientRect(), W = innerWidth, H = innerHeight;
+      if (b.dataset.flyout === 'kitdesign') { f.style.maxHeight = Math.max(160, Math.min(H * .6, r.top - 20)) + 'px'; const kw = f.offsetWidth, kh = f.offsetHeight; f.style.left = `${clamp(r.left + r.width / 2 - kw / 2, 8, W - kw - 8)}px`; f.style.top = `${Math.max(8, r.top - kh - 12)}px`; return; }
+      const fw = f.offsetWidth, fh = f.offsetHeight;
       let x = r.right + 12, y = r.top; if (x + fw > W - 8) x = r.left - fw - 12; if (x < 8) { x = clamp(r.left + r.width / 2 - fw / 2, 8, W - fw - 8); y = r.top - fh - 12; if (y < 8) y = r.bottom + 12; }
       f.style.left = `${x}px`; f.style.top = `${clamp(y, 8, H - fh - 8)}px`;
     });
@@ -8839,7 +8850,7 @@ class CoreStudio {
     // Visible drawing-assist bar (Procreate style): guide type + snap toggle, shown while the pencil is active.
     const bar = document.createElement('div'); bar.className = 'st-assist st-glass';
     const bs = (k, label) => `<label class="st-assist-sl"><span>${label}</span><b data-bo="${k}"></b><input type="range" data-bset="${k}"></label>`;
-    bar.innerHTML = '<div class="st-mask-note" data-mask-note></div><div class="st-assist-r0"><div class="st-assist-seg" role="group" aria-label="Tool"><button type="button" data-atool="pen" class="is-on">Pen</button><button type="button" data-atool="erase">Eraser</button></div><label class="st-assist-sl st-esize"><span>Eraser size</span><b data-bo="esize"></b><input type="range" min="6" max="90" step="2" data-eset></label><button type="button" class="st-assist-new" data-anew>+ New layer</button></div><div class="st-assist-r1"><span class="st-assist-t">Drawing Guides</span><div class="st-assist-seg" role="group" aria-label="Guide"><button type="button" data-ag="none">Off</button><button type="button" data-ag="grid">2D Grid</button><button type="button" data-ag="iso">Isometric</button></div><button type="button" class="st-assist-sw" data-asnap role="switch" aria-checked="false"><span>Assisted drawing</span><i></i></button><button type="button" class="st-assist-x" data-adone aria-label="Done drawing">Done</button></div><div class="st-assist-r2">' + bs('gopacity', 'Opacity') + bs('gthick', 'Thickness') + bs('gap', 'Grid size') + '</div>';
+    bar.innerHTML = '<div class="st-mask-note" data-mask-note></div><div class="st-assist-r0"><div class="st-assist-seg" role="group" aria-label="Tool"><button type="button" data-atool="pen" class="is-on">Pen</button><button type="button" data-atool="erase">Eraser</button></div><label class="st-assist-sl st-esize"><span>Eraser size</span><b data-bo="esize"></b><input type="range" min="6" max="90" step="2" data-eset></label><button type="button" class="st-assist-new" data-anew>+ New layer</button></div><div class="st-assist-rp"><input type="color" data-bcolor aria-label="Pen colour">' + bs('size', 'Pen thickness') + bs('opacity', 'Pen opacity') + '</div><div class="st-assist-r1"><span class="st-assist-t">Drawing Guides</span><div class="st-assist-seg" role="group" aria-label="Guide"><button type="button" data-ag="none">Off</button><button type="button" data-ag="grid">2D Grid</button><button type="button" data-ag="iso">Isometric</button></div><button type="button" class="st-assist-sw" data-asnap role="switch" aria-checked="false"><span>Assisted drawing</span><i></i></button><button type="button" class="st-assist-x" data-adone aria-label="Done drawing">Done</button></div><div class="st-assist-r2">' + bs('gopacity', 'Guide opacity') + bs('gthick', 'Guide thickness') + bs('gap', 'Grid size') + '</div>';
     this.el.append(bar);
     const poke = (k, v) => { const el = fly.querySelector(`[data-dset="${k}"]`); if (!el) return; if (el.type === 'checkbox') el.checked = v; else el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
     const syncBar = () => {
@@ -8847,6 +8858,7 @@ class CoreStudio {
       const sw = bar.querySelector('[data-asnap]'); sw.setAttribute('aria-checked', String(!!this.drawSet.assist)); sw.classList.toggle('is-on', !!this.drawSet.assist);
       bar.querySelectorAll('[data-bset]').forEach(el => { const k = el.dataset.bset, src = fly.querySelector(`[data-dset="${k}"]`); if (src) { ['min', 'max', 'step'].forEach(a => el.setAttribute(a, src.getAttribute(a))); } if (document.activeElement !== el) el.value = this.drawSet[k]; el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%'); bar.querySelector(`[data-bo="${k}"]`).textContent = fmt[k](this.drawSet[k]); });
       bar.classList.toggle('is-off', this.drawSet.guide === 'none');
+      const bc = bar.querySelector('[data-bcolor]'); if (bc && document.activeElement !== bc) bc.value = this.drawSet.color;
     };
     this.drawTool = 'pen';
     const esl = bar.querySelector('[data-eset]'), setTool = t => { this.drawTool = t; bar.querySelectorAll('[data-atool]').forEach(b => b.classList.toggle('is-on', b.dataset.atool === t)); bar.classList.toggle('is-erase', t === 'erase'); pad.classList.toggle('is-erase', t === 'erase'); eraseCur.hidden = t !== 'erase'; };
@@ -8860,6 +8872,7 @@ class CoreStudio {
     bar.querySelectorAll('[data-ag]').forEach(b => b.addEventListener('click', () => poke('guide', b.dataset.ag)));
     bar.querySelector('[data-asnap]').addEventListener('click', () => poke('assist', !this.drawSet.assist));
     bar.querySelectorAll('[data-bset]').forEach(el => el.addEventListener('input', () => poke(el.dataset.bset, +el.value)));
+    bar.querySelector('[data-bcolor]').addEventListener('input', e => poke('color', e.target.value));
     bar.querySelector('[data-adone]').addEventListener('click', () => { this.setDrawing(false); this.closeFly(); });
     fly.addEventListener('input', syncBar); syncBar(); this.syncAssistBar = syncBar;
     const btn = this.el.querySelector('[data-studio-draw]');
