@@ -978,6 +978,25 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 #studio input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-7px;border-radius:50%;background:#ff4655;box-shadow:0 0 0 3px #ff465533,0 2px 6px #0008}
 #studio input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radius:50%;background:#ff4655}
 #studio input[type=checkbox]{accent-color:#ff4655}
+/* Magic Bento */
+.mb{--mx:50%;--my:50%;--glow:255,70,85}
+.mb::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .35s;z-index:0;
+  background:radial-gradient(260px circle at var(--mx) var(--my),rgba(var(--glow),.16),transparent 60%);
+  box-shadow:inset 0 0 0 1px rgba(var(--glow),.0)}
+.mb.mb-on::after{opacity:1}
+.mb::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;opacity:0;transition:opacity .35s;z-index:1;
+  background:radial-gradient(220px circle at var(--mx) var(--my),rgba(var(--glow),.95),transparent 55%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.mb.mb-on::before{opacity:1}
+.mb-p{position:absolute;width:4px;height:4px;border-radius:50%;background:rgb(var(--glow));box-shadow:0 0 8px rgb(var(--glow));pointer-events:none;z-index:2;animation:mbp 1.6s ease-out both}
+@keyframes mbp{0%{opacity:0;transform:scale(0)}30%{opacity:1}100%{opacity:0;transform:translate(calc((var(--r,0.5) - .5) * 60px),-40px) scale(.4)}}
+.mb-r{position:absolute;width:0;height:0;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(var(--glow),.35),transparent 60%);pointer-events:none;z-index:2;animation:mbr .7s ease-out forwards}
+@keyframes mbr{to{width:var(--d);height:var(--d);opacity:0}}
+.gw-a.mb{--glow:255,95,168}
+.gateway-choice.mb::before{display:none}
+.gateway-orb{transition:transform .25s ease-out}
+.atelier-copy.mb{border-radius:18px}
+@media(prefers-reduced-motion:reduce){.mb-p,.mb-r{display:none}}
 /* Movable trays */
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
 .st-edge-hint[hidden]{display:none}
@@ -6638,6 +6657,33 @@ const NET = (() => {
     rgb(hex) { const n = parseInt(hex.slice(1), 16); return `${n >> 16},${n >> 8 & 255},${n & 255}`; }
   };
 })();
+/* Magic Bento (after reactbits.dev): a spotlight and glowing border that follow the pointer, optional tilt and
+   magnetism, a few drifting particles on hover and a ripple on click. Vanilla, applied by selector. */
+const MagicBento = (() => {
+  const fine = matchMedia('(pointer: fine)').matches, still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const bind = (el, o) => {
+    if (el._mb) return; el._mb = 1; el.classList.add('mb');
+    const move = e => {
+      const r = el.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+      el.style.setProperty('--mx', x + 'px'); el.style.setProperty('--my', y + 'px'); el.classList.add('mb-on');
+      if (still || !fine) return;
+      const nx = x / r.width - .5, ny = y / r.height - .5;
+      const tf = (o.tilt ? `perspective(900px) rotateX(${-ny * o.tilt}deg) rotateY(${nx * o.tilt}deg)` : '') + (o.magnet ? ` translate(${nx * o.magnet}px,${ny * o.magnet}px)` : '');
+      if (tf) (o.target ? el.querySelector(o.target) || el : el).style.transform = tf;
+    };
+    const leave = () => { el.classList.remove('mb-on'); if (o.tilt || o.magnet) (o.target ? el.querySelector(o.target) || el : el).style.transform = ''; };
+    el.addEventListener('pointermove', move); el.addEventListener('pointerleave', leave);
+    if (o.particles && !still) el.addEventListener('pointerenter', () => {
+      for (let i = 0; i < 8; i++) { const s = document.createElement('i'); s.className = 'mb-p'; s.style.cssText = `left:${Math.random() * 100}%;top:${Math.random() * 100}%;animation-delay:${i * 80}ms`; el.append(s); setTimeout(() => s.remove(), 1800); }
+    });
+    if (o.ripple && !still) el.addEventListener('pointerdown', e => {
+      const r = el.getBoundingClientRect(), s = document.createElement('i'); s.className = 'mb-r';
+      s.style.cssText = `left:${e.clientX - r.left}px;top:${e.clientY - r.top}px;--d:${Math.hypot(r.width, r.height) * 2}px`; el.append(s); setTimeout(() => s.remove(), 700);
+    });
+  };
+  const apply = (sel, o = {}) => document.querySelectorAll(sel).forEach(el => bind(el, o));
+  return { apply };
+})();
 /** Drifting, twinkling constellation anchored to a point (an orb or the viewport centre); animates only while its view is open. */
 class GatewayNet {
   constructor(canvas, rgb, anchor, opts) {
@@ -6746,6 +6792,8 @@ class WorldAtelier {
       const orb = cv.parentNode.querySelector('.gateway-orb');
       return new GatewayNet(cv, i ? '255,40,50' : '255,120,190', () => { const a = orb.getBoundingClientRect(), b = cv.getBoundingClientRect(); return { x: a.left + a.width / 2 - b.left, y: a.top + a.height / 2 - b.top, r: Math.max(40, a.width / 2) }; }, () => ({ density: i ? 70 : 55 }));
     });
+    MagicBento.apply('.gateway-choice', { tilt: 10, magnet: 14, target: '.gateway-orb', particles: true });
+    MagicBento.apply('.atelier-copy', { ripple: true, particles: true });
     netList.forEach(n => n.watch(this.choice, () => !this.choice.hidden, ['hidden']));
     this.choice.querySelectorAll('[data-route]').forEach((card, i) => card.addEventListener('pointerdown', e => {
       if (e.target.closest('button')) return;
@@ -7068,6 +7116,7 @@ class CoreStudio {
     fold(this.el.querySelector('[data-panel-fold]'), this.panel);
     fold(this.el.querySelector('[data-layers-fold]'), this.el.querySelector('[data-tray="layers"]'));
     this.initTrays();
+    MagicBento.apply('#studio .st-glass', { ripple: true }); MagicBento.apply('#studio .studio-preset', { tilt: 8, magnet: 4, ripple: true, particles: true });
     fold(this.el.querySelector('[data-dock-fold]'), this.el.querySelector('.st-dock'), 'toolbar');
     this.el.querySelector('[data-studio-tools]').onclick = () => {
       if (document.body.classList.contains('tune-open')) {
