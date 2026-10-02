@@ -1037,6 +1037,19 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 @keyframes rbfolder{from{translate:0 60vh;rotate:-8deg;opacity:0}to{translate:0 0;rotate:0deg}}
 .atelier-copy h2 .ch{transition:scale .2s ease-out,color .9s,text-shadow .9s;transform-origin:50% 100%}
 @media(prefers-reduced-motion:reduce){.rb-star::after,.st-grain{animation:none}}
+.st-draw-pad{position:absolute;inset:0;z-index:0;pointer-events:auto;cursor:crosshair;touch-action:none}
+.st-draw-pad[hidden]{display:none}
+.st-guides,.st-ink{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.st-ink path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+#studio.is-drawing .st-item{pointer-events:none}
+#studio [data-studio-draw][aria-pressed=true]{background:linear-gradient(150deg,#ff6b78,#e8364a);color:#fff}
+.st-cpts{position:absolute;inset:0;z-index:0;pointer-events:none}
+.st-cpts[hidden],.st-cpts.is-off{display:none}
+#studio .st-cpt{position:absolute;width:26px;height:26px;min-height:0;min-width:0;padding:0;margin:-13px 0 0 -13px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #0006,0 4px 14px #0008;pointer-events:auto;cursor:grab;touch-action:none}
+.st-cpt-row{display:flex;align-items:center;gap:10px;margin:6px 0}
+.st-cpt-row input[type=color]{width:44px!important;height:34px!important}
+.st-cpt-row span{flex:1;font:13px var(--f-sans);color:#cfd6e2}
+.st-cpts-ed[hidden]{display:none}
 /* Movable trays */
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
 .st-edge-hint[hidden]{display:none}
@@ -7174,13 +7187,13 @@ class CoreStudio {
     const I = d => `<svg class="st-i" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
     this.icons = { text: I('<path d="M5 6h14M12 6v13"/>'), tri: I('<path d="M12 4l9 16H3z"/>'), rect: I('<rect x="4" y="4" width="16" height="16" rx="1"/>'), circle: I('<circle cx="12" cy="12" r="8.5"/>'),
       lock: I('<rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'), unlock: I('<rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 7.6-1.8"/>'),
-      trash: I('<path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/>') };
+      trash: I('<path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/>'), stroke: I('<path d="M4 20l4-1L19 8l-3-3L5 16z"/><path d="M14 7l3 3"/>') };
     this.fxBg = document.createElement('canvas'); this.fxGl = document.createElement('canvas'); this.fx.append(this.fxBg, this.fxGl);
     this.el.innerHTML = `<div class="studio-stage" data-studio-stage></div>
       <button type="button" class="st-btn st-back st-glass" data-studio-exit aria-label="Exit studio">${I('<path d="M19 12H5M11 6l-6 6 6 6"/>')}</button>
       <button type="button" class="st-btn st-tray-lock st-glass" data-tray-lock aria-pressed="true" aria-label="Unlock menus to move them"></button><button type="button" class="st-btn st-tray-snap st-glass" data-tray-snap aria-pressed="true" aria-label="Snap menus to edges">${I('<path d="M4 4v16M4 12h9M10 8l4 4-4 4"/>')}<span>Snap</span></button>
       <nav class="st-rail st-glass" data-tray="add" aria-label="Add to poster"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><span class="st-rail-label">Add</span>
-        <button type="button" class="st-btn" data-studio-add="text">${this.icons.text}Text</button><button type="button" class="st-btn st-fly-btn" data-flyout="focus" aria-expanded="false">${this.icons.tri}Focus<i class="st-caret"></i></button></nav>
+        <button type="button" class="st-btn" data-studio-add="text">${this.icons.text}Text</button><button type="button" class="st-btn st-fly-btn" data-flyout="focus" aria-expanded="false">${this.icons.tri}Focus<i class="st-caret"></i></button><button type="button" class="st-btn st-fly-btn" data-flyout="draw" data-studio-draw aria-pressed="false" aria-expanded="false">${this.icons.stroke}Draw<i class="st-caret"></i></button></nav>
       <nav class="st-rail st-rail-decor st-glass" data-tray="decor" aria-label="Add decoration"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><span class="st-rail-label">Decor</span>
         <button type="button" class="st-btn st-fly-btn" data-flyout="decor" aria-expanded="false">${this.icons.circle}Shapes<i class="st-caret"></i></button><span class="st-rail-sep"></span>
         <button type="button" class="st-btn" data-studio-undo aria-label="Undo" disabled>${I('<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>')}Undo</button><button type="button" class="st-btn" data-studio-redo aria-label="Redo" disabled>${I('<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/>')}Redo</button>
@@ -7194,6 +7207,16 @@ class CoreStudio {
         <div class="st-fly-shapes"><button type="button" class="st-btn" data-studio-decor="tri">${this.icons.tri}Triangle</button><button type="button" class="st-btn" data-studio-decor="rect">${this.icons.rect}Square</button><button type="button" class="st-btn" data-studio-decor="circle">${this.icons.circle}Circle</button></div>
         <label class="st-fly-row"><span>Colour</span><input type="color" data-fset="decorFill"></label>
         <label class="st-fly-row"><span>Opacity</span><output data-fo="decorOpacity"></output><input type="range" min="0.05" max="1" step="0.05" data-fset="decorOpacity"></label></div>
+      <div class="st-fly st-glass" data-fly="draw" hidden><b class="st-fly-title">Pencil</b><p class="st-fly-note">Draw on the canvas. Hold still at the end of a stroke to turn it into a straight line or a circle, then keep holding and move to adjust it.</p>
+        <label class="st-fly-row"><span>Colour</span><input type="color" data-dset="color"></label>
+        <label class="st-fly-row"><span>Size</span><output data-do="size"></output><input type="range" min="1" max="40" step="1" data-dset="size"></label>
+        <label class="st-fly-row"><span>Opacity</span><output data-do="opacity"></output><input type="range" min="0.05" max="1" step="0.05" data-dset="opacity"></label>
+        <label class="st-fly-row"><span>Line type</span><select data-dset="dash"><option value="solid">Solid</option><option value="dashed">Dashed</option><option value="dotted">Dotted</option></select></label>
+        <label class="st-fly-row"><span>Hold to shape</span><output data-do="hold"></output><input type="range" min="0.3" max="2" step="0.1" data-dset="hold"></label>
+        <label class="st-fly-row"><span>Guide</span><select data-dset="guide"><option value="none">None</option><option value="grid">Grid</option><option value="iso">Isometric</option></select></label>
+        <label class="st-fly-row"><span>Guide spacing</span><output data-do="gap"></output><input type="range" min="16" max="120" step="4" data-dset="gap"></label>
+        <label class="st-fly-row st-fly-check"><span>Drawing assist (snap to guide)</span><input type="checkbox" data-dset="assist"></label>
+        <button type="button" class="st-btn is-primary" data-draw-done>Done drawing</button></div>
       <div class="st-fly st-glass" data-fly="style" hidden><b class="st-fly-title">Shape style</b>
         <label class="st-fly-row st-fly-check" data-sfor="decor"><span>Fill colour</span><input type="checkbox" data-sset="fillOn"></label>
         <label class="st-fly-row st-fly-check"><span>Outline</span><input type="checkbox" data-sset="lineOn"></label>
@@ -7235,7 +7258,8 @@ class CoreStudio {
         <button type="button" class="st-btn" data-studio-tools aria-expanded="false" aria-controls="studio-tools" aria-label="Settings">${I('<path d="M4 6h16M4 12h16M4 18h16"/>')}<span class="st-label">Settings</span></button></div>
       <aside id="studio-tools" class="studio-panel st-glass" data-tray="panel" aria-label="Studio settings" hidden><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-panel-fold aria-expanded="true"><h2>Cerebra, in focus.</h2><span class="st-chev" aria-hidden="true"></span></button>
       <h3>Poster presets</h3><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-preset="ember" style="--p1:#0c1625;--p2:#d26448">Ember dossier</button><button type="button" class="studio-preset" data-studio-preset="monolith" style="--p1:#e0e4e3;--p2:#666e72">Monolith</button><button type="button" class="studio-preset" data-studio-preset="blueprint" style="--p1:#f4f5f3;--p2:#becbd2">Orbital grid</button><button type="button" class="studio-preset" data-studio-preset="bio" style="--p1:#1a0b3a;--p2:#7b2fa8">Biocomputer</button><button type="button" class="studio-preset" data-studio-preset="infinity" style="--p1:#05090b;--p2:#72b4b4">Infinity noir</button></div><p class="studio-note">Tap any poster text to edit it, drag to move it. Add shapes from the left to keep an area sharp and blur the rest.</p>
-      <h3>Background</h3><select data-studio-background aria-label="Studio background"><option value="space">Space</option><option value="white">White</option><option value="studio">Studio light</option><option value="model">Model workspace</option><option value="solid">Solid colour</option><option value="gradient">Gradient</option></select>
+      <h3>Background</h3><select data-studio-background aria-label="Studio background"><option value="space">Space</option><option value="white">White</option><option value="studio">Studio light</option><option value="model">Model workspace</option><option value="solid">Solid colour</option><option value="gradient">Gradient</option><option value="points">Colour points</option></select>
+      <div class="st-cpts-ed" data-cpts-ed hidden><p class="studio-note">Colour A is the base. Drag the dots on the canvas to place each colour.</p><div data-cpts-list></div><button type="button" class="st-btn" data-cpts-add>+ Add colour</button></div>
       <div class="studio-two"><label>Colour A<input type="color" data-studio-bg-a value="#111727"></label><label>Colour B<input type="color" data-studio-bg-b value="#274052"></label></div>
       <label class="studio-control"><span>Gradient angle</span><input type="range" min="0" max="360" value="115" data-studio-angle><output>115°</output></label><label class="studio-control"><span>Grid</span><select data-studio-gridmode aria-label="Grid"><option value="always">Always</option><option value="focus">Only with a focus shape</option><option value="off">Off</option></select></label><input type="checkbox" data-studio-grid hidden checked>
       <h3>Colour effects</h3><select data-studio-effect aria-label="Colour effect"><option value="off">Off</option><option value="chromatic">Chromatic aberration</option><option value="rgb">RGB split</option><option value="color">Color split</option><option value="vhs">VHS effect</option><option value="glitch">Glitch art</option></select><label class="studio-control"><span>Strength</span><input type="range" min="0" max="20" value="5" data-studio-effect-amount><output>5</output></label>
@@ -7281,7 +7305,10 @@ class CoreStudio {
       if (this.subject < 0) dispatchEvent(new Event('cerebra:tune'));
       else { app.detail.index = this.subject; WorldTune.open(true, 'world'); }
     };
-    this.el.querySelector('[data-studio-background]').onchange = e => { this.background = e.target.value; this.paintBackground(); };
+    this.el.querySelector('[data-studio-background]').onchange = e => { this.background = e.target.value; this.paintBackground(); this.renderCpts(); this.commit(); };
+    this.cpts = [{ c: '#ff3d8a', x: .28, y: .3 }, { c: '#2fc8ff', x: .72, y: .65 }, { c: '#7b2cbf', x: .5, y: .9 }];
+    this.cptLayer = document.createElement('div'); this.cptLayer.className = 'st-cpts'; this.stage.after(this.cptLayer);
+    this.el.querySelector('[data-cpts-add]').onclick = () => { this.cpts.push({ c: '#ffb04a', x: .5, y: .5 }); this.paintBackground(); this.renderCpts(); this.commit(); };
     this.el.querySelector('[data-studio-subject]').onchange = e => this.setSubject(+e.target.value);
     this.el.querySelectorAll('[data-studio-preset]').forEach(b => b.onclick = () => this.applyPreset(b.dataset.studioPreset));
     this.el.querySelectorAll('[data-studio-add]').forEach(b => b.onclick = () => this.addItem(b.dataset.studioAdd));
@@ -7312,6 +7339,7 @@ class CoreStudio {
       el.addEventListener('change', () => this.commit());
     });
     document.addEventListener('pointerdown', e => { if (!e.target.closest('.st-fly,[data-flyout]')) this.closeFly(); }, true);
+    this.initDraw();
     this.el.querySelector('[data-flyout="style"]').addEventListener('pointerdown', e => e.stopPropagation());
     this.el.querySelector('[data-studio-effect]').onchange = e => { this.effect = e.target.value; this.fxOn = this.effect !== 'off'; this.el.querySelector('[data-studio-fx]').setAttribute('aria-pressed', String(this.fxOn)); this.lastVfx = 0; this.paintVfx(); };
     this.el.querySelector('[data-studio-grid]').onchange = e => { this.grid = e.target.checked; this.gridMode = this.grid ? 'always' : 'off'; this.el.querySelector('[data-studio-gridmode]').value = this.gridMode; this.paintBackground(); };
@@ -7409,9 +7437,9 @@ class CoreStudio {
     addEventListener('keydown', e => {
       if (!this.active || e.key !== 'Escape' || document.body.classList.contains('tune-open')) return;
       if (document.activeElement && document.activeElement.isContentEditable) return;
-      e.preventDefault(); e.stopImmediatePropagation(); if (this.sel) this.select(null); else if (!this.panel.hidden) this.tools(false); else this.close();
+      e.preventDefault(); e.stopImmediatePropagation(); if (this.drawing) this.setDrawing(false); else if (this.sel) this.select(null); else if (!this.panel.hidden) this.tools(false); else this.close();
     }, { signal, capture: true });
-    addEventListener('resize', () => { if (this.active) requestAnimationFrame(() => requestAnimationFrame(() => { this.layoutTrays(); this.paintBackground(); this.items.forEach(it => this.place(it)); this.updateFocus(); })); }, { signal });
+    addEventListener('resize', () => { if (this.active) requestAnimationFrame(() => requestAnimationFrame(() => { this.layoutTrays(); this.paintGuides(); this.paintBackground(); this.items.forEach(it => this.place(it)); this.updateFocus(); })); }, { signal });
     this.hist = []; this.hi = -1; this.restoring = false;
     this.applyPreset('ember');
     this.undoBtn = this.el.querySelector('[data-studio-undo]'); this.redoBtn = this.el.querySelector('[data-studio-redo]');
@@ -7428,7 +7456,7 @@ class CoreStudio {
       e.preventDefault(); e.shiftKey ? this.redo() : this.undo();
     });
   }
-  tools(on) { this.panel.hidden = !on; this.el.classList.toggle('panel-closed', !on); this.el.querySelector('[data-studio-tools]').setAttribute('aria-expanded', String(on)); this.layoutTrays(); }
+  tools(on) { this.panel.hidden = !on; if (this.cptLayer) this.cptLayer.classList.toggle('is-off', !on); this.el.classList.toggle('panel-closed', !on); this.el.querySelector('[data-studio-tools]').setAttribute('aria-expanded', String(on)); this.layoutTrays(); }
   home() { this.x = this.y = this.vx = this.vy = 0; this.app.core.planet.resetView(); }
   point(e) { const r = this.app.stage.renderer.domElement.getBoundingClientRect(); return { x:clamp((e.clientX-r.left)/r.width,0,1), y:clamp((e.clientY-r.top)/r.height,0,1) }; }
   setSubject(index) {
@@ -7589,7 +7617,7 @@ class CoreStudio {
     const it = { id: ++this.itemId, kind, x: .5, y: .45, w: side * Math.min(1, H / W), h: side * Math.min(1, W / H), locked: false,
       content: 'Your text', font: 'display', size: Math.round(clamp(W * .05, 32, 72)), color: '#ffffff', weight: 400, ls: 0, upper: false, align: 'c', role: null, ...o };
     if (kind !== 'text') {
-      it.w = o.w ?? .32; it.h = o.h ?? .32;
+      it.w = o.w ?? .32; it.h = o.h ?? .32; if (kind === 'stroke') { it.w0 = o.w0 ?? it.w; it.h0 = o.h0 ?? it.h; }
       if (it.decor) { it.fill = o.fill ?? '#ff3d8a'; it.opacity = o.opacity ?? .85; }
       it.st = { fillOn: !!it.decor, lineOn: !it.decor && false, lineColor: '#ffffff', lineW: 2, dash: 'solid', pattern: 'none', ...(o.st || {}) };
     }
@@ -7670,29 +7698,38 @@ class CoreStudio {
     const lock = c.querySelector('[data-ctx-lock]');
     lock.innerHTML = `${it.locked ? this.icons.lock : this.icons.unlock}<span>${it.locked ? 'Locked' : 'Lock'}</span>`; lock.setAttribute('aria-pressed', String(it.locked));
   }
-  shapePath(kind, w, h, x = 0, y = 0) {
+  shapePath(kind, w, h, x = 0, y = 0, it) {
+    if (kind === 'stroke') return new Path2D(this.strokeD(it, w, h, x, y));
     const p = new Path2D();
     if (kind === 'circle') p.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
     else if (kind === 'tri') { p.moveTo(x + w / 2, y); p.lineTo(x + w, y + h); p.lineTo(x, y + h); p.closePath(); }
     else p.rect(x, y, w, h);
     return p;
   }
-  shapeD(kind, w, h) { return kind === 'circle' ? `M0 ${h / 2}A${w / 2} ${h / 2} 0 1 0 ${w} ${h / 2}A${w / 2} ${h / 2} 0 1 0 0 ${h / 2}Z` : kind === 'tri' ? `M${w / 2} 0L${w} ${h}L0 ${h}Z` : `M0 0H${w}V${h}H0Z`; }
+  // Smooth path through the stroke's points, scaled into a w x h box at (x, y).
+  strokeD(it, w, h, x = 0, y = 0) {
+    const sx = w / it.w0, sy = h / it.h0, P = it.pts.map(([u, v]) => [x + u * sx, y + v * sy]);
+    if (P.length < 3) return P.length === 1 ? `M${P[0][0]} ${P[0][1]}l0.01 0` : `M${P[0][0]} ${P[0][1]}L${P[1][0]} ${P[1][1]}`;
+    let d = `M${P[0][0]} ${P[0][1]}`;
+    for (let i = 1; i < P.length - 1; i++) d += `Q${P[i][0]} ${P[i][1]} ${(P[i][0] + P[i + 1][0]) / 2} ${(P[i][1] + P[i + 1][1]) / 2}`;
+    return d + `L${P[P.length - 1][0]} ${P[P.length - 1][1]}`;
+  }
+  shapeD(kind, w, h, it) { if (kind === 'stroke') return this.strokeD(it, w, h); return kind === 'circle' ? `M0 ${h / 2}A${w / 2} ${h / 2} 0 1 0 ${w} ${h / 2}A${w / 2} ${h / 2} 0 1 0 0 ${h / 2}Z` : kind === 'tri' ? `M${w / 2} 0L${w} ${h}L0 ${h}Z` : `M0 0H${w}V${h}H0Z`; }
   dashArr(s) { const w = s.lineW; return s.dash === 'dashed' ? [w * 4, w * 3] : s.dash === 'dotted' ? [0.01, w * 2.2] : []; }
   drawShapeSvg(it, w, h) {
     const svg = it.el.querySelector('svg.st-outline'); if (!svg) return;
-    const s = it.st, d = this.shapeD(it.kind, w, h), id = 'p' + it.id, col = it.decor ? it.fill : s.lineColor;
+    const s = it.st, d = this.shapeD(it.kind, w, h, it), id = 'p' + it.id, col = it.decor ? it.fill : s.lineColor;
     const pat = s.pattern === 'grid' ? `<pattern id="${id}" width="18" height="18" patternUnits="userSpaceOnUse"><path d="M18 0H0V18" fill="none" stroke="${col}" stroke-width="1" opacity=".8"/></pattern>`
       : s.pattern === 'dots' ? `<pattern id="${id}" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="7" cy="7" r="1.8" fill="${col}"/></pattern>` : '';
     const fill = it.decor && s.fillOn ? `<path d="${d}" fill="${it.fill}" fill-opacity="${it.opacity}"/>` : '';
     const patt = pat ? `<path d="${d}" fill="url(#${id})" opacity="${it.decor ? it.opacity : 1}"/>` : '';
-    const line = s.lineOn ? `<path d="${d}" fill="none" stroke="${col}" stroke-width="${s.lineW}" stroke-linecap="round" stroke-dasharray="${this.dashArr(s).join(' ')}" opacity="${it.decor ? it.opacity : 1}"/>` : '';
+    const line = s.lineOn ? `<path d="${d}" fill="none" stroke="${col}" stroke-width="${s.lineW}" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${this.dashArr(s).join(' ')}" opacity="${it.decor ? it.opacity : 1}"/>` : '';
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
     svg.innerHTML = `<defs>${pat}</defs>${fill}${patt}${line}<path class="st-guide" d="${d}"/>`;
   }
   // Canvas version for exports; x/y/w/h in output pixels.
   drawShapeCanvas(g, it, x, y, w, h, k) {
-    const s = it.st, path = this.shapePath(it.kind, w, h, x, y), col = it.decor ? it.fill : s.lineColor, a = (it.decor ? it.opacity : 1) * (it.alpha ?? 1);
+    const s = it.st, path = this.shapePath(it.kind, w, h, x, y, it), col = it.decor ? it.fill : s.lineColor, a = (it.decor ? it.opacity : 1) * (it.alpha ?? 1);
     g.save(); g.globalAlpha = a;
     if (it.decor && s.fillOn) { g.fillStyle = it.fill; g.fill(path); }
     if (s.pattern !== 'none') {
@@ -7701,7 +7738,7 @@ class CoreStudio {
       else { const st = 14 * k; for (let i = x + st / 2; i < x + w; i += st) for (let j = y + st / 2; j < y + h; j += st) { g.beginPath(); g.arc(i, j, 1.8 * k, 0, 6.283); g.fill(); } }
       g.restore();
     }
-    if (s.lineOn) { g.strokeStyle = col; g.lineWidth = s.lineW * k; g.lineCap = 'round'; g.setLineDash(this.dashArr(s).map(v => v * k)); g.stroke(path); }
+    if (s.lineOn) { g.strokeStyle = col; g.lineWidth = s.lineW * k; g.lineCap = 'round'; g.lineJoin = 'round'; g.setLineDash(this.dashArr(s).map(v => v * k)); g.stroke(path); }
     g.restore();
   }
   // Library: keep compositions (all settings + a thumbnail) in this browser and reopen them in a parallax carousel.
@@ -7741,10 +7778,118 @@ class CoreStudio {
       c.style.transform = circ ? `perspective(1100px) rotateY(${-d * 55}deg) translateZ(${-Math.abs(d) * 160}px) translateY(${Math.abs(d) * 50}px)` : `scale(${1 - Math.abs(d) * .12})`; c.style.opacity = 1 - Math.abs(d) * (circ ? .3 : .45);
     });
   }
-  label(it) { return it.kind === 'text' ? 'Text' : (it.decor ? '' : 'Focus ') + { tri: 'triangle', rect: 'square', circle: 'circle' }[it.kind]; }
+  // Pencil: freehand strokes become 'stroke' items. Holding still turns a stroke into a line or circle (QuickShape);
+  // guides draw a soft grid/isometric lattice and assist locks strokes to its axes.
+  initDraw() {
+    this.drawSet = { color: '#ffffff', size: 4, opacity: 1, dash: 'solid', hold: 2, guide: 'none', gap: 48, assist: false };
+    try { Object.assign(this.drawSet, JSON.parse(localStorage.getItem('cerebra-studio-pencil') || '{}')); } catch (e) {}
+    const pad = this.drawPad = document.createElement('div'); pad.className = 'st-draw-pad'; pad.hidden = true;
+    pad.innerHTML = '<canvas class="st-guides"></canvas><svg class="st-ink"><path/></svg>';
+    this.stage.after(pad); this.guideCv = pad.querySelector('canvas'); this.ink = pad.querySelector('path');
+    const fly = this.el.querySelector('[data-fly="draw"]'), fmt = { size: v => `${v}px`, opacity: v => `${Math.round(v * 100)}%`, hold: v => `${(+v).toFixed(1)}s`, gap: v => `${v}px` };
+    const sync = () => fly.querySelectorAll('[data-dset]').forEach(el => { const k = el.dataset.dset, v = this.drawSet[k]; if (el.type === 'checkbox') el.checked = v; else el.value = v; const o = fly.querySelector(`[data-do="${k}"]`); if (o) o.textContent = fmt[k](v); });
+    fly.querySelectorAll('[data-dset]').forEach(el => el.addEventListener('input', () => {
+      const k = el.dataset.dset; this.drawSet[k] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value; sync(); this.paintGuides();
+      try { localStorage.setItem('cerebra-studio-pencil', JSON.stringify(this.drawSet)); } catch (e) {}
+    }));
+    sync();
+    const btn = this.el.querySelector('[data-studio-draw]');
+    this.setDrawing = on => { this.drawing = on; pad.hidden = !on; this.el.classList.toggle('is-drawing', on); btn.setAttribute('aria-pressed', String(on)); if (on) { this.select(null); this.paintGuides(); } };
+    btn.addEventListener('click', () => { if (this.drawing) { this.setDrawing(false); this.closeFly(); } else { this.setDrawing(true); sync(); } });
+    this.el.querySelector('[data-draw-done]').onclick = () => { this.setDrawing(false); this.closeFly(); };
+    let cur = null;
+    const pt = e => [e.clientX, e.clientY];
+    const angles = () => this.drawSet.guide === 'grid' ? [0, 90] : this.drawSet.guide === 'iso' ? [30, 90, 150] : [0, 45, 90, 135];
+    const assist = (p) => {
+      if (!this.drawSet.assist || !cur.start) return p;
+      const [sx, sy] = cur.start, dx = p[0] - sx, dy = p[1] - sy;
+      if (!cur.axis) { if (Math.hypot(dx, dy) < 10) return p; const a = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 180; cur.axis = angles().reduce((b, c) => Math.min(Math.abs(c - a), 180 - Math.abs(c - a)) < Math.min(Math.abs(b - a), 180 - Math.abs(b - a)) ? c : b) * Math.PI / 180; }
+      const ux = Math.cos(cur.axis), uy = Math.sin(cur.axis), k = dx * ux + dy * uy; return [sx + ux * k, sy + uy * k];
+    };
+    const render = () => { const P = cur.pts; this.ink.setAttribute('d', P.length ? 'M' + P.map(p => p.join(' ')).join('L') : ''); };
+    const armHold = () => { clearTimeout(cur.timer); cur.timer = setTimeout(() => quickShape(), this.drawSet.hold * 1000); };
+    const quickShape = () => {
+      if (!cur || cur.shape || cur.pts.length < 3) return;
+      const P = cur.pts, xs = P.map(p => p[0]), ys = P.map(p => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+      const span = Math.max(x1 - x0, y1 - y0), s = P[0], e = P[P.length - 1];
+      if (span > 24 && Math.hypot(e[0] - s[0], e[1] - s[1]) < span * .3) {
+        const c = [(x0 + x1) / 2, (y0 + y1) / 2], rx = (x1 - x0) / 2, ry = (y1 - y0) / 2, r = (rx + ry) / 2;
+        cur.shape = { type: 'circle', c, rx: Math.abs(rx - ry) < r * .25 ? r : rx, ry: Math.abs(rx - ry) < r * .25 ? r : ry, d0: Math.max(8, Math.hypot(e[0] - c[0], e[1] - c[1])) };
+      } else cur.shape = { type: 'line', a: s };
+      shapeTo(e); if (navigator.vibrate) navigator.vibrate(8);
+    };
+    const shapeTo = p => {
+      const S = cur.shape;
+      if (S.type === 'line') { const q = assist(p); cur.pts = [S.a, q]; }
+      else { const k = Math.hypot(p[0] - S.c[0], p[1] - S.c[1]) / S.d0, n = 72; cur.pts = Array.from({ length: n + 1 }, (_, i) => [S.c[0] + Math.cos(i / n * 6.2832) * S.rx * k, S.c[1] + Math.sin(i / n * 6.2832) * S.ry * k]); }
+      render();
+    };
+    pad.addEventListener('pointerdown', e => {
+      if (e.button !== 0) return; e.preventDefault(); pad.setPointerCapture(e.pointerId); this.closeFly();
+      const D = this.drawSet; this.ink.setAttribute('stroke', D.color); this.ink.setAttribute('stroke-width', D.size); this.ink.setAttribute('opacity', D.opacity);
+      this.ink.setAttribute('stroke-dasharray', this.dashArr({ lineW: D.size, dash: D.dash }).join(' '));
+      cur = { id: e.pointerId, start: pt(e), pts: [pt(e)], anchor: pt(e) }; render(); armHold();
+    });
+    pad.addEventListener('pointermove', e => {
+      if (!cur || e.pointerId !== cur.id) return;
+      const p = pt(e);
+      if (cur.shape) { shapeTo(p); return; }
+      const q = assist(p);
+      if (cur.axis) cur.pts = [cur.start, q]; else cur.pts.push(q);
+      if (Math.hypot(p[0] - cur.anchor[0], p[1] - cur.anchor[1]) > 4) { cur.anchor = p; armHold(); }
+      render();
+    });
+    const finish = e => {
+      if (!cur || e.pointerId !== cur.id) return; clearTimeout(cur.timer);
+      const P = cur.pts; cur = null; this.ink.setAttribute('d', '');
+      if (!P.length) return;
+      const U = this.U(), W = innerWidth, H = innerHeight, sh = this.shift || { x: 0, y: 0 }, pad = Math.max(12, this.drawSet.size);
+      const xs = P.map(p => p[0]), ys = P.map(p => p[1]), x0 = Math.min(...xs) - pad, y0 = Math.min(...ys) - pad, x1 = Math.max(...xs) + pad, y1 = Math.max(...ys) + pad;
+      const w0 = (x1 - x0) / U, h0 = (y1 - y0) / U, D = this.drawSet;
+      this.addItem('stroke', { decor: true, x: ((x0 + x1) / 2 - sh.x) / W, y: ((y0 + y1) / 2 - sh.y) / H, w: w0, h: h0, w0, h0,
+        pts: P.map(p => [+((p[0] - x0) / U).toFixed(4), +((p[1] - y0) / U).toFixed(4)]), fill: D.color, opacity: D.opacity,
+        st: { fillOn: false, lineOn: true, lineW: D.size, dash: D.dash, pattern: 'none', lineColor: D.color }, silent: true });
+      this.commit();
+    };
+    pad.addEventListener('pointerup', finish); pad.addEventListener('pointercancel', finish);
+  }
+  paintGuides() {
+    const c = this.guideCv; if (!c) return; const D = this.drawSet, W = innerWidth, H = innerHeight, d = Math.min(devicePixelRatio || 1, 2);
+    c.width = W * d; c.height = H * d; const g = c.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, W, H);
+    if (D.guide === 'none') return;
+    g.strokeStyle = 'rgba(255,255,255,.14)'; g.lineWidth = 1; g.beginPath();
+    const s = D.gap;
+    if (D.guide === 'grid') { for (let x = 0; x <= W; x += s) { g.moveTo(x, 0); g.lineTo(x, H); } for (let y = 0; y <= H; y += s) { g.moveTo(0, y); g.lineTo(W, y); } }
+    else {
+      const t = Math.tan(Math.PI / 6), dx = s / Math.cos(Math.PI / 6);
+      for (let x = 0; x <= W; x += dx * Math.cos(Math.PI / 6)) { g.moveTo(x, 0); g.lineTo(x, H); }
+      for (let c0 = -W * t; c0 <= H + W * t; c0 += s) { g.moveTo(0, c0); g.lineTo(W, c0 - W * t); g.moveTo(0, c0 - W * t); g.lineTo(W, c0); }
+    }
+    g.stroke();
+  }
+  // Colour points background: a base colour with soft colour pools you can add and drag on the canvas.
+  renderCpts() {
+    const on = this.background === 'points', ed = this.el.querySelector('[data-cpts-ed]'), list = this.el.querySelector('[data-cpts-list]');
+    ed.hidden = !on; this.cptLayer.hidden = !on || !this.active; if (!on) return;
+    list.innerHTML = this.cpts.map((p, i) => `<div class="st-cpt-row"><input type="color" value="${p.c}" data-ci="${i}" aria-label="Colour ${i + 1}"><span>Point ${i + 1}</span><button type="button" class="st-eye st-ldel" data-cd="${i}" aria-label="Remove colour">${this.icons.trash}</button></div>`).join('');
+    list.querySelectorAll('[data-ci]').forEach(el => { el.oninput = () => { this.cpts[+el.dataset.ci].c = el.value; this.paintBackground(); this.placeCpts(); }; el.onchange = () => this.commit(); });
+    list.querySelectorAll('[data-cd]').forEach(el => el.onclick = () => { this.cpts.splice(+el.dataset.cd, 1); this.paintBackground(); this.renderCpts(); this.commit(); });
+    this.cptLayer.innerHTML = this.cpts.map((p, i) => `<button type="button" class="st-cpt" data-cp="${i}" aria-label="Move colour ${i + 1}"></button>`).join('');
+    this.cptLayer.querySelectorAll('.st-cpt').forEach(b => {
+      const i = +b.dataset.cp; let drag = null;
+      b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); b.setPointerCapture(e.pointerId); drag = e.pointerId; });
+      b.addEventListener('pointermove', e => { if (drag !== e.pointerId) return; this.cpts[i].x = clamp(e.clientX / innerWidth, 0, 1); this.cpts[i].y = clamp(e.clientY / innerHeight, 0, 1); this.placeCpts(); this.paintBackground(); });
+      const end = e => { if (drag !== e.pointerId) return; drag = null; this.commit(); };
+      b.addEventListener('pointerup', end); b.addEventListener('pointercancel', end);
+    });
+    this.placeCpts();
+  }
+  placeCpts() { this.cptLayer.querySelectorAll('.st-cpt').forEach(b => { const p = this.cpts[+b.dataset.cp]; if (!p) return; b.style.left = p.x * 100 + '%'; b.style.top = p.y * 100 + '%'; b.style.background = p.c; }); }
+  label(it) { return it.kind === 'text' ? 'Text' : it.kind === 'stroke' ? 'Drawing' : (it.decor ? '' : 'Focus ') + { tri: 'triangle', rect: 'square', circle: 'circle' }[it.kind]; }
   // Photoshop-style layer list: top of the list is the front. Drag ⋮⋮ to restack, the eye hides, a tap selects.
   renderLayers() {
     const ul = this.el.querySelector('[data-studio-objects]'); if (!ul || this.dragLayer) return;
+    cancelAnimationFrame(this.relayRaf); this.relayRaf = requestAnimationFrame(() => this.layoutTrays());
     this.el.querySelector('[data-objects-empty]').hidden = this.items.length > 0;
     const eye = '<svg class="studio-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg>';
     const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -7792,7 +7937,7 @@ class CoreStudio {
     if (!quiet) this.commit();
   }  // Undo/redo: whole-composition snapshots (items, shape blur and the look settings).
   snapshot() {
-    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'grain', 'grainAmt', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides'];
+    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'grain', 'grainAmt', 'cpts', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides'];
     return JSON.stringify({ s: Object.fromEntries(keys.map(k => [k, this[k]])), layers: this.layers, core: this.coreLayers,
       items: this.items.map(({ el, id, ...rest }) => rest) });
   }
@@ -7815,7 +7960,7 @@ class CoreStudio {
     this.el.querySelectorAll('[data-studio-preset]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioPreset === this.preset)));
     this.el.querySelectorAll('[data-studio-layer]').forEach(b => b.setAttribute('aria-pressed', String(this.layers[b.dataset.studioLayer])));
     this.el.querySelectorAll('[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(this.coreLayers[+b.dataset.studioCore])));
-    this.el.classList.toggle('hide-guides', this.guides === false); if (this.syncGrain) this.syncGrain(); this.updateFocus(); this.paintBackground(); this.paintVfx();
+    this.el.classList.toggle('hide-guides', this.guides === false); if (this.syncGrain) this.syncGrain(); this.cpts = JSON.parse(JSON.stringify(this.cpts || [])); this.renderCpts(); this.updateFocus(); this.paintBackground(); this.paintVfx();
     this.restoring = false; this.syncHist();
   }
 
@@ -7921,7 +8066,7 @@ class CoreStudio {
     if (this.active || this.pending || !a.worldsReady) return;
     if (a.detail.busy) return;
     if (a.detail.open) { this.pending = true; a.closeWorld(); return; }
-    this.active = true; this.home(); this.tools(innerWidth > 900); requestAnimationFrame(() => this.layoutTrays());
+    this.active = true; this.home(); this.tools(innerWidth > 900); this.renderCpts(); requestAnimationFrame(() => this.layoutTrays());
     this.coreLayers.fill(true); this.el.querySelectorAll('[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', 'true'));
     OrbitBuilder.open(false); WorldTune.open(false);
     document.querySelector('[data-tune-close]').click();
@@ -7936,7 +8081,7 @@ class CoreStudio {
   close() {
     if (!this.active) { this.pending = false; return; }
     const a = this.app; this.active = false; this.drag = null;
-    WorldTune.open(false); this.select(null); this.fx.style.display='none'; this.bg.style.filter='';this.vfx.getContext('2d').clearRect(0,0,this.vfx.width,this.vfx.height);
+    WorldTune.open(false); if (this.drawing) this.setDrawing(false); this.select(null); this.fx.style.display='none'; this.bg.style.filter='';this.vfx.getContext('2d').clearRect(0,0,this.vfx.width,this.vfx.height);
     document.querySelector('[data-tune-close]').click();
     document.documentElement.classList.remove('studio-lock'); document.body.classList.remove('studio-on');
     document.body.style.backgroundColor = this.saved.background;
@@ -7969,8 +8114,9 @@ class CoreStudio {
       const rad=this.angle*Math.PI/180,cx=w/2,cy=h/2,r=Math.hypot(w,h)/2;
       const gr=g.createLinearGradient(cx-Math.cos(rad)*r,cy-Math.sin(rad)*r,cx+Math.cos(rad)*r,cy+Math.sin(rad)*r);
       gr.addColorStop(0,this.bgA);gr.addColorStop(1,this.bgB);g.fillStyle=gr;
-    }else g.fillStyle=mode==='solid'?this.bgA:mode==='white'?'#ffffff':mode==='model'?'#333945':'#05070a';
+    }else g.fillStyle=mode==='solid'||mode==='points'?this.bgA:mode==='white'?'#ffffff':mode==='model'?'#333945':'#05070a';
     g.fillRect(0,0,w,h);
+    if (mode === 'points') (this.cpts || []).forEach(p => { const R = Math.max(w, h) * .55, gr = g.createRadialGradient(p.x * w, p.y * h, 0, p.x * w, p.y * h, R); gr.addColorStop(0, p.c); gr.addColorStop(1, p.c + '00'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
     if (mode === 'studio' || mode === 'model') {
       const grd = g.createRadialGradient(w * .45, h * .32, 0, w * .5, h * .5, Math.max(w, h) * .7);
       grd.addColorStop(0, mode === 'studio' ? '#70788a' : '#566171'); grd.addColorStop(1, '#111621');
