@@ -6846,13 +6846,13 @@ class Organisms {
 /** Shared settings for the drifting network: the chooser uses fixed looks, the atelier and studio backdrop follow these. */
 const NET = (() => {
   const def = { on: false, color: '#ff2832', density: 90, link: 130, speed: 1, opacity: .45 };
-  let s = def; try { s = { ...def, ...JSON.parse(localStorage.getItem('cerebra-net-v2') || '{}') }; } catch (e) {}
+  let s = def; try { s = { ...def, ...JSON.parse(localStorage.getItem('cerebra-net-v3') || '{}') }; } catch (e) {}
   const subs = new Set();
   const rows = [['on', 'Show network', 'checkbox'], ['color', 'Colour', 'color'], ['density', 'Points', 'range', 20, 200, 1, v => v], ['link', 'Link length', 'range', 40, 260, 5, v => v + ' px'],
     ['speed', 'Speed', 'range', 0, 3, .05, v => (+v).toFixed(2) + '×'], ['opacity', 'Opacity', 'range', .05, 1, .05, v => Math.round(v * 100) + '%']];
   return {
     get: () => s, sub: f => subs.add(f),
-    set(k, v) { s = { ...s, [k]: v }; try { localStorage.setItem('cerebra-net-v2', JSON.stringify(s)); } catch (e) {}
+    set(k, v) { s = { ...s, [k]: v }; try { localStorage.setItem('cerebra-net-v3', JSON.stringify(s)); } catch (e) {}
       document.querySelectorAll(`[data-net="${k}"]`).forEach(el => { if (el.type === 'checkbox') el.checked = v; else if (el.value != v) el.value = v; const o = el.parentNode.querySelector('output'); if (o) o.textContent = rows.find(r => r[0] === k)[6](v); });
       subs.forEach(f => f(k)); },
     html: () => rows.map(([k, label, type, min, max, step, fmt]) => type === 'range'
@@ -7065,9 +7065,9 @@ function netBackdrop() {
   const net = new GatewayNet(c, '255,40,50', (w, h) => ({ x: w / 2, y: h / 2, r: Math.max(w, h) * .26 }), () => { const s = NET.get(), r = Math.max(innerWidth, innerHeight) * .26; return { density: s.density, linkUnits: s.link / r, speed: s.speed, rgb: NET.rgb(s.color) }; });
   const b = document.body, active = () => NET.get().on && (b.classList.contains('atelier-on') || b.classList.contains('studio-on'));
   const sync = net.watch(b, active, ['class']);
-  const look = () => { c.classList.toggle('on', active()); c.style.opacity = NET.get().opacity; };
+  const look = () => { c.classList.toggle('on', active()); const s = window.__cerebra && window.__cerebra.studio, l = s && s.fxItem && s.active ? s.fxItem('network') : null; c.style.opacity = NET.get().opacity * (l ? l.alpha : 1); };
   new MutationObserver(look).observe(b, { attributes: true, attributeFilter: ['class'] }); look();
-  NET.sub(() => { sync(); look(); });
+  NET.sub(() => { sync(); look(); const s = window.__cerebra && window.__cerebra.studio; if (s && s.active && !s.fxSyncing && !s.restoring) s.syncFxLayers(); });
   const at = document.getElementById('at-net'), btn = document.querySelector('[data-net-toggle]');
   at.innerHTML = NET.html();
   btn.addEventListener('click', () => { at.hidden = !at.hidden; btn.setAttribute('aria-expanded', String(!at.hidden)); });
@@ -7499,7 +7499,7 @@ class CoreStudio {
     this.el.querySelector('[data-studio-draw]').addEventListener('click', () => { if (this.drawing) { this.tool = 'move'; this.el.classList.remove('tool-hand'); } this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(!this.drawing && b.dataset.studioTool === this.tool))); });
     addEventListener('keydown', e => { if (!this.active || e.target.closest('input,textarea,select,[contenteditable=true]') || e.ctrlKey || e.metaKey) return; const k = e.key.toLowerCase(); if (k === 'v') this.setTool('move'); else if (k === 'h') this.setTool('hand'); });
     this.el.querySelector('[data-flyout="style"]').addEventListener('pointerdown', e => e.stopPropagation());
-    this.el.querySelector('[data-studio-effect]').onchange = e => { this.effect = e.target.value; this.fxOn = this.effect !== 'off'; this.el.querySelector('[data-studio-fx]').setAttribute('aria-pressed', String(this.fxOn)); this.lastVfx = 0; this.paintVfx(); };
+    this.el.querySelector('[data-studio-effect]').onchange = e => { this.effect = e.target.value; this.syncFxLayers(); this.el.querySelector('[data-studio-fx]').setAttribute('aria-pressed', String(this.fxOn)); this.commit(); };
     this.el.querySelector('[data-studio-grid]').onchange = e => { this.grid = e.target.checked; this.gridMode = this.grid ? 'always' : 'off'; this.el.querySelector('[data-studio-gridmode]').value = this.gridMode; this.paintBackground(); };
     this.gridMode = 'always'; this.el.querySelector('[data-studio-gridmode]').onchange = e => { this.gridMode = e.target.value; this.paintBackground(); this.commit(); };
     const rangeControl = (selector, key, format, repaint) => {
@@ -7536,7 +7536,7 @@ class CoreStudio {
       this.items.slice().forEach(it => this.removeItem(it, true));
       Object.keys(this.layers).forEach(k => { this.layers[k] = k !== 'dust'; }); this.coreLayers.fill(true);
       this.blur = 8; this.dim = 0; this.guides = true; this.el.classList.remove('hide-guides');
-      this.frozen = false; this.showSubject = true; this.fxOn = false;
+      this.frozen = false; this.showSubject = true; this.fxOn = false; this.grain = false; NET.set('on', false);
       [['[data-studio-freeze]', 'false'], ['[data-studio-show]', 'true'], ['[data-studio-fx]', 'false']].forEach(([s, v]) => this.el.querySelector(s).setAttribute('aria-pressed', v));
       this.el.querySelector('[data-freeze-label]').textContent = 'Stop';
       this.el.querySelectorAll('[data-studio-layer],[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioLayer !== 'dust')));
@@ -7544,10 +7544,10 @@ class CoreStudio {
     };
     this.frozen = false; this.lensOn = false; this.grain = false; this.grainAmt = .1;
     this.grainEl = document.createElement('div'); this.grainEl.className = 'st-grain'; this.grainEl.hidden = true; this.stage.after(this.grainEl);
-    const syncGrain = () => { this.grainEl.hidden = !this.grain; this.grainEl.style.opacity = this.grainAmt; };
+    const syncGrain = () => { this.syncFxLayers(); };
     this.el.querySelector('[data-studio-grain]').onchange = e => { this.grain = e.target.checked; syncGrain(); this.commit(); };
     this.el.querySelector('[data-studio-grain-amt]').oninput = e => { this.grainAmt = +e.target.value; e.target.nextElementSibling.textContent = `${Math.round(this.grainAmt * 100)}%`; syncGrain(); };
-    this.syncGrain = () => { syncGrain(); this.el.querySelector('[data-studio-grain]').checked = this.grain; };
+    this.syncGrain = () => { this.el.querySelector('[data-studio-grain]').checked = this.grain; syncGrain(); };
     this.lib = this.el.querySelector('[data-studio-library]');
     this.el.querySelector('[data-studio-lib-save]').onclick = () => this.libSave();
     this.el.querySelector('[data-studio-lib]').onclick = () => this.libOpen(true);
@@ -7561,7 +7561,11 @@ class CoreStudio {
     this.fxOn = false; this.fxLive = () => this.fxOn && this.subject < 0;
     this.fxSection = this.el.querySelector('[data-studio-effect]').closest('details'); this.coreSection = this.el.querySelector('[data-studio-core]').closest('details'); this.partsSection = this.el.querySelector('[data-studio-layer="shells"]').closest('details'); this.worldSection = this.el.querySelector('[data-studio-layer="atmo"]').closest('details'); this.worldSection.hidden = true;
     this.el.querySelector('[data-studio-reset]').onclick = () => { Object.keys(this.layers).forEach(k => { this.layers[k] = k !== 'dust'; }); this.coreLayers.fill(true); this.blur = 8; this.applyPreset(this.preset, false); this.el.querySelectorAll('[data-studio-layer],[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioLayer !== 'dust'))); this.updateFocus(); this.commit(); };
-    this.el.querySelector('[data-studio-fx]').onclick = e => { this.fxOn = !this.fxOn; if (this.fxOn && this.effect === 'off') { this.effect = 'chromatic'; if (!this.effectAmount) this.effectAmount = 4; const s = this.el.querySelector('[data-studio-effect]'); s.value = 'chromatic'; const r = this.el.querySelector('[data-studio-effect-amount]'); r.value = this.effectAmount; r.dispatchEvent(new Event('input')); } this.lastVfx = 0; e.currentTarget.setAttribute('aria-pressed', String(this.fxOn)); this.paintVfx(); };
+    this.el.querySelector('[data-studio-fx]').onclick = e => {
+      if (this.effect === 'off') { this.effect = 'chromatic'; if (!this.effectAmount) this.effectAmount = 4; const s = this.el.querySelector('[data-studio-effect]'); s.value = 'chromatic'; const r = this.el.querySelector('[data-studio-effect-amount]'); r.value = this.effectAmount; r.dispatchEvent(new Event('input')); this.syncFxLayers(); }
+      else { const it = this.fxItem('colour'); if (it) { it.hide = !it.hide; this.applyFx(); this.renderLayers(); } }
+      e.currentTarget.setAttribute('aria-pressed', String(this.fxOn)); this.commit();
+    };
     this.el.querySelector('[data-studio-show]').onclick = e => { this.showSubject = !this.showSubject; const b = e.currentTarget; b.setAttribute('aria-pressed', String(this.showSubject)); b.setAttribute('aria-label', this.showSubject ? 'Hide subject' : 'Show subject'); this.paintBackground(); };
     this.el.querySelectorAll('[data-studio-layer]').forEach(b => b.onclick = () => { const k = b.dataset.studioLayer; this.layers[k] = !this.layers[k]; b.setAttribute('aria-pressed', String(this.layers[k])); });
     this.el.querySelectorAll('[data-studio-core]').forEach(b => b.onclick = () => { const i = +b.dataset.studioCore; this.coreLayers[i] = !this.coreLayers[i]; b.setAttribute('aria-pressed', String(this.coreLayers[i])); b.setAttribute('aria-label', `${this.coreLayers[i] ? 'Hide' : 'Show'} ${LAYER_NAMES[i]}`); });
@@ -7654,6 +7658,7 @@ class CoreStudio {
       '[data-studio-light]':p.light,'[data-studio-light-x]':p.lightX,'[data-studio-shadow]':p.shadow,'[data-studio-shadow-soft]':p.soft,'[data-studio-effect]':p.effect,'[data-studio-effect-amount]':p.amount};
     Object.entries(values).forEach(([selector,value])=>{const el=this.el.querySelector(selector);if(el.type==='checkbox')el.checked=value;else el.value=value;if(el.type==='range')el.dispatchEvent(new Event('input'));});
     if (this.syncGrain) { this.grain = !!p.grain; if (p.grain) this.grainAmt = p.grain; this.syncGrain(); const gr = this.el.querySelector('[data-studio-grain-amt]'); if (gr) { gr.value = this.grainAmt; gr.nextElementSibling.textContent = `${Math.round(this.grainAmt * 100)}%`; } }
+    this.syncFxLayers();
     if (texts) this.presetTexts(name, p.ink); this.commit();
     this.updateFocus(); this.paintBackground(); this.paintVfx();
   }
@@ -7787,6 +7792,10 @@ class CoreStudio {
   // Shape sizes are in units of the screen's short side, which never changes with rotation or the on-screen keyboard.
   U() { return Math.min(screen.width, screen.height) || Math.min(innerWidth, innerHeight); }
   addItem(kind, o = {}) {
+    if (kind === 'fx') {
+      const fx = { id: ++this.itemId, kind: 'fx', locked: false, alpha: 1, hide: false, ...o, el: document.createElement('div') };
+      this.items.push(fx); this.renderLayers(); if (!this.restoring) this.applyFx(); return fx;
+    }
     const W = innerWidth, H = innerHeight, side = .2;
     const it = { id: ++this.itemId, kind, x: .5, y: .45, w: side * Math.min(1, H / W), h: side * Math.min(1, W / H), locked: false,
       content: 'Your text', font: 'display', size: Math.round(clamp(W * .05, 32, 72)), color: '#ffffff', weight: 400, ls: 0, upper: false, align: 'c', role: null, ...o };
@@ -7843,6 +7852,7 @@ class CoreStudio {
     const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r);
   }
   place(it) {
+    if (it.kind === 'fx') { this.applyFx(); return; }
     const el = it.el, W = innerWidth, H = innerHeight;
     el.classList.toggle('is-locked', it.locked);
     if (it.kind === 'text') {
@@ -7857,7 +7867,7 @@ class CoreStudio {
   select(it) {
     if (this.sel && this.sel !== it && this.sel.el.isContentEditable) this.sel.el.blur();
     this.sel = it; this.items.forEach(i => i.el.classList.toggle('is-selected', i === it)); this.renderLayers();
-    const c = this.ctx; c.hidden = !it; if (this.closeFly) this.closeFly(); if (!it) return;
+    const c = this.ctx; c.hidden = !it || it.kind === 'fx'; if (this.closeFly) this.closeFly(); if (!it || it.kind === 'fx') return;
     const text = it.kind === 'text';
     const group = text ? 'text' : it.decor ? 'decor' : 'shape';
     c.querySelector('[data-ctx-for-shape]').hidden = text;
@@ -8083,7 +8093,32 @@ class CoreStudio {
     k.addEventListener('keydown', e => { const d = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key]; if (d) { e.preventDefault(); set(+input.value + d * st); } });
     input.addEventListener('input', draw); new MutationObserver(draw).observe(input, { attributes: true }); draw();
   }
-  label(it) { return it.kind === 'text' ? 'Text' : it.kind === 'stroke' ? 'Drawing' : (it.decor ? '' : 'Focus ') + { tri: 'triangle', rect: 'square', circle: 'circle' }[it.kind]; }
+  // Effects are layers: colour effect, film grain and the network backdrop each own a layer row with opacity, hide and delete.
+  fxItem(type) { return this.items.find(i => i.kind === 'fx' && i.fxType === type); }
+  fxVisible(type) { const it = this.fxItem(type); return !!it && !it.hide; }
+  syncFxLayers() {
+    if (!this.items) return; this.fxSyncing = true;
+    const want = { colour: this.effect !== 'off', grain: !!this.grain, network: !!NET.get().on };
+    Object.entries(want).forEach(([type, on]) => { const it = this.fxItem(type); if (on && !it) this.addItem('fx', { fxType: type }); else if (!on && it) this.removeItem(it, true); });
+    this.fxSyncing = false; this.applyFx(); this.renderLayers();
+  }
+  fxOff(type) {
+    this.fxSyncing = true;
+    if (type === 'colour') { this.effect = 'off'; const s = this.el.querySelector('[data-studio-effect]'); s.value = 'off'; this.fxOn = false; this.lastVfx = 0; }
+    else if (type === 'grain') { this.grain = false; const c = this.el.querySelector('[data-studio-grain]'); if (c) c.checked = false; }
+    else NET.set('on', false);
+    this.fxSyncing = false; this.applyFx(); this.commit();
+  }
+  applyFx() {
+    const col = this.fxItem('colour'), gr = this.fxItem('grain'), nt = this.fxItem('network');
+    this.fxOn = !!col && !col.hide && this.effect !== 'off'; this.lastVfx = 0;
+    this.vfx.style.opacity = col ? col.alpha : 1;
+    if (this.grainEl) { this.grainEl.hidden = !(this.grain && gr && !gr.hide); this.grainEl.style.opacity = this.grainAmt * (gr ? gr.alpha : 1); }
+    const nb = document.getElementById('net-bg'); if (nb) { nb.style.opacity = NET.get().opacity * (nt ? nt.alpha : 1); nb.style.visibility = nt && nt.hide ? 'hidden' : ''; }
+    this.paintVfx();
+  }
+  fxName(it) { return it.fxType === 'colour' ? `Effect · ${({ chromatic: 'Chromatic', rgb: 'RGB split', color: 'Colour split', vhs: 'VHS', glitch: 'Glitch' })[this.effect] || 'Colour'}` : it.fxType === 'grain' ? 'Film grain' : 'Network'; }
+  label(it) { return it.kind === 'fx' ? this.fxName(it) : it.kind === 'text' ? 'Text' : it.kind === 'stroke' ? 'Drawing' : (it.decor ? '' : 'Focus ') + { tri: 'triangle', rect: 'square', circle: 'circle' }[it.kind]; }
   // Photoshop-style layer list: top of the list is the front. Drag ⋮⋮ to restack, the eye hides, a tap selects.
   renderLayers() {
     const ul = this.el.querySelector('[data-studio-objects]'); if (!ul || this.dragLayer) return;
@@ -8092,7 +8127,7 @@ class CoreStudio {
     const eye = '<svg class="studio-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg>';
     const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     ul.innerHTML = this.items.slice().reverse().map(it => {
-      const sw = it.kind === 'text' ? `<i class="st-sw" style="color:${it.color}">T</i>` : `<i class="st-sw ${it.decor ? 'is-fill' : ''}" style="color:${it.decor ? it.fill : '#fff'}">${this.icons[it.kind]}</i>`;
+      const sw = it.kind === 'fx' ? `<i class="st-sw is-fx">${{ colour: '◐', grain: '▒', network: '⌘' }[it.fxType]}</i>` : it.kind === 'text' ? `<i class="st-sw" style="color:${it.color}">T</i>` : `<i class="st-sw ${it.decor ? 'is-fill' : ''}" style="color:${it.decor ? it.fill : '#fff'}">${this.icons[it.kind]}</i>`;
       const name = it.kind === 'text' ? esc((it.content || '').split('\n')[0].slice(0, 24) || 'Text') : this.label(it);
       return `<li class="st-layer${it === this.sel ? ' is-sel' : ''}${it.hide ? ' is-hidden' : ''}" data-layer="${this.items.indexOf(it)}"><span class="st-grip" aria-label="Drag to restack">⋮⋮</span>${sw}<span class="st-lname">${name}</span>${it.locked ? `<span class="st-lk">${this.icons.lock}</span>` : ''}<button type="button" class="st-eye" aria-pressed="${!it.hide}" aria-label="${it.hide ? 'Show' : 'Hide'} layer">${eye}</button><button type="button" class="st-eye st-ldel" aria-label="Delete layer">${this.icons.trash}</button>${it === this.sel ? `<label class="st-lop">Opacity<input type="range" min="0" max="1" step="0.05" value="${it.alpha ?? 1}" aria-label="Layer opacity"><output>${Math.round((it.alpha ?? 1) * 100)}%</output></label>` : ''}</li>`;
     }).join('');
@@ -8130,6 +8165,7 @@ class CoreStudio {
   lockItem(it, on) { it.locked = on; this.place(it); this.select(it); this.renderLayers(); this.commit(); }
   removeItem(it, quiet) {
     it.el.remove(); this.items = this.items.filter(i => i !== it); this.renderLayers();
+    if (it.kind === 'fx' && !this.restoring && !this.fxSyncing) this.fxOff(it.fxType);
     if (this.sel === it) this.select(null);
     if (!quiet || it.kind !== 'text') this.updateFocus();
     if (!quiet) this.commit();
@@ -8158,13 +8194,13 @@ class CoreStudio {
     this.el.querySelectorAll('[data-studio-preset]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioPreset === this.preset)));
     this.el.querySelectorAll('[data-studio-layer]').forEach(b => b.setAttribute('aria-pressed', String(this.layers[b.dataset.studioLayer])));
     this.el.querySelectorAll('[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(this.coreLayers[+b.dataset.studioCore])));
-    this.el.classList.toggle('hide-guides', this.guides === false); if (this.syncGrain) this.syncGrain(); this.cpts = JSON.parse(JSON.stringify(this.cpts || [])); this.renderCpts(); this.updateFocus(); this.paintBackground(); this.paintVfx();
+    this.el.classList.toggle('hide-guides', this.guides === false); if (this.syncGrain) this.syncGrain(); this.cpts = JSON.parse(JSON.stringify(this.cpts || [])); this.renderCpts(); this.fxSyncing = true; NET.set('on', !!this.fxItem('network')); this.fxSyncing = false; this.applyFx(); this.updateFocus(); this.paintBackground(); this.paintVfx();
     this.restoring = false; this.syncHist();
   }
 
   // Shapes keep their area sharp: the scene is blurred and a clipped, sharp copy sits on top. Works in Safari, unlike masked backdrop blur.
   updateFocus() {
-    const shapes = this.items.filter(i => i.kind !== 'text' && !i.decor && !i.hide), U = this.U(), on = this.active && shapes.length > 0 && (this.blur > 0 || this.dim > 0), W = innerWidth, H = innerHeight, gl = this.app.stage.renderer.domElement;
+    const shapes = this.items.filter(i => i.kind !== 'text' && i.kind !== 'fx' && !i.decor && !i.hide), U = this.U(), on = this.active && shapes.length > 0 && (this.blur > 0 || this.dim > 0), W = innerWidth, H = innerHeight, gl = this.app.stage.renderer.domElement;
     if (this.focusOn !== on && this.gridMode === 'focus') { this.focusOn = on; this.paint(this.bg.getContext('2d'), this.bg.width, this.bg.height); }
     this.focusOn = on;
     gl.style.filter = this.active ? `brightness(${this.light * (on ? 1 - this.dim : 1)})${on ? ` blur(${this.blur}px)` : ''}` : '';
@@ -8194,7 +8230,7 @@ class CoreStudio {
       const bitmap=await createImageBitmap(blob), out=document.createElement('canvas');out.width=width;out.height=height;
       const g=out.getContext('2d'),sx=width/this.app.stage.width,sy=height/this.app.stage.height;
       g.drawImage(bitmap,0,0);bitmap.close();
-      const U=this.U(),shapes=this.items.filter(i=>i.kind!=='text'&&!i.decor&&!i.hide);
+      const U=this.U(),shapes=this.items.filter(i=>i.kind!=='text'&&i.kind!=='fx'&&!i.decor&&!i.hide);
       if(shapes.length&&(this.blur>0||this.dim>0)){
         const blurred=document.createElement('canvas');blurred.width=width;blurred.height=height;
         const b=blurred.getContext('2d');b.filter=`blur(${this.blur*Math.max(sx,sy)}px)`;b.drawImage(out,0,0);b.filter='none';if(this.dim>0){b.fillStyle=`rgba(0,0,0,${this.dim})`;b.fillRect(0,0,width,height);}
@@ -8205,7 +8241,7 @@ class CoreStudio {
           else b.rect(x-rx,y-ry,rx*2,ry*2);});
         b.fill();b.globalCompositeOperation='source-over';g.drawImage(blurred,0,0);
       }
-      if(this.fxLive()&&this.effect!=='off'&&this.effectAmount>0)g.drawImage(this.vfx,0,0,width,height);
+      if(this.fxLive()&&this.effect!=='off'&&this.effectAmount>0){g.save();g.globalAlpha=(this.fxItem('colour')||{alpha:1}).alpha;g.drawImage(this.vfx,0,0,width,height);g.restore();}
       const drawText=(el)=>{
         const style=getComputedStyle(el),r=el.getBoundingClientRect();if(!r.width||!r.height)return;
         g.save();g.fillStyle=style.color;g.globalAlpha=+style.opacity||1;g.font=`${style.fontWeight} ${parseFloat(style.fontSize)*sy}px ${style.fontFamily}`;
@@ -8216,13 +8252,14 @@ class CoreStudio {
         g.restore();
       };
       this.items.filter(i=>!i.hide).forEach(i=>{
+        if(i.kind==='fx')return;
         if(i.kind==='text'){drawText(i.el);return;}
         const U2=this.U()*sx,ww=i.w*U2,hh=i.h*U2*(sy/sx);this.drawShapeCanvas(g,i,i.x*width-ww/2,i.y*height-hh/2,ww,hh,sx);});
       // Crop to the poster: the band under the side menus is not part of the composition.
       let fin=out;
       if(innerWidth>900){const c0=this.compCentre(),sh=this.shift||{x:0,y:0},cx=(c0.x+sh.x)*sx,half=Math.min(cx,width-cx);
         fin=document.createElement('canvas');fin.width=Math.round(half*2);fin.height=height;fin.getContext('2d').drawImage(out,Math.round(cx-half),0,fin.width,height,0,0,fin.width,height);}
-      if(this.grain){const gc=fin.getContext('2d'),n=document.createElement('canvas');n.width=256;n.height=256;const ng=n.getContext('2d'),id=ng.createImageData(256,256);for(let i=0;i<id.data.length;i+=4){const v=Math.random()*255;id.data[i]=id.data[i+1]=id.data[i+2]=v;id.data[i+3]=255;}ng.putImageData(id,0,0);gc.save();gc.globalAlpha=this.grainAmt;gc.globalCompositeOperation='overlay';gc.fillStyle=gc.createPattern(n,'repeat');gc.fillRect(0,0,fin.width,fin.height);gc.restore();}
+      if(this.grain&&this.fxVisible('grain')){const gc=fin.getContext('2d'),n=document.createElement('canvas');n.width=256;n.height=256;const ng=n.getContext('2d'),id=ng.createImageData(256,256);for(let i=0;i<id.data.length;i+=4){const v=Math.random()*255;id.data[i]=id.data[i+1]=id.data[i+2]=v;id.data[i+3]=255;}ng.putImageData(id,0,0);gc.save();gc.globalAlpha=this.grainAmt*this.fxItem('grain').alpha;gc.globalCompositeOperation='overlay';gc.fillStyle=gc.createPattern(n,'repeat');gc.fillRect(0,0,fin.width,fin.height);gc.restore();}
       const final=await new Promise(resolve=>fin.toBlob(resolve,type,.93));
       if(!final)throw Error('PNG encoding failed');
       const link=document.createElement('a');link.href=URL.createObjectURL(final);link.download=`cerebra-${this.preset}-${fin.width}x${fin.height}.${{'image/jpeg':'jpg','image/webp':'webp'}[type]||'png'}`;
@@ -8264,7 +8301,7 @@ class CoreStudio {
     if (this.active || this.pending || !a.worldsReady) return;
     if (a.detail.busy) return;
     if (a.detail.open) { this.pending = true; a.closeWorld(); return; }
-    this.active = true; this.home(); this.tools(innerWidth > 900); this.renderCpts(); requestAnimationFrame(() => this.layoutTrays());
+    this.active = true; this.home(); this.tools(innerWidth > 900); this.renderCpts(); this.syncFxLayers(); requestAnimationFrame(() => this.layoutTrays());
     this.coreLayers.fill(true); this.el.querySelectorAll('[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', 'true'));
     OrbitBuilder.open(false); WorldTune.open(false);
     document.querySelector('[data-tune-close]').click();
