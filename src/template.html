@@ -7665,8 +7665,9 @@ class WorldAtelier {
     dots.addEventListener('click', e => { const b = e.target.closest('[data-rail]'); if (b) jump(+b.dataset.rail); });
     let scrub = false;   // dragging along the dot column scrubs through the worlds
     const scrubTo = e => { const bs = [...dots.children], r = dots.getBoundingClientRect(); const k = clamp(Math.floor((e.clientY - r.top) / r.height * bs.length), 0, bs.length - 1); if (k !== this.index) { this.track.scrollTo({ top: k * this.track.clientHeight, behavior: 'instant' }); this.select(k); } };
-    dots.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button !== 0) return; scrub = true; dots.setPointerCapture(e.pointerId); });
-    dots.addEventListener('pointermove', e => { if (scrub && e.buttons) scrubTo(e); });
+    let sy = 0, moved = false;
+    dots.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button !== 0) return; scrub = true; moved = false; sy = e.clientY; });
+    dots.addEventListener('pointermove', e => { if (!scrub || !e.buttons) return; if (!moved && Math.abs(e.clientY - sy) < 6) return; if (!moved) { moved = true; dots.setPointerCapture(e.pointerId); } scrubTo(e); });
     const stop = () => { scrub = false; }; dots.addEventListener('pointerup', stop); dots.addEventListener('pointercancel', stop);
     this.el.querySelector('[data-rail-prev]').addEventListener('click', () => jump(this.index - 1));
     this.el.querySelector('[data-rail-next]').addEventListener('click', () => jump(this.index + 1));
