@@ -1357,6 +1357,26 @@ html,body{touch-action:pan-x pan-y}
 .st-td-al .st-i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 .td-o{-webkit-text-stroke:1px currentColor;-webkit-text-fill-color:transparent;font-weight:700}
 #studio .st-context{flex-wrap:wrap;row-gap:8px;height:auto!important;min-height:0;justify-content:center;max-width:min(920px,calc(100% - 24px))}
+/* Layers: multi-select, resize */
+.st-lbar{display:flex;gap:8px;margin:2px 0 8px}.st-lbar .st-addgroup{margin:0;flex:1}
+.st-addgroup[aria-pressed=true]{background:var(--cyg)!important;color:#fff}
+.studio-panel.is-folded .st-lbar,.studio-panel.is-folded .st-lsel,.studio-panel.is-folded .st-lresize,.studio-panel.is-folded .st-addgroup{display:none!important}
+.st-lsel{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px;padding:8px;border-radius:14px;background:#8b5cf624;border:1px solid #8b5cf666}
+.st-lsel[hidden]{display:none}
+.st-lsel b{font:600 11px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;color:#d9ccff;margin-right:4px}
+.st-lsel button{min-height:32px;padding:0 10px;border:0;border-radius:10px;background:#ffffff1c;color:#fff;font:600 11px var(--f-cond);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.st-lsel button[data-ma=delete]{background:#ff335555}
+.st-lcheck{width:28px!important;min-width:28px!important;border-radius:50%!important;border:2px solid #ffffff66!important;font-weight:700;color:#fff}
+.st-lcheck.is-on{background:var(--cyg)!important;border-color:transparent!important}
+.st-layer.is-multi{outline:2px solid #8b5cf6;outline-offset:-2px;background:#8b5cf630}
+.st-layer.is-drag[data-n]::after{content:attr(data-n);position:absolute;right:8px;top:-8px;min-width:22px;height:22px;border-radius:11px;background:var(--cyg);color:#fff;font:700 12px var(--f-num);display:grid;place-items:center}
+.st-layer{position:relative}
+.st-newgroup-zone{list-style:none;margin:6px 0;padding:14px;text-align:center;border:2px dashed #8b5cf6aa;border-radius:14px;color:#d9ccff;font:600 11px var(--f-cond);letter-spacing:.1em;text-transform:uppercase}
+.st-layer{touch-action:pan-y}
+.st-lresize{position:fixed;display:block;margin:0;width:30px;height:30px;border:0;background:none;cursor:nesw-resize;touch-action:none;z-index:60;opacity:.8;pointer-events:auto}
+.st-lresize::before{content:"";position:absolute;left:6px;bottom:6px;width:14px;height:14px;border-left:3px solid #c9a8ff;border-bottom:3px solid #c9a8ff;border-radius:0 0 0 6px}
+.res-r~.st-lresize,.st-lresize.is-r{cursor:nwse-resize}.st-lresize[hidden]{display:none}.st-lresize.is-r::before{left:auto;right:6px;border-left:0;border-right:3px solid #c9a8ff;border-radius:0 0 6px 0}.res-r .st-lresize::before{left:auto;right:6px;border-left:0;border-right:3px solid #c9a8ff;border-radius:0 0 6px 0}
+.st-save-grain{display:flex;align-items:center;gap:8px;font:600 11px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;color:#cfd6e2}.st-save-grain input{width:20px;height:20px}
 /* Movable trays */
 #studio [data-tray],#studio .st-tray-snap,#studio .st-tray-lock{-webkit-user-select:none;user-select:none}
 .st-edge-hint{position:absolute;z-index:4;pointer-events:none;background:#ff4655;box-shadow:0 0 18px 4px #ff4655aa;border-radius:3px;animation:edgepulse 1s ease-in-out infinite alternate}
@@ -7819,6 +7839,7 @@ class CoreStudio {
       <div class="st-save st-glass" data-studio-save hidden><span class="st-ctx-kind">Save image</span>
         <label>Format<select data-save-type><option value="image/png">PNG</option><option value="image/jpeg">JPEG</option><option value="application/pdf">PDF</option><option value="image/tiff">TIFF</option><option value="image/vnd.adobe.photoshop">PSD</option><option value="image/webp">WebP</option><option value="application/x-cerebra">Cerebra project</option></select></label>
         <label>Size<select data-save-scale><option value="1">1× screen</option><option value="2" selected>2× (sharp)</option><option value="3">3× (print)</option></select></label>
+        <label class="st-save-grain"><input type="checkbox" data-save-grain> Film grain</label>
         <button type="button" class="st-btn" data-save-import>Import project</button><input type="file" accept=".cerebra,.json,application/json" data-save-file hidden>
         <button type="button" class="st-btn is-primary" data-save-go>Download</button></div>
       <div class="st-lib" data-studio-library hidden><div class="st-lib-head"><b>Library</b><span data-lib-count></span><button type="button" class="st-btn" data-lib-mode aria-pressed="false">Circular</button><button type="button" class="st-btn" data-lib-close aria-label="Close library">✕</button></div>
@@ -7870,10 +7891,10 @@ class CoreStudio {
       <h3>Planet parts</h3><div class="studio-layers">${Object.keys(names).map(k => `<button type="button" class="studio-layer" data-studio-layer="${k}" aria-pressed="${k !== 'dust'}" aria-label="Show ${names[k]}"><span>${names[k]}</span>${eye}</button>`).join('')}</div>
       <h3>Inside the core</h3><div class="studio-layers">${LAYER_NAMES.map((name, i) => `<button type="button" class="studio-layer" data-studio-core="${i}" aria-pressed="true" aria-label="Hide ${name}"><span>${name}</span>${eye}</button>`).join('')}<button type="button" class="studio-layer" data-studio-layer="life" aria-pressed="true" aria-label="Hide organisms"><span>Organisms</span>${eye}</button></div>
       <button type="button" class="st-btn st-reset" data-studio-reset>Reset settings</button></aside>
-      <aside class="studio-panel st-layers-tray st-glass" data-tray="layers" aria-label="Layers"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-layers-fold aria-expanded="true"><h2>Layers</h2><span class="st-chev" aria-hidden="true"></span></button><button type="button" class="st-btn st-addgroup" data-add-group aria-label="Add a group">+ Group</button><ul class="st-layers" data-studio-objects></ul><p class="studio-note" data-objects-empty>Add text, shapes or decor. Drag ⋮⋮ to restack, the eye hides a layer.</p></aside>`;
+      <aside class="studio-panel st-layers-tray st-glass" data-tray="layers" aria-label="Layers"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-layers-fold aria-expanded="true"><h2>Layers</h2><span class="st-chev" aria-hidden="true"></span></button><div class="st-lbar"><button type="button" class="st-btn st-addgroup" data-add-group aria-label="Add a group">+ Group</button><button type="button" class="st-btn st-addgroup" data-sel-mode aria-pressed="false">Select</button></div><div class="st-lsel" data-lsel hidden></div><button type="button" class="st-lresize" data-lresize aria-label="Resize layers panel"></button><ul class="st-layers" data-studio-objects></ul><p class="studio-note" data-objects-empty>Add text, shapes or decor. Drag ⋮⋮ to restack, the eye hides a layer.</p></aside>`;
     document.body.append(this.bg, this.fx, this.vfx, this.el);
     this.panel = this.el.querySelector('.studio-panel'); this.stage = this.el.querySelector('[data-studio-stage]'); this.ctx = this.el.querySelector('[data-studio-context]');
-    this.items = []; this.itemId = 0; this.sel = null; this.groups = []; this.rotSnap = 0; try { this.rotSnap = +localStorage.getItem('cerebra-rot-snap') || 0; } catch (e) {}
+    this.items = []; this.itemId = 0; this.sel = null; this.groups = []; this.multi = new Set(); this.selMode = false; this.rotSnap = 0; try { this.rotSnap = +localStorage.getItem('cerebra-rot-snap') || 0; } catch (e) {}
     const typing = e => e.target.matches && (e.target.matches('input[type=text],textarea') || e.target.isContentEditable);
     this.el.addEventListener('focusin', e => { if (typing(e) && matchMedia('(pointer: coarse)').matches) this.el.classList.add('st-typing'); });
     this.el.addEventListener('focusout', e => { if (typing(e)) { this.el.classList.remove('st-typing'); requestAnimationFrame(() => scrollTo(0, 0)); } });
@@ -7892,6 +7913,7 @@ class CoreStudio {
     fold(this.el.querySelector('[data-panel-fold]'), this.panel);
     fold(this.el.querySelector('[data-layers-fold]'), this.el.querySelector('[data-tray="layers"]'));
     this.el.querySelector('[data-add-group]').addEventListener('click', () => this.addGroup());
+    this.el.querySelector('[data-sel-mode]').addEventListener('click', () => { this.selMode = !this.selMode; if (!this.selMode) this.multi.clear(); this.renderLayers(); });
     // Effects popover: pick an effect, set its strength, and the network backdrop live together.
     {
       const fxsel = this.el.querySelector('[data-studio-effect]'), amt = this.el.querySelector('[data-studio-effect-amount]'), box = this.el.querySelector('[data-fxbox]'), mine = this.el.querySelector('[data-fxamt]'), mo = this.el.querySelector('[data-fxamt-o]');
@@ -7965,7 +7987,7 @@ class CoreStudio {
     syncSel();
     document.addEventListener('pointerdown', e => { if (!e.target.closest('.st-group')) closeGrp(); }, true);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeGrp(); });
-    this.initTrays(); RB.dock(this.el.querySelector('.st-dock'));
+    this.initTrays(); this.initLayerResize(); RB.dock(this.el.querySelector('.st-dock'));
     this.el.querySelectorAll('[data-studio-tune],[data-save-go]').forEach(b => b.classList.add('rb-star'));
     MagicBento.apply('#studio .st-glass', { ripple: true }); MagicBento.apply('#studio .studio-preset', { tilt: 8, magnet: 4, ripple: true, particles: true });
     fold(this.el.querySelector('[data-dock-fold]'), this.el.querySelector('.st-dock'), 'toolbar');
@@ -8059,7 +8081,8 @@ class CoreStudio {
     document.addEventListener('pointerdown', e => { if (!saveMenu.hidden && !e.target.closest('.st-save,[data-studio-export]')) { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); } }, true);
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !saveMenu.hidden) { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); } });
     const fileIn = this.el.querySelector('[data-save-file]'); this.el.querySelector('[data-save-import]').onclick = () => fileIn.click(); fileIn.onchange = () => { if (fileIn.files[0]) this.importProject(fileIn.files[0]); fileIn.value = ''; saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); };
-    this.el.querySelector('[data-save-go]').onclick = () => { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); this.exportPoster(saveMenu.querySelector('[data-save-type]').value, +saveMenu.querySelector('[data-save-scale]').value); };
+    const gcb = saveMenu.querySelector('[data-save-grain]'); saveBtn.addEventListener('click', () => { gcb.checked = !!(this.grain && this.fxVisible('grain')); }, true);
+    this.el.querySelector('[data-save-go]').onclick = () => { this.exportGrain = gcb.checked; saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); this.exportPoster(saveMenu.querySelector('[data-save-type]').value, +saveMenu.querySelector('[data-save-scale]').value); };
     const ctx = k => this.ctx.querySelector(`[data-ctx-${k}]`), withText = f => e => { const it = this.sel; if (it && it.kind === 'text') { f(it, e.target); it.edited = true; this.place(it); } };
     ctx('content').oninput = withText((it, el) => { it.content = el.value; it.el.textContent = el.value; this.renderLayers(); });
     ctx('content').addEventListener('pointerdown', () => { if (matchMedia('(pointer: coarse)').matches) this.el.classList.add('st-typing'); });
@@ -8089,17 +8112,32 @@ class CoreStudio {
     ctx('delete').onclick = () => { if (this.sel) this.removeItem(this.sel); };
     this.el.querySelector('[data-studio-gravity]').onclick = e => { this.gravity = !this.gravity; e.currentTarget.setAttribute('aria-pressed', String(this.gravity)); };
     this.el.querySelector('[data-studio-home]').onclick = () => this.home();
-    this.el.querySelector('[data-studio-reset-all]').onclick = () => {
-      this.items.slice().forEach(it => this.removeItem(it, true));
+    const resetCanvas = () => {
+      this.items.slice().forEach(it => this.removeItem(it, true)); this.groups = []; this.multi.clear(); this.selMode = false;
       Object.keys(this.layers).forEach(k => { this.layers[k] = k !== 'dust'; }); this.coreLayers.fill(true);
-      this.blur = 8; this.dim = 0; this.guides = true; this.el.classList.remove('hide-guides');
+      this.blur = 8; this.dim = 0; this.focusInv = 0; this.focusText = false; this.focusObj = false; this.guides = true; this.el.classList.remove('hide-guides');
       this.frozen = false; this.showSubject = true; this.fxOn = false; this.grain = false; NET.set('on', false);
       [['[data-studio-freeze]', 'false'], ['[data-studio-show]', 'true'], ['[data-studio-fx]', 'false']].forEach(([s, v]) => this.el.querySelector(s).setAttribute('aria-pressed', v));
       this.el.querySelector('[data-freeze-label]').textContent = 'Stop';
       this.el.querySelectorAll('[data-studio-layer],[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioLayer !== 'dust')));
-      document.querySelector('[data-t-reset]').click();
-      this.home(); this.applyPreset('ember'); this.paintVfx(); this.resetTrays();
+      this.home(); this.applyPreset('ember'); this.paintVfx(); this.renderLayers();
     };
+    const resetFull = () => {
+      resetCanvas(); document.querySelector('[data-t-reset]').click(); this.resetTrays();
+      try { ['cerebra-ui-prefs', 'cerebra-layers-size', 'cerebra-studio-pencil', 'cerebra-rot-snap'].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+      this.laySize = null; this.rotSnap = 0; this.gridStyle = { auto: true, c: '#ffffff', a: .25, t: 1, n: 24 }; if (this.syncGridUI) this.syncGridUI(); this.setGridMode('always');
+      const root = document.documentElement; ['--cyg', '--glrgb1', '--glrgb2', '--glk', '--glb'].forEach(v => root.style.removeProperty(v)); this.uiSet && Object.assign(this.uiSet, { glk: 1, glb: 26, theme: 'violet' });
+      this.layoutTrays(); this.hist = null; this.hi = 0; this.hist = [this.snapshot()]; this.syncHist();
+    };
+    {
+      const rb = this.el.querySelector('[data-studio-reset-all]'), pop = document.createElement('div'); pop.className = 'st-lmenu st-glass st-resetmenu'; pop.hidden = true; this.el.append(pop);
+      pop.innerHTML = '<button type="button" class="st-lm-i" data-rs="canvas"><span>Reset canvas</span><i>can undo</i></button><button type="button" class="st-lm-i" data-rs="full"><span>Reset everything</span><i>cannot undo</i></button>';
+      const close = () => { pop.hidden = true; rb.setAttribute('aria-expanded', 'false'); };
+      rb.setAttribute('aria-haspopup', 'menu'); rb.onclick = e => { e.stopPropagation(); if (!pop.hidden) { close(); return; } pop.hidden = false; rb.setAttribute('aria-expanded', 'true'); const r = rb.getBoundingClientRect(); pop.style.width = '240px'; const left = clamp(r.left + r.width / 2 - 120, 8, innerWidth - 248); pop.style.left = left + 'px'; pop.style.top = Math.max(8, r.top - pop.offsetHeight - 12) + 'px'; };
+      pop.querySelector('[data-rs=canvas]').onclick = () => { close(); resetCanvas(); this.commit(); };
+      pop.querySelector('[data-rs=full]').onclick = () => { close(); if (confirm('Reset everything (canvas, Cerebra settings, menus and UI)? This cannot be undone.')) resetFull(); };
+      document.addEventListener('pointerdown', e => { if (!pop.hidden && !e.target.closest('.st-resetmenu,[data-studio-reset-all]')) close(); }, true);
+    }
     this.frozen = false; this.lensOn = false; this.grain = false; this.grainAmt = .1;
     this.grainEl = document.createElement('div'); this.grainEl.className = 'st-grain'; this.grainEl.hidden = true; this.stage.after(this.grainEl);
     const syncGrain = () => { this.syncFxLayers(); };
@@ -8301,7 +8339,7 @@ class CoreStudio {
     return cfg;
   }
   layoutTrays(cfg = this.trayCfg) {
-    if (!this.trays || !cfg) return;
+    if (!this.trays || !cfg) return; if (this.updLayHandle) this.updLayHandle();
     const W = innerWidth, H = innerHeight, small = W <= 900, gap = small ? 12 : 16, sT = Math.max(gap, parseFloat(getComputedStyle(this.el).getPropertyValue('--sat')) || gap), top0 = gap + 52 + 12;
     const vis = n => !this.trays[n].hidden, vert = ['left', 'right'];
     const set = (el, o) => { Object.assign(el.style, { left: 'auto', right: 'auto', top: 'auto', bottom: 'auto', width: '', height: '', maxHeight: '', ...o }); };
@@ -8311,13 +8349,13 @@ class CoreStudio {
     for (const e of vert) {
       const list = cfg[e].filter(vis); if (!list.length) continue;
       let y = e === 'left' ? top0 : gap, colW = 0;
-      const widthOf = n => n === 'panel' || n === 'layers' ? Math.min(340, W - 2 * gap - 140) : n === 'dock' ? (small ? 60 : 64) : (small ? 60 : 72);
+      const widthOf = n => n === 'layers' && this.laySize ? Math.min(this.laySize.w, W - 2 * gap - 80) : n === 'panel' || n === 'layers' ? Math.min(340, W - 2 * gap - 140) : n === 'dock' ? (small ? 60 : 64) : (small ? 60 : 72);
       list.forEach((n, i) => {
         const el = this.trays[n]; el.classList.add('is-v'); el.classList.remove('is-h');
         const w = widthOf(n), folded = el.classList.contains('is-folded'), last = i === list.length - 1;
         set(el, { [e]: used[e] + 'px', top: y + 'px', width: w + 'px', ...(n === 'panel' && !folded && last ? { bottom: gap + 'px' } : { maxHeight: `${Math.max(120, H - y - gap)}px` }) });
         if (n === 'panel' && !folded && !last) el.style.height = Math.max(160, (H - y) * .5) + 'px';
-        if (n === 'layers' && !folded) el.style.maxHeight = Math.max(140, Math.min(H * .38, 360)) + 'px';
+        if (n === 'layers' && !folded) el.style.maxHeight = (this.laySize ? Math.max(140, Math.min(this.laySize.h, H - y - gap)) : Math.max(140, Math.min(H * .38, 360))) + 'px';
         y += el.offsetHeight + gap; colW = Math.max(colW, w);
       });
       used[e] += colW + gap;
@@ -8327,7 +8365,7 @@ class CoreStudio {
       const el = this.trays[n]; el.classList.add('is-h'); el.classList.remove('is-v');
       // On phones the side rails are short, so bottom trays run full width under them.
       const L = small && e === 'bottom' ? gap : Math.max(used.left, e === 'top' ? gap + (small ? 60 : 72) + gap + 56 : gap), R = small && e === 'bottom' ? gap : used.right;
-      const h = n === 'panel' || n === 'layers' ? (el.classList.contains('is-folded') ? null : Math.min(H * (n === 'layers' ? .28 : .42), n === 'layers' ? 240 : 380)) : n === 'dock' ? (matchMedia('(pointer: coarse)').matches ? 80 : small ? 60 : 64) : (small ? 64 : 74);
+      const h = n === 'panel' || n === 'layers' ? (el.classList.contains('is-folded') ? null : n === 'layers' && this.laySize ? Math.min(this.laySize.h, H * .7) : Math.min(H * (n === 'layers' ? .28 : .42), n === 'layers' ? 240 : 380)) : n === 'dock' ? (matchMedia('(pointer: coarse)').matches ? 80 : small ? 60 : 64) : (small ? 64 : 74);
       const folded = el.classList.contains('is-folded'), span = (n === 'panel' || n === 'dock' || n === 'layers') && !folded;
       set(el, { [e]: used[e] + 'px', ...(span ? { left: L + 'px', right: R + 'px' } : { left: `max(${L}px, calc(50% - ${(W - L - R) / 2}px))`, right: 'auto' }), ...(h ? { height: h + 'px' } : {}) });
       if (!span) { el.style.left = L + (W - L - R - el.offsetWidth) / 2 + 'px'; }
@@ -8866,7 +8904,8 @@ class CoreStudio {
       const sw = it.kind === 'fx' ? `<i class="st-sw is-fx">${{ colour: '◐', grain: '▒', network: '⌘' }[it.fxType]}</i>` : it.kind === 'text' ? `<i class="st-sw" style="color:${it.color}">T</i>` : `<i class="st-sw ${it.decor ? 'is-fill' : ''}" style="color:${it.decor ? it.fill : '#fff'}">${this.icons[it.kind]}</i>`;
       const name = it.name ? esc(it.name) : it.kind === 'text' ? esc((it.content || '').split('\n')[0].slice(0, 24) || 'Text') : this.label(it);
       const lk = it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-llock${it.locked ? ' is-on' : ''}" aria-pressed="${!!it.locked}" aria-label="${it.locked ? 'Unlock' : 'Lock'} layer">${it.locked ? this.icons.lock : this.icons.unlock}</button>`;
-      return `<li class="st-layer${inGroup ? ' in-group' : ''}${it === this.sel ? ' is-sel' : ''}${it.hide ? ' is-hidden' : ''}${this.isHid(it) && !it.hide ? ' is-ghidden' : ''}" data-layer="${this.items.indexOf(it)}"><span class="st-grip" aria-label="Drag to restack or into a group">⋮⋮</span>${sw}<span class="st-lname">${name}</span>${lk}${it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-lmore" aria-haspopup="menu" aria-label="Layer options"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>`}<button type="button" class="st-eye" data-leye aria-pressed="${!it.hide}" aria-label="${it.hide ? 'Show' : 'Hide'} layer">${eye}</button><button type="button" class="st-eye st-ldel" aria-label="Delete layer">${this.icons.trash}</button>${it === this.sel ? `<label class="st-lop">Opacity<input type="range" min="0" max="1" step="0.05" value="${it.alpha ?? 1}" aria-label="Layer opacity"><output>${Math.round((it.alpha ?? 1) * 100)}%</output></label>` : ''}</li>`;
+      const chk = (this.selMode || this.multi.size) ? `<button type="button" class="st-eye st-lcheck${this.multi.has(it.id) ? ' is-on' : ''}" role="checkbox" aria-checked="${this.multi.has(it.id)}" aria-label="Select layer">${this.multi.has(it.id) ? '✓' : ''}</button>` : '';
+      return `<li class="st-layer${this.multi.has(it.id) ? ' is-multi' : ''}${inGroup ? ' in-group' : ''}${it === this.sel ? ' is-sel' : ''}${it.hide ? ' is-hidden' : ''}${this.isHid(it) && !it.hide ? ' is-ghidden' : ''}" data-layer="${this.items.indexOf(it)}">${chk}<span class="st-grip" aria-label="Drag to restack or into a group">⋮⋮</span>${sw}<span class="st-lname">${name}</span>${lk}${it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-lmore" aria-haspopup="menu" aria-label="Layer options"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>`}<button type="button" class="st-eye" data-leye aria-pressed="${!it.hide}" aria-label="${it.hide ? 'Show' : 'Hide'} layer">${eye}</button><button type="button" class="st-eye st-ldel" aria-label="Delete layer">${this.icons.trash}</button>${it === this.sel ? `<label class="st-lop">Opacity<input type="range" min="0" max="1" step="0.05" value="${it.alpha ?? 1}" aria-label="Layer opacity"><output>${Math.round((it.alpha ?? 1) * 100)}%</output></label>` : ''}</li>`;
     };
     const head = g => { const m = this.items.filter(i => i.group === g.id), allLocked = m.length && m.every(i => i.locked); return `<li class="st-ghead${g.hide ? ' is-hidden' : ''}" data-gid="${g.id}"><button type="button" class="st-eye st-gtog" aria-expanded="${!g.collapsed}" aria-label="${g.collapsed ? 'Expand' : 'Collapse'} group"><span class="st-chev${g.collapsed ? ' is-closed' : ''}" aria-hidden="true"></span></button>${folder}<span class="st-lname st-gname" data-gname>${esc(g.name)}</span><span class="st-gcount">${m.length}</span><button type="button" class="st-eye st-glock${allLocked ? ' is-on' : ''}" aria-pressed="${!!allLocked}" aria-label="Lock group">${allLocked ? this.icons.lock : this.icons.unlock}</button><button type="button" class="st-eye st-geye" aria-pressed="${!g.hide}" aria-label="${g.hide ? 'Show' : 'Hide'} group">${eye}</button><button type="button" class="st-eye st-gdel" aria-label="Ungroup">${this.icons.trash}</button></li>`; };
     const seen = new Set(), out = [];
@@ -8878,6 +8917,10 @@ class CoreStudio {
     });
     this.groups.forEach(g => { if (!seen.has(g.id)) out.push(head(g)); });
     ul.innerHTML = out.join('');
+    const bar = this.el.querySelector('[data-lsel]'), sm = this.el.querySelector('[data-sel-mode]'); this.multi.forEach(id => { if (!this.items.some(i => i.id === id)) this.multi.delete(id); });
+    sm.setAttribute('aria-pressed', String(this.selMode || this.multi.size > 0)); sm.textContent = this.selMode || this.multi.size ? 'Done' : 'Select';
+    bar.hidden = !this.multi.size;
+    if (this.multi.size) { bar.innerHTML = `<b>${this.multi.size} selected</b>${[['group', 'Group'], ['top', 'To top'], ['bottom', 'To bottom'], ['hide', 'Hide'], ['lock', 'Lock'], ['delete', 'Delete']].map(([k, l]) => `<button type="button" data-ma="${k}">${l}</button>`).join('')}<button type="button" data-ma="clear" aria-label="Clear selection">✕</button>`; bar.querySelectorAll('[data-ma]').forEach(b => b.onclick = () => b.dataset.ma === 'clear' ? this.clearMulti() : this.multiAct(b.dataset.ma)); }
     // group headers
     ul.querySelectorAll('.st-ghead').forEach(li => {
       const g = this.groups.find(x => x.id === +li.dataset.gid), mem = () => this.items.filter(i => i.group === g.id);
@@ -8896,13 +8939,21 @@ class CoreStudio {
       const lk = li.querySelector('.st-llock'); if (lk) lk.addEventListener('click', () => this.lockItem(it, !it.locked));
       const op = li.querySelector('.st-lop input');
       if (op) { op.addEventListener('input', () => { it.alpha = +op.value; op.nextElementSibling.textContent = `${Math.round(it.alpha * 100)}%`; this.place(it); }); op.addEventListener('change', () => this.commit()); }
-      li.addEventListener('click', e => { if (e.target.closest('.st-eye,.st-grip,.st-lop,.st-gedit')) return; if (!this.isHid(it)) this.select(it); });
+      li.addEventListener('click', e => { if (e.target.closest('.st-eye,.st-grip,.st-lop,.st-gedit') || this.swiped) return; if (this.selMode || this.multi.size) { this.toggleMulti(it); return; } if (!this.isHid(it)) this.select(it); });
       li.querySelector('[data-leye]').addEventListener('click', () => { it.hide = !it.hide; if (it.hide && this.sel === it) this.select(null); this.place(it); this.updateFocus(); this.renderLayers(); this.commit(); });
+      const ck = li.querySelector('.st-lcheck'); if (ck) ck.addEventListener('click', () => this.toggleMulti(it));
+      // Swipe right on a row to tick it (iOS/macOS style).
+      let sw = null;
+      li.addEventListener('pointerdown', e => { if (e.target.closest('.st-eye,.st-grip,.st-lop,.st-gedit,input,select')) return; sw = { id: e.pointerId, x: e.clientX, y: e.clientY, done: false }; });
+      li.addEventListener('pointermove', e => { if (!sw || sw.id !== e.pointerId || sw.done) return; const dx = e.clientX - sw.x, dy = e.clientY - sw.y; if (dx > 46 && Math.abs(dy) < 26) { sw.done = true; this.swiped = true; setTimeout(() => { this.swiped = false; }, 350); this.selMode = true; this.toggleMulti(it, true); } else if (Math.abs(dy) > 30) sw = null; });
+      li.addEventListener('pointerup', () => { sw = null; }); li.addEventListener('pointercancel', () => { sw = null; });
       const grip = li.querySelector('.st-grip');
       grip.addEventListener('pointerdown', e => {
         e.preventDefault(); grip.setPointerCapture(e.pointerId);
-        this.dragLayer = { id: e.pointerId, y: e.clientY, li, it, target: null };
-        li.classList.add('is-drag');
+        const set = this.multi.has(it.id) ? this.items.filter(i => this.multi.has(i.id)) : [it];
+        this.dragLayer = { id: e.pointerId, y: e.clientY, li, it, set, target: null };
+        li.classList.add('is-drag'); if (set.length > 1) li.dataset.n = set.length;
+        const z = document.createElement('li'); z.className = 'st-newgroup-zone'; z.textContent = 'Drop here → new group'; ul.append(z);
       });
       grip.addEventListener('pointermove', e => {
         const d = this.dragLayer; if (!d || d.id !== e.pointerId) return;
@@ -8912,26 +8963,18 @@ class CoreStudio {
         for (const n of ul.children) {
           if (n === li) continue; const r = n.getBoundingClientRect();
           if (e.clientY >= r.top && e.clientY <= r.bottom) {
-            if (n.classList.contains('st-ghead')) { n.classList.add('is-drop-in'); d.target = { kind: 'group', id: +n.dataset.gid }; }
-            else { const above = e.clientY < r.top + r.height / 2; n.classList.add(above ? 'is-drop-above' : 'is-drop-below'); d.target = { kind: 'row', it: this.items[+n.dataset.layer], above }; }
+            if (n.classList.contains('st-newgroup-zone')) { n.classList.add('is-drop-in'); d.target = { kind: 'new' }; }
+            else if (n.classList.contains('st-ghead')) { n.classList.add('is-drop-in'); d.target = { kind: 'group', id: +n.dataset.gid }; }
+            else if (n.dataset.layer != null) { const t = this.items[+n.dataset.layer]; if (d.set.includes(t)) break; const above = e.clientY < r.top + r.height / 2; n.classList.add(above ? 'is-drop-above' : 'is-drop-below'); d.target = { kind: 'row', it: t, above }; }
             break;
           }
         }
       });
       const drop = e => {
         const d = this.dragLayer; if (!d || d.id !== e.pointerId) return; this.dragLayer = null;
-        li.classList.remove('is-drag'); li.style.transform = '';
+        li.classList.remove('is-drag'); li.style.transform = ''; delete li.dataset.n; ul.querySelector('.st-newgroup-zone')?.remove();
         const t = d.target, moved = Math.abs(e.clientY - d.y) > 6;
-        if (t && moved) {
-          if (t.kind === 'group') it.group = t.id;
-          else if (t.it && t.it !== it) {
-            this.items = this.items.filter(i => i !== it);
-            const k = this.items.indexOf(t.it); this.items.splice(t.above ? k + 1 : k, 0, it);
-            it.group = t.it.group ?? null;
-            this.items.forEach(i => this.stage.append(i.el));
-          }
-          this.place(it); this.updateFocus(); this.commit();
-        }
+        if (t && moved) this.moveLayers(d.set, t);
         this.renderLayers();
       };
       grip.addEventListener('pointerup', drop); grip.addEventListener('pointercancel', drop);
@@ -9026,6 +9069,44 @@ class CoreStudio {
   }
   syncMaskBar() { const b = this.el.querySelector('.st-assist'); if (b) b.classList.toggle('is-mask', !!this.maskEdit); const n = this.el.querySelector('[data-mask-note]'); if (n) n.textContent = this.maskEdit ? `Mask: Pen hides · Eraser reveals (${this.maskEdit.name || this.label(this.maskEdit)})` : ''; }
   setGridMode(v) { this.gridMode = v; this.el.querySelectorAll('[data-studio-gridmode]').forEach(e => { e.value = v; }); }
+  toggleMulti(it, on) { if (on === true || !this.multi.has(it.id)) this.multi.add(it.id); else this.multi.delete(it.id); if (!this.multi.size) this.selMode = this.selMode && true; this.renderLayers(); }
+  clearMulti() { this.multi.clear(); this.selMode = false; this.renderLayers(); }
+  moveLayers(set, t) {
+    const order = this.items.filter(i => set.includes(i));
+    if (t.kind === 'new') { const g = { id: Date.now() + Math.floor(Math.random() * 1000), name: `Group ${this.groups.length + 1}`, hide: false, collapsed: false }; this.groups.push(g); order.forEach(i => { i.group = g.id; }); }
+    else if (t.kind === 'group') order.forEach(i => { i.group = t.id; });
+    else if (t.it) {
+      this.items = this.items.filter(i => !set.includes(i)); const k = this.items.indexOf(t.it); this.items.splice(t.above ? k + 1 : k, 0, ...order);
+      order.forEach(i => { i.group = t.it.group ?? null; });
+    }
+    this.items.forEach(i => this.stage.append(i.el)); order.forEach(i => this.place(i)); this.updateFocus(); this.commit();
+  }
+  multiAct(act) {
+    const set = this.items.filter(i => this.multi.has(i.id)); if (!set.length) return;
+    if (act === 'group') this.moveLayers(set, { kind: 'new' });
+    else if (act === 'top') { this.items = this.items.filter(i => !set.includes(i)).concat(set); this.items.forEach(i => this.stage.append(i.el)); this.commit(); }
+    else if (act === 'bottom') { this.items = set.concat(this.items.filter(i => !set.includes(i))); this.items.forEach(i => this.stage.append(i.el)); this.commit(); }
+    else if (act === 'hide') { const h = !set.every(i => i.hide); set.forEach(i => { i.hide = h; this.place(i); }); this.updateFocus(); this.commit(); }
+    else if (act === 'lock') { const l = !set.every(i => i.locked); set.forEach(i => { i.locked = l; this.place(i); }); this.commit(); }
+    else if (act === 'delete') { set.forEach(i => this.removeItem(i, true)); this.commit(); this.multi.clear(); this.selMode = false; }
+    if (act === 'group') { this.multi.clear(); this.selMode = false; }
+    this.renderLayers();
+  }
+  initLayerResize() {
+    const tray = this.trays && this.trays.layers, h = this.el.querySelector('[data-lresize]'); if (!tray) return;
+    try { this.laySize = JSON.parse(localStorage.getItem('cerebra-layers-size') || 'null'); } catch (e) {}
+    this.el.append(h); let d = null;
+    const edge = () => ['left', 'right', 'top', 'bottom'].find(k => (this.trayCfg[k] || []).includes && (this.trayCfg[k] || []).includes('layers')) || 'right';
+    h.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); h.setPointerCapture(e.pointerId); const r = tray.getBoundingClientRect(); d = { id: e.pointerId, x: e.clientX, y: e.clientY, w: r.width, h: r.height, e: edge() }; });
+    h.addEventListener('pointermove', e => { if (!d || d.id !== e.pointerId) return; const dx = e.clientX - d.x, dy = e.clientY - d.y;
+      const w = d.e === 'right' ? d.w - dx : d.e === 'left' ? d.w + dx : d.w, hh = d.e === 'bottom' ? d.h - dy : d.h + dy;
+      this.laySize = { w: clamp(Math.round(w), 260, Math.min(720, innerWidth - 120)), h: clamp(Math.round(hh), 140, innerHeight - 100) }; this.layoutTrays(); });
+    const end = e => { if (!d || d.id !== e.pointerId) return; d = null; try { localStorage.setItem('cerebra-layers-size', JSON.stringify(this.laySize)); } catch (x) {} };
+    this.updLayHandle = () => { const r = tray.getBoundingClientRect(), L = edge() === 'left'; h.classList.toggle('is-r', L); h.hidden = tray.hidden || tray.classList.contains('is-folded') || r.width < 50; h.style.left = (L ? r.right - 32 : r.left + 2) + 'px'; h.style.top = (r.bottom - 32) + 'px'; };
+    addEventListener('resize', () => this.updLayHandle()); setInterval(() => { if (this.active) this.updLayHandle(); }, 400);
+    h.addEventListener('pointerup', end); h.addEventListener('pointercancel', end);
+    h.addEventListener('dblclick', () => { this.laySize = null; try { localStorage.removeItem('cerebra-layers-size'); } catch (x) {} this.layoutTrays(); });
+  }
   addGroup() {
     const g = { id: Date.now() + Math.floor(Math.random() * 1000), name: `Group ${this.groups.length + 1}`, hide: false, collapsed: false };
     this.groups.push(g); if (this.sel && this.sel.kind !== 'fx') this.sel.group = g.id; this.renderLayers(); this.commit();
@@ -9159,7 +9240,7 @@ class CoreStudio {
       let fin=out;
       if(innerWidth>900){const c0=this.compCentre(),sh=this.shift||{x:0,y:0},cx=(c0.x+sh.x)*sx,half=Math.min(cx,width-cx);
         fin=document.createElement('canvas');fin.width=Math.round(half*2);fin.height=height;fin.getContext('2d').drawImage(out,Math.round(cx-half),0,fin.width,height,0,0,fin.width,height);}
-      if(this.grain&&this.fxVisible('grain')){const gc=fin.getContext('2d'),n=document.createElement('canvas');n.width=256;n.height=256;const ng=n.getContext('2d'),id=ng.createImageData(256,256);for(let i=0;i<id.data.length;i+=4){const v=Math.random()*255;id.data[i]=id.data[i+1]=id.data[i+2]=v;id.data[i+3]=255;}ng.putImageData(id,0,0);gc.save();gc.globalAlpha=this.grainAmt*this.fxItem('grain').alpha;gc.globalCompositeOperation='overlay';gc.fillStyle=gc.createPattern(n,'repeat');gc.fillRect(0,0,fin.width,fin.height);gc.restore();}
+      if((this.exportGrain===undefined?(this.grain&&this.fxVisible('grain')):this.exportGrain)){const gc=fin.getContext('2d'),n=document.createElement('canvas');n.width=256;n.height=256;const ng=n.getContext('2d'),id=ng.createImageData(256,256);for(let i=0;i<id.data.length;i+=4){const v=Math.random()*255;id.data[i]=id.data[i+1]=id.data[i+2]=v;id.data[i+3]=255;}ng.putImageData(id,0,0);gc.save();gc.globalAlpha=(this.grainAmt||.1)*((this.fxItem('grain')||{alpha:1}).alpha);gc.globalCompositeOperation='overlay';gc.fillStyle=gc.createPattern(n,'repeat');gc.fillRect(0,0,fin.width,fin.height);gc.restore();}
       return fin;
   }
   async exportPoster(type = 'image/png', scale = 2) {
@@ -9173,7 +9254,7 @@ class CoreStudio {
       const link=document.createElement('a');link.href=URL.createObjectURL(final);link.download=`cerebra-${this.preset}-${fin.width}x${fin.height}.${{'image/jpeg':'jpg','image/webp':'webp','application/pdf':'pdf','image/tiff':'tif','image/vnd.adobe.photoshop':'psd'}[type]||'png'}`;
       document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(link.href),4000);
     }catch(err){console.error('Studio export failed',err);label.textContent='Export failed';setTimeout(()=>label.textContent='Save PNG',2500);}
-    finally{this.exporting=false;button.disabled=false;if(label.textContent==='Rendering…')label.textContent='Save PNG';}
+    finally{this.exportGrain=undefined;this.exporting=false;button.disabled=false;if(label.textContent==='Rendering…')label.textContent='Save PNG';}
   }
   paintVfx(now=performance.now()) {
     const c=this.vfx, w=this.app.stage.width, h=this.app.stage.height;
