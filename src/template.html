@@ -1787,10 +1787,9 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio [data-kit-panel] .st-fly-row:has(>input[type=color]){grid-template-columns:minmax(0,1fr) 64px}
 #studio [data-kit-panel] .st-fly-row>input[type=color]{width:64px;height:36px}
 #studio [data-kit-panel] .st-fly-check{min-height:44px;cursor:pointer}
-#studio [data-kit-panel] .st-fly-check input[type=checkbox]{appearance:none;-webkit-appearance:none;width:42px;height:24px;margin:0;border-radius:999px;background:#ffffff26;position:relative;cursor:pointer;transition:background .18s;flex:none}
-#studio [data-kit-panel] .st-fly-check input[type=checkbox]::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 4px #0007;transition:transform .18s}
-#studio [data-kit-panel] .st-fly-check input[type=checkbox]:checked{background:linear-gradient(150deg,#ff6b78,#e8364a)}
-#studio [data-kit-panel] .st-fly-check input[type=checkbox]:checked::after{transform:translateX(18px)}
+#studio [data-kit-panel] .st-fly-check input[type=checkbox]{appearance:none;-webkit-appearance:none;display:block;box-sizing:border-box;width:44px;height:26px;min-width:44px;margin:0;padding:0;border:0;border-radius:999px;justify-self:end;align-self:center;cursor:pointer;flex:none;overflow:hidden;background-color:#ffffff2e;background-image:radial-gradient(circle,#fff 0 9px,#0000 9.5px);background-repeat:no-repeat;background-size:22px 22px;background-position:2px 50%;transition:background-color .18s,background-position .18s;box-shadow:inset 0 0 0 1px #ffffff1c}
+#studio [data-kit-panel] .st-fly-check input[type=checkbox]::after,#studio [data-kit-panel] .st-fly-check input[type=checkbox]::before{content:none!important;display:none!important}
+#studio [data-kit-panel] .st-fly-check input[type=checkbox]:checked{background-color:#e8364a;background-image:radial-gradient(circle,#fff 0 9px,#0000 9.5px);background-position:calc(100% - 2px) 50%;box-shadow:0 0 12px #ff465566}
 #studio [data-kit-panel] .st-ksec-h,#studio [data-kit-panel] summary{font:600 11px var(--f-sans);letter-spacing:.12em;text-transform:uppercase;color:#9aa4b6;padding:8px 4px 0;margin:0}
 #studio [data-kit-panel] .st-ksec{display:grid;gap:8px}
 #studio [data-kit-panel] summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:36px;padding:0 12px;border-radius:12px;background:#ffffff0d;border:1px solid #ffffff14;color:#dfe5ef}
@@ -11232,7 +11231,7 @@ class CoreStudio {
       h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
     });
     this.updateXf = () => {
-      const x = this.xfSet(), edit = this.el.classList.contains('st-typing') || (x && x.items.length === 1 && x.items[0].el.isContentEditable), b = x && !edit && !this.groupDrag && !this.itemDrag?.moved ? this.xfBox(x) : null;
+      const x = this.xfSet(), edit = this.el.classList.contains('st-typing') || (x && x.items.length === 1 && x.items[0].el.isContentEditable), flyOpen = !!this.el.querySelector('.st-fly:not([hidden])'), b = x && !edit && !flyOpen && !this.groupDrag && !this.itemDrag?.moved ? this.xfBox(x) : null;
       if (!b) { box.hidden = true; return; }
       box.hidden = false; Object.assign(box.style, { left: b.L + 'px', top: b.T + 'px', width: (b.R - b.L) + 'px', height: (b.B - b.T) + 'px' });
       const free = x.items.length === 1 && !x.planet && x.items[0].kind !== 'text' && !x.items[0].rot; box.classList.toggle('has-edges', free);
