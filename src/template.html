@@ -1769,6 +1769,7 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .st-mq svg{position:absolute;inset:0}
 #studio .st-mq-r{fill:#8b5cf622;stroke:#a78bfa;stroke-width:1.5;stroke-dasharray:6 4}
 #studio .st-mq-l{fill:#8b5cf622;stroke:#a78bfa;stroke-width:1.5;stroke-dasharray:6 4;stroke-linejoin:round}
+#studio .st-ghead.is-multi{outline:2px solid #a78bfa;outline-offset:-2px}
 #studio .st-planet-sel{position:fixed;z-index:6;border-radius:50%;border:2px dashed #a78bfa;box-shadow:0 0 0 2px #8b5cf633,0 0 24px #8b5cf655;pointer-events:none}
 #studio .st-multibox{position:fixed;z-index:6;border:1.5px dashed #a78bfa;border-radius:8px;pointer-events:none}
 #studio [data-studio-stage] .is-multi{outline:2px solid #a78bfa;outline-offset:3px}
@@ -8903,7 +8904,9 @@ class CoreStudio {
     this.panel = this.el.querySelector('.studio-panel'); this.stage = this.el.querySelector('[data-studio-stage]'); this.catcher = document.createElement('div'); this.catcher.className = 'st-catcher'; this.planetBox = document.createElement('div'); this.planetBox.className = 'st-planetbox'; this.planetBox.setAttribute('aria-hidden', 'true'); this.stage.prepend(this.catcher); this.ctx = this.el.querySelector('[data-studio-context]');
     this.items = []; this.itemId = 0; this.sel = null; this.groups = []; this.multi = new Set(); this.selMode = false; this.rotSnap = 0; try { this.rotSnap = +localStorage.getItem('cerebra-rot-snap') || 0; } catch (e) {}
     const typing = e => e.target.matches && (e.target.matches('input[type=text],textarea') || e.target.isContentEditable);
-    this.el.addEventListener('focusin', e => { if (typing(e) && matchMedia('(pointer: coarse)').matches) this.el.classList.add('st-typing'); });
+    const inMenu = e => !!(e.target.closest && e.target.closest('.studio-panel,.st-dock,.st-fly,.st-save'));   // a field inside a menu must not hide that menu while you type
+    this.el.addEventListener('focusin', e => { if (typing(e) && !inMenu(e) && matchMedia('(pointer: coarse)').matches) this.el.classList.add('st-typing'); });
+    this.el.addEventListener('pointerdown', () => { if (this.el.classList.contains('st-typing')) requestAnimationFrame(() => { const a = document.activeElement; if (!(a && a !== document.body && (a.matches('input[type=text],textarea') || a.isContentEditable))) this.el.classList.remove('st-typing'); }); }, true);
     this.el.addEventListener('focusout', e => { if (typing(e)) { this.el.classList.remove('st-typing'); requestAnimationFrame(() => scrollTo(0, 0)); } });
     this.panel.querySelectorAll('h3').forEach((heading, index) => {
       const section = document.createElement('details');
@@ -10529,7 +10532,7 @@ class CoreStudio {
       const chk = (this.selMode || this.multi.size) ? `<button type="button" class="st-eye st-lcheck${this.multi.has(it.id) ? ' is-on' : ''}" role="checkbox" aria-checked="${this.multi.has(it.id)}" aria-label="Select layer">${this.multi.has(it.id) ? '✓' : ''}</button>` : '';
       return `<li class="st-layer${this.multi.has(it.id) ? ' is-multi' : ''}${inGroup ? ' in-group' : ''}${it === this.sel ? ' is-sel' : ''}${it.hide ? ' is-hidden' : ''}${this.isHid(it) && !it.hide ? ' is-ghidden' : ''}${it.fxType === 'planet' ? ' is-planet' : ''}" data-layer="${this.items.indexOf(it)}">${chk}<span class="st-grip" aria-label="Drag to restack or into a group">⋮⋮</span>${sw}<span class="st-lname">${name}</span>${lk}${it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-lmore" aria-haspopup="menu" aria-label="Layer options"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>`}<button type="button" class="st-eye" data-leye aria-pressed="${!it.hide}" aria-label="${it.hide ? 'Show' : 'Hide'} layer">${eye}</button><button type="button" class="st-eye st-ldel" aria-label="Delete layer">${this.icons.trash}</button>${it === this.sel ? `<label class="st-lop">Opacity<input type="range" min="0" max="1" step="0.05" value="${it.alpha ?? 1}" aria-label="Layer opacity"><output>${Math.round((it.alpha ?? 1) * 100)}%</output></label>` : ''}</li>`;
     };
-    const head = g => { const m = this.items.filter(i => i.group === g.id), allLocked = m.length && m.every(i => i.locked); return `<li class="st-ghead${g.hide ? ' is-hidden' : ''}" data-gid="${g.id}"><button type="button" class="st-eye st-gtog" aria-expanded="${!g.collapsed}" aria-label="${g.collapsed ? 'Expand' : 'Collapse'} group"><span class="st-chev${g.collapsed ? ' is-closed' : ''}" aria-hidden="true"></span></button>${folder}<span class="st-lname st-gname" data-gname>${esc(g.name)}</span><span class="st-gcount">${m.length}</span><button type="button" class="st-eye st-glock${allLocked ? ' is-on' : ''}" aria-pressed="${!!allLocked}" aria-label="Lock group">${allLocked ? this.icons.lock : this.icons.unlock}</button><button type="button" class="st-eye st-geye" aria-pressed="${!g.hide}" aria-label="${g.hide ? 'Show' : 'Hide'} group">${eye}</button><button type="button" class="st-eye st-gdel" aria-label="Ungroup">${this.icons.trash}</button></li>`; };
+    const head = g => { const m = this.items.filter(i => i.group === g.id), allLocked = m.length && m.every(i => i.locked); return `<li class="st-ghead${g.hide ? ' is-hidden' : ''}${m.length && m.every(i => this.multi.has(i.id)) ? ' is-multi' : ''}" data-gid="${g.id}"><button type="button" class="st-eye st-gtog" aria-expanded="${!g.collapsed}" aria-label="${g.collapsed ? 'Expand' : 'Collapse'} group"><span class="st-chev${g.collapsed ? ' is-closed' : ''}" aria-hidden="true"></span></button>${folder}<span class="st-lname st-gname" data-gname>${esc(g.name)}</span><span class="st-gcount">${m.length}</span><button type="button" class="st-eye st-glock${allLocked ? ' is-on' : ''}" aria-pressed="${!!allLocked}" aria-label="Lock group">${allLocked ? this.icons.lock : this.icons.unlock}</button><button type="button" class="st-eye st-geye" aria-pressed="${!g.hide}" aria-label="${g.hide ? 'Show' : 'Hide'} group">${eye}</button><button type="button" class="st-eye st-gdel" aria-label="Ungroup">${this.icons.trash}</button></li>`; };
     const seen = new Set(), out = [];
     this.items.slice().reverse().forEach(it => {
       if (it.group == null || !this.groups.some(g => g.id === it.group)) { out.push(row(it, false)); return; }
@@ -10551,7 +10554,15 @@ class CoreStudio {
       li.querySelector('.st-glock').addEventListener('click', () => { const m = mem(), lock = !(m.length && m.every(i => i.locked)); m.forEach(i => { i.locked = lock; this.place(i); }); this.renderLayers(); this.commit(); });
       li.querySelector('.st-gdel').addEventListener('click', () => { mem().forEach(i => { i.group = null; }); this.groups = this.groups.filter(x => x !== g); this.renderLayers(); this.commit(); });
       const nm = li.querySelector('[data-gname]');
-      nm.addEventListener('click', () => { const inp = document.createElement('input'); inp.type = 'text'; inp.className = 'st-gedit'; inp.value = g.name; inp.maxLength = 24; nm.replaceWith(inp); inp.focus(); inp.select(); const done = () => { g.name = inp.value.trim() || g.name; this.renderLayers(); this.commit(); }; inp.addEventListener('blur', done); inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); if (e.key === 'Escape') { inp.value = g.name; inp.blur(); } e.stopPropagation(); }); });
+      const rename = () => { const inp = document.createElement('input'); inp.type = 'text'; inp.className = 'st-gedit'; inp.value = g.name; inp.maxLength = 24; nm.replaceWith(inp); inp.focus(); inp.select(); const done = () => { g.name = inp.value.trim() || g.name; this.renderLayers(); this.commit(); }; inp.addEventListener('blur', done); inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); if (e.key === 'Escape') { inp.value = g.name; inp.blur(); } e.stopPropagation(); }); };
+      // tapping a group row selects everything in it (box + bar, move together); a quick second tap on the name renames it
+      li.addEventListener('click', e => {
+        if (e.target.closest('.st-gtog,.st-geye,.st-glock,.st-gdel,.st-gedit')) return;
+        const t = performance.now(), gt = this.gTap;   // the row is re-drawn by the first tap, so the tap time lives on the Studio
+        if (e.target.closest('[data-gname]') && gt && gt.id === g.id && t - gt.t < 700) { this.gTap = null; rename(); return; }
+        this.gTap = { id: g.id, t };
+        this.selectGroup(g);
+      });
     });
     ul.querySelectorAll('.st-layer').forEach(li => {
       const it = this.items[+li.dataset.layer];
@@ -11105,6 +11116,14 @@ class CoreStudio {
     addEventListener('resize', () => this.updLayHandle()); setInterval(() => { if (this.active) this.updLayHandle(); }, 400);
     h.addEventListener('pointerup', end); h.addEventListener('pointercancel', end);
     h.addEventListener('dblclick', () => { this.laySize = null; try { localStorage.removeItem('cerebra-layers-size'); } catch (x) {} this.layoutTrays(); });
+  }
+  // Selecting a group from its row in Layers: every visible member is selected together (one box, one bar); tap again to clear.
+  selectGroup(g) {
+    const m = this.items.filter(i => i.group === g.id && !this.isHid(i)); if (!m.length) return;
+    const same = !this.multiPlanet && this.multi.size === m.length && m.every(i => this.multi.has(i.id));
+    this.select(null); this.lineSel = null;
+    if (same) { this.clearGroup(); return; }
+    this.multi = new Set(m.map(i => i.id)); this.multiPlanet = false; this.selMode = true; this.renderLayers(); this.updateMultiUI();
   }
   addGroup() {
     const g = { id: Date.now() + Math.floor(Math.random() * 1000), name: `Group ${this.groups.length + 1}`, hide: false, collapsed: false };
