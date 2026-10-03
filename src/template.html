@@ -931,6 +931,18 @@ body.studio-on #studio{display:block}
 .studio-panel .studio-two label{display:grid;gap:6px;font:11px var(--f-sans);color:#aab3c4}
 .studio-preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .st-moods{margin-bottom:10px}
+.st-save-video{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.14)}
+.st-save-video small{flex:1 1 100%;font-size:11px;opacity:.7;line-height:1.35}
+#studio .st-rec{position:fixed;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);z-index:100000;display:flex;align-items:center;gap:12px;padding:8px 10px 8px 16px;border-radius:999px;background:#10131ae6;color:#fff;font:700 13px var(--f-mono,monospace);pointer-events:auto;box-shadow:0 8px 24px #0008}
+#studio .st-rec i{width:10px;height:10px;border-radius:50%;background:#ff3b4e;animation:stRec 1s ease-in-out infinite}
+@keyframes stRec{50%{opacity:.25}}
+#studio .st-rec .st-btn{min-height:40px;padding:0 14px}
+#studio .st-vidprev{position:absolute;inset:0;z-index:100000;display:grid;place-items:center;background:#05070ae6;pointer-events:auto}
+#studio .st-vidprev-card{display:grid;gap:10px;max-width:min(92vw,900px);max-height:92vh;padding:14px;border-radius:20px;background:#12151d;border:1px solid #ffffff22;color:#fff}
+#studio .st-vidprev video{width:100%;max-height:68vh;border-radius:12px;background:#000}
+#studio .st-vidprev-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end}
+#studio .st-vidprev small{opacity:.7;font-size:11px;flex:1 1 200px}
+#studio .st-vidprev .st-btn,#studio .st-vidprev a.st-btn{min-height:40px;padding:0 16px;display:inline-flex;align-items:center;text-decoration:none;color:inherit}
 /* Light graphics: live blur behind many large menus over a moving 3D scene is the heaviest thing on a tablet GPU */
 html.st-lite{--gl1:rgba(var(--glrgb1),calc(.8 * var(--glk)));--gl2:rgba(var(--glrgb2),calc(.74 * var(--glk)))}
 html.st-lite #studio :not(.st-glassbox),html.st-lite #tune,html.st-lite #wtune,html.st-lite .tune{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
@@ -8849,6 +8861,11 @@ class CoreStudio {
         <label>Size<select data-save-scale><option value="1">1× screen</option><option value="2" selected>2× (sharp)</option><option value="3">3× (print)</option></select></label>
         <label class="st-save-grain"><input type="checkbox" data-save-grain> Film grain</label>
                 <button type="button" class="st-btn is-primary" data-save-go>Download</button>
+        <div class="st-save-video"><span class="st-ctx-kind">Save video</span>
+          <label>Length<select data-vid-secs><option value="3">3 s</option><option value="5" selected>5 s</option><option value="10">10 s</option></select></label>
+          <label>Size<select data-vid-size><option value="1280" selected>HD 1280</option><option value="1920">Full HD 1920</option></select></label>
+          <button type="button" class="st-btn is-primary" data-vid-go>Record</button>
+          <small data-vid-msg role="status">Records the planet, spinning Kits and moving lines as they move now.</small></div>
         <div class="st-save-planet"><span class="st-ctx-kind">Save planet</span><input type="text" data-planet-name maxlength="24" placeholder="Name your planet" aria-label="Planet name"><button type="button" class="st-btn" data-planet-save>Save planet</button><small data-planet-msg role="status">Keeps your Cerebra core look and shows it first in World Atelier.</small></div></div>
       <div class="st-lib" data-studio-library hidden><div class="st-lib-head"><b>Library</b><span data-lib-count></span><button type="button" class="st-btn" data-lib-mode aria-pressed="false">Circular</button><button type="button" class="st-btn" data-lib-close aria-label="Close library">✕</button></div>
         <div class="st-lib-track" data-lib-track></div><p class="st-lib-empty" data-lib-empty>Nothing kept yet. Press Keep in the toolbar to save this composition.</p></div>
@@ -9146,6 +9163,11 @@ class CoreStudio {
         msg.textContent = ok ? `Saved “${name}”. It is now the first planet in World Atelier.` : 'Could not save (browser storage is full or blocked).'; if (ok) nm.value = '';
       };
     }
+    {
+      const go = saveMenu.querySelector('[data-vid-go]'), msg = saveMenu.querySelector('[data-vid-msg]');
+      if (!this.recMime() || !HTMLCanvasElement.prototype.captureStream) { go.disabled = true; msg.textContent = 'This browser cannot record video. Use Save image instead.'; }
+      go.onclick = () => { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); this.startRecord(+saveMenu.querySelector('[data-vid-secs]').value, +saveMenu.querySelector('[data-vid-size]').value); };
+    }
     const gcb = saveMenu.querySelector('[data-save-grain]'); saveBtn.addEventListener('click', () => { gcb.checked = !!(this.grain && this.fxVisible('grain')); }, true);
     this.el.querySelector('[data-save-go]').onclick = () => { this.exportGrain = gcb.checked; saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); this.exportPoster(saveMenu.querySelector('[data-save-type]').value, +saveMenu.querySelector('[data-save-scale]').value); };
     const ctx = k => this.ctx.querySelector(`[data-ctx-${k}]`), withText = f => e => { const it = this.sel; if (it && it.kind === 'text') { f(it, e.target); it.edited = true; this.place(it); } };
@@ -9275,6 +9297,7 @@ class CoreStudio {
     addEventListener('keydown', e => {
       if (!this.active || e.key !== 'Escape' || document.body.classList.contains('tune-open')) return;
       if (document.activeElement && document.activeElement.isContentEditable) return;
+      if (this.rec) { this.stopRecord(true); e.preventDefault(); e.stopImmediatePropagation(); return; }
       if (this.pickCancel) { this.pickCancel(); e.preventDefault(); e.stopImmediatePropagation(); return; }
       if (this.helpOpen && this.helpOpen()) { this.toggleHelp(false); e.preventDefault(); e.stopImmediatePropagation(); return; }
       if (this.el.classList.contains('st-ui-off')) { this.el.classList.remove('st-ui-off'); e.preventDefault(); e.stopImmediatePropagation(); return; }
@@ -9653,6 +9676,71 @@ class CoreStudio {
     addEventListener('popstate', () => { if (this.active && this.guardN > 0) { this.guardN--; } if (this.active) { try { history.pushState({ studio: 1 }, ''); this.guardN++; } catch (e) {} } });
     this.guardOn = () => { try { history.pushState({ studio: 1 }, ''); this.guardN++; } catch (e) {} };
     this.guardOff = () => { const n = this.guardN; this.guardN = 0; if (n) try { history.go(-n); } catch (e) {} };
+  }
+  // ---- Save video (S6): every Studio frame is composited (background, layers below the planet, planet + colour effect, layers above it) into a smaller canvas that MediaRecorder films.
+  recMime() {
+    if (!window.MediaRecorder) return null;
+    return ['video/mp4;codecs=avc1.42E01E', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].find(m => { try { return MediaRecorder.isTypeSupported(m); } catch (e) { return false; } }) || null;
+  }
+  async startRecord(secs, size) {
+    if (this.rec || this.exporting || this.app.cap || !this.active) return;
+    const mime = this.recMime(); if (!mime || !HTMLCanvasElement.prototype.captureStream) return;
+    this.select(null); this.clearGroup && this.groupActive && this.groupActive() && this.clearGroup();
+    const W = innerWidth, H = innerHeight, wide = W > 900, c0 = this.compCentre(), sh = this.shift || { x: 0, y: 0 }, cxv = c0.x + sh.x;
+    const half = wide ? Math.min(cxv, W - cxv) : W / 2, x0 = wide ? cxv - half : 0, cw = wide ? half * 2 : W;   // the same poster crop as Save image
+    const k = Math.min(2, size / Math.max(cw, H)), rw = 2 * Math.round(cw * k / 2), rh = 2 * Math.round(H * k / 2), FW = Math.round(W * k), FH = Math.round(H * k);
+    await Promise.all(this.items.filter(i => i.kind === 'kit').map(kitFontWait));
+    const sx = FW / this.app.stage.width, sy = FH / this.app.stage.height, shapes = this.items.filter(i => i.kind !== 'text' && i.kind !== 'fx' && !i.decor && !i.ref && !this.isHid(i));
+    const dyn = i => (i.kind === 'kit' && (i.mOn || (i.spinOn && i.spin))) || (i.kind === 'stroke' && this._movers && this._movers.has(i));
+    const seq = []; let cur = null, hasPlanet = false;
+    this.items.forEach(i => {
+      if (i.kind === 'fx') { if (i.fxType === 'planet') { cur = null; hasPlanet = true; seq.push({ t: 'planet', it: i }); } return; }
+      if (i.ref || this.isHid(i)) return;
+      if (dyn(i)) { cur = null; seq.push({ t: 'dyn', it: i }); return; }
+      if (!cur) { cur = { t: 'static', items: [] }; seq.push(cur); } cur.items.push(i);
+    });
+    if (!hasPlanet) seq.unshift({ t: 'planet', it: null });
+    seq.filter(p => p.t === 'static').forEach(p => { const cv = document.createElement('canvas'); cv.width = FW; cv.height = FH; const g = cv.getContext('2d'); p.items.forEach(i => this.paintItemCanvas(i, g, FW, FH, sx, sy, shapes)); p.cv = cv; });
+    const rc = document.createElement('canvas'); rc.width = rw; rc.height = rh; const rg = rc.getContext('2d');
+    const chunks = []; let recorder;
+    try { recorder = new MediaRecorder(rc.captureStream(30), { mimeType: mime, videoBitsPerSecond: Math.round(rw * rh * 30 * .1) }); } catch (e) { console.error('Recorder failed', e); return; }
+    recorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    const bar = document.createElement('div'); bar.className = 'st-rec'; bar.innerHTML = '<i></i><span data-rec-t>0.0 / ' + secs + ' s</span><button type="button" class="st-btn" data-rec-x>Cancel</button>'; this.el.append(bar);
+    const R = this.rec = { rc, rg, seq, k, x0, cw, W, H, FW, FH, sx, sy, shapes, secs, recorder, mime, chunks, bar, last: 0, t0: 0, cancel: false, name: `cerebra-${this.preset}-${rw}x${rh}` };
+    bar.querySelector('[data-rec-x]').onclick = () => this.stopRecord(true);
+    recorder.onstop = () => { bar.remove(); this.rec = null; if (R.cancel) return; const blob = new Blob(chunks, { type: mime.split(';')[0] }); if (blob.size) this.showVideo(blob, mime.includes('mp4') ? 'mp4' : 'webm', R.name); };
+    recorder.start(250); R.t0 = performance.now(); this.recFrame(R.t0, true);
+  }
+  recFrame(now, force) {
+    const R = this.rec; if (!R || R.stopping) return;
+    if (!force && now - R.last < 1000 / 30 - 3) return; R.last = now;
+    const el = (now - R.t0) / 1000; R.bar.querySelector('[data-rec-t]').textContent = `${Math.min(el, R.secs).toFixed(1)} / ${R.secs} s`;
+    if (el >= R.secs) { this.stopRecord(false); return; }
+    const g = R.rg, rc = R.rc, crop = (src, f) => g.drawImage(src, R.x0 * f, 0, R.cw * f, R.H * f, 0, 0, rc.width, rc.height);
+    g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; g.fillStyle = '#000'; g.fillRect(0, 0, rc.width, rc.height);
+    crop(this.bg, this.bg.width / R.W);
+    R.seq.forEach(p => {
+      if (p.t === 'static') crop(p.cv, R.FW / R.W);
+      else if (p.t === 'planet') {
+        if (this.showSubject === false || (p.it && p.it.hide)) return;
+        const gl = this.app.stage.renderer.domElement; g.save(); g.globalAlpha = p.it ? (p.it.alpha ?? 1) : 1; crop(gl, gl.width / R.W);
+        if (this.fxLive() && this.effect !== 'off' && this.effectAmount > 0) { g.globalAlpha *= (this.fxItem('colour') || { alpha: 1 }).alpha; crop(this.vfx, this.vfx.width / R.W); }
+        g.restore();
+      } else { g.save(); g.translate(-R.x0 * R.k, 0); this.paintItemCanvas(p.it, g, R.FW, R.FH, R.sx, R.sy, R.shapes); g.restore(); }
+    });
+  }
+  stopRecord(cancel) {
+    const R = this.rec; if (!R || R.stopping) return; R.stopping = true; R.cancel = !!cancel;
+    try { R.recorder.state !== 'inactive' ? R.recorder.stop() : R.recorder.onstop(); } catch (e) { R.bar.remove(); this.rec = null; }
+  }
+  // The finished clip: plays on a loop here, with Download and (on tablets / phones) Share.
+  showVideo(blob, ext, name) {
+    const url = URL.createObjectURL(blob), file = (() => { try { return new File([blob], `${name}.${ext}`, { type: blob.type }); } catch (e) { return null; } })();
+    const canShare = !!(file && navigator.canShare && navigator.canShare({ files: [file] })), ov = document.createElement('div'); ov.className = 'st-vidprev';
+    ov.innerHTML = `<div class="st-vidprev-card" role="dialog" aria-label="Video preview"><video src="${url}" controls loop autoplay muted playsinline></video><div class="st-vidprev-row"><small>${blob.size < 1048576 ? Math.max(1, Math.round(blob.size / 1024)) + ' KB' : (blob.size / 1048576).toFixed(1) + ' MB'} · ${ext.toUpperCase()} · plays on a loop. If nothing downloads, use Share or press and hold the video.</small>${canShare ? '<button type="button" class="st-btn" data-v-share>Share / Save to Files</button>' : ''}<a class="st-btn is-primary" href="${url}" download="${name}.${ext}">Download</a><button type="button" class="st-btn" data-v-close>Close</button></div></div>`;
+    this.el.append(ov); const close = () => { ov.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000); };
+    ov.querySelector('[data-v-close]').onclick = close; ov.addEventListener('pointerdown', e => { if (e.target === ov) close(); });
+    const sb = ov.querySelector('[data-v-share]'); if (sb) sb.onclick = () => { navigator.share({ files: [file], title: name }).catch(() => {}); };
   }
   // Menu trays dock to the canvas edges. Unlock (padlock) to drag one by its grip; dropping it among others pushes them aside.
   initTrays() {
@@ -11525,6 +11613,7 @@ class CoreStudio {
       if (!o || Math.abs(o.xf - px.xf) * Wp > .5 || Math.abs(o.yf - px.yf) * Hp > .5 || Math.abs(o.rf - px.rf) * Wp > .5) { this.planetPx = px; if (this.shadow > 0) this.paintBackground(); } }
     if (this.updateMultiUI) this.updateMultiUI();
     this.paintVfx();
+    if (this.rec) this.recFrame(performance.now());   // composite this frame for the video (the 3D canvas is only readable right after it was drawn)
     if (a.cap) a.captureStep();
     return true;
   }
