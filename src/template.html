@@ -1765,6 +1765,34 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .st-fly .st-fly-row:has(>select)>span,#studio .st-fly .st-fly-row:has(>input[type=text])>span{overflow-wrap:break-word;hyphens:manual}
 #studio .st-fly .st-fly-row:has(>select)>select,#studio .st-fly .st-fly-row:has(>input[type=text])>input{width:100%;justify-self:stretch}
 #studio .st-fly [hidden]{display:none!important}
+/* ---- Kit settings panel: card rows, chip pickers, switches, collapsible sections (same look as Tune the core) ---- */
+#studio [data-kit-panel]{padding:14px 14px 16px;gap:8px;border-radius:22px}
+#studio [data-kit-panel] .st-fly-title{font:600 13px var(--f-sans);letter-spacing:.04em;padding:2px 2px 8px;margin:0;border-bottom:1px solid #ffffff14}
+#studio [data-kit-panel] .st-fly-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 10px;padding:9px 12px 10px;margin:0;border-radius:14px;background:#ffffff09;border:1px solid #ffffff10;font:12px/1.3 var(--f-sans)}
+#studio [data-kit-panel] .st-fly-row>span{overflow-wrap:normal;word-break:normal;hyphens:manual;color:#dfe5ef}
+#studio [data-kit-panel] .st-fly-row output{justify-self:end;min-width:max-content;white-space:nowrap;text-align:center;padding:2px 8px;border-radius:999px;background:#ff465522;color:#ffb3ba;font:600 11px var(--f-mono)}
+#studio [data-kit-panel] .st-fly-row input[type=range]{grid-column:1/-1;height:22px;margin:0}
+#studio [data-kit-panel] .st-fly-row:has(>select),#studio [data-kit-panel] .st-fly-row:has(>input[type=text]){grid-template-columns:1fr}
+#studio [data-kit-panel] .st-fly-row>select,#studio [data-kit-panel] .st-fly-row>input[type=text]{grid-column:1/-1;width:100%;min-height:38px;padding:6px 12px;border-radius:11px;border:1px solid #ffffff22;background-color:#00000033;color:#fff;font:12px var(--f-sans)}
+#studio [data-kit-panel] .st-fly-row:has(>input[type=color]){grid-template-columns:minmax(0,1fr) 64px}
+#studio [data-kit-panel] .st-fly-row>input[type=color]{width:64px;height:36px}
+#studio [data-kit-panel] .st-fly-check{min-height:44px;cursor:pointer}
+#studio [data-kit-panel] .st-fly-check input[type=checkbox]{appearance:none;-webkit-appearance:none;width:42px;height:24px;margin:0;border-radius:999px;background:#ffffff26;position:relative;cursor:pointer;transition:background .18s;flex:none}
+#studio [data-kit-panel] .st-fly-check input[type=checkbox]::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 4px #0007;transition:transform .18s}
+#studio [data-kit-panel] .st-fly-check input[type=checkbox]:checked{background:linear-gradient(150deg,#ff6b78,#e8364a)}
+#studio [data-kit-panel] .st-fly-check input[type=checkbox]:checked::after{transform:translateX(18px)}
+#studio [data-kit-panel] .st-ksec-h,#studio [data-kit-panel] summary{font:600 11px var(--f-sans);letter-spacing:.12em;text-transform:uppercase;color:#9aa4b6;padding:8px 4px 0;margin:0}
+#studio [data-kit-panel] .st-ksec{display:grid;gap:8px}
+#studio [data-kit-panel] summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:36px;padding:0 12px;border-radius:12px;background:#ffffff0d;border:1px solid #ffffff14;color:#dfe5ef}
+#studio [data-kit-panel] summary::-webkit-details-marker{display:none}
+#studio [data-kit-panel] summary::after{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform .18s;margin-right:2px}
+#studio [data-kit-panel] .st-ksec[open]>summary::after{transform:rotate(225deg)}
+#studio [data-kit-panel] .st-chips{grid-template-columns:1fr}
+#studio [data-kit-panel] .st-chipset{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;grid-column:1/-1}
+#studio [data-kit-panel] .st-chip{display:grid;place-items:center;height:40px;padding:0;border-radius:11px;border:1px solid #ffffff1c;background:#00000030;color:#c3cad8;cursor:pointer;transition:background .15s,color .15s,box-shadow .15s}
+#studio [data-kit-panel] .st-chip svg{width:22px;height:22px;overflow:visible;pointer-events:none}
+#studio [data-kit-panel] .st-chip[aria-pressed=true]{background:linear-gradient(150deg,#ff6b78,#e8364a);border-color:transparent;color:#fff;box-shadow:0 0 14px #ff465566}
+#studio [data-kit-panel] .st-kit-shuffle{min-height:42px;border-radius:14px;margin-top:2px}
 #studio .st-glassbox{position:absolute;pointer-events:none}
 /* Surface style panel */
 #studio .st-off{opacity:.36;filter:grayscale(1);pointer-events:none;transition:opacity .2s}
@@ -8140,20 +8168,23 @@ const L2 = {
       const col = c ? p.c2 : it.fill; o.strokeStyle = o.shadowColor = col; o.beginPath(); let n = 0;
       for (const s of segs) { if (s.c !== c) continue; path(s); n++; }
       if (!n) continue;
-      if (glow > 0) { o.save(); o.globalAlpha *= .35; o.shadowBlur = glow * 16 * k; o.lineWidth = lw * k * 2.6; o.stroke(); o.restore(); }
+      if (glow > 0 && !KIT_LOW) { o.save(); o.globalAlpha *= .35; o.shadowBlur = glow * 16 * k; o.lineWidth = lw * k * 2.6; o.stroke(); o.restore(); }
       o.shadowBlur = 0; o.lineWidth = lwp; o.stroke();
     }
     o.restore(); o.shadowBlur = 0;
   },
-  dots(o, dots, it, k, glow) {
-    const p = it.p, sh = p.dshape || 'circle', dop = p.dop ?? 1, blend = p.cmode === 'blend', W = o.canvas.width || 1, TAU = Math.PI * 2;
+  dots(o, dots, it, k, glow, shape) {
+    const p = it.p, sh = shape || p.dshape || 'circle', dop = p.dop ?? 1, blend = p.cmode === 'blend', W = o.canvas.width || 1, TAU = Math.PI * 2;
     o.save(); o.globalAlpha *= dop;
     for (const d of dots) {
       const col = blend ? kitMix(it.fill, p.c2, clamp(d[0] / W, 0, 1)) : d[3] ? p.c2 : it.fill, r = Math.max(.6, d[2] * k);
-      o.fillStyle = o.strokeStyle = o.shadowColor = col; o.shadowBlur = glow > 0 ? glow * 10 * k : 0; o.lineWidth = Math.max(.6, k * .9); o.beginPath();
+      o.fillStyle = o.strokeStyle = o.shadowColor = col; o.shadowBlur = glow > 0 && !KIT_LOW ? glow * 10 * k : 0; o.lineWidth = Math.max(.6, k * .9); o.beginPath();
       if (sh === 'square') o.rect(d[0] - r, d[1] - r, r * 2, r * 2);
       else if (sh === 'diamond') { o.moveTo(d[0], d[1] - r * 1.3); o.lineTo(d[0] + r * 1.3, d[1]); o.lineTo(d[0], d[1] + r * 1.3); o.lineTo(d[0] - r * 1.3, d[1]); o.closePath(); }
       else if (sh === 'cross') { o.moveTo(d[0] - r * 1.3, d[1]); o.lineTo(d[0] + r * 1.3, d[1]); o.moveTo(d[0], d[1] - r * 1.3); o.lineTo(d[0], d[1] + r * 1.3); }
+      else if (sh === 'triangle') { o.moveTo(d[0], d[1] - r * 1.35); o.lineTo(d[0] + r * 1.25, d[1] + r * .85); o.lineTo(d[0] - r * 1.25, d[1] + r * .85); o.closePath(); }
+      else if (sh === 'hexagon') { for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; i ? o.lineTo(d[0] + Math.cos(a) * r * 1.2, d[1] + Math.sin(a) * r * 1.2) : o.moveTo(d[0] + r * 1.2, d[1]); } o.closePath(); }
+      else if (sh === 'star') { for (let i = 0; i < 10; i++) { const a = i / 10 * TAU - Math.PI / 2, rr = (i % 2 ? .55 : 1.45) * r; i ? o.lineTo(d[0] + Math.cos(a) * rr, d[1] + Math.sin(a) * rr) : o.moveTo(d[0], d[1] - rr); } o.closePath(); }
       else o.arc(d[0], d[1], r, 0, TAU);
       if (sh === 'ring' || sh === 'cross') o.stroke(); else o.fill();
     }
@@ -8163,8 +8194,11 @@ const L2 = {
 // Smooth 2D value noise (seeded) and a hex colour blend, shared by the flow kits.
 const kitNoise = seed => { const r = mulberry32(seed), P = Array.from({ length: 256 }, () => r()), h = (i, j) => P[(i * 73 + j * 151 & 255 ^ (i * 31 + j * 17 >> 3 & 255)) & 255], sm = t => t * t * (3 - 2 * t);
   return (x, y) => { const i = Math.floor(x), j = Math.floor(y), fx = sm(x - i), fy = sm(y - j), a = h(i, j), b = h(i + 1, j), c = h(i, j + 1), d = h(i + 1, j + 1); return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy; }; };
+let KIT_LOW = false;
 const kitRgb = c => { const m = /^#?([0-9a-f]{6})$/i.exec(String(c).trim()); const n = m ? parseInt(m[1], 16) : 0xffffff; return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
 const kitMix = (a, b, t) => { const x = kitRgb(a), y = kitRgb(b); return `rgb(${Math.round(x[0] + (y[0] - x[0]) * t)},${Math.round(x[1] + (y[1] - x[1]) * t)},${Math.round(x[2] + (y[2] - x[2]) * t)})`; };
+const KIT_SHAPES = [['circle', 'Circle'], ['ring', 'Ring'], ['triangle', 'Triangle'], ['square', 'Square'], ['diamond', 'Diamond'], ['hexagon', 'Hexagon'], ['star', 'Star'], ['cross', 'Cross']];
+const KIT_SHAPE_SVG = { circle: '<circle cx="12" cy="12" r="6"/>', ring: '<circle cx="12" cy="12" r="6" fill="none" stroke-width="2"/>', triangle: '<path d="M12 4.5 20 18H4z"/>', square: '<rect x="6" y="6" width="12" height="12"/>', diamond: '<path d="M12 3.5 20.5 12 12 20.5 3.5 12z"/>', hexagon: '<path d="M12 4 19 8v8l-7 4-7-4V8z"/>', star: '<path d="m12 3.5 2.6 5.6 6 .7-4.4 4.2 1.2 6L12 17l-5.4 3 1.2-6-4.4-4.2 6-.7z"/>', cross: '<path d="M12 4v16M4 12h16" fill="none" stroke-width="2.4"/>' };
 const KIT_DASH = [['solid', 'Solid'], ['dashed', 'Dashed'], ['dotted', 'Dotted'], ['mixed', 'Mixed']];
 const KIT = {
   glassLabel: {
@@ -8284,13 +8318,13 @@ const KIT = {
     },
   },
   hubNetwork: {
-    label: 'Hub network', defaults: { hubK: 2.4, hubSp: .24, gap: .1, bias: .7, halo: 0, hubs: 3, branches: 120, reach: .9, curve: .5, dot: 2.4, lw: .8, glow: .5, mix: .2, c2: '#35c9ff' }, thumbK: .6,
-    ui: [{ k: 'hubs', t: 'range', label: 'Hubs', min: 1, max: 8, step: 1 }, { k: 'branches', t: 'range', label: 'Lines per hub', min: 5, max: 600, step: 1 }, { k: 'reach', t: 'range', label: 'Reach', min: .2, max: 1.4, step: .05, pct: 1 }, { k: 'gap', t: 'range', label: 'Inner gap', min: 0, max: 0.6, step: 0.02, pct: 1 }, { k: 'bias', t: 'range', label: 'Reach bias (low = long)', min: 0.2, max: 2, step: 0.05 }, { k: 'curve', t: 'range', label: 'Curve', min: 0, max: 1.5, step: .05, pct: 1 }, { k: 'hubSp', t: 'range', label: 'Hub spacing', min: 0.05, max: 0.5, step: 0.01, pct: 1 }, { k: 'dot', t: 'range', label: 'Node size', min: 0, max: 8, step: .2, unit: 'px' }, { k: 'hubK', t: 'range', label: 'Hub size (× node)', min: 0, max: 6, step: 0.1 }, { k: 'halo', t: 'range', label: 'Hub halo rings', min: 0, max: 4, step: 1 }, { k: 'lw', t: 'range', label: 'Line width', min: .3, max: 4, step: .1, unit: 'px' }, { k: 'glow', t: 'range', label: 'Glow', min: 0, max: 1, step: .05, pct: 1 }, { k: 'mix', t: 'range', label: 'Accent share', min: 0, max: 1, step: .05, pct: 1 }, { k: 'c2', t: 'color', label: 'Accent colour' }],
+    label: 'Hub network', defaults: { hshape: 'circle', hubK: 2.4, hubSp: .24, gap: .1, bias: .7, halo: 0, hubs: 3, branches: 120, reach: .9, curve: .5, dot: 2.4, lw: .8, glow: .5, mix: .2, c2: '#35c9ff' }, thumbK: .6,
+    ui: [{ k: 'hshape', t: 'chips', label: 'Hub symbol', opts: KIT_SHAPES }, { k: 'hubs', t: 'range', label: 'Hubs', min: 1, max: 8, step: 1 }, { k: 'branches', t: 'range', label: 'Lines per hub', min: 5, max: 600, step: 1 }, { k: 'reach', t: 'range', label: 'Reach', min: .2, max: 1.4, step: .05, pct: 1 }, { k: 'gap', t: 'range', label: 'Inner gap', min: 0, max: 0.6, step: 0.02, pct: 1 }, { k: 'bias', t: 'range', label: 'Reach bias (low = long)', min: 0.2, max: 2, step: 0.05 }, { k: 'curve', t: 'range', label: 'Curve', min: 0, max: 1.5, step: .05, pct: 1 }, { k: 'hubSp', t: 'range', label: 'Hub spacing', min: 0.05, max: 0.5, step: 0.01, pct: 1 }, { k: 'dot', t: 'range', label: 'Node size', min: 0, max: 8, step: .2, unit: 'px' }, { k: 'hubK', t: 'range', label: 'Hub size (× node)', min: 0, max: 6, step: 0.1 }, { k: 'halo', t: 'range', label: 'Hub halo rings', min: 0, max: 4, step: 1 }, { k: 'lw', t: 'range', label: 'Line width', min: .3, max: 4, step: .1, unit: 'px' }, { k: 'glow', t: 'range', label: 'Glow', min: 0, max: 1, step: .05, pct: 1 }, { k: 'mix', t: 'range', label: 'Accent share', min: 0, max: 1, step: .05, pct: 1 }, { k: 'c2', t: 'color', label: 'Accent colour' }],
     draw(g, it, x, y, w, h, k) { L2.cached(g, it, x, y, w, h, k, L2.cap(), (o, W, H) => {
       const p = it.p, r = mulberry32(it.seed), M = kitM(it), ms = p.mstyle, m = Math.min(W, H), cx = W / 2, cy = H / 2, nh = p.hubs | 0, per = Math.min(p.branches | 0, Math.floor(L2.cap() / nh)), segs = [], dots = [], TAU = Math.PI * 2;
       const hubs = Array.from({ length: nh }, (_, i) => nh === 1 ? [cx, cy] : [cx + Math.cos(i / nh * TAU + .6) * m * p.hubSp * (.7 + r() * .6), cy + Math.sin(i / nh * TAU + .6) * m * p.hubSp * (.7 + r() * .6)]).map(([hx, hy], i) => { if (ms === 'spin') { const an = M.a * M.t * .12, dx = hx - cx, dy = hy - cy; return [cx + dx * Math.cos(an) - dy * Math.sin(an), cy + dx * Math.sin(an) + dy * Math.cos(an)]; } return [hx + M.a * m * .035 * Math.sin(M.t * .6 + i * 2.1), hy + M.a * m * .035 * Math.cos(M.t * .5 + i * 1.3)]; });
       hubs.forEach(([hx, hy], hi) => { for (let j = 0; j < per; j++) { const a0 = r() * TAU, d0 = (p.gap + Math.pow(r(), p.bias) * p.reach) * m / 2, id = j + hi * 997, a = a0 + (ms === 'spin' ? M.a * M.t * .15 : ms === 'pulse' ? 0 : M.a * .2 * Math.sin(M.t * .8 + kitHash(id, 1) * TAU)), d = d0 * (1 + (ms === 'pulse' ? M.a * .2 * Math.sin(M.t * 1.7 - d0 / (m / 2) * 6) : ms === 'spin' ? 0 : M.a * .1 * Math.sin(M.t * 1.1 + kitHash(id, 2) * TAU))), tx = hx + Math.cos(a) * d, ty = hy + Math.sin(a) * d, off = (r() - .5) * d * p.curve * 2, mx = (hx + tx) / 2 - Math.sin(a) * off, my = (hy + ty) / 2 + Math.cos(a) * off, c = r() < p.mix ? 1 : 0; segs.push({ pts: [hx, hy, mx, my, tx, ty], c }); dots.push([tx, ty, p.dot * (.4 + r() * .6), c]); } });
-      L2.lines(o, segs, it, k, p.lw, p.glow); L2.dots(o, dots, it, k, p.glow); L2.dots(o, hubs.map(q => [q[0], q[1], p.dot * p.hubK, 1]), it, k, p.glow);
+      L2.lines(o, segs, it, k, p.lw, p.glow); L2.dots(o, dots, it, k, p.glow); L2.dots(o, hubs.map(q => [q[0], q[1], p.dot * p.hubK, 1]), it, k, p.glow, p.hshape);
       if (p.halo > 0) { const halos = []; hubs.forEach(([hx, hy]) => { for (let q = 1; q <= p.halo; q++) { const rr = (p.dot * p.hubK + q * 6) * k, pts = []; for (let i = 0; i <= 40; i++) pts.push(hx + Math.cos(i / 40 * TAU) * rr, hy + Math.sin(i / 40 * TAU) * rr); halos.push({ pts, c: 1 }); } }); L2.lines(o, halos, it, k, p.lw * .8, p.glow); }
     }); },
   },
@@ -8718,14 +8752,14 @@ const KIT_MSTYLE = {
 Object.entries(KIT_MSTYLE).forEach(([key, opts]) => {
   const d = KIT[key]; if (!d) return;
   if (!opts.some(o => o[0] === d.defaults.mstyle)) d.defaults.mstyle = opts[0][0];
-  const ui = d.ui.find(u => u.k === 'mstyle'); if (ui) ui.opts = opts; else d.ui.unshift({ k: 'mstyle', t: 'select', label: 'Motion style', opts });
+  const ui = d.ui.find(u => u.k === 'mstyle'); if (ui) ui.opts = opts; else d.ui.splice(d.ui[0] && d.ui[0].t === 'chips' ? 1 : 0, 0, { k: 'mstyle', t: 'select', label: 'Motion style', opts });
 });
 
 // Look options shared by every kit drawn with the line engine (L2): line style, opacities, dot shape, colour blend.
 const KIT_L2_UI = [
   { k: 'ldash', t: 'select', label: 'Line style', opts: KIT_DASH },
   { k: 'lop', t: 'range', label: 'Line opacity', min: .1, max: 1, step: .05, pct: 1 },
-  { k: 'dshape', t: 'select', label: 'Dot shape', opts: [['circle', 'Circle'], ['ring', 'Ring'], ['square', 'Square'], ['diamond', 'Diamond'], ['cross', 'Cross']] },
+  { k: 'dshape', t: 'chips', label: 'Dot shape', opts: KIT_SHAPES },
   { k: 'dop', t: 'range', label: 'Dot opacity', min: 0, max: 1, step: .05, pct: 1 },
   { k: 'cmode', t: 'select', label: 'Colour mode', opts: [['share', 'Accent share'], ['blend', 'Blend across the width']] },
 ];
@@ -10865,10 +10899,11 @@ class CoreStudio {
   }
   drawKit(it, w, h) {
     const c = it.el.querySelector('canvas.st-kitc'); if (!c) return;
-    const d = this.kitScale(), W = Math.max(1, Math.round(w * d)), H = Math.max(1, Math.round(h * d));
+    const d0 = this.kitScale(), d = it.mOn ? Math.min(d0, this.lite ? 1 : 1.5) : d0, W = Math.max(1, Math.round(w * d)), H = Math.max(1, Math.round(h * d));
     if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
-    const g = c.getContext('2d'); g.clearRect(0, 0, W, H); g.globalAlpha = 1; KIT[it.kit].draw(g, it, 0, 0, W, H, d); c.style.opacity = it.opacity ?? 1;
-    kitFontWait(it).then(ok => { if (ok && this.items.includes(it)) this.drawKit(it, w, h); });
+    const g = c.getContext('2d'); g.clearRect(0, 0, W, H); g.globalAlpha = 1; KIT_LOW = !!(it.mOn && this.lite); try { KIT[it.kit].draw(g, it, 0, 0, W, H, d); } finally { KIT_LOW = false; } c.style.opacity = it.opacity ?? 1;
+    if (it.p && it.p.font && this._fontOk && this._fontOk.has(it.p.font)) return;
+    kitFontWait(it).then(ok => { if (ok && this.items.includes(it)) this.drawKit(it, w, h); else if (!ok && it.p.font) (this._fontOk || (this._fontOk = new Set())).add(it.p.font); });
   }
   // Spin: a compositor-side CSS/WAAPI rotation of the kit canvas. `ang` is the resting angle, `spin` deg/s (negative = anticlockwise), `spinOn` plays it.
   kitAngle(it) { const a = KIT_ANIM.get(it), base = it.ang || 0; if (!a || !it.spinOn || !it.spin) return base; return (((base + (a.currentTime || 0) / 1000 * it.spin) % 360) + 360) % 360; }
@@ -10916,27 +10951,30 @@ class CoreStudio {
     const it = this.sel, f = this.el.querySelector('[data-kit-panel]'); if (!it || it.kind !== 'kit') return;
     const def = KIT[it.kit], fmt = (u, v) => u.pct ? `${Math.round(v * 100)}%` : u.unit ? `${+v.toFixed(1)}${u.unit}` : String(v);
     const spin = it.spin || 0;
-    const shown = def.ui.filter(u => !u.when || [].concat(u.when[1]).includes(it.p[u.when[0]]));
+    const shown = def.ui.filter(u => u.k !== 'mstyle' && (!u.when || [].concat(u.when[1]).includes(it.p[u.when[0]]))), ms = def.ui.find(u => u.k === 'mstyle');
     f.innerHTML = `<b class="st-fly-title">${def.label}</b>`
-      + `<label class="st-fly-row"><span>Opacity</span><output>${Math.round((it.opacity ?? 1) * 100)}%</output><input type="range" min="0.05" max="1" step="0.05" value="${it.opacity ?? 1}" data-kop></label>`
-      + `<label class="st-fly-row st-fly-check"><span>Spin</span><input type="checkbox" data-kspin-on${it.spinOn ? ' checked' : ''}></label>`
-      + `<label class="st-fly-row"><span>Spin speed</span><output>${spin ? `${spin}°/s` : 'still'}</output><input type="range" min="-120" max="120" step="1" value="${spin}" data-kspin></label>`
-      + (def.anim ? `<label class="st-fly-row st-fly-check"><span>Motion (parts move)</span><input type="checkbox" data-kmo-on${it.mOn ? ' checked' : ''}></label>`
-        + `<label class="st-fly-row"><span>Motion amount</span><output>${Math.round((it.mAmt ?? .6) * 100)}%</output><input type="range" min="0.05" max="1" step="0.05" value="${it.mAmt ?? .6}" data-kmo-amt></label>`
-        + `<label class="st-fly-row"><span>Motion speed</span><output>${(it.mSpd ?? 1).toFixed(1)}×</output><input type="range" min="0.2" max="3" step="0.1" value="${it.mSpd ?? 1}" data-kmo-spd></label>`
-        + `<label class="st-fly-row"><span>Extra motion</span><select data-kmo-fx>${KIT_FX_OPTS.map(([v, n]) => `<option value="${v}"${(it.mFx || 'none') === v ? ' selected' : ''}>${n}</option>`).join('')}</select></label>`
-        + KIT_MOTION_UI.filter(u => !u.when || String(it[u.when[0]] ?? KIT_MOTION_UI.find(x => x.k === u.when[0]).def) === u.when[1]).map(u => { const v = it[u.k] ?? u.def;
-          return u.t === 'range' ? `<label class="st-fly-row"><span>${u.label}</span><output>${fmt(u, v)}</output><input type="range" min="${u.min}" max="${u.max}" step="${u.step}" value="${v}" data-kmx="${u.k}"></label>`
-            : `<label class="st-fly-row"><span>${u.label}</span><select data-kmx="${u.k}">${u.opts.map(([o, n]) => `<option value="${o}"${String(o) === String(v) ? ' selected' : ''}>${n}</option>`).join('')}</select></label>`; }).join('') : '')
       + shown.map(u => {
       const v = it.p[u.k];
       if (u.t === 'range') return `<label class="st-fly-row"><span>${u.label}</span><output>${fmt(u, v)}</output><input type="range" min="${u.min}" max="${u.max}" step="${u.step}" value="${v}" data-kp="${u.k}"></label>`;
+      if (u.t === 'chips') return `<div class="st-fly-row st-chips"><span>${u.label}</span><div class="st-chipset" role="group" aria-label="${u.label}">${u.opts.map(([o, n]) => `<button type="button" class="st-chip" data-kchip="${u.k}" data-v="${o}" title="${n}" aria-label="${n}" aria-pressed="${o === v}"><svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="0" aria-hidden="true">${KIT_SHAPE_SVG[o] || ''}</svg></button>`).join('')}</div></div>`;
       if (u.t === 'select') return `<label class="st-fly-row"><span>${u.label}</span><select data-kp="${u.k}">${u.opts.map(([o, n]) => `<option value="${o}"${o === v ? ' selected' : ''}>${n}</option>`).join('')}</select></label>`;
       if (u.t === 'text') return `<label class="st-fly-row"><span>${u.label}</span><input type="text" value="${kitEsc(v)}" maxlength="120" data-kp="${u.k}"></label>`;
       if (u.t === 'area') return `<label class="st-fly-row st-kit-area"><span>${u.label}</span><textarea rows="5" data-kp="${u.k}">${kitEsc(v)}</textarea></label>`;
       if (u.t === 'check') return `<label class="st-fly-row st-fly-check"><span>${u.label}</span><input type="checkbox" data-kp="${u.k}"${v ? ' checked' : ''}></label>`;
       return `<label class="st-fly-row"><span>${u.label}</span><input type="color" value="${v}" data-kp="${u.k}"></label>`;
-    }).join('') + (def.noShuffle ? '' : '<button type="button" class="st-btn st-kit-shuffle" data-kit-shuffle>Shuffle pattern</button>');
+    }).join('')
+      + `<div class="st-ksec-h">Look &amp; spin</div>` + `<label class="st-fly-row"><span>Opacity</span><output>${Math.round((it.opacity ?? 1) * 100)}%</output><input type="range" min="0.05" max="1" step="0.05" value="${it.opacity ?? 1}" data-kop></label>`
+      + `<label class="st-fly-row st-fly-check"><span>Spin</span><input type="checkbox" data-kspin-on${it.spinOn ? ' checked' : ''}></label>`
+      + `<label class="st-fly-row"><span>Spin speed</span><output>${spin ? `${spin}°/s` : 'still'}</output><input type="range" min="-120" max="120" step="1" value="${spin}" data-kspin></label>`
+      + (def.anim ? `<details class="st-ksec" data-ksec="mo"${(this._ko?.mo ?? it.mOn) ? ' open' : ''}><summary>Motion</summary>` + `<label class="st-fly-row st-fly-check"><span>Motion (parts move)</span><input type="checkbox" data-kmo-on${it.mOn ? ' checked' : ''}></label>`
+        + (ms ? `<label class="st-fly-row"><span>Motion style</span><select data-kp="mstyle">${ms.opts.map(([o, n]) => `<option value="${o}"${o === it.p.mstyle ? ' selected' : ''}>${n}</option>`).join('')}</select></label>` : '')
+        + `<label class="st-fly-row"><span>Motion amount</span><output>${Math.round((it.mAmt ?? .6) * 100)}%</output><input type="range" min="0.05" max="1" step="0.05" value="${it.mAmt ?? .6}" data-kmo-amt></label>`
+        + `<label class="st-fly-row"><span>Motion speed</span><output>${(it.mSpd ?? 1).toFixed(1)}×</output><input type="range" min="0.2" max="3" step="0.1" value="${it.mSpd ?? 1}" data-kmo-spd></label>`
+        + `<label class="st-fly-row"><span>Extra motion</span><select data-kmo-fx>${KIT_FX_OPTS.map(([v, n]) => `<option value="${v}"${(it.mFx || 'none') === v ? ' selected' : ''}>${n}</option>`).join('')}</select></label>`
+        + KIT_MOTION_UI.filter(u => !u.when || String(it[u.when[0]] ?? KIT_MOTION_UI.find(x => x.k === u.when[0]).def) === u.when[1]).map(u => { const v = it[u.k] ?? u.def;
+          return u.t === 'range' ? `<label class="st-fly-row"><span>${u.label}</span><output>${fmt(u, v)}</output><input type="range" min="${u.min}" max="${u.max}" step="${u.step}" value="${v}" data-kmx="${u.k}"></label>`
+            : `<label class="st-fly-row"><span>${u.label}</span><select data-kmx="${u.k}">${u.opts.map(([o, n]) => `<option value="${o}"${String(o) === String(v) ? ' selected' : ''}>${n}</option>`).join('')}</select></label>`; }).join('') + '</details>' : '')
+      + (def.noShuffle ? '' : '<button type="button" class="st-btn st-kit-shuffle" data-kit-shuffle>Shuffle pattern</button>');
     const op = f.querySelector('[data-kop]'), sOn = f.querySelector('[data-kspin-on]'), sp = f.querySelector('[data-kspin]');
     op.addEventListener('input', () => { it.opacity = +op.value; op.parentNode.querySelector('output').textContent = `${Math.round(it.opacity * 100)}%`; const co = this.ctx.querySelector('[data-ctx-opacity]'); co.value = it.opacity; co.nextElementSibling.textContent = `${Math.round(it.opacity * 100)}%`; this.kitRedraw(it); });
     sp.addEventListener('input', () => { const v = +sp.value; sp.parentNode.querySelector('output').textContent = v ? `${v}°/s` : 'still'; if (v && !it.spinOn) { sOn.checked = true; this.setKitSpin(it, { spin: v, spinOn: true }); } else this.setKitSpin(it, { spin: v }); });
@@ -10956,6 +10994,12 @@ class CoreStudio {
         if (el.type === 'range') rangeFill(el);
       });
     }
+    f.querySelectorAll('[data-kchip]').forEach(btn => btn.addEventListener('click', () => {
+      const u = def.ui.find(x => x.k === btn.dataset.kchip); it.p[u.k] = btn.dataset.v;
+      btn.parentNode.querySelectorAll('[data-kchip]').forEach(x => x.setAttribute('aria-pressed', String(x === btn)));
+      this.kitRedraw(it); this.place(it); this.commit();
+    }));
+    f.querySelectorAll('details[data-ksec]').forEach(d => d.addEventListener('toggle', () => { (this._ko || (this._ko = {}))[d.dataset.ksec] = d.open; }));
     f.querySelectorAll('[data-kp]').forEach(el => {
       const u = def.ui.find(x => x.k === el.dataset.kp), drives = def.ui.some(x => x.when && x.when[0] === u.k);
       if (drives) el.addEventListener('change', () => this.syncKit());
