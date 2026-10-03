@@ -926,6 +926,20 @@ body.studio-on #studio{display:block}
 .studio-panel .studio-two label{display:grid;gap:6px;font:11px var(--f-sans);color:#aab3c4}
 .studio-preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .st-moods{margin-bottom:10px}
+#studio .st-zoompill{position:absolute;z-index:6;left:max(12px,env(safe-area-inset-left));bottom:150px;display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;pointer-events:auto}
+#studio .st-zoompill[hidden]{display:none}
+#studio .st-zoompill .st-btn{min-width:40px;min-height:40px;padding:0;font-size:20px;line-height:1;border-radius:999px}
+#studio .st-zoompct{min-width:52px;min-height:40px;border:0;background:none;color:#ff9199;font:600 12px var(--f-mono);cursor:pointer}
+@media (min-width:901px){#studio .st-zoompill{left:92px;bottom:92px}}
+#studio.st-ui-off .st-zoompill{display:none}
+#studio .st-zoom{display:grid;gap:6px;padding:8px 10px;border-radius:14px;background:#ffffff0f;min-width:190px}
+#studio .st-zoom-t{font:600 10px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:#d9ccff}
+#studio .st-zoom-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
+#studio .st-zoom-row .st-btn{min-width:40px;min-height:40px;padding:0;font-size:20px;line-height:1}
+#studio .st-zoom-row input[type=range]{flex:1;min-width:80px;accent-color:#ff4655}
+#studio .st-zoom-row b{font:600 13px var(--f-mono);color:#ff9199}
+#studio .st-draft{position:fixed;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);z-index:100000;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 10px;max-width:min(560px,calc(100vw - 16px));padding:10px 14px;border-radius:18px;font:600 12px var(--f-sans);color:#fff;pointer-events:auto}
+#studio .st-draft .st-btn{min-height:40px;padding:0 14px}
 #studio .st-moods .studio-preset{min-height:56px}
 #studio .st-random{width:100%;justify-content:center;gap:8px;margin:0 0 6px}
 #studio .st-pk{display:inline-grid;place-items:center;width:26px;height:26px;margin-left:4px;padding:0;flex:none;border:1px solid #ffffff30;border-radius:8px;background:#ffffff12;color:inherit;cursor:crosshair;vertical-align:middle}
@@ -8834,6 +8848,7 @@ class CoreStudio {
         <div class="st-group" data-grp="view"><button type="button" class="st-btn" data-grp-btn aria-expanded="false" aria-label="View menu"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="st-label">View</span><i class="st-caret" aria-hidden="true"></i></button><div class="st-sub" hidden>
         <button type="button" class="st-btn" data-studio-show aria-pressed="true" aria-label="Hide subject">${I('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/>')}<span class="st-label" data-show-label>Subject</span></button>
         <button type="button" class="st-btn" data-studio-freeze aria-pressed="false" aria-label="Freeze motion">${I('<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>')}<span class="st-label" data-freeze-label>Stop</span></button>
+        <div class="st-zoom" data-st-zoom><span class="st-zoom-t">Cerebra size</span><div class="st-zoom-row"><button type="button" class="st-btn" data-zoom="-" aria-label="Make Cerebra smaller">−</button><input type="range" min="45" max="240" step="5" value="100" data-zoom-r aria-label="Cerebra size"><button type="button" class="st-btn" data-zoom="+" aria-label="Make Cerebra bigger">+</button></div><div class="st-zoom-row"><b data-zoom-v>100%</b><button type="button" class="st-chip" data-zoom="0">Reset size</button></div></div>
         <button type="button" class="st-btn" data-studio-home aria-label="Recenter">${I('<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>')}<span class="st-label">Recenter</span></button>
         <button type="button" class="st-btn" data-studio-gravity aria-pressed="false" aria-label="Gravity">${I('<path d="M12 4v13M6 12l6 6 6-6"/>')}<span class="st-label">Gravity</span></button>
         </div></div>
@@ -9063,7 +9078,7 @@ class CoreStudio {
       this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioTool === this.tool && !this.drawing))); if (this.tool === 'hand' || this.tool === 'select') this.select(null); };
     this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.onclick = () => this.setTool(b.dataset.studioTool));
     this.el.querySelector('[data-studio-draw]').addEventListener('click', () => { if (this.drawing) { this.tool = 'move'; this.el.classList.remove('tool-hand'); } this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(!this.drawing && b.dataset.studioTool === this.tool))); });
-    this.initShortcuts(); this.initMarquee(); this.initMood(); this.initPicker();
+    this.initShortcuts(); this.initMarquee(); this.initMood(); this.initPicker(); this.initZoom(); this.initSafety();
     this.el.querySelector('[data-flyout="style"]').addEventListener('pointerdown', e => e.stopPropagation());
     this.el.querySelector('[data-studio-effect]').onchange = e => { this.effect = e.target.value; this.syncFxLayers(); this.el.querySelector('[data-studio-fx]').setAttribute('aria-pressed', String(this.fxOn)); this.commit(); };
     this.el.querySelector('[data-studio-grid]').onchange = e => { this.grid = e.target.checked; this.gridMode = this.grid ? 'always' : 'off'; this.setGridMode(this.gridMode); this.paintBackground(); };
@@ -9568,6 +9583,47 @@ class CoreStudio {
   }
   setPicked(input, hex) {
     input.value = hex; input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); this.pkLast = input;
+  }
+  // ---- Cerebra size (zoom) ----
+  zoomBy(f) { const b = PlanetBody.active; if (!b || !this.active) return false; b.setView(b.zoomT * f); this.syncZoom(); }
+  syncZoom() {
+    const b = PlanetBody.active, r = this.el.querySelector('[data-zoom-r]'), vs = this.el.querySelectorAll('[data-zoom-v]'); if (!b || !r) return; if (this.zoomPill) this.zoomPill.hidden = this.subject >= 0;
+    const pct = Math.round(b.zoomT * 100); if (document.activeElement !== r) r.value = pct; vs.forEach(v => { v.textContent = pct + '%'; }); r.style.setProperty('--p', ((pct - 45) / (240 - 45) * 100) + '%');
+  }
+  initZoom() {
+    const box = this.el.querySelector('[data-st-zoom]'); if (!box) return;
+    const pill = this.zoomPill = document.createElement('div'); pill.className = 'st-zoompill st-glass'; pill.setAttribute('role', 'group'); pill.setAttribute('aria-label', 'Cerebra size');
+    pill.innerHTML = '<button type="button" class="st-btn" data-zoom="-" aria-label="Make Cerebra smaller">−</button><button type="button" class="st-zoompct" data-zoom="0" data-zoom-v aria-label="Reset Cerebra size" title="Reset size">100%</button><button type="button" class="st-btn" data-zoom="+" aria-label="Make Cerebra bigger">+</button>';
+    this.el.append(pill); pill.addEventListener('click', e => { const b = e.target.closest('[data-zoom]'); if (!b) return; const P = PlanetBody.active; if (!P) return; const z = b.dataset.zoom; if (z === '0') P.setView(1); else P.setView(P.zoomT * (z === '+' ? 1.1 : 1 / 1.1)); this.syncZoom(); });
+    box.addEventListener('click', e => { const b = e.target.closest('[data-zoom]'); if (!b) return; const P = PlanetBody.active; if (!P) return; const z = b.dataset.zoom; if (z === '0') P.setView(1); else P.setView(P.zoomT * (z === '+' ? 1.1 : 1 / 1.1)); this.syncZoom(); });
+    box.querySelector('[data-zoom-r]').addEventListener('input', e => { const P = PlanetBody.active; if (P) P.setView(+e.target.value / 100); this.syncZoom(); });
+    setInterval(() => { if (this.active) this.syncZoom(); }, 400);   // pinch / wheel / Reset view also move it
+  }
+  // ---- Safety: autosave + restore, and no accidental swipe-back out of Studio ----
+  initSafety() {
+    const DB = 'cerebra-studio', ST = 'draft', idb = fn => new Promise(res => { try { const q = indexedDB.open(DB, 1); q.onupgradeneeded = () => q.result.createObjectStore(ST); q.onerror = () => res(null); q.onsuccess = () => { try { const t = q.result.transaction(ST, 'readwrite'), r = fn(t.objectStore(ST)); t.oncomplete = () => res(r && r.result !== undefined ? r.result : true); t.onerror = () => res(null); } catch (e) { res(null); } }; } catch (e) { res(null); } });
+    this.draftHold = true; this.guardN = 0;   // no saving until the user has answered the restore offer (or there is none)
+    const save = () => { if (!this.active || this.draftHold || this.restoring || !this.hist || this.hist.length < 2) return; const d = { t: Date.now(), json: this.snapshot(), pl: this.planetLook() }; idb(s => s.put(d, 'last')); };
+    let tm = 0; this.draftSoon = () => { clearTimeout(tm); tm = setTimeout(save, 1500); };
+    this.draftNow = () => { clearTimeout(tm); save(); };
+    document.addEventListener('visibilitychange', () => { if (document.hidden) this.draftNow(); });
+    addEventListener('pagehide', () => this.draftNow());
+    this.offerDraft = async () => {
+      if (this.draftAsked) { this.draftHold = false; return; } this.draftAsked = true;
+      const d = await idb(s => s.get('last')); this.draftHold = false;
+      let items = 0; try { items = d && d.json ? JSON.parse(d.json).items.filter(i => i.kind !== 'fx' && !i.role).length : 0; } catch (e) {}
+      if (!d || !d.json || !items || Date.now() - d.t > 14 * 864e5 || !this.active) return;
+      const bar = document.createElement('div'); bar.className = 'st-draft st-glass'; bar.setAttribute('role', 'alert');
+      const when = new Date(d.t), hm = when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      bar.innerHTML = `<span>Your last session (${items} item${items > 1 ? 's' : ''}, ${hm}) was saved.</span><button type="button" class="st-btn is-primary" data-draft="yes">Restore</button><button type="button" class="st-btn" data-draft="no">Not now</button>`;
+      this.el.append(bar);
+      bar.addEventListener('click', e => { const b = e.target.closest('[data-draft]'); if (!b) return; if (b.dataset.draft === 'yes') { this.restore(d.json); if (d.pl) this.showPlanet(d.pl); this.layoutTrays && this.layoutTrays(); this.commit(); } bar.remove(); });
+      setTimeout(() => bar.isConnected && bar.remove(), 30000);
+    };
+    // Swipe-back guard: one extra history entry while Studio is open, put back whenever the browser pops it.
+    addEventListener('popstate', () => { if (this.active && this.guardN > 0) { this.guardN--; } if (this.active) { try { history.pushState({ studio: 1 }, ''); this.guardN++; } catch (e) {} } });
+    this.guardOn = () => { try { history.pushState({ studio: 1 }, ''); this.guardN++; } catch (e) {} };
+    this.guardOff = () => { const n = this.guardN; this.guardN = 0; if (n) try { history.go(-n); } catch (e) {} };
   }
   // Menu trays dock to the canvas edges. Unlock (padlock) to drag one by its grip; dropping it among others pushes them aside.
   initTrays() {
@@ -10525,9 +10581,18 @@ class CoreStudio {
     const b = def.geom(it.p, w, h), f = `blur(${it.p.blur}px)`;
     Object.assign(gb.style, { left: `${b.x}px`, top: `${b.y}px`, width: `${b.w}px`, height: `${b.h}px`, borderRadius: `${b.r}px`, backdropFilter: f, webkitBackdropFilter: f });
   }
+  // Pixel budget: every Kit is a canvas. With many (or very large) ones the sharpness is lowered a little so the page cannot run out of memory (tablets reload the tab when it does).
+  kitScale() {
+    const now = performance.now(), k = this._ks; if (k && now - k.t < 400) return k.d;
+    let area = 0; for (const it of this.items) if (it.kind === 'kit' && it.el) area += it.el.offsetWidth * it.el.offsetHeight;
+    const d = clamp(Math.sqrt(24e6 / Math.max(1, area)), .6, Math.min(2, window.devicePixelRatio || 1));
+    this._ks = { t: now, d };
+    if (k && Math.abs(k.d - d) > .05 && !this._ksQ) { this._ksQ = true; requestAnimationFrame(() => { this._ksQ = false; this.items.forEach(i => { if (i.kind === 'kit' && i.el) this.drawKit(i, i.el.offsetWidth, i.el.offsetHeight); }); }); }
+    return d;
+  }
   drawKit(it, w, h) {
     const c = it.el.querySelector('canvas.st-kitc'); if (!c) return;
-    const d = Math.min(2, window.devicePixelRatio || 1), W = Math.max(1, Math.round(w * d)), H = Math.max(1, Math.round(h * d));
+    const d = this.kitScale(), W = Math.max(1, Math.round(w * d)), H = Math.max(1, Math.round(h * d));
     if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
     const g = c.getContext('2d'); g.clearRect(0, 0, W, H); g.globalAlpha = 1; KIT[it.kit].draw(g, it, 0, 0, W, H, d); c.style.opacity = it.opacity ?? 1;
     kitFontWait(it).then(ok => { if (ok && this.items.includes(it)) this.drawKit(it, w, h); });
@@ -10684,6 +10749,8 @@ class CoreStudio {
       { group: 'Move', label: 'Nudge 1 px', keys: ['arrowleft', 'arrowright', 'arrowup', 'arrowdown'], show: '←↑↓→', run: null },
       { group: 'Move', label: 'Nudge 10 px', keys: ['shift+arrowleft', 'shift+arrowright', 'shift+arrowup', 'shift+arrowdown'], show: 'Shift + ←↑↓→', run: null },
       { group: 'View', label: 'Hand while Space is held', keys: ['space'], noRun: true },
+      { group: 'View', label: 'Cerebra bigger', keys: ['=', '+'], show: '+', run: () => this.zoomBy(1.1) },
+      { group: 'View', label: 'Cerebra smaller', keys: ['-', '_'], show: '−', run: () => this.zoomBy(1 / 1.1) },
       { group: 'View', label: 'Reset the view', keys: ['mod+0'], run: () => { const b = typeof PlanetBody !== 'undefined' && PlanetBody.active; if (b && b.resetView) b.resetView(); } },
       { group: 'View', label: 'Hide / show the tools', keys: ['tab'], free: true, run: () => { this.el.classList.toggle('st-ui-off'); } },
       { group: 'Other', label: 'Close menu / deselect', keys: ['escape'], noRun: true },
@@ -11026,7 +11093,9 @@ class CoreStudio {
   commit(extra) {
     if (this.restoring || !this.hist) return;
     const s = this.snapshot(extra); if (this.hist[this.hi] === s) return;
-    this.hist = this.hist.slice(0, this.hi + 1); this.hist.push(s); if (this.hist.length > 80) this.hist.shift(); this.hi = this.hist.length - 1; this.syncHist();
+    this.hist = this.hist.slice(0, this.hi + 1); this.hist.push(s); if (this.hist.length > 80) this.hist.shift();
+    for (let n = this.hist.reduce((a, x) => a + x.length, 0); n > 16e6 && this.hist.length > 2; n -= this.hist.shift().length);   // keep the undo list under ~16 MB so a big composition cannot exhaust memory
+    this.hi = this.hist.length - 1; this.syncHist(); if (this.draftSoon) this.draftSoon();
   }
   syncHist() { if (!this.undoBtn) return; this.undoBtn.disabled = this.hi <= 0; this.redoBtn.disabled = this.hi >= this.hist.length - 1; }
   // A Mood / Random look entry also carries the planet's look before (`pre`) and after (`pl`) so undo and redo move the planet with the scene.
@@ -11212,10 +11281,12 @@ class CoreStudio {
     a.stage.scene.traverse(o => this.saved.visibility.set(o, o.visible));
     document.documentElement.classList.add('studio-lock'); document.body.classList.add('studio-on');
     this.paintBackground(); this.updateFocus(); this.el.querySelector('[data-studio-exit]').focus();
+    if (this.guardOn) { this.guardOn(); this.offerDraft(); }
   }
   close() {
     if (!this.active) { this.pending = false; return; }
-    const a = this.app; this.active = false; this.drag = null;
+    if (this.draftNow) this.draftNow();
+    const a = this.app; this.active = false; this.drag = null; if (this.guardOff) this.guardOff();
     WorldTune.open(false); if (this.drawing) this.setDrawing(false); this.select(null); this.fx.style.display='none'; this.bg.style.filter='';this.vfx.getContext('2d').clearRect(0,0,this.vfx.width,this.vfx.height);
     document.querySelector('[data-tune-close]').click();
     document.documentElement.classList.remove('studio-lock'); document.body.classList.remove('studio-on');
