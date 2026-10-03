@@ -1715,6 +1715,7 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .cfx-col{display:grid;justify-items:center;gap:5px;font:600 9.5px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;color:#aab3c4}
 #studio .cfx-col input[type=color]{width:100%;height:42px;padding:3px;border:1px solid #ffffff2a;border-radius:12px;background:#0000003a;cursor:pointer}
 #studio .cfx-hide,.tune-row.wt-hide{display:none!important}
+#studio .studio-corefx[data-st=none] :is([data-cfx-head],[data-cfx-grp]),#studio .studio-corefx[data-noopts="1"] :is([data-cfx-head=opts],[data-cfx-grp=opts]){display:none!important}
 #studio .cfx-sub{margin:18px 0 4px;padding-top:12px;border-top:1px solid #ffffff14;font:600 11px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:#d9ccff}
 #studio .cfx-reset{width:100%;justify-content:center;margin-top:16px}
 /* Dropdowns: closed select + custom glass list */
@@ -9141,7 +9142,7 @@ class CoreStudio {
     const t = this.coreFxTarget(); if (!t) return; const def = Effects.defaults(), rel = this.coreFxRelevant(t);
     box.querySelectorAll('[data-cfx]').forEach(el => { const k = el.dataset.cfx, v = t.tune[k] != null ? t.tune[k] : def[k]; if (!light || el !== document.activeElement) el.value = String(v); const o = el.parentNode.querySelector('output'); if (o) o.textContent = +el.step >= 1 ? String(Math.round(+v)) : (+v).toFixed(2); if (el.type === 'range') rangeFill(el); });
     box.querySelectorAll('[data-cfx-styles]').forEach(el => el.classList.toggle('cfx-hide', !el.dataset.cfxStyles.split(' ').includes(t.tune.s_style || 'none')));
-    box.querySelectorAll('[data-cfx-head]').forEach(h => { const none = (t.tune.s_style || 'none') === 'none'; h.classList.toggle('cfx-hide', none || (h.dataset.cfxHead === 'opts' && ![...box.querySelectorAll('[data-cfx-styles]')].some(r => !r.classList.contains('cfx-hide')))); });
+    box.dataset.st = t.tune.s_style || 'none'; box.dataset.noopts = [...box.querySelectorAll('[data-cfx-styles]')].some(r => !r.classList.contains('cfx-hide')) ? '' : '1';
     box.querySelectorAll('[data-cfx-sw]').forEach(g => { const v = +(t.tune[g.dataset.cfxSw] ?? def[g.dataset.cfxSw]); g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === v))); });
     box.querySelectorAll('[data-cfx-style]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cfxStyle === (t.tune.s_style || 'none'))));
     box.querySelectorAll('[data-cfx-rel]').forEach(el => { const on = rel[el.dataset.cfxRel] !== false; el.classList.toggle('st-off', !on); if (on) el.removeAttribute('inert'); else el.setAttribute('inert', ''); });
@@ -9880,16 +9881,17 @@ class CoreStudio {
   // Neumorphic rotary dial that drives an existing range input (drag up/down or sideways, wheel, arrow keys).
   dialDeck(root, rowSel, fold) {
     if (!root || root._deck) return; root._deck = 1;
+    const isSub = e => e.classList.contains('tune-sub') || e.classList.contains('cfx-sub');
     const ok = r => r && r.matches && r.matches(rowSel) && !r.closest('.dial-body') && r.querySelectorAll('input').length === 1 && r.querySelector('input[type=range]');
     const build = () => {
       const touched = new Set();
       [...root.querySelectorAll(rowSel)].forEach(r => {
         if (!ok(r)) return;
-        let key = r.previousElementSibling; while (key && !key.classList.contains('tune-sub') && !key.classList.contains('dial-grp') && !key.matches(rowSel)) key = key.previousElementSibling;
-        while (key && !key.classList.contains('tune-sub')) { if (key.classList.contains('dial-grp')) { key = key._tsub || null; break; } key = key.previousElementSibling; }
+        let key = r.previousElementSibling; while (key && !isSub(key) && !key.classList.contains('dial-grp') && !key.matches(rowSel)) key = key.previousElementSibling;
+        while (key && !isSub(key)) { if (key.classList.contains('dial-grp')) { key = key._tsub || null; break; } key = key.previousElementSibling; }
         const holder = key || r.parentElement; let g = holder._dg;
         if (!g) {
-          const body = document.createElement('div'); body.className = 'dial-body'; let host = body, cnt = null;
+          const body = document.createElement('div'); body.className = 'dial-body'; let host = body, cnt = null; if (key && key.dataset.cfxHead) body.dataset.cfxGrp = key.dataset.cfxHead;
           if (fold) {
             host = document.createElement('details'); host.className = 'dial-grp'; host._tsub = key;
             const sm = document.createElement('summary'); sm.innerHTML = '<span></span><i>0</i>'; const pn = r.closest('[data-pane]'); sm.firstChild.textContent = key ? key.textContent : pn ? pn.dataset.pane : 'Dials'; cnt = sm.lastChild;
