@@ -1476,15 +1476,18 @@ body .dial-body.many>.tune-row>input[type=range]{grid-column:1/-1;grid-row:2;wid
 @keyframes edgepulse{from{opacity:.55}to{opacity:1}}
 #studio .st-tray-lock{position:absolute;top:max(var(--st-gap),env(safe-area-inset-top));left:calc(var(--st-gap) * 2 + var(--st-rail));width:52px;height:52px;padding:0;border-radius:16px;pointer-events:auto}
 #studio .st-tray-snap{position:absolute;top:max(var(--st-gap),env(safe-area-inset-top));left:calc(var(--st-gap) * 3 + var(--st-rail) + 52px);height:52px;padding:0 14px;border-radius:16px;pointer-events:auto;display:none}
-#studio.trays-unlocked .st-tray-snap{display:inline-flex}
+#studio:not(.trays-locked) .st-tray-snap{display:inline-flex}
 #studio .st-tray-snap[aria-pressed=false]{color:#ff8f98}
 .st-layers-tray{overflow-y:auto}
 .st-layers-tray .st-panel-head h2{font-size:13.5px}
-#studio .st-tray-lock[aria-pressed=false]{color:#ff8f98;border-color:#ff4655}
+#studio .st-tray-lock[aria-pressed=true]{color:#ff8f98;border-color:#ff4655}
 .st-tray-grip{display:none}
-#studio.trays-unlocked [data-tray]{outline:1.5px dashed #ff465599;outline-offset:3px}
-#studio.trays-unlocked .st-tray-grip{display:block;flex:none;align-self:stretch;min-height:22px;min-width:22px;margin:-2px 0 4px;border:0;border-radius:8px;background:repeating-linear-gradient(90deg,#ff465566 0 2px,transparent 2px 6px);cursor:grab;touch-action:none}
-#studio.trays-unlocked .is-h>.st-tray-grip{margin:0 4px 0 -2px;background:repeating-linear-gradient(0deg,#ff465566 0 2px,transparent 2px 6px)}
+#studio [data-tray].is-dragging{outline:1.5px dashed #ff465599;outline-offset:3px}
+#studio:not(.trays-locked) .st-tray-grip{display:block;flex:none;align-self:stretch;min-height:22px;min-width:22px;margin:-2px 0 4px;border:0;border-radius:8px;background:repeating-linear-gradient(90deg,#ffffff40 0 2px,transparent 2px 6px);cursor:grab;touch-action:none}
+#studio:not(.trays-locked) .st-panel-head{cursor:grab;touch-action:none}
+#studio:not(.trays-locked) .st-tray-grip{min-height:16px;opacity:.7}
+#studio:not(.trays-locked) .studio-panel>.st-tray-grip{height:16px;margin:-10px 0 6px}
+#studio:not(.trays-locked) .is-h>.st-tray-grip{margin:0 4px 0 -2px;background:repeating-linear-gradient(0deg,#ffffff40 0 2px,transparent 2px 6px)}
 #studio .studio-panel>.st-tray-grip{width:100%;height:22px;margin:-10px 0 10px}
 #studio [data-tray]{transition:left .3s cubic-bezier(.3,.7,.2,1),right .3s cubic-bezier(.3,.7,.2,1),top .3s cubic-bezier(.3,.7,.2,1),bottom .3s cubic-bezier(.3,.7,.2,1)}
 #studio [data-tray].is-dragging{transition:none;z-index:5;opacity:.85;box-shadow:0 20px 60px #000a}
@@ -8898,7 +8901,7 @@ class CoreStudio {
         </div></div>
         <div class="st-group" data-grp="settings"><button type="button" class="st-btn" data-grp-btn aria-expanded="false" aria-label="Settings menu"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg><span class="st-label">Settings</span><i class="st-caret" aria-hidden="true"></i></button><div class="st-sub st-sub-wide" hidden>
           <div class="st-setbox"><p class="st-sub-t">Menus</p>
-            <div class="st-setrow"><span>Move menus (unlock)</span><button type="button" class="st-btn st-tray-lock st-glass" data-tray-lock aria-pressed="true" aria-label="Unlock menus to move them"></button></div>
+            <div class="st-setrow"><span>Menus can be moved (lock to freeze)</span><button type="button" class="st-btn st-tray-lock st-glass" data-tray-lock aria-pressed="false" aria-label="Lock menus in place"></button></div>
             <div class="st-setrow"><span>Snap to edges</span><button type="button" class="st-btn st-tray-snap st-glass" data-tray-snap aria-pressed="true" aria-label="Snap menus to edges">${I('<path d="M4 4v16M4 12h9M10 8l4 4-4 4"/>')}<span>Snap</span></button></div>
             <button type="button" class="st-chip st-wide" data-tray-reset>Reset menu positions</button>
             <button type="button" class="st-chip st-wide st-keys-btn" data-studio-keys>Keyboard shortcuts (?)</button></div>
@@ -9775,30 +9778,45 @@ class CoreStudio {
     this.trayCfg = ok ? saved : def; this.trayWide = wide;
     this.edgeHint = document.createElement('div'); this.edgeHint.className = 'st-edge-hint'; this.edgeHint.hidden = true; this.el.append(this.edgeHint);
     const lock = this.el.querySelector('[data-tray-lock]'), icon = on => on ? this.icons.lock : this.icons.unlock;
-    this.traysLocked = true; lock.innerHTML = icon(true); this.traySnap = true;
+    this.traysLocked = false; lock.innerHTML = icon(false); this.traySnap = true;
     const snapBtn = this.el.querySelector('[data-tray-snap]');
     snapBtn.onclick = () => { this.traySnap = !this.traySnap; snapBtn.setAttribute('aria-pressed', String(this.traySnap)); snapBtn.querySelector('span').textContent = this.traySnap ? 'Snap' : 'Free'; };
-    lock.onclick = () => { this.traysLocked = !this.traysLocked; lock.innerHTML = icon(this.traysLocked); lock.setAttribute('aria-pressed', String(this.traysLocked)); lock.setAttribute('aria-label', this.traysLocked ? 'Unlock menus to move them' : 'Lock menus in place'); this.el.classList.toggle('trays-unlocked', !this.traysLocked); };
+    lock.onclick = () => { this.traysLocked = !this.traysLocked; lock.innerHTML = icon(this.traysLocked); lock.setAttribute('aria-pressed', String(this.traysLocked)); lock.setAttribute('aria-label', this.traysLocked ? 'Unlock menus to move them' : 'Lock menus in place'); this.el.classList.toggle('trays-locked', this.traysLocked); };
     Object.entries(this.trays).forEach(([name, el]) => {
-      const g = el.querySelector('[data-tray-grip]');
-      g.addEventListener('pointerdown', e => {
-        if (this.traysLocked || e.button !== 0) return;
-        e.preventDefault(); e.stopPropagation(); g.setPointerCapture(e.pointerId);
-        const r = el.getBoundingClientRect(); this.trayDrag = { name, el, id: e.pointerId, dx: e.clientX - r.left, dy: e.clientY - r.top, x0: e.clientX, y0: e.clientY };
+      const g = el.querySelector('[data-tray-grip]'), head = el.querySelector('.st-panel-head');
+      const begin = (e, cap, sx, sy) => {
+        cap.setPointerCapture(e.pointerId);
+        const r = el.getBoundingClientRect(); this.trayDrag = { name, el, id: e.pointerId, dx: sx - r.left, dy: sy - r.top, x0: sx, y0: sy, moved: false };
         el.classList.add('is-dragging'); this.select(null);
-      });
-      g.addEventListener('pointermove', e => {
+      };
+      const move = e => {
         const d = this.trayDrag; if (!d || d.id !== e.pointerId) return;
+        if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) > 6) d.moved = true;
         el.style.transform = `translate(${e.clientX - d.x0}px,${e.clientY - d.y0}px)`;
-        const tgt = this.trayTarget(name, e.clientX, e.clientY); this.layoutTrays(tgt); this.edgeHint.dataset.edge = this.trayEdge || ''; this.edgeHint.hidden = !this.trayEdge; el.style.transform = this.traySnap ? `translate(${e.clientX - d.x0}px,${e.clientY - d.y0}px)` : '';
-      });
+        const tgt = this.trayTarget(name, e.clientX, e.clientY); this.layoutTrays(tgt); this.edgeHint.dataset.edge = this.trayEdge || ''; this.edgeHint.hidden = !this.trayEdge; el.style.transform = this.trayEdge ? `translate(${e.clientX - d.x0}px,${e.clientY - d.y0}px)` : '';
+      };
       const end = e => {
         const d = this.trayDrag; if (!d || d.id !== e.pointerId) return; this.trayDrag = null;
-        const tgt = this.trayTarget(name, e.clientX, e.clientY); this.trayCfg = tgt;
-        try { localStorage.setItem('cerebra-studio-trays2-' + (this.trayWide ? 'w' : 'n'), JSON.stringify(tgt)); } catch (err) {}
+        if (d.moved) {
+          const tgt = this.trayTarget(name, e.clientX, e.clientY); this.trayCfg = tgt;
+          try { localStorage.setItem('cerebra-studio-trays2-' + (this.trayWide ? 'w' : 'n'), JSON.stringify(tgt)); } catch (err) {}
+          const stop = ev => { ev.stopPropagation(); ev.preventDefault(); }; addEventListener('click', stop, true); setTimeout(() => removeEventListener('click', stop, true), 0);   // a drag on the title must not also fold the menu
+        }
         el.classList.remove('is-dragging'); el.style.transform = ''; this.edgeHint.hidden = true; this.layoutTrays();
       };
-      g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
+      g.addEventListener('pointerdown', e => { if (this.traysLocked || e.button !== 0) return; e.preventDefault(); e.stopPropagation(); begin(e, g, e.clientX, e.clientY); });
+      g.addEventListener('pointermove', move); g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
+      // The title bar of Layers / Design moves the menu too (a plain tap still folds it).
+      if (head) {
+        let arm = null;
+        head.addEventListener('pointerdown', e => { if (this.traysLocked || e.button !== 0) return; arm = { id: e.pointerId, x: e.clientX, y: e.clientY }; try { head.setPointerCapture(e.pointerId); } catch (x) {} });
+        head.addEventListener('pointermove', e => {
+          if (this.trayDrag && this.trayDrag.id === e.pointerId) { move(e); return; }
+          if (!arm || arm.id !== e.pointerId || e.buttons === 0 && e.pointerType === 'mouse') return;
+          if (Math.hypot(e.clientX - arm.x, e.clientY - arm.y) > 7) { begin(e, head, arm.x, arm.y); arm = null; move(e); }
+        });
+        head.addEventListener('pointerup', e => { arm = null; end(e); }); head.addEventListener('pointercancel', e => { arm = null; end(e); });
+      }
     });
   }
   resetTrays() {
@@ -9808,7 +9826,7 @@ class CoreStudio {
   }
   // Nearest edge to the pointer, and the slot among that edge's trays (0 = against the edge).
   trayTarget(name, x, y) {
-    if (!this.traySnap) {
+    if (!this.traySnap || Math.min(x, innerWidth - x, y, innerHeight - y) > 130) {   // away from every edge the menu simply floats where you drop it
       const cfg = Object.fromEntries(Object.entries(this.trayCfg).map(([k, v]) => [k, Array.isArray(v) ? v.filter(n => n !== name) : { ...v }]));
       const d = this.trayDrag || { dx: 0, dy: 0 }; cfg.free[name] = { x: clamp((x - d.dx) / innerWidth, 0, .95), y: clamp((y - d.dy) / innerHeight, 0, .95) }; this.trayEdge = null; return cfg;
     }
