@@ -9852,7 +9852,14 @@ class CoreStudio {
       if (this.updateLineUI) this.updateLineUI();
       if (!this._movers || !this._movers.size || this.app.reduced || acc < Math.max(1 / 45, cost * 2)) return;
       acc = 0; const t0 = performance.now();
-      this._movers.forEach(it => { if (!this.items.includes(it)) { this._movers.delete(it); return; } if (!this.isHid(it)) this.drawMoving(it); });
+      this._rest = this._rest || new WeakSet();
+      this._movers.forEach(it => {
+        if (!this.items.includes(it)) { this._movers.delete(it); return; } if (this.isHid(it)) return;
+        // a plucked string that has settled (and is not set to repeat) needs one last frame, then no more work until it is plucked again
+        const calm = it.strokes.every(st => !lineMoves(st) || (st.motion === 'pluck' && !(st.every > 0) && this.lineT - this.plucked(st) > 7 / (st.damp || 2.5)));
+        if (calm) { if (this._rest.has(it)) return; this._rest.add(it); } else this._rest.delete(it);
+        this.drawMoving(it);
+      });
       cost = (performance.now() - t0) / 1000;
     };
     requestAnimationFrame(tick);
