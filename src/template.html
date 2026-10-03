@@ -8751,6 +8751,7 @@ class CoreStudio {
       btn.addEventListener('click', e => {
         e.stopPropagation(); const open = sub.hidden; closeGrp();
         if (!open) return;
+        if (innerWidth <= 900 && !this.panel.hidden) this.tools(false);   // on small screens the Design panel and a dock menu would sit on top of each other
         sub.hidden = false; btn.setAttribute('aria-expanded', 'true'); g.classList.add('is-open');
         const dock = g.closest('.st-dock').getBoundingClientRect(), up = dock.top + dock.height / 2 > innerHeight / 2;
         sub.classList.toggle('is-down', !up); sub.style.setProperty('--sx', '0px');
@@ -9055,7 +9056,7 @@ class CoreStudio {
       e.preventDefault(); e.shiftKey ? this.redo() : this.undo();
     });
   }
-  tools(on) { this.panel.hidden = !on; if (this.cptLayer) this.cptLayer.classList.toggle('is-off', !on); this.el.classList.toggle('panel-closed', !on); this.el.querySelector('[data-studio-tools]').setAttribute('aria-expanded', String(on)); this.layoutTrays(); }
+  tools(on) { if (on && innerWidth <= 900 && this.closeGrp) this.closeGrp(); this.panel.hidden = !on; if (this.cptLayer) this.cptLayer.classList.toggle('is-off', !on); this.el.classList.toggle('panel-closed', !on); this.el.querySelector('[data-studio-tools]').setAttribute('aria-expanded', String(on)); this.layoutTrays(); }
   home() { this.x = this.y = this.vx = this.vy = 0; this.app.core.planet.resetView(); }
   point(e) { const r = this.app.stage.renderer.domElement.getBoundingClientRect(); return { x:clamp((e.clientX-r.left)/r.width,0,1), y:clamp((e.clientY-r.top)/r.height,0,1) }; }
   setSubject(index) {
