@@ -8248,7 +8248,7 @@ const KIT = {
         if (p.mstyle === 'swirl') { const an = M.a * M.t * .2, dx = c[0] - cmx, dy = c[1] - cmy; px = cmx + dx * Math.cos(an) - dy * Math.sin(an); py = cmy + dx * Math.sin(an) + dy * Math.cos(an); } else if (p.mstyle === 'swarm') { const sc = 1 + M.a * .2 * Math.sin(M.t * 1.2 + kitHash(i, 6) * 1.5); px = cmx + (c[0] - cmx) * sc; py = cmy + (c[1] - cmy) * sc; }
         return [px, py, c[2] * (pu ? 1 + M.a * .12 * Math.sin(M.t * 1.4 + kitHash(i, 5) * TAU) : 1), c[3]]; });
       const segs = []; cells.forEach((c, i) => { for (let j = i + 1; j < cells.length; j++) { const d = Math.hypot(c[0] - cells[j][0], c[1] - cells[j][1]); if (d < (c[2] + cells[j][2]) * (1 + p.links * .5)) segs.push({ pts: [live[i][0], live[i][1], live[j][0], live[j][1]], c: c[3] }); } });
-      L2.lines(o, segs, it, k, p.lw * .8, p.glow);
+      L2.lines(o, segs, it, k, p.lw * .8, p.glow); o.lineCap = 'round';   // the line engine used to leave round caps behind; the cell rings keep that look
       for (const c of live) { o.strokeStyle = o.shadowColor = c[3] ? p.c2 : it.fill; o.shadowBlur = p.glow * 10 * k; o.lineWidth = Math.max(.5, p.lw * k); o.beginPath(); o.arc(c[0], c[1], c[2], 0, TAU); o.stroke(); o.shadowBlur = 0; o.globalAlpha = .6; if (p.ringK > 0) { o.beginPath(); o.arc(c[0], c[1], c[2] * p.ringK, 0, TAU); o.stroke(); } o.globalAlpha = 1; if (p.fillA > 0) { o.globalAlpha = p.fillA; o.fillStyle = c[3] ? p.c2 : it.fill; o.beginPath(); o.arc(c[0], c[1], c[2], 0, TAU); o.fill(); o.globalAlpha = 1; } if (p.nucleus) { o.fillStyle = c[3] ? p.c2 : it.fill; o.beginPath(); o.arc(c[0] + c[2] * .1, c[1] - c[2] * .05, c[2] * p.nucK, 0, TAU); o.fill(); } }
     }); },
   },
