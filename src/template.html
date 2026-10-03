@@ -8381,91 +8381,100 @@ const KIT = {
     },
   },
   rings: {
-    label: 'Rings', defaults: { n: 7, inner: .18, lw: 1.2, dash: 'solid', fade: .5, gaps: .35 },
+    label: 'Rings', defaults: { rot: 0, squash: 1, curve: 1, taper: 0, n: 7, inner: .18, lw: 1.2, dash: 'solid', fade: .5, gaps: .35 },
     ui: [{ k: 'n', t: 'range', label: 'Rings', min: 1, max: KIT_MAX.rings, step: 1 }, { k: 'inner', t: 'range', label: 'Inner size', min: 0, max: .9, step: .02, pct: 1 }, { k: 'lw', t: 'range', label: 'Line width', min: .4, max: 8, step: .2, unit: 'px' },
-      { k: 'dash', t: 'select', label: 'Line type', opts: KIT_DASH }, { k: 'fade', t: 'range', label: 'Fade outward', min: 0, max: .95, step: .05, pct: 1 }, { k: 'gaps', t: 'range', label: 'Broken rings', min: 0, max: 1, step: .05, pct: 1 }],
+      { k: 'dash', t: 'select', label: 'Line type', opts: KIT_DASH }, { k: 'fade', t: 'range', label: 'Fade outward', min: 0, max: .95, step: .05, pct: 1 }, { k: 'gaps', t: 'range', label: 'Broken rings', min: 0, max: 1, step: .05, pct: 1 },
+      { k: 'curve', t: 'range', label: 'Spacing curve', min: 0.4, max: 2.5, step: 0.05 }, { k: 'taper', t: 'range', label: 'Line taper (thin to thick)', min: -1, max: 1, step: 0.05, pct: 1 }, { k: 'squash', t: 'range', label: 'Squash (1 = round)', min: 0.3, max: 1, step: 0.02, pct: 1 }, { k: 'rot', t: 'range', label: 'Rotate', min: 0, max: 180, step: 5, unit: '°' }],
     draw(g, it, x, y, w, h, k) {
       const p = it.p, r = mulberry32(it.seed), n = Math.min(KIT_MAX.rings, p.n | 0), cx = x + w / 2, cy = y + h / 2, rx = w / 2 - p.lw * k, ry = h / 2 - p.lw * k, a0 = g.globalAlpha, M = kitM(it);
       g.strokeStyle = it.fill; g.lineWidth = p.lw * k;
       for (let i = 0; i < n; i++) {
-        const t = n === 1 ? 1 : i / (n - 1), sc = p.inner + (1 - p.inner) * t, u = r(), v = r(), q = r(), mode = p.dash === 'mixed' ? ['solid', 'dashed', 'dotted'][Math.floor(q * 3)] : p.dash;
-        g.globalAlpha = a0 * (1 - p.fade * t); g.lineCap = mode === 'dotted' ? 'round' : 'butt';
+        const t = n === 1 ? 1 : i / (n - 1), sc = p.inner + (1 - p.inner) * Math.pow(t, p.curve), u = r(), v = r(), q = r(), mode = p.dash === 'mixed' ? ['solid', 'dashed', 'dotted'][Math.floor(q * 3)] : p.dash;
+        g.globalAlpha = a0 * (1 - p.fade * t); g.lineWidth = p.lw * k * (1 + (t - .5) * p.taper); g.lineCap = mode === 'dotted' ? 'round' : 'butt';
         g.setLineDash(mode === 'dashed' ? [p.lw * 6 * k, p.lw * 4 * k] : mode === 'dotted' ? [.01, p.lw * 3 * k] : []);
         const part = u < p.gaps, s0 = v * Math.PI * 2, len = Math.PI * 2 * (.3 + .55 * q);
-        const ms = p.mstyle, pul = ms === 'crawl' ? 1 : 1 + M.a * (ms === 'breathe' ? .09 : .06) * Math.sin(M.t * 1.6 - (ms === 'breathe' ? 0 : i * .8)), rot = M.a * M.t * (.25 + q * .5) * (i % 2 ? 1 : -1), ox = ms === 'wobble' ? M.a * rx * .06 * Math.sin(M.t * 1.1 + i * .7) : 0, oy = ms === 'wobble' ? M.a * ry * .06 * Math.cos(M.t * .9 + i * .7) : 0; g.lineDashOffset = M.a ? -M.t * M.a * (ms === 'crawl' ? 34 : 18) * k * (i % 2 ? 1 : -1) : 0; g.beginPath(); g.ellipse(cx + ox, cy + oy, Math.max(.5, rx * sc * pul), Math.max(.5, ry * sc * pul), 0, part ? s0 + rot : 0, part ? s0 + rot + len : Math.PI * 2); g.stroke();
+        const ms = p.mstyle, pul = ms === 'crawl' ? 1 : 1 + M.a * (ms === 'breathe' ? .09 : .06) * Math.sin(M.t * 1.6 - (ms === 'breathe' ? 0 : i * .8)), rot = M.a * M.t * (.25 + q * .5) * (i % 2 ? 1 : -1), ox = ms === 'wobble' ? M.a * rx * .06 * Math.sin(M.t * 1.1 + i * .7) : 0, oy = ms === 'wobble' ? M.a * ry * .06 * Math.cos(M.t * .9 + i * .7) : 0; g.lineDashOffset = M.a ? -M.t * M.a * (ms === 'crawl' ? 34 : 18) * k * (i % 2 ? 1 : -1) : 0; g.beginPath(); g.ellipse(cx + ox, cy + oy, Math.max(.5, rx * sc * pul), Math.max(.5, ry * sc * pul * p.squash), p.rot * Math.PI / 180, part ? s0 + rot : 0, part ? s0 + rot + len : Math.PI * 2); g.stroke();
       }
       g.setLineDash([]); g.lineDashOffset = 0; g.globalAlpha = a0;
     },
   },
   radial: {
-    label: 'Rays', defaults: { n: 72, inner: .22, spread: .6, lw: 1, dot: 3, c2: '#ffb04a', c3: '#7cc4ff', mix: .25 },
+    label: 'Rays', defaults: { rot: 0, squash: 1, tip: 'circle', jit: 1, n: 72, inner: .22, spread: .6, lw: 1, dot: 3, c2: '#ffb04a', c3: '#7cc4ff', mix: .25 },
     ui: [{ k: 'n', t: 'range', label: 'Rays', min: 4, max: KIT_MAX.radial, step: 1 }, { k: 'inner', t: 'range', label: 'Start radius', min: 0, max: .9, step: .02, pct: 1 }, { k: 'spread', t: 'range', label: 'Length variety', min: 0, max: 1, step: .05, pct: 1 }, { k: 'lw', t: 'range', label: 'Line width', min: .4, max: 6, step: .2, unit: 'px' },
-      { k: 'dot', t: 'range', label: 'End dots', min: 0, max: 10, step: .5, unit: 'px' }, { k: 'mix', t: 'range', label: 'Accent dots', min: 0, max: 1, step: .05, pct: 1 }, { k: 'c2', t: 'color', label: 'Accent 1' }, { k: 'c3', t: 'color', label: 'Accent 2' }],
+      { k: 'dot', t: 'range', label: 'End dots', min: 0, max: 10, step: .5, unit: 'px' }, { k: 'tip', t: 'select', label: 'End shape', opts: [['circle', 'Circle'], ['square', 'Square'], ['diamond', 'Diamond'], ['ring', 'Ring']] },
+      { k: 'jit', t: 'range', label: 'Angle scatter', min: 0, max: 3, step: 0.05 }, { k: 'rot', t: 'range', label: 'Rotate', min: 0, max: 360, step: 5, unit: '°' }, { k: 'squash', t: 'range', label: 'Squash (1 = round)', min: 0.3, max: 1, step: 0.02, pct: 1 }, { k: 'mix', t: 'range', label: 'Accent dots', min: 0, max: 1, step: .05, pct: 1 }, { k: 'c2', t: 'color', label: 'Accent 1' }, { k: 'c3', t: 'color', label: 'Accent 2' }],
     draw(g, it, x, y, w, h, k) {
-      const p = it.p, r = mulberry32(it.seed), n = Math.min(KIT_MAX.radial, p.n | 0), M = kitM(it), cx = x + w / 2, cy = y + h / 2, dr = p.dot * k, rx = w / 2 - dr - 1, ry = h / 2 - dr - 1;
+      const p = it.p, r = mulberry32(it.seed), n = Math.min(KIT_MAX.radial, p.n | 0), M = kitM(it), cx = x + w / 2, cy = y + h / 2, dr = p.dot * k, rx = w / 2 - dr - 1, ry = (h / 2 - dr - 1) * p.squash;
       g.lineWidth = p.lw * k; g.lineCap = 'round';
       for (let i = 0; i < n; i++) {
-        const a = i / n * Math.PI * 2 + (r() - .5) * .6 / n * 2 * Math.PI / 6 + M.a * M.t * .05, len = clamp(1 - p.spread * r() + M.a * (p.mstyle === 'sweep' ? .4 * Math.sin(M.t * 2 - i / n * 12.566) : p.mstyle === 'pulse' ? .3 * Math.sin(M.t * 1.6) : .3 * Math.sin(M.t * 1.7 + kitHash(i, 3) * 6.283)), .05, 1), e = p.inner + (1 - p.inner) * len, c = Math.cos(a), sn = Math.sin(a), rr = r();
+        const a = i / n * Math.PI * 2 + (r() - .5) * .6 / n * 2 * Math.PI / 6 * p.jit + M.a * M.t * .05 + p.rot * Math.PI / 180, len = clamp(1 - p.spread * r() + M.a * (p.mstyle === 'sweep' ? .4 * Math.sin(M.t * 2 - i / n * 12.566) : p.mstyle === 'pulse' ? .3 * Math.sin(M.t * 1.6) : .3 * Math.sin(M.t * 1.7 + kitHash(i, 3) * 6.283)), .05, 1), e = p.inner + (1 - p.inner) * len, c = Math.cos(a), sn = Math.sin(a), rr = r();
         const col = rr < p.mix * .5 ? p.c2 : rr < p.mix ? p.c3 : it.fill;
         g.strokeStyle = g.fillStyle = col; g.beginPath(); g.moveTo(cx + c * rx * p.inner, cy + sn * ry * p.inner); g.lineTo(cx + c * rx * e, cy + sn * ry * e); g.stroke();
-        if (dr > 0) { g.beginPath(); g.arc(cx + c * rx * e, cy + sn * ry * e, dr * (col === it.fill ? .7 : 1.2), 0, Math.PI * 2); g.fill(); }
+        if (dr > 0) { const tx = cx + c * rx * e, ty = cy + sn * ry * e, tr = dr * (col === it.fill ? .7 : 1.2); g.beginPath(); if (p.tip === 'square') g.rect(tx - tr, ty - tr, tr * 2, tr * 2); else if (p.tip === 'diamond') { g.moveTo(tx, ty - tr * 1.3); g.lineTo(tx + tr * 1.3, ty); g.lineTo(tx, ty + tr * 1.3); g.lineTo(tx - tr * 1.3, ty); g.closePath(); } else g.arc(tx, ty, tr, 0, Math.PI * 2); if (p.tip === 'ring') { g.lineWidth = Math.max(.6, p.lw * k * .8); g.stroke(); g.lineWidth = p.lw * k; } else g.fill(); }
       }
     },
   },
   arc: {
-    label: 'Arcs', defaults: { n: 4, inner: .35, lw: 8, round: true, c2: '#ffffff' },
+    label: 'Arcs', defaults: { sweep: 1, curve: 1, colMode: 'alt', rot: 0, n: 4, inner: .35, lw: 8, round: true, c2: '#ffffff' },
     ui: [{ k: 'n', t: 'range', label: 'Arcs', min: 1, max: KIT_MAX.arc, step: 1 }, { k: 'inner', t: 'range', label: 'Inner size', min: 0, max: .9, step: .02, pct: 1 }, { k: 'lw', t: 'range', label: 'Thickness', min: 1, max: 40, step: 1, unit: 'px' },
-      { k: 'round', t: 'check', label: 'Round ends' }, { k: 'c2', t: 'color', label: 'Second colour' }],
+      { k: 'round', t: 'check', label: 'Round ends' }, { k: 'c2', t: 'color', label: 'Second colour' },
+      { k: 'colMode', t: 'select', label: 'Colour pattern', opts: [['alt', 'Alternate'], ['blend', 'Blend inner to outer'], ['first', 'Single colour']] }, { k: 'sweep', t: 'range', label: 'Arc length', min: 0.3, max: 1.8, step: 0.05, pct: 1 }, { k: 'curve', t: 'range', label: 'Spacing curve', min: 0.4, max: 2.5, step: 0.05 }, { k: 'rot', t: 'range', label: 'Rotate', min: 0, max: 360, step: 5, unit: '°' }],
     draw(g, it, x, y, w, h, k) {
       const p = it.p, r = mulberry32(it.seed), n = Math.min(KIT_MAX.arc, p.n | 0), M = kitM(it), ms = p.mstyle, cx = x + w / 2, cy = y + h / 2, rx = w / 2 - p.lw * k / 2, ry = h / 2 - p.lw * k / 2;
       g.lineWidth = p.lw * k; g.lineCap = p.round ? 'round' : 'butt';
       for (let i = 0; i < n; i++) {
-        const t = n === 1 ? 1 : i / (n - 1), sc = p.inner + (1 - p.inner) * t, s0 = r() * Math.PI * 2 + (ms === 'pendulum' ? M.a * .9 * Math.sin(M.t * (.6 + kitHash(i, 5) * .6) + i) * (i % 2 ? 1 : -1) : ms === 'grow' ? 0 : M.a * M.t * (kitHash(i, 5) - .5) * 1.8), len = Math.PI * 2 * (.15 + .55 * r()) * (1 + M.a * (ms === 'grow' ? .6 : .25) * Math.sin(M.t * (ms === 'grow' ? 1.3 : .9) + i * (ms === 'grow' ? .9 : 1)));
-        g.strokeStyle = i % 2 ? p.c2 : it.fill; g.beginPath(); g.ellipse(cx, cy, Math.max(.5, rx * sc), Math.max(.5, ry * sc), 0, s0, s0 + len); g.stroke();
+        const t = n === 1 ? 1 : i / (n - 1), sc = p.inner + (1 - p.inner) * Math.pow(t, p.curve), s0 = r() * Math.PI * 2 + p.rot * Math.PI / 180 + (ms === 'pendulum' ? M.a * .9 * Math.sin(M.t * (.6 + kitHash(i, 5) * .6) + i) * (i % 2 ? 1 : -1) : ms === 'grow' ? 0 : M.a * M.t * (kitHash(i, 5) - .5) * 1.8), len = Math.PI * 2 * p.sweep * (.15 + .55 * r()) * (1 + M.a * (ms === 'grow' ? .6 : .25) * Math.sin(M.t * (ms === 'grow' ? 1.3 : .9) + i * (ms === 'grow' ? .9 : 1)));
+        g.strokeStyle = p.colMode === 'blend' ? kitMix(it.fill, p.c2, t) : p.colMode === 'first' ? it.fill : i % 2 ? p.c2 : it.fill; g.beginPath(); g.ellipse(cx, cy, Math.max(.5, rx * sc), Math.max(.5, ry * sc), 0, s0, s0 + len); g.stroke();
       }
     },
   },
   arcText: {
-    label: 'Curved text', defaults: { text: 'CEREBRA · STUDIO STUDY · 2020 · ', font: 'mono', weight: '500', size: 16, upper: true, fit: true, ls: .25, start: -90, span: 360, flip: false }, thumbK: .45, noShuffle: true,
+    label: 'Curved text', defaults: { text: 'CEREBRA · STUDIO STUDY · 2020 · ', font: 'mono', weight: '500', size: 16, upper: true, fit: true, ls: .25, start: -90, span: 360, flip: false, ramp: 1, fade: 0, outline: false, off: 0 }, thumbK: .45, noShuffle: true,
     ui: [{ k: 'text', t: 'text', label: 'Text' }, { k: 'font', t: 'select', label: 'Font', opts: KIT_FONT_OPTS }, { k: 'weight', t: 'select', label: 'Weight', opts: KIT_WEIGHTS }, { k: 'size', t: 'range', label: 'Size', min: 6, max: 90, step: 1, unit: 'px' },
       { k: 'upper', t: 'check', label: 'Capitals' }, { k: 'fit', t: 'check', label: 'Fill the arc' }, { k: 'ls', t: 'range', label: 'Letter spacing', min: 0, max: 2, step: .05, unit: 'em' },
-      { k: 'start', t: 'range', label: 'Start angle', min: -180, max: 180, step: 1, unit: '°' }, { k: 'span', t: 'range', label: 'Arc length', min: 30, max: 360, step: 5, unit: '°' }, { k: 'flip', t: 'check', label: 'Reverse (inside, reads anticlockwise)' }],
+      { k: 'start', t: 'range', label: 'Start angle', min: -180, max: 180, step: 1, unit: '°' }, { k: 'span', t: 'range', label: 'Arc length', min: 30, max: 360, step: 5, unit: '°' }, { k: 'flip', t: 'check', label: 'Reverse (inside, reads anticlockwise)' },
+      { k: 'ramp', t: 'range', label: 'Size at the end (1 = same)', min: 0.3, max: 2, step: 0.05, pct: 1 }, { k: 'fade', t: 'range', label: 'Fade towards the end', min: 0, max: 1, step: 0.05, pct: 1 }, { k: 'outline', t: 'check', label: 'Outline letters' }, { k: 'off', t: 'range', label: 'Baseline offset', min: -1.5, max: 1.5, step: 0.05 }],
     draw(g, it, x, y, w, h, k) {
       const p = it.p, M = kitM(it), ms = p.mstyle, px = p.size * k, chars = [...(p.upper ? String(p.text).toUpperCase() : String(p.text))]; if (!chars.length) return;
-      const cx = x + w / 2, cy = y + h / 2, R = Math.max(4, Math.min(w, h) / 2 - (p.flip ? px * .15 : px * .9));
+      const cx = x + w / 2, cy = y + h / 2, R = Math.max(4, Math.min(w, h) / 2 - (p.flip ? px * .15 : px * .9) + p.off * px), nc = chars.length, sz = chars.map((_, i) => 1 + (p.ramp - 1) * (nc === 1 ? 0 : i / (nc - 1))), a00 = g.globalAlpha;
       g.font = kitFont(p, px); g.fillStyle = it.fill; g.textBaseline = 'alphabetic'; g.textAlign = 'center';
-      const ws = chars.map(c => g.measureText(c).width), sum = ws.reduce((a, b) => a + b, 0), span = p.span * Math.PI / 180, full = p.span >= 359.5;
+      const ws = chars.map((c, i) => g.measureText(c).width * sz[i]), sum = ws.reduce((a, b) => a + b, 0), span = p.span * Math.PI / 180, full = p.span >= 359.5;
       const gap = p.fit ? Math.max(0, (span * R - sum) / (full ? chars.length : Math.max(1, chars.length - 1))) : p.ls * px, dir = p.flip ? -1 : 1, a0 = p.start * Math.PI / 180 + (ms === 'pendulum' ? M.a * .5 * Math.sin(M.t * .8) : ms === 'wave' ? 0 : M.a * M.t * .3 * dir);
       let acc = 0;
-      chars.forEach((c, i) => { const a = a0 + dir * (acc + ws[i] / 2) / R; acc += ws[i] + gap; const Rb = R + (ms === 'wave' ? M.a * px * .5 * Math.sin(M.t * 2.2 + i * .55) : 0); g.save(); g.translate(cx + Rb * Math.cos(a), cy + Rb * Math.sin(a)); g.rotate(a + dir * Math.PI / 2); g.fillText(c, 0, 0); g.restore(); });
+      chars.forEach((c, i) => { const a = a0 + dir * (acc + ws[i] / 2) / R; acc += ws[i] + gap; const Rb = R + (ms === 'wave' ? M.a * px * .5 * Math.sin(M.t * 2.2 + i * .55) : 0); g.save(); g.translate(cx + Rb * Math.cos(a), cy + Rb * Math.sin(a)); g.rotate(a + dir * Math.PI / 2); if (p.ramp !== 1) g.font = kitFont(p, px * sz[i]); g.globalAlpha = a00 * (1 - p.fade * (nc === 1 ? 0 : i / (nc - 1))); if (p.outline) { g.strokeStyle = it.fill; g.lineWidth = Math.max(.7, k * .8); g.strokeText(c, 0, 0); } else g.fillText(c, 0, 0); g.restore(); });
+      g.globalAlpha = a00;
     },
   },
   labelRing: {
-    label: 'Label ring', defaults: { items: 'JANUARY\nFEBRUARY\nMARCH\nAPRIL\nMAY\nJUNE\nJULY\nAUGUST\nSEPTEMBER\nOCTOBER\nNOVEMBER\nDECEMBER', font: 'mono', weight: '500', size: 12, upper: true, inner: .45, ring: true, ticks: 'ticks', lw: 1, start: -90, span: 360, readable: true }, thumbK: .5, noShuffle: true,
+    label: 'Label ring', defaults: { items: 'JANUARY\nFEBRUARY\nMARCH\nAPRIL\nMAY\nJUNE\nJULY\nAUGUST\nSEPTEMBER\nOCTOBER\nNOVEMBER\nDECEMBER', font: 'mono', weight: '500', size: 12, upper: true, inner: .45, ring: true, ticks: 'ticks', lw: 1, start: -90, span: 360, readable: true, orient: 'radial', tickLen: 7, gapK: .6, num: false }, thumbK: .5, noShuffle: true,
     ui: [{ k: 'items', t: 'area', label: 'Labels (one per line)' }, { k: 'font', t: 'select', label: 'Font', opts: KIT_FONT_OPTS }, { k: 'weight', t: 'select', label: 'Weight', opts: KIT_WEIGHTS }, { k: 'size', t: 'range', label: 'Size', min: 6, max: 60, step: 1, unit: 'px' },
       { k: 'upper', t: 'check', label: 'Capitals' }, { k: 'inner', t: 'range', label: 'Text starts at', min: .05, max: .95, step: .01, pct: 1 }, { k: 'ring', t: 'check', label: 'Ring line' },
       { k: 'ticks', t: 'select', label: 'Marks', opts: [['none', 'None'], ['ticks', 'Ticks'], ['dots', 'Dots']] }, { k: 'lw', t: 'range', label: 'Line width', min: .4, max: 5, step: .2, unit: 'px' },
-      { k: 'start', t: 'range', label: 'Start angle', min: -180, max: 180, step: 1, unit: '°' }, { k: 'span', t: 'range', label: 'Arc length', min: 30, max: 360, step: 5, unit: '°' }, { k: 'readable', t: 'check', label: 'Keep text upright' }],
+      { k: 'start', t: 'range', label: 'Start angle', min: -180, max: 180, step: 1, unit: '°' }, { k: 'span', t: 'range', label: 'Arc length', min: 30, max: 360, step: 5, unit: '°' }, { k: 'readable', t: 'check', label: 'Keep text upright' },
+      { k: 'orient', t: 'select', label: 'Text direction', opts: [['radial', 'Pointing out from the centre'], ['tangent', 'Along the ring']] }, { k: 'num', t: 'check', label: 'Number the labels' }, { k: 'gapK', t: 'range', label: 'Gap from the ring', min: 0.1, max: 2.5, step: 0.05 }, { k: 'tickLen', t: 'range', label: 'Tick length', min: 2, max: 30, step: 1, unit: 'px', when: ['ticks', 'ticks'] }],
     draw(g, it, x, y, w, h, k) {
       const p = it.p, lines = String(p.items).split('\n').map(t => t.trim()).filter(Boolean).slice(0, KIT_MAX.label), n = lines.length; if (!n) return;
-      const cx = x + w / 2, cy = y + h / 2, R = Math.min(w, h) / 2 - k, r0 = R * p.inner, px = p.size * k, span = p.span * Math.PI / 180, full = p.span >= 359.5, a0 = p.start * Math.PI / 180 + (p.mstyle === 'pendulum' ? kitM(it).a * .4 * Math.sin(kitM(it).t * .7) : p.mstyle === 'highlight' ? 0 : kitM(it).a * kitM(it).t * .12), pad = px * .6, ga = g.globalAlpha, hl = p.mstyle === 'highlight' && kitM(it).a > 0, act = hl ? Math.floor(kitM(it).t * 1.2) % n : -1;
+      const cx = x + w / 2, cy = y + h / 2, R = Math.min(w, h) / 2 - k, r0 = R * p.inner, px = p.size * k, span = p.span * Math.PI / 180, full = p.span >= 359.5, a0 = p.start * Math.PI / 180 + (p.mstyle === 'pendulum' ? kitM(it).a * .4 * Math.sin(kitM(it).t * .7) : p.mstyle === 'highlight' ? 0 : kitM(it).a * kitM(it).t * .12), pad = px * p.gapK, ga = g.globalAlpha, hl = p.mstyle === 'highlight' && kitM(it).a > 0, act = hl ? Math.floor(kitM(it).t * 1.2) % n : -1;
       g.fillStyle = g.strokeStyle = it.fill; g.font = kitFont(p, px); g.textBaseline = 'middle'; g.lineWidth = Math.max(.5, p.lw * k); g.lineCap = 'round';
       if (p.ring) { g.beginPath(); g.arc(cx, cy, r0, a0, a0 + (full ? Math.PI * 2 : span)); g.stroke(); }
       lines.forEach((t, i) => {
         if (hl) g.globalAlpha = ga * (i === act ? 1 : .35);
         const a = a0 + (full ? i / n : n === 1 ? 0 : i / (n - 1)) * span, c = Math.cos(a), sn = Math.sin(a), back = p.readable && c < -1e-6;
-        if (p.ticks === 'ticks') { g.beginPath(); g.moveTo(cx + c * (r0 - 7 * k), cy + sn * (r0 - 7 * k)); g.lineTo(cx + c * r0, cy + sn * r0); g.stroke(); }
+        if (p.ticks === 'ticks') { g.beginPath(); g.moveTo(cx + c * (r0 - p.tickLen * k), cy + sn * (r0 - p.tickLen * k)); g.lineTo(cx + c * r0, cy + sn * r0); g.stroke(); }
         else if (p.ticks === 'dots') { g.beginPath(); g.arc(cx + c * r0, cy + sn * r0, Math.max(1.2, p.lw * 1.6) * k, 0, Math.PI * 2); g.fill(); }
-        g.save(); g.translate(cx, cy); g.rotate(a + (back ? Math.PI : 0)); g.textAlign = back ? 'right' : 'left'; g.fillText(p.upper ? t.toUpperCase() : t, back ? -(r0 + pad) : r0 + pad, 0); g.restore();
+        const txt = (p.num ? String(i + 1).padStart(2, '0') + ' ' : '') + (p.upper ? t.toUpperCase() : t);
+        if (p.orient === 'tangent') { const flip = p.readable && sn > 0; g.save(); g.translate(cx + c * (r0 + pad), cy + sn * (r0 + pad)); g.rotate(a + (flip ? -Math.PI / 2 : Math.PI / 2)); g.textAlign = 'center'; g.textBaseline = flip ? 'bottom' : 'top'; g.fillText(txt, 0, 0); g.restore(); g.textBaseline = 'middle'; }
+        else { g.save(); g.translate(cx, cy); g.rotate(a + (back ? Math.PI : 0)); g.textAlign = back ? 'right' : 'left'; g.fillText(txt, back ? -(r0 + pad) : r0 + pad, 0); g.restore(); }
       });
       g.globalAlpha = ga;
     },
   },
   scaleRing: {
-    label: 'Scale ring', defaults: { n: 120, major: 10, minorLen: 5, majorLen: 12, lw: 1, ring: true, side: 'in', numbers: false, font: 'mono', weight: '500', size: 10, start: -90, span: 360 }, thumbK: .6, noShuffle: true,
+    label: 'Scale ring', defaults: { n: 120, major: 10, minorLen: 5, majorLen: 12, lw: 1, ring: true, side: 'in', numbers: false, font: 'mono', weight: '500', size: 10, start: -90, span: 360, numStart: 0, numStep: 1, mid: 0, midLen: 8 }, thumbK: .6, noShuffle: true,
     ui: [{ k: 'n', t: 'range', label: 'Ticks', min: 4, max: KIT_MAX.ticks, step: 1 }, { k: 'major', t: 'range', label: 'Long tick every', min: 1, max: 60, step: 1 }, { k: 'minorLen', t: 'range', label: 'Short tick', min: 1, max: 40, step: 1, unit: 'px' }, { k: 'majorLen', t: 'range', label: 'Long tick', min: 1, max: 60, step: 1, unit: 'px' },
       { k: 'lw', t: 'range', label: 'Line width', min: .4, max: 5, step: .2, unit: 'px' }, { k: 'side', t: 'select', label: 'Ticks point', opts: [['in', 'Inward'], ['out', 'Outward']] }, { k: 'ring', t: 'check', label: 'Ring line' }, { k: 'numbers', t: 'check', label: 'Numbers' },
       { k: 'font', t: 'select', label: 'Font', opts: KIT_FONT_OPTS, when: ['numbers', true] }, { k: 'size', t: 'range', label: 'Number size', min: 6, max: 40, step: 1, unit: 'px', when: ['numbers', true] },
+      { k: 'numStart', t: 'range', label: 'First number', min: -1000, max: 1000, step: 1, when: ['numbers', true] }, { k: 'numStep', t: 'range', label: 'Number step', min: 0.1, max: 100, step: 0.1, when: ['numbers', true] }, { k: 'mid', t: 'range', label: 'Medium tick every (0 = off)', min: 0, max: 60, step: 1 }, { k: 'midLen', t: 'range', label: 'Medium tick', min: 1, max: 50, step: 1, unit: 'px' },
       { k: 'start', t: 'range', label: 'Start angle', min: -180, max: 180, step: 1, unit: '°' }, { k: 'span', t: 'range', label: 'Arc length', min: 30, max: 360, step: 5, unit: '°' }],
     draw(g, it, x, y, w, h, k) {
       const p = it.p, M = kitM(it), n = Math.min(KIT_MAX.ticks, p.n | 0), cx = x + w / 2, cy = y + h / 2, out = p.side === 'out', px = p.size * k, span = p.span * Math.PI / 180, full = p.span >= 359.5, a0 = p.start * Math.PI / 180 + (p.mstyle === 'rotate' ? M.a * M.t * .35 : 0), maj = Math.max(1, p.major | 0);
@@ -8474,56 +8483,62 @@ const KIT = {
       if (p.ring) { g.beginPath(); g.arc(cx, cy, R, a0, a0 + (full ? Math.PI * 2 : span)); g.stroke(); }
       if (p.numbers) { g.font = kitFont(p, px); g.textAlign = 'center'; g.textBaseline = 'middle'; }
       for (let i = 0; i < n; i++) {
-        const a = a0 + (full ? i / n : n === 1 ? 0 : i / (n - 1)) * span, c = Math.cos(a), sn = Math.sin(a), big = i % maj === 0, len = (big ? p.majorLen : p.minorLen) * k * (1 + M.a * (p.mstyle === 'pulse' ? .9 * (.5 + .5 * Math.sin(M.t * 3 - i * .35)) : p.mstyle === 'rotate' ? 0 : 1.2 * Math.pow(Math.max(0, Math.cos(a - M.a * M.t * 1.4)), 10)));
+        const a = a0 + (full ? i / n : n === 1 ? 0 : i / (n - 1)) * span, c = Math.cos(a), sn = Math.sin(a), big = i % maj === 0, len = (big ? p.majorLen : p.mid > 0 && i % p.mid === 0 ? p.midLen : p.minorLen) * k * (1 + M.a * (p.mstyle === 'pulse' ? .9 * (.5 + .5 * Math.sin(M.t * 3 - i * .35)) : p.mstyle === 'rotate' ? 0 : 1.2 * Math.pow(Math.max(0, Math.cos(a - M.a * M.t * 1.4)), 10)));
         g.beginPath(); g.moveTo(cx + c * R, cy + sn * R); g.lineTo(cx + c * (R + dir * len), cy + sn * (R + dir * len)); g.stroke();
-        if (p.numbers && big) { const rr = R + dir * (p.majorLen * k + px * .8); g.save(); g.translate(cx + c * rr, cy + sn * rr); g.rotate(a + (sn > 0 ? -Math.PI / 2 : Math.PI / 2)); g.fillText(String(i), 0, 0); g.restore(); }
+        if (p.numbers && big) { const rr = R + dir * (p.majorLen * k + px * .8); g.save(); g.translate(cx + c * rr, cy + sn * rr); g.rotate(a + (sn > 0 ? -Math.PI / 2 : Math.PI / 2)); g.fillText(String(+(p.numStart + i * p.numStep).toFixed(2)), 0, 0); g.restore(); }
       }
     },
   },
   dotRing: {
-    label: 'Dot rings', defaults: { rings: 14, inner: .25, spacing: 11, min: .6, max: 2.6, grade: 'out', jitter: .15, dropout: .05, twist: 3, c2: '#ffb04a', mix: .08 }, thumbK: .6,
+    label: 'Dot rings', defaults: { rings: 14, inner: .25, spacing: 11, min: .6, max: 2.6, grade: 'out', jitter: .15, dropout: .05, twist: 3, c2: '#ffb04a', mix: .08, dshape: 'circle', rot: 0, squash: 1, fade: 0 }, thumbK: .6,
     ui: [{ k: 'rings', t: 'range', label: 'Rings', min: 1, max: 40, step: 1 }, { k: 'inner', t: 'range', label: 'Inner size', min: 0, max: .9, step: .02, pct: 1 }, { k: 'spacing', t: 'range', label: 'Dot spacing', min: 4, max: 40, step: 1, unit: 'px' },
       { k: 'min', t: 'range', label: 'Smallest dot', min: .3, max: 8, step: .1, unit: 'px' }, { k: 'max', t: 'range', label: 'Largest dot', min: .3, max: 12, step: .1, unit: 'px' }, { k: 'grade', t: 'select', label: 'Dot size grows', opts: [['out', 'Outward'], ['in', 'Inward'], ['even', 'Even']] },
       { k: 'jitter', t: 'range', label: 'Scatter', min: 0, max: 1, step: .05, pct: 1 }, { k: 'dropout', t: 'range', label: 'Missing dots', min: 0, max: .9, step: .05, pct: 1 }, { k: 'twist', t: 'range', label: 'Twist per ring', min: -30, max: 30, step: 1, unit: '°' },
-      { k: 'mix', t: 'range', label: 'Accent dots', min: 0, max: .6, step: .02, pct: 1 }, { k: 'c2', t: 'color', label: 'Accent colour' }],
+      { k: 'mix', t: 'range', label: 'Accent dots', min: 0, max: .6, step: .02, pct: 1 }, { k: 'c2', t: 'color', label: 'Accent colour' },
+      { k: 'dshape', t: 'select', label: 'Dot shape', opts: [['circle', 'Circle'], ['square', 'Square'], ['diamond', 'Diamond'], ['ring', 'Ring']] }, { k: 'fade', t: 'range', label: 'Fade outward', min: 0, max: 1, step: 0.05, pct: 1 }, { k: 'squash', t: 'range', label: 'Squash (1 = round)', min: 0.3, max: 1, step: 0.02, pct: 1 }, { k: 'rot', t: 'range', label: 'Rotate', min: 0, max: 360, step: 5, unit: '°' }],
     draw(g, it, x, y, w, h, k) {
-      const p = it.p, r = mulberry32(it.seed), M = kitM(it), cx = x + w / 2, cy = y + h / 2, rx = w / 2 - p.max * k, ry = h / 2 - p.max * k, N = Math.max(1, p.rings | 0), sp = Math.max(2, p.spacing) * k;
+      const p = it.p, r = mulberry32(it.seed), M = kitM(it), cx = x + w / 2, cy = y + h / 2, rx = w / 2 - p.max * k, ry = (h / 2 - p.max * k) * p.squash, a00 = g.globalAlpha, N = Math.max(1, p.rings | 0), sp = Math.max(2, p.spacing) * k;
       const counts = [], rad = []; let total = 0;
       for (let i = 0; i < N; i++) { const t = N === 1 ? 1 : i / (N - 1), sc = p.inner + (1 - p.inner) * t; rad.push([t, sc]); const c = Math.max(6, Math.round(2 * Math.PI * Math.min(rx, ry) * sc / sp)); counts.push(c); total += c; }
       const f = total > KIT_MAX.dots ? KIT_MAX.dots / total : 1;
       for (let i = 0; i < N; i++) {
-        const [t, sc] = rad[i], c = Math.max(6, Math.round(counts[i] * f)), tw = p.twist * i * Math.PI / 180 + (p.mstyle === 'breathe' || p.mstyle === 'wave' ? 0 : M.a * M.t * .22 * (i % 2 ? 1 : -1) * (.3 + t)), grow = p.grade === 'out' ? t : p.grade === 'in' ? 1 - t : .5, dr = (p.min + (p.max - p.min) * grow) * k / 2 * (1 + M.a * .25 * Math.sin(M.t * 2 + i * .6));
+        g.globalAlpha = a00 * (1 - p.fade * rad[i][0]); const [t, sc] = rad[i], c = Math.max(6, Math.round(counts[i] * f)), tw = p.rot * Math.PI / 180 + p.twist * i * Math.PI / 180 + (p.mstyle === 'breathe' || p.mstyle === 'wave' ? 0 : M.a * M.t * .22 * (i % 2 ? 1 : -1) * (.3 + t)), grow = p.grade === 'out' ? t : p.grade === 'in' ? 1 - t : .5, dr = (p.min + (p.max - p.min) * grow) * k / 2 * (1 + M.a * .25 * Math.sin(M.t * 2 + i * .6));
         for (let j = 0; j < c; j++) {
           const q = r(), q2 = r(), q3 = r(); if (q < p.dropout) continue;
           const a = tw + (j + (q2 - .5) * p.jitter) / c * Math.PI * 2, rr = sc * (1 + (q3 - .5) * p.jitter * .1) * (p.mstyle === 'breathe' ? 1 + M.a * .06 * Math.sin(M.t * 1.5 - i * .5) : p.mstyle === 'wave' ? 1 + M.a * .05 * Math.sin(M.t * 2 + a * 4) : 1);
-          g.fillStyle = r() < p.mix ? p.c2 : it.fill; g.beginPath(); g.arc(cx + Math.cos(a) * rx * rr, cy + Math.sin(a) * ry * rr, Math.max(.3, dr), 0, Math.PI * 2); g.fill();
+          g.fillStyle = g.strokeStyle = r() < p.mix ? p.c2 : it.fill; const dx = cx + Math.cos(a) * rx * rr, dy = cy + Math.sin(a) * ry * rr, d1 = Math.max(.3, dr); g.beginPath();
+          if (p.dshape === 'square') g.rect(dx - d1, dy - d1, d1 * 2, d1 * 2); else if (p.dshape === 'diamond') { g.moveTo(dx, dy - d1 * 1.3); g.lineTo(dx + d1 * 1.3, dy); g.lineTo(dx, dy + d1 * 1.3); g.lineTo(dx - d1 * 1.3, dy); g.closePath(); } else g.arc(dx, dy, d1, 0, Math.PI * 2);
+          if (p.dshape === 'ring') { g.lineWidth = Math.max(.5, k * .8); g.stroke(); } else g.fill();
         }
       }
+      g.globalAlpha = a00;
     },
   },
   radialBars: {
-    label: 'Radial bars', defaults: { mode: 'segments', tracks: 6, trackW: 6, trackGap: 2, inner: .5, fill: .55, c2: '#35c9ff', mix: .15, bars: 48, gap: .35, minLen: .15, values: '' },
+    label: 'Radial bars', defaults: { mode: 'segments', tracks: 6, trackW: 6, trackGap: 2, inner: .5, fill: .55, c2: '#35c9ff', mix: .15, bars: 48, gap: .35, minLen: .15, values: '', start: -90, round: false, bgA: 0 },
     ui: [{ k: 'mode', t: 'select', label: 'Style', opts: [['segments', 'Ring segments'], ['bars', 'Bars']] }, { k: 'inner', t: 'range', label: 'Inner size', min: .05, max: .9, step: .02, pct: 1 },
       { k: 'tracks', t: 'range', label: 'Tracks', min: 1, max: KIT_MAX.tracks, step: 1, when: ['mode', 'segments'] }, { k: 'trackW', t: 'range', label: 'Track width', min: 1, max: 30, step: 1, unit: 'px', when: ['mode', 'segments'] }, { k: 'trackGap', t: 'range', label: 'Track gap', min: 0, max: 20, step: 1, unit: 'px', when: ['mode', 'segments'] }, { k: 'fill', t: 'range', label: 'Filled share', min: .1, max: .95, step: .05, pct: 1, when: ['mode', 'segments'] },
       { k: 'bars', t: 'range', label: 'Bars', min: 4, max: KIT_MAX.bars, step: 1, when: ['mode', 'bars'] }, { k: 'gap', t: 'range', label: 'Gap between bars', min: 0, max: .9, step: .05, pct: 1, when: ['mode', 'bars'] }, { k: 'minLen', t: 'range', label: 'Shortest bar', min: 0, max: .8, step: .05, pct: 1, when: ['mode', 'bars'] },
-      { k: 'values', t: 'area', label: 'Values 0-100 (blank = random)', when: ['mode', 'bars'] }, { k: 'mix', t: 'range', label: 'Accent share', min: 0, max: 1, step: .05, pct: 1 }, { k: 'c2', t: 'color', label: 'Accent colour' }],
+      { k: 'values', t: 'area', label: 'Values 0-100 (blank = random)', when: ['mode', 'bars'] }, { k: 'mix', t: 'range', label: 'Accent share', min: 0, max: 1, step: .05, pct: 1 }, { k: 'c2', t: 'color', label: 'Accent colour' },
+      { k: 'start', t: 'range', label: 'Start angle', min: -180, max: 180, step: 1, unit: '°' }, { k: 'round', t: 'check', label: 'Round segment ends', when: ['mode', 'segments'] }, { k: 'bgA', t: 'range', label: 'Track background', min: 0, max: 0.5, step: 0.02, pct: 1, when: ['mode', 'segments'] }],
     draw(g, it, x, y, w, h, k) {
-      const p = it.p, r = mulberry32(it.seed), M = kitM(it), cx = x + w / 2, cy = y + h / 2, R = Math.min(w, h) / 2 - k, TAU = Math.PI * 2;
+      const p = it.p, r = mulberry32(it.seed), M = kitM(it), cx = x + w / 2, cy = y + h / 2, R = Math.min(w, h) / 2 - k, TAU = Math.PI * 2, a0 = g.globalAlpha, st0 = p.start * Math.PI / 180;
       if (p.mode === 'bars') {
         const n = Math.min(KIT_MAX.bars, p.bars | 0), r0 = R * p.inner, nums = String(p.values).split(/[\s,;]+/).map(Number).filter(v => isFinite(v) && String(v) !== ''), step = TAU / n, half = step * (1 - p.gap) / 2;
         for (let i = 0; i < n; i++) {
-          const rv = r(), rc = r(), v = nums.length ? clamp(nums[i % nums.length] / 100, 0, 1) : Math.pow(rv, 1.4), len = p.minLen + (1 - p.minLen) * clamp(v + M.a * (p.mstyle === 'sweep' ? .4 * Math.sin(M.t * 2 - i / n * TAU * 2) : p.mstyle === 'grow' ? .6 * ((((M.t * .4 - i / n) % 1) + 1) % 1) - .3 : .35 * Math.sin(M.t * 2.2 + kitHash(i, 7) * TAU)), 0, 1), r1 = r0 + (R - r0) * len, a = -Math.PI / 2 + i * step;
+          const rv = r(), rc = r(), v = nums.length ? clamp(nums[i % nums.length] / 100, 0, 1) : Math.pow(rv, 1.4), len = p.minLen + (1 - p.minLen) * clamp(v + M.a * (p.mstyle === 'sweep' ? .4 * Math.sin(M.t * 2 - i / n * TAU * 2) : p.mstyle === 'grow' ? .6 * ((((M.t * .4 - i / n) % 1) + 1) % 1) - .3 : .35 * Math.sin(M.t * 2.2 + kitHash(i, 7) * TAU)), 0, 1), r1 = r0 + (R - r0) * len, a = st0 + i * step;
           g.fillStyle = rc < p.mix ? p.c2 : it.fill; g.beginPath(); g.arc(cx, cy, r1, a - half, a + half); g.arc(cx, cy, r0, a + half, a - half, true); g.closePath(); g.fill();
         }
         return;
       }
-      const T = Math.min(KIT_MAX.tracks, p.tracks | 0), tw = p.trackW * k, gp = p.trackGap * k; g.lineWidth = tw; g.lineCap = 'butt';
+      const T = Math.min(KIT_MAX.tracks, p.tracks | 0), tw = p.trackW * k, gp = p.trackGap * k; g.lineWidth = tw; g.lineCap = p.round ? 'round' : 'butt';
       for (let i = 0; i < T; i++) {
         const rr = R - tw / 2 - i * (tw + gp); if (rr < R * p.inner) break;
+        if (p.bgA > 0) { g.globalAlpha = a0 * p.bgA; g.strokeStyle = it.fill; g.beginPath(); g.arc(cx, cy, rr, 0, TAU); g.stroke(); g.globalAlpha = a0; }
         let pos = r() * .6; const rot = M.a * M.t * (.25 + i * .06) * (i % 2 ? 1 : -1);
         while (pos < TAU) {
           const seg = .5 * (.3 + 1.4 * r()), gap = seg * (1 - p.fill) / p.fill * (.4 + 1.2 * r()), end = Math.min(TAU, pos + seg);
-          g.strokeStyle = r() < p.mix ? p.c2 : it.fill; g.beginPath(); g.arc(cx, cy, rr, -Math.PI / 2 + pos + rot, -Math.PI / 2 + end + rot); g.stroke(); pos = end + gap;
+          g.strokeStyle = r() < p.mix ? p.c2 : it.fill; g.beginPath(); g.arc(cx, cy, rr, st0 + pos + rot, st0 + end + rot); g.stroke(); pos = end + gap;
         }
       }
     },
