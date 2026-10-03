@@ -931,6 +931,10 @@ body.studio-on #studio{display:block}
 .studio-panel .studio-two label{display:grid;gap:6px;font:11px var(--f-sans);color:#aab3c4}
 .studio-preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .st-moods{margin-bottom:10px}
+/* Light graphics: live blur behind many large menus over a moving 3D scene is the heaviest thing on a tablet GPU */
+html.st-lite{--gl1:rgba(var(--glrgb1),calc(.8 * var(--glk)));--gl2:rgba(var(--glrgb2),calc(.74 * var(--glk)))}
+html.st-lite #studio :not(.st-glassbox),html.st-lite #tune,html.st-lite #wtune,html.st-lite .tune{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html.st-lite #studio .st-glassbox{backdrop-filter:blur(6px)!important;-webkit-backdrop-filter:blur(6px)!important}
 #studio .st-zoompill{position:absolute;z-index:6;left:calc(max(12px,env(safe-area-inset-left)) + 52px);top:max(12px,env(safe-area-inset-top));display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;pointer-events:auto}
 #studio .st-zoompill[hidden]{display:none}
 #studio .st-zoompill .st-btn{min-width:40px;min-height:40px;padding:0;font-size:20px;line-height:1;border-radius:999px}
@@ -8881,7 +8885,8 @@ class CoreStudio {
             <button type="button" class="st-chip st-wide st-keys-btn" data-studio-keys>Keyboard shortcuts (?)</button></div>
           <div class="st-setbox"><p class="st-sub-t">Glass</p>
             <label class="st-fxamt"><span>Transparency</span><b data-ui-o="glk"></b><input type="range" min="0.2" max="1.8" step="0.05" data-ui="glk"></label>
-            <label class="st-fxamt"><span>Blur</span><b data-ui-o="glb"></b><input type="range" min="0" max="48" step="1" data-ui="glb"></label></div>
+            <label class="st-fxamt"><span>Blur</span><b data-ui-o="glb"></b><input type="range" min="0" max="48" step="1" data-ui="glb"></label>
+            <div class="st-setrow"><span>Light graphics (smoother on tablets)</span><input type="checkbox" data-lite aria-label="Light graphics"></div></div>
           <div class="st-setbox"><p class="st-sub-t">UI theme</p><div class="st-chips"><button type="button" class="st-chip" data-uitheme="violet">Violet</button><button type="button" class="st-chip" data-uitheme="ocean">Ocean</button><button type="button" class="st-chip" data-uitheme="sunset">Sunset</button><button type="button" class="st-chip" data-uitheme="mint">Mint</button><button type="button" class="st-chip" data-uitheme="mono">Mono</button></div></div>
         </div></div>
         <div class="st-group st-more" data-grp="more"><button type="button" class="st-btn" data-grp-btn aria-expanded="false" aria-label="More menu"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span class="st-label">More</span><i class="st-caret" aria-hidden="true"></i></button><div class="st-sub st-sub-wide" hidden></div></div></div>
@@ -8947,6 +8952,10 @@ class CoreStudio {
         box.querySelectorAll('[data-uitheme]').forEach(c => c.classList.toggle('is-on', c.dataset.uitheme === set.theme));
       };
       const saveUI = () => { try { localStorage.setItem('cerebra-ui-prefs', JSON.stringify(set)); } catch (e) {} };
+      // Light graphics: no live background blur behind menus, softer glass on Kits, a lower planet resolution. On by default on touch devices.
+      { let v = null; try { v = localStorage.getItem('cerebra-lite'); } catch (e) {} this.lite = v === null ? matchMedia('(pointer: coarse)').matches : v === '1';
+        const chk = box.querySelector('[data-lite]'), apply = () => { document.documentElement.classList.toggle('st-lite', this.lite); chk.checked = this.lite; this._ks = null; if (this.active) { this.applyLiteDpr(); this.items.forEach(i => { if (i.kind === 'kit' && i.el) this.drawKit(i, i.el.offsetWidth, i.el.offsetHeight); }); } };
+        chk.addEventListener('change', () => { this.lite = chk.checked; try { localStorage.setItem('cerebra-lite', this.lite ? '1' : '0'); } catch (e) {} apply(); }); this.applyLite = apply; apply(); }
       box.querySelectorAll('[data-ui]').forEach(el => el.addEventListener('input', () => { set[el.dataset.ui] = +el.value; applyUI(); saveUI(); }));
       box.querySelectorAll('[data-uitheme]').forEach(c => c.addEventListener('click', () => { set.theme = c.dataset.uitheme; applyUI(); saveUI(); }));
       box.querySelector('[data-tray-reset]').addEventListener('click', () => this.resetTrays());
@@ -10621,11 +10630,17 @@ class CoreStudio {
     const b = def.geom(it.p, w, h), f = `blur(${it.p.blur}px)`;
     Object.assign(gb.style, { left: `${b.x}px`, top: `${b.y}px`, width: `${b.w}px`, height: `${b.h}px`, borderRadius: `${b.r}px`, backdropFilter: f, webkitBackdropFilter: f });
   }
+  applyLiteDpr() { const st = this.app.stage; if (this._dpr0 === undefined) this._dpr0 = st.maxDPR; st.maxDPR = this.lite ? Math.min(this._dpr0, 1.25) : this._dpr0; this.app.resize(); }
+  // Slider drags fire many input events per frame (120 Hz on an iPad Pro): redraw the Kit once per frame, without re-laying-out the whole selection UI.
+  kitRedraw(it) {
+    (this._kr || (this._kr = new Set())).add(it);
+    if (this._krRaf) return; this._krRaf = requestAnimationFrame(() => { this._krRaf = 0; const U = this.U(); this._kr.forEach(i => { if (this.items.includes(i)) { this.drawKit(i, i.w * U, i.h * U); this.syncGlass(i, i.w * U, i.h * U); } }); this._kr.clear(); });
+  }
   // Pixel budget: every Kit is a canvas. With many (or very large) ones the sharpness is lowered a little so the page cannot run out of memory (tablets reload the tab when it does).
   kitScale() {
     const now = performance.now(), k = this._ks; if (k && now - k.t < 400) return k.d;
-    let area = 0; for (const it of this.items) if (it.kind === 'kit' && it.el) area += it.el.offsetWidth * it.el.offsetHeight;
-    const d = clamp(Math.sqrt(24e6 / Math.max(1, area)), .6, Math.min(2, window.devicePixelRatio || 1));
+    const U = this.U(); let area = 0; for (const it of this.items) if (it.kind === 'kit') area += it.w * U * it.h * U;   // from the model, not the DOM: no forced layout
+    const d = clamp(Math.sqrt((this.lite ? 12e6 : 24e6) / Math.max(1, area)), .6, Math.min(this.lite ? 1.5 : 2, window.devicePixelRatio || 1));
     this._ks = { t: now, d };
     if (k && Math.abs(k.d - d) > .05 && !this._ksQ) { this._ksQ = true; requestAnimationFrame(() => { this._ksQ = false; this.items.forEach(i => { if (i.kind === 'kit' && i.el) this.drawKit(i, i.el.offsetWidth, i.el.offsetHeight); }); }); }
     return d;
@@ -10654,12 +10669,16 @@ class CoreStudio {
       requestAnimationFrame(tick);
       acc += Math.min(.1, (now - last) / 1000); last = now;
       if (!this.active || document.hidden || this.app.reduced || acc < Math.max(1 / 30, cost * 2.2)) return;
-      const step = acc; acc = 0; const t0 = performance.now();
-      for (const it of this.items) {
-        if (it.kind !== 'kit' || !it.mOn || !it.el || this.isHid(it)) continue;
-        let c = KIT_T.get(it); if (!c) KIT_T.set(it, c = { t: 0 }); c.t += step * (it.mSpd ?? 1);
-        this.drawKit(it, it.el.offsetWidth, it.el.offsetHeight);
+      acc = 0; const t0 = performance.now(), W = innerWidth, H = innerHeight, U = this.U(), tn = t0 / 1000;
+      // Only the Kits that are moving and on screen, and at most a few per frame (round-robin) so many of them cannot starve the page.
+      const live = this.items.filter(it => it.kind === 'kit' && it.mOn && it.el && !this.isHid(it) && it.x * W + it.w * U / 2 > 0 && it.x * W - it.w * U / 2 < W && it.y * H + it.h * U / 2 > 0 && it.y * H - it.h * U / 2 < H);
+      const cap = this.lite ? 4 : 10, n = Math.min(cap, live.length), s0 = (this._kr0 = (this._kr0 || 0) % Math.max(1, live.length));
+      for (let k = 0; k < n; k++) {
+        const it = live[(s0 + k) % live.length];
+        let c = KIT_T.get(it); if (!c) KIT_T.set(it, c = { t: 0 }); c.t += (c.at == null ? 1 / 30 : Math.min(.5, tn - c.at)) * (it.mSpd ?? 1); c.at = tn;
+        this.drawKit(it, it.w * U, it.h * U);
       }
+      this._kr0 = s0 + n;
       cost = (performance.now() - t0) / 1000;
     };
     requestAnimationFrame(tick);
@@ -10701,20 +10720,20 @@ class CoreStudio {
       return `<label class="st-fly-row"><span>${u.label}</span><input type="color" value="${v}" data-kp="${u.k}"></label>`;
     }).join('') + (def.noShuffle ? '' : '<button type="button" class="st-btn st-kit-shuffle" data-kit-shuffle>Shuffle pattern</button>');
     const op = f.querySelector('[data-kop]'), sOn = f.querySelector('[data-kspin-on]'), sp = f.querySelector('[data-kspin]');
-    op.addEventListener('input', () => { it.opacity = +op.value; op.parentNode.querySelector('output').textContent = `${Math.round(it.opacity * 100)}%`; const co = this.ctx.querySelector('[data-ctx-opacity]'); co.value = it.opacity; co.nextElementSibling.textContent = `${Math.round(it.opacity * 100)}%`; this.place(it); });
+    op.addEventListener('input', () => { it.opacity = +op.value; op.parentNode.querySelector('output').textContent = `${Math.round(it.opacity * 100)}%`; const co = this.ctx.querySelector('[data-ctx-opacity]'); co.value = it.opacity; co.nextElementSibling.textContent = `${Math.round(it.opacity * 100)}%`; this.kitRedraw(it); });
     sp.addEventListener('input', () => { const v = +sp.value; sp.parentNode.querySelector('output').textContent = v ? `${v}°/s` : 'still'; if (v && !it.spinOn) { sOn.checked = true; this.setKitSpin(it, { spin: v, spinOn: true }); } else this.setKitSpin(it, { spin: v }); });
     sOn.addEventListener('change', () => { if (sOn.checked && !it.spin) { it.spin = 20; sp.value = 20; sp.parentNode.querySelector('output').textContent = '20°/s'; rangeFill(sp); } this.setKitSpin(it, { spinOn: sOn.checked }); });
     [op, sp, sOn].forEach(el => el.addEventListener('change', () => this.commit()));
     const mOn = f.querySelector('[data-kmo-on]'), mAmt = f.querySelector('[data-kmo-amt]'), mSpd = f.querySelector('[data-kmo-spd]');
     if (mOn) {
       mOn.addEventListener('change', () => { it.mOn = mOn.checked; this.place(it); });
-      mAmt.addEventListener('input', () => { it.mAmt = +mAmt.value; mAmt.parentNode.querySelector('output').textContent = `${Math.round(it.mAmt * 100)}%`; if (!it.mOn) { it.mOn = true; mOn.checked = true; } this.place(it); });
+      mAmt.addEventListener('input', () => { it.mAmt = +mAmt.value; mAmt.parentNode.querySelector('output').textContent = `${Math.round(it.mAmt * 100)}%`; if (!it.mOn) { it.mOn = true; mOn.checked = true; } this.kitRedraw(it); });
       mSpd.addEventListener('input', () => { it.mSpd = +mSpd.value; mSpd.parentNode.querySelector('output').textContent = `${it.mSpd.toFixed(1)}×`; });
       const mFx = f.querySelector('[data-kmo-fx]'); mFx.addEventListener('change', () => { it.mFx = mFx.value; if (it.mFx !== 'none' && !it.mOn) { it.mOn = true; mOn.checked = true; } this.place(it); });
       [mOn, mAmt, mSpd, mFx].forEach(el => el.addEventListener('change', () => this.commit()));
       f.querySelectorAll('[data-kmx]').forEach(el => {
         const u = KIT_MOTION_UI.find(x => x.k === el.dataset.kmx), drives = KIT_MOTION_UI.some(x => x.when && x.when[0] === u.k);
-        const set = () => { it[u.k] = u.k === 'mDir' || el.type === 'range' ? +el.value : el.value; if (!it.mOn) { it.mOn = true; mOn.checked = true; } const o = el.parentNode.querySelector('output'); if (o) o.textContent = fmt(u, it[u.k]); this.place(it); };
+        const set = () => { it[u.k] = u.k === 'mDir' || el.type === 'range' ? +el.value : el.value; if (!it.mOn) { it.mOn = true; mOn.checked = true; } const o = el.parentNode.querySelector('output'); if (o) o.textContent = fmt(u, it[u.k]); this.kitRedraw(it); };
         el.addEventListener('input', set); el.addEventListener('change', () => { set(); this.commit(); if (drives) this.syncKit(); });
         if (el.type === 'range') rangeFill(el);
       });
@@ -10722,8 +10741,8 @@ class CoreStudio {
     f.querySelectorAll('[data-kp]').forEach(el => {
       const u = def.ui.find(x => x.k === el.dataset.kp), drives = def.ui.some(x => x.when && x.when[0] === u.k);
       if (drives) el.addEventListener('change', () => this.syncKit());
-      el.addEventListener('input', () => { it.p[u.k] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value; const o = el.parentNode.querySelector('output'); if (o) o.textContent = fmt(u, it.p[u.k]); this.place(it); });
-      el.addEventListener('change', () => this.commit());
+      el.addEventListener('input', () => { it.p[u.k] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value; const o = el.parentNode.querySelector('output'); if (o) o.textContent = fmt(u, it.p[u.k]); this.kitRedraw(it); });
+      el.addEventListener('change', () => { this.place(it); this.commit(); });
       if (el.type === 'text' || el.tagName === 'TEXTAREA') el.addEventListener('keydown', e => e.stopPropagation());
       if (el.type === 'range') rangeFill(el);
     });
@@ -11113,7 +11132,7 @@ class CoreStudio {
       this.laySize = { w: clamp(Math.round(w), 260, Math.min(720, innerWidth - 120)), h: clamp(Math.round(hh), 140, innerHeight - 100) }; this.layoutTrays(); });
     const end = e => { if (!d || d.id !== e.pointerId) return; d = null; try { localStorage.setItem('cerebra-layers-size', JSON.stringify(this.laySize)); } catch (x) {} };
     this.updLayHandle = () => { const r = tray.getBoundingClientRect(), L = edge() === 'left'; h.classList.toggle('is-r', L); h.hidden = tray.hidden || tray.classList.contains('is-folded') || r.width < 50; h.style.left = (L ? r.right - 32 : r.left + 2) + 'px'; h.style.top = (r.bottom - 32) + 'px'; };
-    addEventListener('resize', () => this.updLayHandle()); setInterval(() => { if (this.active) this.updLayHandle(); }, 400);
+    addEventListener('resize', () => this.updLayHandle()); setInterval(() => { if (this.active && !document.hidden) this.updLayHandle(); }, 900);
     h.addEventListener('pointerup', end); h.addEventListener('pointercancel', end);
     h.addEventListener('dblclick', () => { this.laySize = null; try { localStorage.removeItem('cerebra-layers-size'); } catch (x) {} this.layoutTrays(); });
   }
@@ -11343,10 +11362,12 @@ class CoreStudio {
     document.documentElement.classList.add('studio-lock'); document.body.classList.add('studio-on');
     this.paintBackground(); this.updateFocus(); this.el.querySelector('[data-studio-exit]').focus();
     if (this.guardOn) { this.guardOn(); this.offerDraft(); }
+    this.applyLiteDpr();
   }
   close() {
     if (!this.active) { this.pending = false; return; }
     if (this.draftNow) this.draftNow();
+    if (this._dpr0 !== undefined) { this.app.stage.maxDPR = this._dpr0; this.app.resize(); }
     const a = this.app; this.active = false; this.drag = null; if (this.guardOff) this.guardOff();
     WorldTune.open(false); if (this.drawing) this.setDrawing(false); this.select(null); this.fx.style.display='none'; this.bg.style.filter='';this.vfx.getContext('2d').clearRect(0,0,this.vfx.width,this.vfx.height);
     document.querySelector('[data-tune-close]').click();
