@@ -952,6 +952,8 @@ html.st-lite #studio .st-glassbox{backdrop-filter:blur(6px)!important;-webkit-ba
 #studio .st-zoompill{position:absolute;z-index:6;left:calc(max(12px,env(safe-area-inset-left)) + 52px);top:max(12px,env(safe-area-inset-top));display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;pointer-events:auto}
 #studio .st-zoompill[hidden]{display:none}
 #studio .st-zoompill .st-btn{min-width:40px;min-height:40px;padding:0;font-size:20px;line-height:1;border-radius:999px}
+#studio .st-zoomgrip{display:grid;place-items:center;width:22px;min-height:40px;color:#ffffff66;font:700 12px var(--f-mono);letter-spacing:-2px;cursor:grab;touch-action:none;user-select:none}
+#studio .st-zoompill.is-dragging{opacity:.85;box-shadow:0 14px 40px #000a}
 #studio .st-zoompct{min-width:52px;min-height:40px;border:0;background:none;color:#ff9199;font:600 12px var(--f-mono);cursor:pointer}
 
 #studio.st-ui-off .st-zoompill{display:none}
@@ -9681,8 +9683,19 @@ class CoreStudio {
   initZoom() {
     const box = this.el.querySelector('[data-st-zoom]'); if (!box) return;
     const pill = this.zoomPill = document.createElement('div'); pill.className = 'st-zoompill st-glass'; pill.setAttribute('role', 'group'); pill.setAttribute('aria-label', 'Cerebra size');
-    pill.innerHTML = '<button type="button" class="st-btn" data-zoom="-" aria-label="Make Cerebra smaller">−</button><button type="button" class="st-zoompct" data-zoom="0" data-zoom-v aria-label="Reset Cerebra size" title="Reset size">100%</button><button type="button" class="st-btn" data-zoom="+" aria-label="Make Cerebra bigger">+</button>';
-    this.el.append(pill); pill.addEventListener('click', e => { const b = e.target.closest('[data-zoom]'); if (!b) return; const P = PlanetBody.active; if (!P) return; const z = b.dataset.zoom; if (z === '0') P.setView(1); else P.setView(P.zoomT * (z === '+' ? 1.1 : 1 / 1.1)); this.syncZoom(); });
+    pill.innerHTML = '<span class="st-zoomgrip" data-zoom-grip aria-label="Drag to move" role="presentation">⋮⋮</span><button type="button" class="st-btn" data-zoom="-" aria-label="Make Cerebra smaller">−</button><button type="button" class="st-zoompct" data-zoom="0" data-zoom-v aria-label="Reset Cerebra size" title="Reset size">100%</button><button type="button" class="st-btn" data-zoom="+" aria-label="Make Cerebra bigger">+</button>';
+    this.el.append(pill);
+    // The pill can be dragged by its grip anywhere (remembered); Reset menu positions puts it back at the top.
+    const KEY = 'cerebra-zoompill', place = pos => { if (pos) { pill.style.left = clamp(pos.x * innerWidth, 4, Math.max(4, innerWidth - pill.offsetWidth - 4)) + 'px'; pill.style.top = clamp(pos.y * innerHeight, 4, Math.max(4, innerHeight - pill.offsetHeight - 4)) + 'px'; } else { pill.style.left = ''; pill.style.top = ''; } };
+    try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v) requestAnimationFrame(() => place(v)); } catch (e) {}
+    this.resetZoomPill = () => { try { localStorage.removeItem(KEY); } catch (e) {} place(null); };
+    addEventListener('resize', () => { try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v) place(v); } catch (e) {} });
+    let zd = null; const gr = pill.querySelector('[data-zoom-grip]');
+    gr.addEventListener('pointerdown', e => { e.preventDefault(); gr.setPointerCapture(e.pointerId); const r = pill.getBoundingClientRect(); zd = { id: e.pointerId, dx: e.clientX - r.left, dy: e.clientY - r.top }; pill.classList.add('is-dragging'); });
+    gr.addEventListener('pointermove', e => { if (!zd || zd.id !== e.pointerId) return; zd.pos = { x: (e.clientX - zd.dx) / innerWidth, y: (e.clientY - zd.dy) / innerHeight }; place(zd.pos); });
+    const zend = e => { if (!zd || zd.id !== e.pointerId) return; pill.classList.remove('is-dragging'); if (zd.pos) { try { localStorage.setItem(KEY, JSON.stringify(zd.pos)); } catch (x) {} } zd = null; };
+    gr.addEventListener('pointerup', zend); gr.addEventListener('pointercancel', zend);
+    pill.addEventListener('click', e => { const b = e.target.closest('[data-zoom]'); if (!b) return; const P = PlanetBody.active; if (!P) return; const z = b.dataset.zoom; if (z === '0') P.setView(1); else P.setView(P.zoomT * (z === '+' ? 1.1 : 1 / 1.1)); this.syncZoom(); });
     box.addEventListener('click', e => { const b = e.target.closest('[data-zoom]'); if (!b) return; const P = PlanetBody.active; if (!P) return; const z = b.dataset.zoom; if (z === '0') P.setView(1); else P.setView(P.zoomT * (z === '+' ? 1.1 : 1 / 1.1)); this.syncZoom(); });
     box.querySelector('[data-zoom-r]').addEventListener('input', e => { const P = PlanetBody.active; if (P) P.setView(+e.target.value / 100); this.syncZoom(); });
     setInterval(() => { if (this.active) this.syncZoom(); }, 400);   // pinch / wheel / Reset view also move it
@@ -9830,6 +9843,7 @@ class CoreStudio {
     });
   }
   resetTrays() {
+    if (this.resetZoomPill) this.resetZoomPill();
     try { localStorage.removeItem('cerebra-studio-trays2-' + (this.trayWide ? 'w' : 'n')); } catch (e) {}
     const wide = innerWidth > 900; this.trayCfg = wide ? { left: ['add', 'decor'], right: ['layers', 'panel'], bottom: ['dock'], top: [], free: {} } : { left: ['add'], right: ['decor'], bottom: ['dock', 'layers', 'panel'], top: [], free: {} };
     Object.values(this.trays).forEach(el => { el.style.transform = ''; el.classList.remove('is-dragging'); }); this.layoutTrays();
