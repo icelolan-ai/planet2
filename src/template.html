@@ -8217,6 +8217,7 @@ const L2 = {
       for (const s of segs) { if (s.c !== c) continue; path(s); n++; }
       if (!n) continue;
       if (glow > 0 && !KIT_LOW) { o.save(); o.globalAlpha *= .35; o.shadowBlur = glow * 16 * k; o.lineWidth = lw * k * 2.6; o.stroke(); o.restore(); }
+      else if (glow > 0) { o.save(); o.shadowBlur = 0; o.globalAlpha *= .16 * Math.min(1, glow * 1.4); o.lineWidth = lw * k * 3.4; o.stroke(); o.restore(); }
       o.shadowBlur = 0; o.lineWidth = lwp; o.stroke();
     }
     o.restore(); o.shadowBlur = 0;
@@ -10950,9 +10951,9 @@ class CoreStudio {
   }
   drawKit(it, w, h) {
     const c = it.el.querySelector('canvas.st-kitc'); if (!c) return;
-    const d0 = this.kitScale(), d = it.mOn ? Math.min(d0, this.lite ? 1 : 1.5) : d0, W = Math.max(1, Math.round(w * d)), H = Math.max(1, Math.round(h * d));
+    const d0 = this.kitScale(), d = it.mOn ? Math.max(.6, Math.min(d0, this.lite ? 1 : 1.5, Math.sqrt((this.lite ? .5e6 : .9e6) / Math.max(1, w * h)))) : d0, W = Math.max(1, Math.round(w * d)), H = Math.max(1, Math.round(h * d));
     if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
-    const g = c.getContext('2d'); g.clearRect(0, 0, W, H); g.globalAlpha = 1; KIT_LOW = !!(it.mOn && this.lite); try { KIT[it.kit].draw(g, it, 0, 0, W, H, d); } finally { KIT_LOW = false; } c.style.opacity = it.opacity ?? 1;
+    const g = c.getContext('2d'); g.clearRect(0, 0, W, H); g.globalAlpha = 1; KIT_LOW = !!it.mOn; try { KIT[it.kit].draw(g, it, 0, 0, W, H, d); } finally { KIT_LOW = false; } c.style.opacity = it.opacity ?? 1;
     if (it.p && it.p.font && this._fontOk && this._fontOk.has(it.p.font)) return;
     kitFontWait(it).then(ok => { if (ok && this.items.includes(it)) this.drawKit(it, w, h); else if (!ok && it.p.font) (this._fontOk || (this._fontOk = new Set())).add(it.p.font); });
   }
@@ -10972,10 +10973,11 @@ class CoreStudio {
     const tick = now => {
       requestAnimationFrame(tick);
       acc += Math.min(.1, (now - last) / 1000); last = now;
-      if (!this.active || document.hidden || this.app.reduced || acc < Math.max(1 / 30, cost * 2.2)) return;
+      if (!this.active || document.hidden || this.app.reduced || acc < Math.max(this._liveN > 2 || this.lite ? 1 / 20 : 1 / 30, cost * 2.2)) return;
       acc = 0; const t0 = performance.now(), W = innerWidth, H = innerHeight, U = this.U(), tn = t0 / 1000;
       // Only the Kits that are moving and on screen, and at most a few per frame (round-robin) so many of them cannot starve the page.
       const live = this.items.filter(it => it.kind === 'kit' && it.mOn && it.el && !this.isHid(it) && it.x * W + it.w * U / 2 > 0 && it.x * W - it.w * U / 2 < W && it.y * H + it.h * U / 2 > 0 && it.y * H - it.h * U / 2 < H);
+      this._liveN = live.length;
       const cap = this.lite ? 4 : 10, n = Math.min(cap, live.length), s0 = (this._kr0 = (this._kr0 || 0) % Math.max(1, live.length));
       for (let k = 0; k < n; k++) {
         const it = live[(s0 + k) % live.length];
