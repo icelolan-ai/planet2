@@ -8702,7 +8702,12 @@ class CoreStudio {
         <div class="st-rad" data-srad hidden><b class="st-fly-sub">Corner radius</b>
           <label class="st-fly-row st-fly-check"><span>All corners together</span><input type="checkbox" data-rad-link></label>
           <label class="st-fly-row"><span>Top left</span><output data-rado="0"></output><input type="range" min="0" max="1" step="0.01" data-rad="0"></label><label class="st-fly-row"><span>Top right</span><output data-rado="1"></output><input type="range" min="0" max="1" step="0.01" data-rad="1"></label><label class="st-fly-row"><span>Bottom right</span><output data-rado="2"></output><input type="range" min="0" max="1" step="0.01" data-rad="2"></label><label class="st-fly-row"><span>Bottom left</span><output data-rado="3"></output><input type="range" min="0" max="1" step="0.01" data-rad="3"></label></div>
-        <label class="st-fly-row st-fly-check" data-sfor="decor"><span>Fill colour</span><input type="checkbox" data-sset="fillOn"></label>
+        <label class="st-fly-row" data-sfor="decor"><span>Fill</span><select data-sset="fillMode"><option value="none">Off</option><option value="solid">Solid</option><option value="soft">Soft</option></select></label>
+        <label class="st-fly-row" data-sfor="decor" data-sfill="soft"><span>Soft style</span><select data-sset="softKind"><option value="tint">Tint (even, see-through)</option><option value="fade">Fade (gradient)</option></select></label>
+        <label class="st-fly-row" data-sfor="decor" data-sfill="fade"><span>Fade direction</span><select data-sset="fadeDir"><option value="in">Strong at the edge</option><option value="out">Strong in the centre</option></select></label>
+        <label class="st-fly-row" data-sfor="decor" data-sfill="soft"><span>Softness</span><output data-so="softAmt"></output><input type="range" min="0" max="1" step="0.05" data-sset="softAmt"></label>
+        <label class="st-fly-row" data-sfor="decor" data-sfill="on"><span>Fill colour</span><input type="color" data-sset="fillColor"></label>
+        <button type="button" class="st-chip st-wide" data-sfor="decor" data-sfill="own" data-fill-match>Fill colour follows the shape colour</button>
         <label class="st-fly-row st-fly-check"><span>Outline</span><input type="checkbox" data-sset="lineOn"></label>
         <label class="st-fly-row" data-sfor="focus"><span>Line colour</span><input type="color" data-sset="lineColor"></label>
         <label class="st-fly-row"><span>Line width</span><output data-so="lineW"></output><input type="range" min="0.5" max="12" step="0.5" data-sset="lineW"></label>
@@ -8905,13 +8910,17 @@ class CoreStudio {
     this.syncStyle = () => { const it = this.sel; if (!it || !it.st) return; const f = this.el.querySelector('[data-fly="style"]');
       f.querySelectorAll('[data-sfor]').forEach(n => { n.hidden = n.dataset.sfor !== (it.decor ? 'decor' : 'focus'); });
       f.querySelectorAll('[data-sset]').forEach(el => { const v = it.st[el.dataset.sset]; if (el.type === 'checkbox') el.checked = v; else el.value = v; });
+      const fm = it.st.fillMode || 'none'; f.querySelector('[data-sset="fillColor"]').value = it.st.fillColor || it.fill;
+      f.querySelectorAll('[data-sfill]').forEach(n => { const k = n.dataset.sfill; n.hidden = !(it.decor && (k === 'on' ? fm !== 'none' : k === 'soft' ? fm === 'soft' : k === 'fade' ? fm === 'soft' && it.st.softKind === 'fade' : fm !== 'none' && !!it.st.fillColor)); });
+      f.querySelector('[data-so="softAmt"]').textContent = `${Math.round((it.st.softAmt ?? .5) * 100)}%`;
       f.querySelector('[data-so="lineW"]').textContent = `${it.st.lineW}px`;
       const sr = f.querySelector('[data-srad]'); sr.hidden = it.kind !== 'rect'; if (it.kind === 'rect') { it.rad = it.rad || [0, 0, 0, 0]; sr.querySelectorAll('[data-rad]').forEach(el => { const i = +el.dataset.rad; el.value = it.rad[i]; sr.querySelector(`[data-rado="${i}"]`).textContent = Math.round(it.rad[i] * 100) + '%'; el.style.setProperty('--p', (it.rad[i] * 100) + '%'); }); sr.querySelector('[data-rad-link]').checked = this.radLink !== false; } };
     this.radLink = true;
     this.el.querySelectorAll('[data-rad]').forEach(el => { el.addEventListener('input', () => { const it = this.sel; if (!it || it.kind !== 'rect') return; it.rad = it.rad || [0, 0, 0, 0]; const v = +el.value; if (this.radLink !== false) it.rad = [v, v, v, v]; else it.rad[+el.dataset.rad] = v; this.syncStyle(); this.place(it); this.updateFocus(); }); el.addEventListener('change', () => this.commit()); });
     this.el.querySelector('[data-rad-link]').addEventListener('change', e => { this.radLink = e.target.checked; });
+    this.el.querySelector('[data-fill-match]').addEventListener('click', () => { const it = this.sel; if (!it || !it.st) return; it.st.fillColor = ''; this.syncStyle(); this.place(it); this.commit(); });
     this.el.querySelectorAll('[data-sset]').forEach(el => {
-      el.addEventListener('input', () => { const it = this.sel; if (!it || !it.st) return; const k = el.dataset.sset; it.st[k] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value; if (it.kind === 'stroke' && it.strokes) it.strokes.forEach(sk => { if (k === 'lineColor') sk.color = it.st.lineColor; if (k === 'lineW') sk.size = it.st.lineW; if (k === 'dash') sk.dash = it.st.dash; }); this.syncStyle(); this.place(it); });
+      el.addEventListener('input', () => { const it = this.sel; if (!it || !it.st) return; const k = el.dataset.sset; it.st[k] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value; if (k === 'fillMode') it.st.fillOn = it.st.fillMode !== 'none'; if (it.kind === 'stroke' && it.strokes) it.strokes.forEach(sk => { if (k === 'lineColor') sk.color = it.st.lineColor; if (k === 'lineW') sk.size = it.st.lineW; if (k === 'dash') sk.dash = it.st.dash; }); this.syncStyle(); this.place(it); });
       el.addEventListener('change', () => this.commit());
     });
     this.el.querySelectorAll('[data-fset-sel]').forEach(el => el.addEventListener('change', () => { this[el.dataset.fsetSel] = +el.value; this.updateFocus(); this.commit(); }));
@@ -9503,7 +9512,9 @@ class CoreStudio {
       it.w = o.w ?? .32; it.h = o.h ?? .32; if (kind === 'stroke') { it.w0 = o.w0 ?? it.w; it.h0 = o.h0 ?? it.h; }
       if (it.decor) { it.fill = o.fill ?? '#ff3d8a'; it.opacity = o.opacity ?? .85; }
       if (kind === 'kit') { it.decor = true; it.kit = KIT[o.kit] ? o.kit : 'rings'; it.p = { ...KIT[it.kit].defaults, ...(o.p || {}) }; it.seed = o.seed ?? (Math.random() * 1e9 | 0); it.fill = o.fill ?? '#e8ecf5'; it.opacity = o.opacity ?? 1; if (KIT[it.kit].blend) it.blend = o.blend ?? KIT[it.kit].blend; it.w = o.w ?? (KIT[it.kit].cover ? (innerWidth + 4) / this.U() : KIT[it.kit].size?.[0] ?? .38); it.h = o.h ?? (KIT[it.kit].cover ? (innerHeight + 4) / this.U() : KIT[it.kit].size?.[1] ?? .38); if (KIT[it.kit].cover) { it.x = o.x ?? .5; it.y = o.y ?? .5; } }
-      it.st = { fillOn: false, lineOn: !!it.decor, lineColor: it.decor ? (it.fill || '#ffffff') : '#ffffff', lineW: 3, dash: 'solid', pattern: 'none', ...(o.st || {}) };
+      it.st = { fillOn: false, fillMode: null, softKind: 'tint', softAmt: .5, fadeDir: 'in', fillColor: '', lineOn: !!it.decor, lineColor: it.decor ? (it.fill || '#ffffff') : '#ffffff', lineW: 3, dash: 'solid', pattern: 'none', ...(o.st || {}) };
+      if (!it.st.fillMode) it.st.fillMode = it.st.fillOn ? 'solid' : 'none';   // older saves only had fillOn
+      it.st.fillOn = it.st.fillMode !== 'none';
     }
     const el = document.createElement('div'); it.el = el;
     if (kind === 'text') { el.className = 'st-item st-text'; el.tabIndex = 0; el.textContent = it.content; el.setAttribute('aria-label', 'Poster text, tap to edit'); }
@@ -9704,11 +9715,18 @@ class CoreStudio {
     const s = it.st, d = this.shapeD(it.kind, w, h, it), id = 'p' + it.id, col = it.decor ? it.fill : s.lineColor;
     const pat = s.pattern === 'grid' ? `<pattern id="${id}" width="18" height="18" patternUnits="userSpaceOnUse"><path d="M18 0H0V18" fill="none" stroke="${col}" stroke-width="1" opacity=".8"/></pattern>`
       : s.pattern === 'dots' ? `<pattern id="${id}" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="7" cy="7" r="1.8" fill="${col}"/></pattern>` : '';
-    const fill = it.decor && s.fillOn ? `<path d="${d}" fill="${it.fill}" fill-opacity="${it.opacity}"/>` : '';
+    const fm = s.fillMode || (s.fillOn ? 'solid' : 'none'), fc = s.fillColor || it.fill, sa = s.softAmt ?? .5;
+    let fill = '', fdefs = '';
+    if (it.decor && fm === 'solid') fill = `<path d="${d}" fill="${fc}" fill-opacity="${it.opacity}"/>`;
+    else if (it.decor && fm === 'soft' && s.softKind === 'fade') {   // gradient from the edge in (or the centre out)
+      const peak = .2 + .8 * sa, a0 = s.fadeDir === 'out' ? peak : 0, a1 = s.fadeDir === 'out' ? 0 : peak;
+      fdefs = `<radialGradient id="g${it.id}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="${fc}" stop-opacity="${a0}"/><stop offset="1" stop-color="${fc}" stop-opacity="${a1}"/></radialGradient>`;
+      fill = `<path d="${d}" fill="url(#g${it.id})" fill-opacity="${it.opacity}"/>`;
+    } else if (it.decor && fm === 'soft') fill = `<path d="${d}" fill="${fc}" fill-opacity="${it.opacity * (.08 + .32 * sa)}"/>`;
     const patt = pat ? `<path d="${d}" fill="url(#${id})" opacity="${it.decor ? it.opacity : 1}"/>` : '';
     const line = s.lineOn ? `<path d="${d}" fill="none" stroke="${col}" stroke-width="${s.lineW}" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${this.dashArr(s).join(' ')}" opacity="${it.decor ? it.opacity : 1}"/>` : '';
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-    svg.innerHTML = `<defs>${pat}${mk}</defs>${wrapO}${fill}${patt}${line}${wrapC}<path class="st-guide" d="${d}"/>`;
+    svg.innerHTML = `<defs>${pat}${fdefs}${mk}</defs>${wrapO}${fill}${patt}${line}${wrapC}<path class="st-guide" d="${d}"/>`;
   }
   // Canvas version for exports; x/y/w/h in output pixels.
   blendOp(it) { const b = it.blend || 'normal'; return b === 'normal' ? 'source-over' : b === 'plus-lighter' ? 'lighter' : b; }
@@ -9741,7 +9759,13 @@ class CoreStudio {
     }
     const s = it.st, path = this.shapePath(it.kind, w, h, x, y, it), col = it.decor ? it.fill : s.lineColor, a = (it.decor ? it.opacity : 1) * (it.alpha ?? 1);
     g.save(); g.globalAlpha = a;
-    if (it.decor && s.fillOn) { g.fillStyle = it.fill; g.fill(path); }
+    const fm = s.fillMode || (s.fillOn ? 'solid' : 'none'), fc = s.fillColor || it.fill, sa = s.softAmt ?? .5;
+    if (it.decor && fm === 'solid') { g.fillStyle = fc; g.fill(path); }
+    else if (it.decor && fm === 'soft' && s.softKind === 'fade') {
+      const peak = .2 + .8 * sa, a0 = s.fadeDir === 'out' ? peak : 0, a1 = s.fadeDir === 'out' ? 0 : peak, [cr, cg, cb] = kitRgb(fc);
+      g.save(); g.clip(path); g.translate(x + w / 2, y + h / 2); g.scale(w / 2, h / 2);   // an ellipse that fits the box, like the screen gradient
+      const gr = g.createRadialGradient(0, 0, 0, 0, 0, 1); gr.addColorStop(0, `rgba(${cr},${cg},${cb},${a0})`); gr.addColorStop(1, `rgba(${cr},${cg},${cb},${a1})`); g.fillStyle = gr; g.fillRect(-1.6, -1.6, 3.2, 3.2); g.restore();
+    } else if (it.decor && fm === 'soft') { g.save(); g.globalAlpha = a * (.08 + .32 * sa); g.fillStyle = fc; g.fill(path); g.restore(); }
     if (s.pattern !== 'none') {
       g.save(); g.clip(path); g.strokeStyle = g.fillStyle = col;
       if (s.pattern === 'grid') { const st = 18 * k; g.lineWidth = k; g.globalAlpha = a * .8; g.beginPath(); for (let i = x; i <= x + w; i += st) { g.moveTo(i, y); g.lineTo(i, y + h); } for (let j = y; j <= y + h; j += st) { g.moveTo(x, j); g.lineTo(x + w, j); } g.stroke(); }
@@ -10417,13 +10441,13 @@ class CoreStudio {
     const c = this.drawSet.color;
     if (it.kind === 'text') it.color = c;
     else if (it.kind === 'stroke') (it.strokes || []).forEach(st => { st.color = c; });
-    else { it.fill = c; it.st.fillOn = true; it.decor = true; it.opacity = it.opacity ?? 1; }
+    else { it.fill = c; it.st.fillOn = true; if (it.st.fillMode === 'none') it.st.fillMode = 'solid'; it.decor = true; it.opacity = it.opacity ?? 1; }
     this.place(it); this.renderLayers(); this.updateFocus(); this.commit();
   }
   clearLayer(it) {
     if (it.kind === 'stroke') { it.strokes = []; if (it.mask) it.mask.strokes = []; }
     else if (it.kind === 'text') { it.content = ''; it.el.textContent = ''; }
-    else { it.st.fillOn = false; it.st.pattern = 'none'; it.st.lineOn = false; }
+    else { it.st.fillOn = false; it.st.fillMode = 'none'; it.st.pattern = 'none'; it.st.lineOn = false; }
     this.place(it); this.renderLayers(); this.updateFocus(); this.commit();
   }
   invertLayer(it) {
