@@ -1819,6 +1819,28 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 .st-xf-e::after{content:"";position:absolute;inset:-10px}
 @media(pointer:coarse){.st-xf-h{width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:8px}.st-xf-h::after{inset:-10px}}
 #studio .st-shape.is-selected:not(.is-locked) .st-handle,#studio .st-handle{display:none!important}
+/* ---- Context bar (the "Design" strip under a selected thing): grouped cards, same finish as Tune the core ---- */
+#studio .st-context{gap:8px;padding:10px 12px;border-radius:26px;align-items:center;justify-content:center;max-width:min(1200px,calc(100% - 24px))}
+#studio .st-context .st-ctx-kind{align-self:center;padding:7px 14px;border-radius:999px;background:#ff465524;border:1px solid #ff46553d;color:#ffb3ba;font:600 10.5px var(--f-cond);letter-spacing:.16em}
+#studio .st-context>label,#studio .st-context>span>label:not(.st-rotbox label),#studio .st-rotbox>label{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 14px;border-radius:14px;background:#ffffff0b;border:1px solid #ffffff14;font:600 10px var(--f-cond);letter-spacing:.12em;text-transform:uppercase;color:#aab3c4}
+#studio .st-context input[type=range]{width:96px;height:22px;margin:0}
+#studio .st-context output{min-width:44px;padding:2px 8px;border-radius:999px;background:#ff465522;color:#ffb3ba;font:600 11px var(--f-mono);text-align:center}
+#studio .st-context input[type=color]{width:44px;height:44px;padding:4px;border-radius:14px;border:1px solid #ffffff22;background:#ffffff0b}
+#studio .st-context input[type=text]{min-height:44px;border-radius:14px;background:#ffffff0b;border:1px solid #ffffff1c}
+#studio .st-context select{min-height:44px;border-radius:14px;border:1px solid #ffffff1c;background-color:#ffffff0b;color:#fff;padding:0 12px}
+#studio .st-rotbox{display:inline-flex;gap:8px;flex-wrap:nowrap}
+#studio .st-rotbox input[type=number]{width:58px;height:36px;border:0;border-radius:10px;background:#00000033;text-align:center;font:600 13px var(--f-num);color:#fff}
+#studio .st-rotbox label i{font-style:normal;color:#8e98ab}
+#studio .st-rotbox select{min-height:36px!important;height:36px;border:0;border-radius:10px;background-color:#00000033;padding:0 8px!important;font:600 12.5px var(--f-num)}
+#studio .st-context .st-btn{min-height:44px;border-radius:14px;padding:0 14px;background:#ffffff0d;border:1px solid #ffffff16;color:#e7ecf5;display:inline-flex;align-items:center;gap:8px;font-weight:600}
+#studio .st-context .st-btn:hover{background:#ffffff1c}
+#studio .st-context .st-fly-btn{background:linear-gradient(150deg,#ff6b78,#e8364a)!important;border-color:transparent!important;color:#fff;box-shadow:0 0 18px #ff465544;padding:0 18px}
+#studio .st-context [data-ctx-for-kit]{background:linear-gradient(150deg,#8b5cf6,#e8364a)!important}
+#studio .st-context [data-ctx-lock]{margin-left:6px}
+#studio .st-context [data-ctx-delete]:hover{background:#7a1f2b;border-color:#ff6b78}
+#studio .st-context [data-ctx-delete],#studio .st-context [data-ctx-close]{padding:0;width:44px;justify-content:center}
+#studio .st-context [data-ctx-close]{border-radius:50%}
+#studio .st-context .st-btn svg.st-i{width:18px;height:18px}
 #studio .st-glassbox{position:absolute;pointer-events:none}
 /* Surface style panel */
 #studio .st-off{opacity:.36;filter:grayscale(1);pointer-events:none;transition:opacity .2s}
