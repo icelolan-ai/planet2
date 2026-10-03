@@ -9256,7 +9256,7 @@ class CoreStudio {
     this.el.querySelector('[data-studio-bg-b]').oninput = e => { this.bgB = e.target.value; this.paintBackground(); };
     const saveMenu = this.el.querySelector('[data-studio-save]'), saveBtn = this.el.querySelector('[data-studio-export]');
     saveBtn.onclick = () => { saveMenu.hidden = !saveMenu.hidden; saveBtn.setAttribute('aria-expanded', String(!saveMenu.hidden)); if (!saveMenu.hidden) this.select(null); };
-    document.addEventListener('pointerdown', e => { if (!saveMenu.hidden && !e.target.closest('.st-save,[data-studio-export]')) { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); } }, true);
+    document.addEventListener('pointerdown', e => { if (!saveMenu.hidden && !e.target.closest('.st-save,[data-studio-export],.st-dd')) { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); } }, true);
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !saveMenu.hidden) { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); } });
     {
       const nm = saveMenu.querySelector('[data-planet-name]'), msg = saveMenu.querySelector('[data-planet-msg]');
