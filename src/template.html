@@ -1715,6 +1715,14 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .cfx-col{display:grid;justify-items:center;gap:5px;font:600 9.5px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;color:#aab3c4}
 #studio .cfx-col input[type=color]{width:100%;height:42px;padding:3px;border:1px solid #ffffff2a;border-radius:12px;background:#0000003a;cursor:pointer}
 #studio .cfx-hide,.tune-row.wt-hide{display:none!important}
+/* S4 lines */
+#studio .st-mcv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#studio .st-line-opts{margin-top:8px}#studio .st-line-opts[hidden]{display:none}
+#studio .st-lh{position:fixed;z-index:57;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;border:2px solid #fff;background:var(--cyg);box-shadow:0 2px 10px #0008;cursor:grab;touch-action:none;pointer-events:auto;padding:0}
+#studio .st-lh[hidden],#studio .st-lbar[hidden]{display:none}
+#studio .st-lbar{position:fixed;z-index:57;width:min(300px,calc(100vw - 16px));max-height:min(60vh,420px);overflow:auto;padding:10px 12px 12px;border-radius:16px;pointer-events:auto;display:grid;gap:6px}
+#studio .st-lbar-t{font:600 11px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:#d9ccff}
+#studio .st-lbar-b{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}#studio .st-lbar-b .st-btn{min-height:40px;min-width:48px}
 /* Select tool, marquee, planet ring, multi-selection bar */
 #studio .st-mq{position:fixed;inset:0;z-index:55;pointer-events:none}
 #studio .st-mq svg{position:absolute;inset:0}
@@ -1748,7 +1756,7 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .st-help kbd{font:600 11px var(--f-mono);padding:2px 7px;border-radius:6px;background:#ffffff1c;border:1px solid #ffffff26;color:#fff;white-space:nowrap}
 #studio .st-peek{display:none;position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:50;pointer-events:auto;min-height:40px;padding:0 16px}
 #studio.st-ui-off .st-peek{display:inline-flex;align-items:center}
-#studio.st-ui-off :is(.st-rail,.st-dock,.studio-panel,.st-assist,.st-lib,.st-layers-tray,.st-ctx,.st-fly,.st-edit-mini,.st-save,.st-lmenu,.st-selbar,.st-multibar){opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+#studio.st-ui-off :is(.st-rail,.st-dock,.studio-panel,.st-assist,.st-lib,.st-layers-tray,.st-ctx,.st-fly,.st-edit-mini,.st-save,.st-lmenu,.st-selbar,.st-multibar,.st-lbar,.st-lh){opacity:0!important;visibility:hidden!important;pointer-events:none!important}
 @media(pointer:coarse){#studio .st-keys-btn{display:none}}
 #studio .studio-corefx[data-st=none] :is([data-cfx-head],[data-cfx-grp]),#studio .studio-corefx[data-noopts="1"] :is([data-cfx-head=opts],[data-cfx-grp=opts]){display:none!important}
 #studio .cfx-sub{margin:18px 0 4px;padding-top:12px;border-top:1px solid #ffffff14;font:600 11px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:#d9ccff}
@@ -8644,6 +8652,42 @@ const KIT_L2_UI = [
   const at = d.ui.findIndex(u => u.k === 'c2'); d.ui.splice(at < 0 ? d.ui.length : at + 1, 0, ...KIT_L2_UI);
 });
 
+// ---- S4: straight lines for the pen (stroke records with type 'line'); geometry shared by the screen (SVG), the moving canvas and Save.
+const LINE_MAXPTS = matchMedia('(pointer:coarse)').matches ? 64 : 120, LINE_NZ = new Map();
+const LINE_UI = [
+  { k: 'motion', label: 'Motion', type: 'select', opts: [['none', 'Still'], ['wobble', 'Hand-drawn tremble'], ['wave', 'Wave travelling along'], ['pulse', 'Thick and thin pulse'], ['pluck', 'Plucked string']], def: 'none' },
+  { k: 'amp', label: 'Amplitude', type: 'range', min: 0, max: 40, step: 1, unit: 'px', def: 8, for: ['wobble', 'wave', 'pluck', 'pulse'] },
+  { k: 'freq', label: 'Wavelength / pitch', type: 'range', min: .5, max: 12, step: .5, def: 3, for: ['wobble', 'wave', 'pluck'] },
+  { k: 'speed', label: 'Speed', type: 'range', min: .2, max: 4, step: .1, unit: '×', def: 1, for: ['wobble', 'wave', 'pulse'] },
+  { k: 'damp', label: 'Damping (how fast it settles)', type: 'range', min: .5, max: 6, step: .1, def: 2.5, for: ['pluck'] },
+  { k: 'every', label: 'Pluck again every (0 = on tap only)', type: 'range', min: 0, max: 10, step: .5, unit: 's', def: 0, for: ['pluck'] },
+  { k: 'cap', label: 'Ends', type: 'select', opts: [['round', 'Round'], ['butt', 'Flat'], ['dot', 'Dots'], ['arrow', 'Arrow']], def: 'round' },
+  { k: 'bow', label: 'Curve (bow)', type: 'range', min: -1, max: 1, step: .05, def: 0 },
+];
+const linePref = k => 'l' + k[0].toUpperCase() + k.slice(1), lineMoves = st => st.type === 'line' && !!st.motion && st.motion !== 'none';
+// Points along a line from A to B (screen px) at clock time t; k scales px-based values (amplitude) when exporting; plk(st) = when it was last plucked.
+const lineGeom = (st, A, B, t, plk, k = 1) => {
+  const dx = B[0] - A[0], dy = B[1] - A[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L, N = clamp(Math.round(L / (6 * k)), 12, LINE_MAXPTS), mo = st.motion || 'none', amp = (st.amp || 0) * k, f = st.freq || 3, sp = st.speed || 1, bow = (st.bow || 0) * L * .5;
+  let nz = null; if (mo === 'wobble') { nz = LINE_NZ.get(st.seed); if (!nz) { nz = kitNoise((st.seed | 0) || 1); LINE_NZ.set(st.seed, nz); } }
+  let pl = 0, lw = 1;
+  if (mo === 'pluck') { let tt = t - plk(st); if (st.every > 0) tt = ((tt % st.every) + st.every) % st.every; pl = tt < 0 ? 0 : Math.exp(-(st.damp || 2.5) * tt) * Math.cos(2 * Math.PI * (.8 + f * .35) * tt); }
+  if (mo === 'pulse') lw = 1 + clamp(amp / (40 * k), 0, 1) * .9 * Math.sin(2 * Math.PI * sp * t);
+  const pts = [];
+  for (let i = 0; i <= N; i++) {
+    const u = i / N, env = Math.sin(Math.PI * u); let off = bow * env;
+    if (mo === 'wobble') off += amp * (nz(u * f * 1.6 + 3, t * sp * 1.7) - .5) * 2 * Math.pow(env, .6);
+    else if (mo === 'wave') off += amp * Math.sin(2 * Math.PI * (f * u - sp * t)) * env;
+    else if (mo === 'pluck') off += amp * pl * env;
+    pts.push([A[0] + dx * u + nx * off, A[1] + dy * u + ny * off]);
+  }
+  return { pts, lw };
+};
+// extra SVG / canvas drawing for the end caps (dots and arrow head); the round / flat caps are plain stroke-linecap
+const lineCapShapes = (st, pts, k = 1) => {
+  const n = pts.length, s = st.size * k, out = []; if (st.cap === 'dot') { out.push({ c: pts[0], r: s * 1.3 }, { c: pts[n - 1], r: s * 1.3 }); }
+  if (st.cap === 'arrow') { const a = pts[Math.max(0, n - 4)], b = pts[n - 1], d = Math.atan2(b[1] - a[1], b[0] - a[0]), hl = s * 4.2, hw = s * 2.2; out.push({ tri: [[b[0], b[1]], [b[0] - Math.cos(d) * hl + Math.sin(d) * hw, b[1] - Math.sin(d) * hl - Math.cos(d) * hw], [b[0] - Math.cos(d) * hl - Math.sin(d) * hw, b[1] - Math.sin(d) * hl + Math.cos(d) * hw]] }); }
+  return out;
+};
 class CoreStudio {
   constructor(app) {
     this.app = app; this.active = false; this.pending = false;
@@ -9551,7 +9595,8 @@ class CoreStudio {
       if (e.button !== 0 || e.target.closest('.st-lock') || el.isContentEditable) return;
       e.stopPropagation(); e.preventDefault();
       if (this.beginItemPress && this.beginItemPress(it, e)) return;
-      const wasSel = this.sel === it; this.select(it);
+      const lineHit = kind === 'stroke' && this.tool === 'move' ? this.pluckAt(it, e) : -1;
+      const wasSel = this.sel === it; this.select(it); if (lineHit >= 0 && !it.rot) this.selectLine(it, lineHit); else if (this.lineSel) this.clearLineSel();
       if (it.locked && kind !== 'text') return;
       el.setPointerCapture(e.pointerId);
       this.itemDrag = { it, id: e.pointerId, x: e.clientX, y: e.clientY, ox: it.x, oy: it.y, ow: it.w, oh: it.h, resize: !!e.target.closest('.st-handle'), moved: false, wasSel };
@@ -9671,7 +9716,7 @@ class CoreStudio {
   isHid(it) { return !!it.hide || (it.group != null && this.groups.some(g => g.id === it.group && g.hide)); }
   select(it) {
     if (this.sel && this.sel !== it && this.sel.el.isContentEditable) this.sel.el.blur();
-    const prev = this.sel; this.sel = it; this.items.forEach(i => i.el.classList.toggle('is-selected', i === it)); this.renderLayers();
+    const prev = this.sel; this.sel = it; if (this.lineSel && this.lineSel.it !== it) this.lineSel = null; this.items.forEach(i => i.el.classList.toggle('is-selected', i === it)); this.renderLayers();
     const c = this.ctx, usable = !!it && it.kind !== 'fx'; if (!(usable && prev === it && this.ctxOpen)) this.ctxOpen = false;
     c.hidden = !(usable && this.ctxOpen); if (this.closeFly) this.closeFly(); if (!usable) { this.updateRotHandle(); return; }
     const text = it.kind === 'text';
@@ -9699,6 +9744,137 @@ class CoreStudio {
     return p;
   }
   // Smooth path through the stroke's points, scaled into a w x h box at (x, y).
+  // ---- stroke records <-> screen points. A "layer" is one stroke item; every record's points are stored relative to the item's box.
+  strokesAbs(t) {
+    if (!t) return []; const U = this.U(), W = innerWidth, H = innerHeight, sh = this.shift || { x: 0, y: 0 }, k = t.w / t.w0 * U, kh = t.h / t.h0 * U, left = t.x * W + sh.x - t.w * U / 2, top = t.y * H + sh.y - t.h * U / 2;
+    return t.strokes.map(o => ({ ...o, abs: o.pts.map(([u, v]) => [left + u * k, top + v * kh]) }));
+  }
+  strokePad(a) {
+    let pd = a.size; if (a.type === 'line') { const L = Math.hypot(a.abs[1][0] - a.abs[0][0], a.abs[1][1] - a.abs[0][1]); pd += (lineMoves(a) ? (a.amp || 0) * 1.4 + a.size : 0) + Math.abs(a.bow || 0) * L * .55 + (a.cap === 'arrow' ? a.size * 4.5 : a.cap === 'dot' ? a.size * 1.5 : 0); }
+    return pd;
+  }
+  // Rewrite a layer from absolute points (new box around everything) and keep the history / layers panel in step.
+  writeStrokes(t, all, quick) {
+    const U = this.U(), W = innerWidth, H = innerHeight, sh = this.shift || { x: 0, y: 0 }, D = this.drawSet, pad = Math.max(12, D.size);
+    const xs = all.flatMap(a => a.abs.map(q => q[0])), ys = all.flatMap(a => a.abs.map(q => q[1])), pd = Math.max(pad, ...all.map(a => this.strokePad(a)));
+    const x0 = Math.min(...xs) - pd, y0 = Math.min(...ys) - pd, x1 = Math.max(...xs) + pd, y1 = Math.max(...ys) + pd, w0 = (x1 - x0) / U, h0 = (y1 - y0) / U;
+    const strokes = all.map(({ abs, pts, ...rest }) => ({ ...rest, pts: abs.map(q => [+((q[0] - x0) / U).toFixed(4), +((q[1] - y0) / U).toFixed(4)]) }));
+    const geo = { x: ((x0 + x1) / 2 - sh.x) / W, y: ((y0 + y1) / 2 - sh.y) / H, w: w0, h: h0, w0, h0 };
+    if (t) { Object.assign(t, geo, { strokes }); this.place(t); if (!quick) this.renderLayers(); }
+    else this.addItem('stroke', { decor: true, ...geo, strokes, fill: D.color, opacity: 1, drawCur: true, st: { fillOn: false, lineOn: true, lineW: D.size, dash: D.dash, pattern: 'none', lineColor: D.color }, silent: true });
+    if (!quick) this.commit();
+  }
+  addStrokeAbs(sk, P) {
+    const t = this.items.find(i => i.kind === 'stroke' && i.drawCur && !i.locked && !i.rot);
+    if (sk.type === 'line' && t && t.strokes.filter(o => o.type === 'line').length >= 200) return false;   // keep a layer light
+    if (t && t.alphaLock && t.strokes.length) sk = { ...sk, clip: true };
+    this.writeStrokes(t, [...this.strokesAbs(t), { ...sk, abs: P }]); return true;
+  }
+  // ---- editing a line you already drew: tap it (Move tool) -> end-point handles + a small bar with its own motion settings
+  initLineEdit() {
+    const mk = (tag, cls, html) => { const n = document.createElement(tag); n.className = cls; if (html) n.innerHTML = html; n.hidden = true; this.el.append(n); return n; };
+    this.lineSel = null;
+    const hs = this.lineHandles = [0, 1].map(j => { const h = mk('button', 'st-lh'); h.type = 'button'; h.setAttribute('aria-label', j ? 'Move the end of the line' : 'Move the start of the line'); return h; });
+    const bar = this.lineBar = mk('div', 'st-lbar st-glass', '<b class="st-lbar-t">Line</b>'
+      + '<label class="st-fly-row"><span>Colour</span><input type="color" data-lb="color"></label>'
+      + '<label class="st-fly-row"><span>Thickness</span><output data-lo="size"></output><input type="range" min="1" max="40" step="1" data-lb="size"></label>'
+      + this.lineRowsHtml('data-lb') + '<span class="st-lbar-b"><button type="button" class="st-btn" data-lb-del aria-label="Delete this line">' + this.icons.trash + '</button><button type="button" class="st-btn is-primary" data-lb-done>Done</button></span>');
+    const cur = () => { const ls = this.lineSel; return ls && ls.it.strokes && ls.it.strokes[ls.i]; };
+    this.syncLineBar = () => {
+      const st = cur(); if (!st) return;
+      bar.querySelectorAll('[data-lb]').forEach(el => { const k = el.dataset.lb, u = LINE_UI.find(x => x.k === k), v = st[k] ?? (u ? u.def : null); if (v == null) return; el.value = v; const o = bar.querySelector(`[data-lo="${k}"]`); if (o) { o.textContent = u ? this.lineVal(u, v) : `${v}px`; } if (el.type === 'range') { const mn = +el.min, mx = +el.max; el.style.setProperty('--p', ((v - mn) / (mx - mn) * 100) + '%'); } });
+      bar.querySelectorAll('[data-lfor]').forEach(r => { r.hidden = !r.dataset.lfor.split(' ').includes(st.motion || 'none'); });
+    };
+    const apply = (quick) => { const ls = this.lineSel; if (!ls) return; this.writeStrokes(ls.it, this.strokesAbs(ls.it), quick); this.syncLineBar(); };
+    bar.querySelectorAll('[data-lb]').forEach(el => {
+      el.addEventListener('input', () => { const st = cur(); if (!st) return; const k = el.dataset.lb, u = LINE_UI.find(x => x.k === k); st[k] = el.type === 'range' ? +el.value : el.value; if (k === 'motion' && st.motion === 'pluck') { this._plk = this._plk || new Map(); this._plk.set(st.seed, this.lineT || 0); } apply(true); });
+      el.addEventListener('change', () => { apply(false); });
+    });
+    bar.querySelector('[data-lb-del]').addEventListener('click', () => this.deleteLine());
+    bar.querySelector('[data-lb-done]').addEventListener('click', () => this.clearLineSel());
+    bar.addEventListener('pointerdown', e => e.stopPropagation());
+    // end-point handles
+    hs.forEach((h, j) => {
+      let drag = null;
+      h.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); h.setPointerCapture(e.pointerId); drag = { id: e.pointerId, moved: false }; });
+      h.addEventListener('pointermove', e => {
+        if (!drag || drag.id !== e.pointerId) return; const ls = this.lineSel; if (!ls) return;
+        const all = this.strokesAbs(ls.it), a = all[ls.i].abs; let p = [e.clientX, e.clientY];
+        if (e.shiftKey) { const o = a[1 - j], dx = p[0] - o[0], dy = p[1] - o[1], L = Math.hypot(dx, dy), an = Math.round(Math.atan2(dy, dx) / (Math.PI / 12)) * (Math.PI / 12); p = [o[0] + Math.cos(an) * L, o[1] + Math.sin(an) * L]; }
+        else if (this.drawSet.assist && this.drawNode) p = this.drawNode(p);
+        a[j] = p; drag.moved = true; this.writeStrokes(ls.it, all, true);
+      });
+      const end = e => { if (!drag || drag.id !== e.pointerId) return; const d = drag; drag = null; if (d.moved) { this.writeStrokes(this.lineSel.it, this.strokesAbs(this.lineSel.it), false); } };
+      h.addEventListener('pointerup', end); h.addEventListener('pointercancel', end);
+    });
+    this.updateLineUI = () => {
+      const ls = this.lineSel, st = cur();
+      const ok = !!(ls && st && st.type === 'line' && this.active && !this.drawing && this.items.includes(ls.it) && !ls.it.rot && !this.isHid(ls.it) && this.tool === 'move');
+      if (!ok) { hs.forEach(h => { h.hidden = true; }); bar.hidden = true; if (ls && !st) this.lineSel = null; return; }
+      const abs = this.strokesAbs(ls.it)[ls.i].abs; hs.forEach((h, j) => { h.hidden = false; h.style.left = abs[j][0] + 'px'; h.style.top = abs[j][1] + 'px'; });
+      bar.hidden = false; const bw = bar.offsetWidth, bh = bar.offsetHeight, mx = (abs[0][0] + abs[1][0]) / 2, top = Math.min(abs[0][1], abs[1][1]), bot = Math.max(abs[0][1], abs[1][1]);
+      let y = top - bh - 26; if (y < 8) y = Math.min(innerHeight - bh - 8, bot + 26);
+      bar.style.left = clamp(mx - bw / 2, 8, Math.max(8, innerWidth - bw - 8)) + 'px'; bar.style.top = Math.max(8, y) + 'px';
+    };
+  }
+  // ---- lines on screen: a plain line is an SVG path; a moving one is drawn each frame on a small canvas over its layer
+  lineAbsPts(it, st, w, h, x = 0, y = 0) { const sx = w / it.w0, sy = h / it.h0; return [[x + st.pts[0][0] * sx, y + st.pts[0][1] * sy], [x + st.pts[1][0] * sx, y + st.pts[1][1] * sy]]; }
+  plucked(st) { const v = this._plk && this._plk.get(st.seed); return v == null ? -999 : v; }
+  lineSvg(it, st, w, h) {
+    const [A, B] = this.lineAbsPts(it, st, w, h), g = lineGeom({ ...st, motion: 'none' }, A, B, 0, () => -999), d = 'M' + g.pts.map(q => `${+q[0].toFixed(2)} ${+q[1].toFixed(2)}`).join('L');
+    const dash = this.dashArr({ lineW: st.size, dash: st.dash }).join(' '), caps = lineCapShapes(st, g.pts).map(c => c.c ? `<circle cx="${c.c[0]}" cy="${c.c[1]}" r="${c.r}" fill="${st.color}"/>` : `<polygon points="${c.tri.map(q => q.join(',')).join(' ')}" fill="${st.color}"/>`).join('');
+    return `<g opacity="${st.opacity}"><path d="${d}" fill="none" stroke="${st.color}" stroke-width="${st.size}" stroke-linecap="${st.cap === 'butt' ? 'butt' : 'round'}" stroke-linejoin="round" stroke-dasharray="${dash}"/>${caps}</g>`;
+  }
+  lineCanvas(g, it, st, w, h, x, y, k, t) {
+    const [A, B] = this.lineAbsPts(it, st, w, h, x, y), geo = lineGeom(st, A, B, t, q => this.plucked(q), k);
+    g.save(); g.strokeStyle = g.fillStyle = st.color; g.lineWidth = Math.max(.5, st.size * k * geo.lw); g.lineCap = st.cap === 'butt' ? 'butt' : 'round'; g.lineJoin = 'round'; g.setLineDash(this.dashArr({ lineW: st.size, dash: st.dash }).map(v => v * k));
+    g.beginPath(); geo.pts.forEach((q, i) => g[i ? 'lineTo' : 'moveTo'](q[0], q[1])); g.stroke(); g.setLineDash([]);
+    lineCapShapes(st, geo.pts, k).forEach(c => { g.beginPath(); if (c.c) g.arc(c.c[0], c.c[1], c.r, 0, 6.2832); else { g.moveTo(c.tri[0][0], c.tri[0][1]); g.lineTo(c.tri[1][0], c.tri[1][1]); g.lineTo(c.tri[2][0], c.tri[2][1]); g.closePath(); } g.fill(); });
+    g.restore();
+  }
+  ensureMcv(it) {
+    this._mcv = this._mcv || new WeakMap(); this._movers = this._movers || new Set();
+    const need = (it.strokes || []).some(lineMoves), cv = this._mcv.get(it);
+    if (need && !cv) { const c = document.createElement('canvas'); c.className = 'st-mcv'; it.el.append(c); this._mcv.set(it, c); this._movers.add(it); }
+    else if (!need && cv) { cv.remove(); this._mcv.delete(it); this._movers.delete(it); }
+    if (need) this.drawMoving(it);
+  }
+  drawMoving(it) {
+    const cv = this._mcv && this._mcv.get(it); if (!cv) return; const w = it.el.offsetWidth, h = it.el.offsetHeight, d = Math.min(devicePixelRatio || 1, 2);
+    if (cv.width !== Math.round(w * d) || cv.height !== Math.round(h * d)) { cv.width = Math.round(w * d); cv.height = Math.round(h * d); }
+    const g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, w, h);
+    (it.strokes || []).forEach(st => { if (lineMoves(st)) { g.globalAlpha = st.opacity; this.lineCanvas(g, it, st, w, h, 0, 0, 1, this.lineT || 0); } });
+  }
+  lineLoop() {
+    this.lineT = 0; this._plk = this._plk || new Map(); let last = performance.now(), acc = 0, cost = 0;
+    const tick = now => {
+      requestAnimationFrame(tick); const dt = Math.min(.1, (now - last) / 1000); last = now; if (!this.active || document.hidden) return; this.lineT += dt; acc += dt;
+      if (this.updateLineUI) this.updateLineUI();
+      if (!this._movers || !this._movers.size || this.app.reduced || acc < Math.max(1 / 45, cost * 2)) return;
+      acc = 0; const t0 = performance.now();
+      this._movers.forEach(it => { if (!this.items.includes(it)) { this._movers.delete(it); return; } if (!this.isHid(it)) this.drawMoving(it); });
+      cost = (performance.now() - t0) / 1000;
+    };
+    requestAnimationFrame(tick);
+  }
+  // ---- picking a line inside a layer, plucking it, end-point handles and the small edit bar
+  viewToLocal(it, vx, vy) { const U = this.U(), W = innerWidth, H = innerHeight, sh = this.shift || { x: 0, y: 0 }, a = -(it.rot || 0) * Math.PI / 180, dx = vx - (it.x * W + sh.x), dy = vy - (it.y * H + sh.y); return [dx * Math.cos(a) - dy * Math.sin(a) + it.w * U / 2, dx * Math.sin(a) + dy * Math.cos(a) + it.h * U / 2]; }
+  hitLine(it, vx, vy) {
+    if (it.kind !== 'stroke' || !it.strokes) return -1; const U = this.U(), w = it.w * U, h = it.h * U, p = this.viewToLocal(it, vx, vy); let best = -1, bd = 1e9;
+    it.strokes.forEach((st, i) => {
+      if (st.type !== 'line') return; const [A, B] = this.lineAbsPts(it, st, w, h), g = lineGeom({ ...st, motion: 'none' }, A, B, 0, () => -999); let d = 1e9;
+      for (let j = 1; j < g.pts.length; j++) { const a = g.pts[j - 1], b = g.pts[j], l2 = (b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2 || 1, u = clamp(((p[0] - a[0]) * (b[0] - a[0]) + (p[1] - a[1]) * (b[1] - a[1])) / l2, 0, 1); d = Math.min(d, Math.hypot(p[0] - a[0] - u * (b[0] - a[0]), p[1] - a[1] - u * (b[1] - a[1]))); }
+      if (d < st.size / 2 + 14 && d < bd) { bd = d; best = i; }
+    });
+    return best;
+  }
+  pluckAt(it, e) { const i = this.hitLine(it, e.clientX, e.clientY); if (i >= 0 && it.strokes[i].motion === 'pluck') { this._plk = this._plk || new Map(); this._plk.set(it.strokes[i].seed, this.lineT || 0); } return i; }
+  clearLineSel() { this.lineSel = null; if (this.updateLineUI) this.updateLineUI(); }
+  selectLine(it, i) { this.lineSel = { it, i }; if (this.syncLineBar) this.syncLineBar(); if (this.updateLineUI) this.updateLineUI(); }
+  deleteLine() {
+    const ls = this.lineSel; if (!ls) return false; const it = ls.it, all = this.strokesAbs(it).filter((_, k) => k !== ls.i); this.lineSel = null;
+    if (!all.length) this.removeItem(it); else this.writeStrokes(it, all); this.updateLineUI(); return true;
+  }
   strokeD(it, w, h, x = 0, y = 0, pts) {
     if (!pts) return (it.strokes || []).map(st => this.strokeD(it, w, h, x, y, st.pts)).join('');
     const sx = w / it.w0, sy = h / it.h0, P = pts.map(([u, v]) => [x + u * sx, y + v * sy]);
@@ -9729,7 +9905,8 @@ class CoreStudio {
     const mk = this.maskSvg(it, w, h), wrapO = mk ? `<g mask="url(#mk${it.id})">` : '', wrapC = mk ? '</g>' : '';
     if (it.kind === 'stroke' && it.strokes) {
       svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-      const sp = st => `<path d="${this.strokeD(it, w, h, 0, 0, st.pts)}" fill="none" stroke="${st.color}" stroke-width="${st.size}" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${this.dashArr({ lineW: st.size, dash: st.dash }).join(' ')}" opacity="${st.opacity}"/>`;
+      this.ensureMcv(it);
+      const sp = st => st.type === 'line' ? (lineMoves(st) ? '' : this.lineSvg(it, st, w, h)) : `<path d="${this.strokeD(it, w, h, 0, 0, st.pts)}" fill="none" stroke="${st.color}" stroke-width="${st.size}" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${this.dashArr({ lineW: st.size, dash: st.dash }).join(' ')}" opacity="${st.opacity}"/>`;
       const base = it.strokes.filter(x => !x.clip), clip = it.strokes.filter(x => x.clip);
       const am = clip.length ? `<mask id="al${it.id}" maskUnits="userSpaceOnUse" x="0" y="0" width="${w}" height="${h}">${base.map(st => `<path d="${this.strokeD(it, w, h, 0, 0, st.pts)}" fill="none" stroke="#fff" stroke-width="${st.size}" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}</mask>` : '';
       svg.innerHTML = `<defs>${mk}${am}</defs>${wrapO}${base.map(sp).join('')}${clip.length ? `<g mask="url(#al${it.id})">${clip.map(sp).join('')}</g>` : ''}${wrapC}<path class="st-guide" d="${this.strokeD(it, w, h)}"/>`;
@@ -9771,7 +9948,7 @@ class CoreStudio {
       KIT[it.kit].draw(g, it, x, y, w, h, k); g.restore(); return; }
     if (it.kind === 'stroke' && it.strokes) {
       g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
-      const one = (c, st) => { c.globalAlpha = st.opacity * (it.alpha ?? 1); c.strokeStyle = st.color; c.lineWidth = st.size * k; c.setLineDash(this.dashArr({ lineW: st.size, dash: st.dash }).map(v => v * k)); c.stroke(new Path2D(this.strokeD(it, w, h, x, y, st.pts))); };
+      const one = (c, st) => { if (st.type === 'line') { c.save(); c.globalAlpha = st.opacity * (it.alpha ?? 1); this.lineCanvas(c, it, st, w, h, x, y, k, this.lineT || 0); c.restore(); return; } c.globalAlpha = st.opacity * (it.alpha ?? 1); c.strokeStyle = st.color; c.lineWidth = st.size * k; c.setLineDash(this.dashArr({ lineW: st.size, dash: st.dash }).map(v => v * k)); c.stroke(new Path2D(this.strokeD(it, w, h, x, y, st.pts))); };
       const base = it.strokes.filter(q => !q.clip), clip = it.strokes.filter(q => q.clip); base.forEach(st => one(g, st));
       if (clip.length) {
         const W = g.canvas.width, H = g.canvas.height, t = document.createElement('canvas'); t.width = W; t.height = H; const tg = t.getContext('2d'); tg.lineCap = 'round'; tg.lineJoin = 'round'; clip.forEach(st => one(tg, st));
@@ -9841,7 +10018,7 @@ class CoreStudio {
   // Pencil: freehand strokes become 'stroke' items. Holding still turns a stroke into a line or circle (QuickShape);
   // guides draw a soft grid/isometric lattice and assist locks strokes to its axes.
   initDraw() {
-    this.drawSet = { color: '#ffffff', size: 4, opacity: 1, dash: 'solid', hold: .75, guide: 'none', gap: 48, assist: false, gopacity: .3, gthick: 1, esize: 24 };
+    this.drawSet = { color: '#ffffff', size: 4, opacity: 1, dash: 'solid', hold: .75, guide: 'none', gap: 48, assist: false, gopacity: .3, gthick: 1, esize: 24, lMotion: 'none', lAmp: 8, lFreq: 3, lSpeed: 1, lDamp: 2.5, lEvery: 0, lCap: 'round', lBow: 0 };
     try { Object.assign(this.drawSet, JSON.parse(localStorage.getItem('cerebra-studio-pencil') || '{}')); } catch (e) {}
     try { if (!localStorage.getItem('cerebra-hold-v3')) { localStorage.setItem('cerebra-hold-v3', '1'); this.drawSet.hold = .75; } } catch (e) {}
     const pad = this.drawPad = document.createElement('div'); pad.className = 'st-draw-pad'; pad.hidden = true;
@@ -9853,11 +10030,25 @@ class CoreStudio {
       const k = el.dataset.dset; this.drawSet[k] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value; sync(); this.paintGuides();
       try { localStorage.setItem('cerebra-studio-pencil', JSON.stringify(this.drawSet)); } catch (e) {}
     }));
+    // line options (generated from LINE_UI so the Pencil menu and the edit bar of a selected line stay identical)
+    this.lineRowsHtml = (attr, vis) => LINE_UI.map(u => u.type === 'select'
+      ? `<label class="st-fly-row"${u.for ? ` data-lfor="${u.for.join(' ')}"` : ''}><span>${u.label}</span><select ${attr}="${u.k}">${u.opts.map(([v, n]) => `<option value="${v}">${n}</option>`).join('')}</select></label>`
+      : `<label class="st-fly-row"${u.for ? ` data-lfor="${u.for.join(' ')}"` : ''}><span>${u.label}</span><output data-lo="${u.k}"></output><input type="range" min="${u.min}" max="${u.max}" step="${u.step}" ${attr}="${u.k}"></label>`).join('');
+    this.lineVal = (u, v) => u.unit ? `${+(+v).toFixed(2)}${u.unit}` : String(+(+v).toFixed(2));
+    const lopt = document.createElement('div'); lopt.className = 'st-line-opts'; lopt.hidden = true; lopt.innerHTML = '<b class="st-fly-sub">Line</b>' + this.lineRowsHtml('data-lset');
+    fly.querySelector('[data-draw-done]').before(lopt);
+    const syncLine = () => {
+      lopt.hidden = this.drawTool !== 'line';
+      lopt.querySelectorAll('[data-lset]').forEach(el => { const u = LINE_UI.find(x => x.k === el.dataset.lset), v = this.drawSet[linePref(u.k)] ?? u.def; el.value = v; const o = lopt.querySelector(`[data-lo="${u.k}"]`); if (o) { o.textContent = this.lineVal(u, v); el.style.setProperty('--p', ((v - u.min) / (u.max - u.min) * 100) + '%'); } });
+      lopt.querySelectorAll('[data-lfor]').forEach(r => { r.hidden = !r.dataset.lfor.split(' ').includes(this.drawSet.lMotion); });
+    };
+    lopt.querySelectorAll('[data-lset]').forEach(el => el.addEventListener('input', () => { const u = LINE_UI.find(x => x.k === el.dataset.lset); this.drawSet[linePref(u.k)] = u.type === 'range' ? +el.value : el.value; syncLine(); try { localStorage.setItem('cerebra-studio-pencil', JSON.stringify(this.drawSet)); } catch (e) {} }));
+    this.syncLineOpts = syncLine; syncLine();
     sync();
     // Visible drawing-assist bar (Procreate style): guide type + snap toggle, shown while the pencil is active.
     const bar = document.createElement('div'); bar.className = 'st-assist st-glass';
     const bs = (k, label) => `<label class="st-assist-sl"><span>${label}</span><b data-bo="${k}"></b><input type="range" data-bset="${k}"></label>`;
-    bar.innerHTML = '<div class="st-mask-note" data-mask-note></div><div class="st-assist-r0"><div class="st-assist-seg" role="group" aria-label="Tool"><button type="button" data-atool="pen" class="is-on">Pen</button><button type="button" data-atool="erase">Eraser</button></div><label class="st-assist-sl st-esize"><span>Eraser size</span><b data-bo="esize"></b><input type="range" min="6" max="90" step="2" data-eset></label><button type="button" class="st-assist-new" data-anew>+ New layer</button></div><div class="st-assist-rp"><input type="color" data-bcolor aria-label="Pen colour">' + bs('size', 'Pen thickness') + bs('opacity', 'Pen opacity') + '</div><div class="st-assist-r1"><span class="st-assist-t">Drawing Guides</span><div class="st-assist-seg" role="group" aria-label="Guide"><button type="button" data-ag="none">Off</button><button type="button" data-ag="grid">2D Grid</button><button type="button" data-ag="iso">Isometric</button></div><button type="button" class="st-assist-sw" data-asnap role="switch" aria-checked="false"><span>Assisted drawing</span><i></i></button><button type="button" class="st-assist-x" data-adone aria-label="Done drawing">Done</button></div><div class="st-assist-r2">' + bs('gopacity', 'Guide opacity') + bs('gthick', 'Guide thickness') + bs('gap', 'Grid size') + '</div>';
+    bar.innerHTML = '<div class="st-mask-note" data-mask-note></div><div class="st-assist-r0"><div class="st-assist-seg" role="group" aria-label="Tool"><button type="button" data-atool="pen" class="is-on">Pen</button><button type="button" data-atool="line">Line</button><button type="button" data-atool="erase">Eraser</button></div><label class="st-assist-sl st-esize"><span>Eraser size</span><b data-bo="esize"></b><input type="range" min="6" max="90" step="2" data-eset></label><button type="button" class="st-assist-new" data-anew>+ New layer</button></div><div class="st-assist-rp"><input type="color" data-bcolor aria-label="Pen colour">' + bs('size', 'Pen thickness') + bs('opacity', 'Pen opacity') + '</div><div class="st-assist-r1"><span class="st-assist-t">Drawing Guides</span><div class="st-assist-seg" role="group" aria-label="Guide"><button type="button" data-ag="none">Off</button><button type="button" data-ag="grid">2D Grid</button><button type="button" data-ag="iso">Isometric</button></div><button type="button" class="st-assist-sw" data-asnap role="switch" aria-checked="false"><span>Assisted drawing</span><i></i></button><button type="button" class="st-assist-x" data-adone aria-label="Done drawing">Done</button></div><div class="st-assist-r2">' + bs('gopacity', 'Guide opacity') + bs('gthick', 'Guide thickness') + bs('gap', 'Grid size') + '</div>';
     this.el.append(bar);
     const poke = (k, v) => { const el = fly.querySelector(`[data-dset="${k}"]`); if (!el) return; if (el.type === 'checkbox') el.checked = v; else el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
     const syncBar = () => {
@@ -9868,7 +10059,7 @@ class CoreStudio {
       const bc = bar.querySelector('[data-bcolor]'); if (bc && document.activeElement !== bc) bc.value = this.drawSet.color;
     };
     this.drawTool = 'pen';
-    const esl = bar.querySelector('[data-eset]'), setTool = t => { this.drawTool = t; bar.querySelectorAll('[data-atool]').forEach(b => b.classList.toggle('is-on', b.dataset.atool === t)); bar.classList.toggle('is-erase', t === 'erase'); pad.classList.toggle('is-erase', t === 'erase'); eraseCur.hidden = t !== 'erase'; };
+    const esl = bar.querySelector('[data-eset]'), setTool = t => { this.drawTool = t; this.lineA = null; this.ink.setAttribute('d', ''); if (this.syncLineOpts) this.syncLineOpts(); bar.querySelectorAll('[data-atool]').forEach(b => b.classList.toggle('is-on', b.dataset.atool === t)); bar.classList.toggle('is-erase', t === 'erase'); pad.classList.toggle('is-erase', t === 'erase'); eraseCur.hidden = t !== 'erase'; };
     this.setDrawTool = setTool;
     const syncEs = () => { esl.value = this.drawSet.esize; esl.style.setProperty('--p', ((esl.value - esl.min) / (esl.max - esl.min) * 100) + '%'); bar.querySelector('[data-bo="esize"]').textContent = this.drawSet.esize + 'px'; eraseCur.style.width = eraseCur.style.height = this.drawSet.esize * 2 + 'px'; };
     const eraseCur = document.createElement('i'); eraseCur.className = 'st-erase-cur'; eraseCur.hidden = true; pad.append(eraseCur);
@@ -9883,7 +10074,7 @@ class CoreStudio {
     bar.querySelector('[data-adone]').addEventListener('click', () => { this.setDrawing(false); this.closeFly(); });
     fly.addEventListener('input', syncBar); syncBar(); this.syncAssistBar = syncBar;
     const btn = this.el.querySelector('[data-studio-draw]');
-    this.setDrawing = on => { if (!on) { this.maskEdit = null; this.syncMaskBar && this.syncMaskBar(); } this.drawing = on; pad.hidden = !on; this.el.classList.toggle('is-drawing', on); btn.setAttribute('aria-pressed', String(on)); if (on) { this.select(null); this.paintGuides(); this.syncAssistBar && this.syncAssistBar(); } };
+    this.setDrawing = on => { if (!on) { this.maskEdit = null; this.syncMaskBar && this.syncMaskBar(); this.lineA = null; this.ink.setAttribute('d', ''); } this.drawing = on; pad.hidden = !on; this.el.classList.toggle('is-drawing', on); btn.setAttribute('aria-pressed', String(on)); if (on) { this.select(null); this.paintGuides(); this.syncAssistBar && this.syncAssistBar(); } };
     btn.addEventListener('click', () => { if (this.drawing) { this.setDrawing(false); this.closeFly(); } else { this.setDrawing(true); sync(); } });
     this.el.querySelector('[data-draw-done]').onclick = () => { this.setDrawing(false); this.closeFly(); };
     // Picking any other tool in the rails switches the pencil/pen off, so the canvas goes back to normal until the pencil is chosen again.
@@ -9935,6 +10126,7 @@ class CoreStudio {
         let changed = false; const out = [];
         t.strokes.forEach(sk => {
           const abs = sk.pts.map(([u, v]) => [left + u * kx, top + v * ky]);
+          if (sk.type === 'line') { const A = abs[0], B = abs[1], l2 = (B[0] - A[0]) ** 2 + (B[1] - A[1]) ** 2 || 1, u = clamp(((p[0] - A[0]) * (B[0] - A[0]) + (p[1] - A[1]) * (B[1] - A[1])) / l2, 0, 1); if (Math.hypot(p[0] - A[0] - u * (B[0] - A[0]), p[1] - A[1] - u * (B[1] - A[1])) < r + sk.size + Math.abs(sk.bow || 0) * Math.sqrt(l2) * .3) { changed = true; return; } out.push(sk); return; }
           if (!abs.some(q => Math.hypot(q[0] - p[0], q[1] - p[1]) < r + sk.size)) { out.push(sk); return; }
           changed = true;
           const dense = []; abs.forEach((q, i) => { if (!i) { dense.push(q); return; } const a = abs[i - 1], n = Math.max(1, Math.ceil(Math.hypot(q[0] - a[0], q[1] - a[1]) / 3)); for (let j = 1; j <= n; j++) dense.push([a[0] + (q[0] - a[0]) * j / n, a[1] + (q[1] - a[1]) * j / n]); });
@@ -9947,9 +10139,39 @@ class CoreStudio {
         t.strokes = out; this.place(t);
       });
     };
+    // ---- Line tool: press, drag, release draws A->B in one go; a plain click sets A and the next click sets B. Shift snaps to 15 degrees, Assisted drawing snaps to the guide.
+    let ln = null; this.lineA = null; this.drawNode = node;
+    const linePt = (e, from) => {
+      let p = this.drawSet.assist ? node(pt(e)) : pt(e);
+      if (e.shiftKey && from) { const dx = p[0] - from[0], dy = p[1] - from[1], L = Math.hypot(dx, dy), a = Math.round(Math.atan2(dy, dx) / (Math.PI / 12)) * (Math.PI / 12); p = [from[0] + Math.cos(a) * L, from[1] + Math.sin(a) * L]; }
+      return p;
+    };
+    const linePreview = (a, b) => {
+      const D = this.drawSet; this.ink.setAttribute('stroke', D.color); this.ink.setAttribute('stroke-width', D.size); this.ink.setAttribute('opacity', D.opacity); this.ink.setAttribute('stroke-dasharray', this.dashArr({ lineW: D.size, dash: D.dash }).join(' '));
+      const g = lineGeom({ motion: 'none', bow: D.lBow }, a, b, 0, () => -999); this.ink.setAttribute('d', 'M' + g.pts.map(q => q.join(' ')).join('L'));
+    };
+    const lineMake = (a, b) => {
+      if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 4) return;
+      const D = this.drawSet, seed = (Math.random() * 1e9 | 0) + 1;
+      const sk = { type: 'line', color: D.color, size: D.size, opacity: D.opacity, dash: D.dash, motion: D.lMotion, amp: D.lAmp, freq: D.lFreq, speed: D.lSpeed, damp: D.lDamp, every: D.lEvery, cap: D.lCap, bow: D.lBow, seed };
+      if (this.addStrokeAbs(sk, [a, b]) && sk.motion === 'pluck') { this._plk = this._plk || new Map(); this._plk.set(seed, this.lineT || 0); }
+    };
+    pad.addEventListener('pointermove', e => {
+      if (this.drawTool !== 'line') return;
+      if (ln && ln.id === e.pointerId) { ln.b = linePt(e, ln.a); if (Math.hypot(ln.b[0] - ln.a[0], ln.b[1] - ln.a[1]) > 8) ln.moved = true; linePreview(ln.a, ln.b); }
+      else if (this.lineA) linePreview(this.lineA, linePt(e, this.lineA));
+    });
+    const lineEnd = e => {
+      if (!ln || ln.id !== e.pointerId) return; const L = ln; ln = null;
+      if (e.type === 'pointercancel') { this.ink.setAttribute('d', ''); return; }
+      if (L.click || L.moved) { this.ink.setAttribute('d', ''); lineMake(L.a, L.b); this.lineA = null; }
+      else { this.lineA = L.a; this.ink.setAttribute('d', ''); }   // a click: wait for the end point
+    };
+    pad.addEventListener('pointerup', lineEnd); pad.addEventListener('pointercancel', lineEnd);
     pad.addEventListener('pointerdown', e => {
       if (e.button !== 0) return; e.preventDefault(); pad.setPointerCapture(e.pointerId); this.closeFly();
       if (this.drawTool === 'erase') { er = { id: e.pointerId, changed: false }; eraseAt(pt(e)); return; }
+      if (this.drawTool === 'line') { const q = linePt(e, this.lineA); ln = { id: e.pointerId, a: this.lineA || q, b: q, moved: false, click: !!this.lineA }; this.lineA = null; linePreview(ln.a, ln.b); return; }
       const D = this.drawSet; this.ink.setAttribute('stroke', D.color); this.ink.setAttribute('stroke-width', D.size); this.ink.setAttribute('opacity', D.opacity);
       this.ink.setAttribute('stroke-dasharray', this.dashArr({ lineW: D.size, dash: D.dash }).join(' '));
       const p0 = D.assist ? node(pt(e)) : pt(e); cur = { id: e.pointerId, start: p0, pts: [p0], anchor: pt(e) }; render(); armHold();
@@ -9969,21 +10191,10 @@ class CoreStudio {
       if (!cur || e.pointerId !== cur.id) return; clearTimeout(cur.timer);
       const P = cur.pts; cur = null; this.ink.setAttribute('d', '');
       if (!P.length) return;
-      const U = this.U(), W = innerWidth, H = innerHeight, sh = this.shift || { x: 0, y: 0 }, D = this.drawSet, pad = Math.max(12, D.size);
-      const sk = { color: D.color, size: D.size, opacity: D.opacity, dash: D.dash };
-      const t = this.items.find(i => i.kind === 'stroke' && i.drawCur && !i.locked && !i.rot);
-      if (t && t.alphaLock && t.strokes.length) sk.clip = true;
-      const all = [{ ...sk, abs: P }];
-      if (t) { const k = t.w / t.w0 * U, kh = t.h / t.h0 * U, left = t.x * W + sh.x - t.w * U / 2, top = t.y * H + sh.y - t.h * U / 2; all.unshift(...t.strokes.map(o => ({ ...o, abs: o.pts.map(([u, v]) => [left + u * k, top + v * kh]) }))); }
-      const xs = all.flatMap(a => a.abs.map(q => q[0])), ys = all.flatMap(a => a.abs.map(q => q[1])), pd = Math.max(pad, ...all.map(a => a.size));
-      const x0 = Math.min(...xs) - pd, y0 = Math.min(...ys) - pd, x1 = Math.max(...xs) + pd, y1 = Math.max(...ys) + pd, w0 = (x1 - x0) / U, h0 = (y1 - y0) / U;
-      const strokes = all.map(a => ({ color: a.color, size: a.size, opacity: a.opacity, dash: a.dash, ...(a.clip ? { clip: true } : {}), pts: a.abs.map(q => [+((q[0] - x0) / U).toFixed(4), +((q[1] - y0) / U).toFixed(4)]) }));
-      const geo = { x: ((x0 + x1) / 2 - sh.x) / W, y: ((y0 + y1) / 2 - sh.y) / H, w: w0, h: h0, w0, h0 };
-      if (t) { Object.assign(t, geo, { strokes }); this.place(t); this.renderLayers(); }
-      else this.addItem('stroke', { decor: true, ...geo, strokes, fill: D.color, opacity: 1, drawCur: true, st: { fillOn: false, lineOn: true, lineW: D.size, dash: D.dash, pattern: 'none', lineColor: D.color }, silent: true });
-      this.commit();
+      const D = this.drawSet; this.addStrokeAbs({ color: D.color, size: D.size, opacity: D.opacity, dash: D.dash }, P);
     };
     pad.addEventListener('pointerup', finish); pad.addEventListener('pointercancel', finish);
+    this.initLineEdit(); this.lineLoop();
   }
   isLightBg() {
     const lum = h => { const m = /^#?([0-9a-f]{6})$/i.exec(h || ''); if (!m) return 0; const n = parseInt(m[1], 16); return (.2126 * (n >> 16) + .7152 * ((n >> 8) & 255) + .0722 * (n & 255)) / 255; };
@@ -10332,6 +10543,7 @@ class CoreStudio {
       { group: 'Tools', label: 'Select (box / lasso)', keys: ['m'], tip: '[data-studio-tool="select"]', run: () => this.setTool(this.tool === 'select' ? 'move' : 'select') },
       { group: 'Tools', label: 'Text', keys: ['t'], tip: '[data-studio-add="text"]', run: press('[data-studio-add="text"]') },
       { group: 'Tools', label: 'Pen', keys: ['p'], tip: '[data-studio-draw]', run: draw('pen') },
+      { group: 'Tools', label: 'Line', keys: ['l'], run: draw('line') },
       { group: 'Tools', label: 'Eraser', keys: ['e'], run: draw('erase') },
       { group: 'Tools', label: 'Shapes', keys: ['s'], tip: '.st-rail [data-flyout="decor"]', run: press('.st-rail [data-flyout="decor"]') },
       { group: 'Tools', label: 'Focus', keys: ['f'], tip: '.st-rail [data-flyout="focus"]', run: press('.st-rail [data-flyout="focus"]') },
@@ -10341,7 +10553,7 @@ class CoreStudio {
       { group: 'Edit', label: 'Copy', keys: ['mod+c'], run: () => { if (String(getSelection()).trim()) return false; const set = targets().filter(i => i.kind !== 'fx'); if (!set.length) return false; this.clip = set.map(snap); this.pasteN = 0; } },
       { group: 'Edit', label: 'Paste', keys: ['mod+v'], run: () => { if (!this.clip || !this.clip.length) return false; this.pasteN = (this.pasteN || 0) + 1; spawn(this.clip, .03 * this.pasteN); } },
       { group: 'Edit', label: 'Duplicate', keys: ['mod+d'], run: () => { const set = targets().filter(i => i.kind !== 'fx'); if (!set.length) return; spawn(set.map(snap), .03); } },
-      { group: 'Edit', label: 'Delete', keys: ['delete', 'backspace'], run: () => { const set = targets(); if (!set.length) return false; if (set.length === 1 && !this.multi.size) this.removeItem(set[0]); else act(set, 'delete'); } },
+      { group: 'Edit', label: 'Delete', keys: ['delete', 'backspace'], run: () => { if (this.lineSel) return this.deleteLine(); const set = targets(); if (!set.length) return false; if (set.length === 1 && !this.multi.size) this.removeItem(set[0]); else act(set, 'delete'); } },
       { group: 'Edit', label: 'Select all', keys: ['mod+a'], run: () => { this.select(null); this.selMode = true; this.multi = new Set(this.items.filter(i => i.kind !== 'fx' && !i.locked && !i.hide).map(i => i.id)); this.multiPlanet = true; this.renderLayers(); } },
       { group: 'Arrange', label: 'Group', keys: ['mod+g'], run: () => { const set = targets(); if (!set.length) return false; this.moveLayers(set, { kind: 'new' }); this.multi.clear(); this.selMode = false; this.renderLayers(); } },
       { group: 'Arrange', label: 'Ungroup', keys: ['mod+shift+g'], run: () => { const ids = new Set(targets().map(i => i.group).filter(g => g != null)); if (!ids.size) return false; this.items.forEach(i => { if (ids.has(i.group)) i.group = null; }); this.groups = this.groups.filter(g => !ids.has(g.id)); this.renderLayers(); this.commit(); } },
@@ -10681,7 +10893,7 @@ class CoreStudio {
   }
   lockItem(it, on) { it.locked = on; this.place(it); this.select(it); this.renderLayers(); this.commit(); }
   removeItem(it, quiet) {
-    it.el.remove(); this.items = this.items.filter(i => i !== it); this.multi.delete(it.id); this.renderLayers();
+    it.el.remove(); this.items = this.items.filter(i => i !== it); this.multi.delete(it.id); if (this.lineSel && this.lineSel.it === it) this.lineSel = null; if (this._movers) this._movers.delete(it); this.renderLayers();
     if (it.kind === 'fx' && !this.restoring && !this.fxSyncing) this.fxOff(it.fxType);
     if (this.sel === it) this.select(null);
     if (!quiet || it.kind !== 'text') this.updateFocus();
@@ -10702,7 +10914,7 @@ class CoreStudio {
   redo() { if (this.hi < this.hist.length - 1) { this.hi++; this.restore(this.hist[this.hi]); } }
   restore(json) {
     const d = JSON.parse(json); this.restoring = true;
-    this.select(null); this.multi.clear(); this.multiPlanet = false; this.selMode = false; this.items.slice().forEach(it => this.removeItem(it, true));
+    this.select(null); this.lineSel = null; this.multi.clear(); this.multiPlanet = false; this.selMode = false; this.items.slice().forEach(it => this.removeItem(it, true));
     Object.assign(this, d.s); this.vx = this.vy = 0; this.groups = this.groups || []; this.gridStyle = this.gridStyle || { auto: true, c: '#ffffff', a: .25, t: 1, n: 24 }; if (this.syncGridUI) this.syncGridUI(); this.setGridMode(this.gridMode || 'always'); Object.assign(this.layers, d.layers); d.core.forEach((v, i) => { this.coreLayers[i] = v; });
     d.items.forEach(o => this.addItem(o.kind, { ...o, silent: true }));
     const v = { '[data-studio-background]': this.background, '[data-studio-bg-a]': this.bgA, '[data-studio-bg-b]': this.bgB, '[data-studio-angle]': this.angle, '[data-studio-grid]': this.grid,
