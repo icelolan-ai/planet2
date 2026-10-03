@@ -12604,6 +12604,24 @@ class App {
 }
 
 const app = new App();
+/* A cached copy of the page can keep running an older build for a long time on tablets. Check the published page for a newer build and offer a reload (never reloads by itself). */
+{
+  const mine = window.__ASSETS && window.__ASSETS.build; let shown = false, last = 0;
+  const check = async () => {
+    if (!mine || shown || document.hidden || Date.now() - last < 60000) return; last = Date.now();
+    try {
+      const r = await fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return;
+      const m = /"build":\s*"([^"]+)"/.exec(await r.text()); if (!m || m[1] === mine) return;
+      shown = true; const bar = document.createElement('div'); bar.setAttribute('role', 'alert');
+      bar.style.cssText = 'position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);transform:translateX(-50%);z-index:100001;display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:16px;background:#1c2029f2;color:#fff;font:600 13px system-ui,sans-serif;box-shadow:0 10px 30px #0008;max-width:calc(100vw - 16px)';
+      bar.innerHTML = '<span>A newer version is available.</span><button type="button" style="min-height:40px;padding:0 14px;border:0;border-radius:12px;background:linear-gradient(135deg,#7c5cff,#ff4655);color:#fff;font:700 13px system-ui">Reload</button><button type="button" aria-label="Dismiss" style="min-height:40px;min-width:40px;border:0;border-radius:12px;background:#ffffff1c;color:#fff;font:700 15px system-ui">✕</button>';
+      const [go, no] = bar.querySelectorAll('button');
+      go.onclick = () => { try { const st = window.__cerebra && window.__cerebra.studio; if (st && st.draftNow) st.draftNow(); } catch (e) {} setTimeout(() => location.reload(), 250); };
+      no.onclick = () => bar.remove(); document.body.append(bar);
+    } catch (e) {}
+  };
+  setTimeout(check, 8000); setInterval(check, 120000); document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+}
 window.__cerebra = app;
 app.init().catch(err => {
   console.error(err);

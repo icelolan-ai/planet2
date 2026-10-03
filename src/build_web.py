@@ -130,6 +130,7 @@ for w in worlds:
     manifest['sizes'][w['id']] = os.path.getsize(os.path.join(SRC, 'worlds', w['id'] + '.glb'))
 vendor_url = emit('', 'vendor', 'js', vendor.encode())
 app_url = emit('', 'app', 'js', minify_js(app_src))
+manifest['build'] = app_url   # lets the running page notice that a newer build has been published
 
 # A tiny bootstrap fetches the two scripts with byte progress (the loader's first ~55% is the real download),
 # then runs them in order. If streaming fails it falls back to plain script tags.
