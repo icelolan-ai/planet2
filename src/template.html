@@ -1618,6 +1618,7 @@ html.has-cursor body.atelier-on .atelier-spin:active{cursor:grabbing!important}
 .atelier-copy button{border-color:var(--a);color:var(--a)}
 .atelier-copy .atelier-actions{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
 .atelier-copy .atelier-studio{border-color:#72d9dd;color:#a8eff0}
+.atelier-copy .atelier-del{border-color:#ff6b78;color:#ffb0b6}
 .atelier-copy button:hover,.atelier-copy button:focus-visible{background:#1c2632;outline:2px solid currentColor;outline-offset:2px}
 .atelier-copy .w>span{opacity:1}.atelier-stop.is-current .atelier-copy .w>span{animation:gateway-word .01s linear both;animation-delay:calc(var(--i) * 55ms + 230ms)}
 .atelier-stop.is-current .atelier-copy .w::after{animation:valwipe .4s cubic-bezier(.7,0,.2,1) both;animation-delay:calc(var(--i) * 55ms + 30ms)}
@@ -7763,6 +7764,7 @@ function netBackdrop() {
 const PLANETS = {
   KEY: 'cerebra.planets.v1',
   list() { try { const l = JSON.parse(localStorage.getItem(this.KEY) || '[]'); return Array.isArray(l) ? l : []; } catch (e) { return []; } },
+  remove(id) { const l = this.list().filter(p => p.id !== id); try { localStorage.setItem(this.KEY, JSON.stringify(l)); } catch (e) { return false; } return true; },
   add(p) { const l = this.list(); l.unshift(p); try { localStorage.setItem(this.KEY, JSON.stringify(l.slice(0, 12))); } catch (e) { return false; } return true; },
   fx(studio) { const t = studio && studio.coreFxObj && studio.coreFxObj(), o = {}; if (t) Object.keys(t.tune).forEach(k => { if (/^[sb]_/.test(k)) o[k] = t.tune[k]; }); return o; },
   show(studio, snap, fx) {   // put a planet's look on the core (not persisted)
@@ -7877,7 +7879,7 @@ class WorldAtelier {
     const S = this.S, stages = this.stops;
     this.track.innerHTML = stages.map((d, i) => `<article class="atelier-stop" style="--a:${esc(d.accent)};--val:${esc(d.accent)}" aria-label="${esc(d.name)}">
       ${i > S ? `<div class="atelier-spin" data-at-spin="${i}" aria-label="Drag to rotate ${esc(d.name)}" hidden></div>` : ''}
-      <div class="atelier-copy"><b>${i < S ? 'Yours' : i === S ? 'Core' : 'World ' + String(i - S).padStart(2, '0')} / ${String(stages.length).padStart(2, '0')}</b><h2 aria-label="${esc(d.name)}">${d.name.split(' ').map((word, wi) => `<span class="atelier-word">${Array.from(word).map((ch, k) => `<span class="ch" aria-hidden="true" style="--i:${wi + k}">${esc(ch)}</span>`).join('')}</span>`).join(' ')}</h2><p>${esc(d.kicker)} · ${esc(d.lede)}</p><div class="atelier-actions"><button type="button" data-at-tune="${i}">Tune ${i > S ? 'this world' : 'the core'} →</button><button type="button" class="atelier-studio" data-at-studio="${i}">Studio mode →</button></div></div>
+      <div class="atelier-copy"><b>${i < S ? 'Yours' : i === S ? 'Core' : 'World ' + String(i - S).padStart(2, '0')} / ${String(stages.length).padStart(2, '0')}</b><h2 aria-label="${esc(d.name)}">${d.name.split(' ').map((word, wi) => `<span class="atelier-word">${Array.from(word).map((ch, k) => `<span class="ch" aria-hidden="true" style="--i:${wi + k}">${esc(ch)}</span>`).join('')}</span>`).join(' ')}</h2><p>${esc(d.kicker)} · ${esc(d.lede)}</p><div class="atelier-actions"><button type="button" data-at-tune="${i}">Tune ${i > S ? 'this world' : 'the core'} →</button><button type="button" class="atelier-studio" data-at-studio="${i}">Studio mode →</button>${i < S ? `<button type="button" class="atelier-del" data-at-del="${i}">Delete this planet</button>` : ''}</div></div>
     </article>`).join('');
     this.spinTargets = [...this.track.querySelectorAll('[data-at-spin]')];
     this.dots.innerHTML = stages.map((d, i) => `<button type="button" role="tab" data-rail="${i}" data-name="${esc(d.name)}" aria-label="${esc(d.name)}" style="--c:${esc(d.accent)}"><i></i></button>`).join('');
@@ -7890,6 +7892,14 @@ class WorldAtelier {
       else WorldTune.open(true, 'world');
     }));
     this.track.querySelectorAll('[data-at-studio]').forEach(b => b.addEventListener('click', () => this.openStudio(+b.dataset.atStudio)));
+    // Saved planets can be removed here: the first tap arms the button, a second tap within 3 s deletes.
+    this.track.querySelectorAll('[data-at-del]').forEach(b => b.addEventListener('click', () => {
+      const i = +b.dataset.atDel, p = this.planets[i]; if (!p) return;
+      if (!b.dataset.armed) { b.dataset.armed = '1'; b.dataset.txt = b.textContent; b.textContent = `Tap again to delete “${p.name}”`; setTimeout(() => { if (b.isConnected && b.dataset.armed) { delete b.dataset.armed; b.textContent = b.dataset.txt; } }, 3000); return; }
+      if (!PLANETS.remove(p.id)) { b.textContent = 'Could not delete (storage blocked)'; return; }
+      this.build(); const k = Math.min(i, this.S); this.coreShown = null;
+      this.track.scrollTo({ top: k * this.track.clientHeight, behavior: 'instant' }); this.select(k); this.showCore(k);
+    }));
   }
   // The core is shared by the saved planets and Cerebra, so swap its look when the stop on screen changes.
   showCore(i) {
