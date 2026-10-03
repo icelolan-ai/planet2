@@ -931,6 +931,8 @@ body.studio-on #studio{display:block}
 .studio-panel .studio-two label{display:grid;gap:6px;font:11px var(--f-sans);color:#aab3c4}
 .studio-preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .st-moods{margin-bottom:10px}
+#studio .st-layers>li:not(.is-drag){transition:transform .2s cubic-bezier(.3,.7,.2,1)}
+#studio .st-layers>li.is-drag{transition:none;z-index:3;position:relative;box-shadow:0 12px 28px #0009}
 .st-save-video{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.14)}
 .st-save-video small{flex:1 1 100%;font-size:11px;opacity:.7;line-height:1.35}
 #studio .st-rec{position:fixed;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);z-index:100000;display:flex;align-items:center;gap:12px;padding:8px 10px 8px 16px;border-radius:999px;background:#10131ae6;color:#fff;font:700 13px var(--f-mono,monospace);pointer-events:auto;box-shadow:0 8px 24px #0008}
@@ -10679,33 +10681,52 @@ class CoreStudio {
       li.addEventListener('pointerup', () => { sw = null; }); li.addEventListener('pointercancel', () => { sw = null; });
       const grip = li.querySelector('.st-grip');
       // Restacking: drag from the ⋮⋮ grip, or from any empty part of the row (mouse: drag up/down; touch: press and hold, then drag).
+      const scroller = () => { for (let n = ul; n && n !== document.body; n = n.parentElement) { const o = getComputedStyle(n).overflowY; if ((o === 'auto' || o === 'scroll') && n.scrollHeight > n.clientHeight + 1) return n; } return ul.closest('.st-layers-tray') || ul; };
       const startDrag = (e, cap) => {
         cap.setPointerCapture(e.pointerId);
-        const set = this.multi.has(it.id) ? this.items.filter(i => this.multi.has(i.id)) : [it];
-        this.dragLayer = { id: e.pointerId, y: e.clientY, li, it, set, target: null };
+        const set = this.multi.has(it.id) ? this.items.filter(i => this.multi.has(i.id)) : [it], sc = scroller();
+        const d = this.dragLayer = { id: e.pointerId, y: e.clientY, cy: e.clientY, li, it, set, target: null, sc, s0: sc.scrollTop, raf: 0 };
         li.classList.add('is-drag'); if (set.length > 1) li.dataset.n = set.length;
         const z = document.createElement('li'); z.className = 'st-newgroup-zone'; z.textContent = 'Drop here → new group'; ul.append(z);
         if (navigator.vibrate) try { navigator.vibrate(8); } catch (x) {}
-      };
-      const moveDrag = e => {
-        const d = this.dragLayer; if (!d || d.id !== e.pointerId) return;
-        li.style.transform = `translateY(${e.clientY - d.y}px)`;
-        ul.querySelectorAll('.is-drop-in,.is-drop-above,.is-drop-below').forEach(n => n.classList.remove('is-drop-in', 'is-drop-above', 'is-drop-below'));
-        d.target = null;
-        for (const n of ul.children) {
-          if (n === li) continue; const r = n.getBoundingClientRect();
-          if (e.clientY >= r.top && e.clientY <= r.bottom) {
+        // The dragged row follows the finger, the other rows slide out of the way, and the list scrolls when the finger nears its top or bottom edge.
+        d.sync = () => {
+          li.style.transform = `translateY(${d.cy - d.y + (sc.scrollTop - d.s0)}px)`;
+          ul.querySelectorAll('.is-drop-in,.is-drop-above,.is-drop-below').forEach(n => n.classList.remove('is-drop-in', 'is-drop-above', 'is-drop-below'));
+          d.target = null; const kids = [...ul.children]; let hit = null;
+          for (const n of kids) { if (n === li) continue; const r = n.getBoundingClientRect(), top = r.top - (n._sh || 0), bot = r.bottom - (n._sh || 0); if (d.cy >= top && d.cy <= bot) { hit = { n, top, bot }; break; } }
+          if (!hit) {   // above the first row / below the last one still counts (the finger is over the list's header while it auto-scrolls)
+            const rows = kids.filter(n => n !== li && !n.classList.contains('st-newgroup-zone')), f = rows[0], l = rows[rows.length - 1];
+            if (f && d.cy < f.getBoundingClientRect().top - (f._sh || 0)) hit = { n: f, top: -1e9, bot: -1e9 + 1 };
+            else if (l && d.cy > l.getBoundingClientRect().bottom - (l._sh || 0) + 4) hit = { n: l, top: 1e9, bot: 1e9 + 1 };
+          }
+          let p = null;
+          if (hit) {
+            const n = hit.n;
             if (n.classList.contains('st-newgroup-zone')) { n.classList.add('is-drop-in'); d.target = { kind: 'new' }; }
             else if (n.classList.contains('st-ghead')) { n.classList.add('is-drop-in'); d.target = { kind: 'group', id: +n.dataset.gid }; }
-            else if (n.dataset.layer != null) { const t = this.items[+n.dataset.layer]; if (d.set.includes(t)) break; const above = e.clientY < r.top + r.height / 2; n.classList.add(above ? 'is-drop-above' : 'is-drop-below'); d.target = { kind: 'row', it: t, above }; }
-            break;
+            else if (n.dataset.layer != null) { const t = this.items[+n.dataset.layer]; if (!d.set.includes(t)) { const above = d.cy < hit.top + (hit.bot - hit.top) / 2; n.classList.add(above ? 'is-drop-above' : 'is-drop-below'); d.target = { kind: 'row', it: t, above }; p = kids.indexOf(n) + (above ? 0 : 1); } }
           }
-        }
+          const s0 = kids.indexOf(li), nx = kids[s0 + 1], gap = nx && !nx.classList.contains('st-newgroup-zone') ? Math.max(0, nx.offsetTop - li.offsetTop - li.offsetHeight) : 8, h = li.offsetHeight + gap;
+          kids.forEach((n, i) => {
+            if (n === li || n.classList.contains('st-newgroup-zone')) return;
+            let sh = 0; if (p != null) { if (p <= s0 && i >= p && i < s0) sh = h; else if (p > s0 + 1 && i > s0 && i < p) sh = -h; }
+            if ((n._sh || 0) !== sh) { n._sh = sh; n.style.transform = sh ? `translateY(${sh}px)` : ''; }
+          });
+        };
+        const loop = () => {
+          if (this.dragLayer !== d) return; const r = sc.getBoundingClientRect(), edge = Math.min(64, r.height / 4); let v = 0;
+          if (d.cy < r.top + edge) v = -(r.top + edge - d.cy) / edge; else if (d.cy > r.bottom - edge) v = (d.cy - (r.bottom - edge)) / edge;
+          if (v) { sc.scrollTop += Math.max(-1, Math.min(1, v)) * 16; d.sync(); }
+          d.raf = requestAnimationFrame(loop);
+        };
+        d.raf = requestAnimationFrame(loop);
       };
+      const moveDrag = e => { const d = this.dragLayer; if (!d || d.id !== e.pointerId) return; d.cy = e.clientY; d.sync(); };
       const drop = e => {
-        const d = this.dragLayer; if (!d || d.id !== e.pointerId) return; this.dragLayer = null;
-        li.classList.remove('is-drag'); li.style.transform = ''; delete li.dataset.n; ul.querySelector('.st-newgroup-zone')?.remove();
-        const t = d.target, moved = Math.abs(e.clientY - d.y) > 6;
+        const d = this.dragLayer; if (!d || d.id !== e.pointerId) return; this.dragLayer = null; cancelAnimationFrame(d.raf);
+        li.classList.remove('is-drag'); li.style.transform = ''; delete li.dataset.n; ul.querySelector('.st-newgroup-zone')?.remove(); [...ul.children].forEach(n => { n._sh = 0; n.style.transform = ''; });
+        const t = d.target, moved = Math.abs(e.clientY - d.y) > 6 || Math.abs(d.sc.scrollTop - d.s0) > 6;
         this.swiped = true; setTimeout(() => { this.swiped = false; }, 350);   // the tap that ends a drag must not also select the row
         if (t && moved) this.moveLayers(d.set, t);
         this.renderLayers();
