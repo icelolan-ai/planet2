@@ -1803,6 +1803,22 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio [data-kit-panel] .st-chip svg{width:22px;height:22px;overflow:visible;pointer-events:none}
 #studio [data-kit-panel] .st-chip[aria-pressed=true]{background:linear-gradient(150deg,#ff6b78,#e8364a);border-color:transparent;color:#fff;box-shadow:0 0 14px #ff465566}
 #studio [data-kit-panel] .st-kit-shuffle{min-height:42px;border-radius:14px;margin-top:2px}
+.st-xf{position:fixed;z-index:8;pointer-events:none;border:1.5px solid #8b5cf6aa;box-sizing:border-box}
+.st-xf[hidden]{display:none}
+.st-xf-h,.st-xf-e{position:absolute;pointer-events:auto;touch-action:none;background:#fff;border:2px solid #8b5cf6;box-shadow:0 2px 8px #0008;box-sizing:border-box}
+.st-xf-h{width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:5px}
+.st-xf-h::after{content:"";position:absolute;inset:-12px}
+.st-xf-h[data-xc=tl]{left:0;top:0;cursor:nwse-resize}.st-xf-h[data-xc=br]{left:100%;top:100%;cursor:nwse-resize}
+.st-xf-h[data-xc=tr]{left:100%;top:0;cursor:nesw-resize}.st-xf-h[data-xc=bl]{left:0;top:100%;cursor:nesw-resize}
+.st-xf-e{display:none;border-radius:99px}
+.st-xf.has-edges .st-xf-e{display:block}
+.st-xf-e[data-xe=l],.st-xf-e[data-xe=r]{width:8px;height:22px;margin:-11px 0 0 -4px;top:50%;cursor:ew-resize}
+.st-xf-e[data-xe=l]{left:0}.st-xf-e[data-xe=r]{left:100%}
+.st-xf-e[data-xe=t],.st-xf-e[data-xe=b]{width:22px;height:8px;margin:-4px 0 0 -11px;left:50%;cursor:ns-resize}
+.st-xf-e[data-xe=t]{top:0}.st-xf-e[data-xe=b]{top:100%}
+.st-xf-e::after{content:"";position:absolute;inset:-10px}
+@media(pointer:coarse){.st-xf-h{width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:8px}.st-xf-h::after{inset:-10px}}
+#studio .st-shape.is-selected:not(.is-locked) .st-handle,#studio .st-handle{display:none!important}
 #studio .st-glassbox{position:absolute;pointer-events:none}
 /* Surface style panel */
 #studio .st-off{opacity:.36;filter:grayscale(1);pointer-events:none;transition:opacity .2s}
@@ -9181,7 +9197,7 @@ class CoreStudio {
       this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioTool === this.tool && !this.drawing))); if (this.tool === 'hand' || this.tool === 'select') this.select(null); };
     this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.onclick = () => this.setTool(b.dataset.studioTool));
     this.el.querySelector('[data-studio-draw]').addEventListener('click', () => { if (this.drawing) { this.tool = 'move'; this.el.classList.remove('tool-hand'); } this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(!this.drawing && b.dataset.studioTool === this.tool))); });
-    this.initShortcuts(); this.initMarquee(); this.initMood(); this.initPicker(); this.initZoom(); this.initSafety(); this.initPickThrough();
+    this.initShortcuts(); this.initMarquee(); this.initXform(); this.initMood(); this.initPicker(); this.initZoom(); this.initSafety(); this.initPickThrough();
     this.el.querySelector('[data-flyout="style"]').addEventListener('pointerdown', e => e.stopPropagation());
     this.el.querySelector('[data-studio-effect]').onchange = e => { this.effect = e.target.value; this.syncFxLayers(); this.el.querySelector('[data-studio-fx]').setAttribute('aria-pressed', String(this.fxOn)); this.commit(); };
     this.el.querySelector('[data-studio-grid]').onchange = e => { this.grid = e.target.checked; this.gridMode = this.grid ? 'always' : 'off'; this.setGridMode(this.gridMode); this.paintBackground(); };
@@ -9730,11 +9746,13 @@ class CoreStudio {
     this.place(it);
   }
   zoomStep(f) {
+    const xs = this.xfMulti(); if (xs) { this.xfScale(xs, f); return true; }
     const t = this.zoomTargets();
     if (t) { if (!t.length) return false; t.forEach(i => this.setScaleOf(i, this.scaleOf(i) * f)); this.updateFocus && this.updateFocus(); this.updateRotHandle && this.updateRotHandle(); this.renderLayers(); this.commit(); this.syncZoom(); return true; }
     const b = PlanetBody.active; if (!b || !this.active) return false; b.setView(b.zoomT * f); this.syncZoom(); return true;
   }
   zoomTo(pct, final) {
+    const xs = this.xfMulti(); if (xs) { const t0 = this.zoomTargets(), k = t0 && t0.length ? this.scaleOf(t0[0]) : (PlanetBody.active ? PlanetBody.active.zoomT : 1); this.xfScale(xs, pct / 100 / (k || 1), final); return; }
     const t = this.zoomTargets();
     if (t) { t.forEach(i => this.setScaleOf(i, pct / 100)); this.updateFocus && this.updateFocus(); this.updateRotHandle && this.updateRotHandle(); if (final) { this.renderLayers(); this.commit(); } this.syncZoom(); return; }
     const b = PlanetBody.active; if (b) b.setView(pct / 100); this.syncZoom();
@@ -11123,6 +11141,78 @@ class CoreStudio {
     addEventListener('keyup', e => { if (e.key === ' ' && held) { held = false; e.preventDefault(); this.setTool(before || 'move'); before = null; } }, true);
     addEventListener('blur', () => { if (held) { held = false; this.setTool(before || 'move'); } });
   }
+  // ---- Canva-style corner handles: scale one thing, several things, or Cerebra about the opposite corner.
+  xfSet() {
+    if (!this.active || this.drawing || this.tool === 'hand') return null;
+    let items = [], planet = false;
+    if (this.multi.size || this.multiPlanet) { items = this.items.filter(i => this.multi.has(i.id) && i.kind !== 'fx' && !i.locked && !this.isHid(i)); planet = !!this.multiPlanet; }
+    else if (this.sel && this.sel.kind !== 'fx') items = this.sel.locked || this.isHid(this.sel) ? [] : [this.sel];
+    else if (this.sel && this.sel.fxType === 'planet') planet = true;
+    return items.length || planet ? { items, planet } : null;
+  }
+  xfMulti() { const x = this.xfSet(); return x && x.items.length + (x.planet ? 1 : 0) > 1 ? x : null; }
+  xfBox(x) {
+    let L = Infinity, T = Infinity, R = -Infinity, B = -Infinity;
+    x.items.forEach(i => { const r = i.el.getBoundingClientRect(); if (r.width || r.height) { L = Math.min(L, r.left); T = Math.min(T, r.top); R = Math.max(R, r.right); B = Math.max(B, r.bottom); } });
+    const c = x.planet && this.planetCircle ? this.planetCircle() : null;
+    if (c) { L = Math.min(L, c.x - c.r); T = Math.min(T, c.y - c.r); R = Math.max(R, c.x + c.r); B = Math.max(B, c.y + c.r); }
+    return isFinite(L) ? { L, T, R, B } : null;
+  }
+  xfSnap(x) {
+    const sn = { items: x.items.map(i => { const r = i.el.getBoundingClientRect(); return { i, s0: this.scaleOf(i), cx: r.left + r.width / 2, cy: r.top + r.height / 2 }; }) };
+    const P = PlanetBody.active; if (x.planet && P) sn.planet = { z0: P.zoomT, c: this.planetCircle ? this.planetCircle() : null, px: this.x, py: this.y };
+    return sn;
+  }
+  xfApply(sn, f, ax, ay) {
+    sn.items.forEach(o => {
+      this.setScaleOf(o.i, o.s0 * f); const tx = ax + (o.cx - ax) * f, ty = ay + (o.cy - ay) * f, r = o.i.el.getBoundingClientRect();
+      o.i.x += (tx - (r.left + r.width / 2)) / innerWidth; o.i.y += (ty - (r.top + r.height / 2)) / innerHeight; this.place(o.i);
+    });
+    const pl = sn.planet, P = PlanetBody.active;
+    if (pl && P) {
+      P.setView(pl.z0 * f); const f2 = P.zoomT / pl.z0;
+      if (pl.c && this.subject < 0) { const a = this.app, dx = ax + (pl.c.x - ax) * f2 - pl.c.x, dy = ay + (pl.c.y - ay) * f2 - pl.c.y; this.x = pl.px + dx * 2 * a.rig.halfWidth / a.stage.width; this.y = pl.py - dy * 2 * a.rig.halfHeight / a.stage.height; this.vx = this.vy = 0; }
+    }
+    this.updateFocus(); this.updateRotHandle && this.updateRotHandle(); if (this.updateMultiUI) this.updateMultiUI(); this.updateXf(); this.syncZoom();
+  }
+  xfScale(x, f, final = true) {
+    const b = this.xfBox(x); if (!b) return; const sn = this.xfSnap(x);
+    this.xfApply(sn, f, (b.L + b.R) / 2, (b.T + b.B) / 2); if (final) { this.renderLayers(); this.commit(); }
+  }
+  initXform() {
+    const box = this.xfEl = document.createElement('div'); box.className = 'st-xf'; box.hidden = true;
+    box.innerHTML = ['tl', 'tr', 'bl', 'br'].map(c => `<span class="st-xf-h" data-xc="${c}" aria-hidden="true"></span>`).join('') + ['l', 'r', 't', 'b'].map(c => `<span class="st-xf-e" data-xe="${c}" aria-hidden="true"></span>`).join('');
+    this.el.append(box);
+    box.addEventListener('pointerdown', e => {
+      const h = e.target.closest('[data-xc],[data-xe]'); if (!h) return;
+      e.preventDefault(); e.stopPropagation();
+      const x = this.xfSet(), b = x && this.xfBox(x); if (!b) return;
+      const edge = h.dataset.xe, corner = h.dataset.xc, id = e.pointerId; h.setPointerCapture(id);
+      let move;
+      if (corner) {
+        const opp = { tl: [b.R, b.B], tr: [b.L, b.B], bl: [b.R, b.T], br: [b.L, b.T] }[corner], cor = { tl: [b.L, b.T], tr: [b.R, b.T], bl: [b.L, b.B], br: [b.R, b.B] }[corner];
+        const vx = cor[0] - opp[0], vy = cor[1] - opp[1], len2 = vx * vx + vy * vy || 1, sn = this.xfSnap(x);
+        move = ev => { const f = clamp(((ev.clientX - opp[0]) * vx + (ev.clientY - opp[1]) * vy) / len2, .08, 12); this.xfApply(sn, f, opp[0], opp[1]); };
+      } else {
+        const it = x.items[0], U = this.U(), W = innerWidth, H = innerHeight, w0 = it.w, h0 = it.h, x0 = it.x, y0 = it.y, px = e.clientX, py = e.clientY;
+        move = ev => {
+          if (edge === 'l' || edge === 'r') { const d = (ev.clientX - px) / U * (edge === 'l' ? -1 : 1), nw = clamp(w0 + d, .04, 3), dd = nw - w0; it.w = nw; it.x = x0 + dd * U / 2 / W * (edge === 'l' ? -1 : 1); }
+          else { const d = (ev.clientY - py) / U * (edge === 't' ? -1 : 1), nh = clamp(h0 + d, .04, 3), dd = nh - h0; it.h = nh; it.y = y0 + dd * U / 2 / H * (edge === 't' ? -1 : 1); }
+          this.place(it); this.updateFocus(); this.updateRotHandle && this.updateRotHandle(); this.updateXf();
+        };
+      }
+      let moved = false;
+      const mv = ev => { if (ev.pointerId !== id) return; moved = true; move(ev); };
+      const up = ev => { if (ev.pointerId !== id) return; h.removeEventListener('pointermove', mv); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up); if (moved) { this.renderLayers(); this.commit(); } };
+      h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+    });
+    this.updateXf = () => {
+      const x = this.xfSet(), edit = this.el.classList.contains('st-typing') || (x && x.items.length === 1 && x.items[0].el.isContentEditable), b = x && !edit && !this.groupDrag && !this.itemDrag?.moved ? this.xfBox(x) : null;
+      if (!b) { box.hidden = true; return; }
+      box.hidden = false; Object.assign(box.style, { left: b.L + 'px', top: b.T + 'px', width: (b.R - b.L) + 'px', height: (b.B - b.T) + 'px' });
+      const free = x.items.length === 1 && !x.planet && x.items[0].kind !== 'text' && !x.items[0].rot; box.classList.toggle('has-edges', free);
+    };
+  }
   // ---- S3: marquee / lasso selection that can include the planet, group move, and the multi-selection bar.
   initMarquee() {
     const app = this.app, canvas = this.catcher, mk = (tag, cls, html) => { const n = document.createElement(tag); n.className = cls; if (html) n.innerHTML = html; n.hidden = true; this.el.append(n); return n; };
@@ -11431,7 +11521,8 @@ class CoreStudio {
   }  // Undo/redo: whole-composition snapshots (items, shape blur and the look settings).
   snapshot(extra) {
     const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'grain', 'grainAmt', 'cpts', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides', 'groups', 'gridStyle', 'focusInv', 'focusScene', 'focusText', 'focusObj', 'x', 'y'];
-    return JSON.stringify({ s: Object.fromEntries(keys.map(k => [k, this[k]])), layers: this.layers, core: this.coreLayers,
+    const P = typeof PlanetBody !== 'undefined' && PlanetBody.active;
+    return JSON.stringify({ pz: P ? +P.zoomT.toFixed(3) : undefined, s: Object.fromEntries(keys.map(k => [k, this[k]])), layers: this.layers, core: this.coreLayers,
       items: this.items.map(({ el, id, ...rest }) => rest), ...extra });
   }
   commit(extra) {
@@ -11458,6 +11549,7 @@ class CoreStudio {
   restore(json) {
     const d = JSON.parse(json); this.restoring = true;
     this.select(null); this.lineSel = null; this.multi.clear(); this.multiPlanet = false; this.selMode = false; this.items.slice().forEach(it => this.removeItem(it, true));
+    if (d.pz != null && PlanetBody.active) PlanetBody.active.setView(d.pz);
     Object.assign(this, d.s); this.vx = this.vy = 0; this.groups = this.groups || []; this.gridStyle = this.gridStyle || { auto: true, c: '#ffffff', a: .25, t: 1, n: 24 }; if (this.syncGridUI) this.syncGridUI(); this.setGridMode(this.gridMode || 'always'); Object.assign(this.layers, d.layers); d.core.forEach((v, i) => { this.coreLayers[i] = v; });
     d.items.forEach(o => this.addItem(o.kind, { ...o, silent: true }));
     const v = { '[data-studio-background]': this.background, '[data-studio-bg-a]': this.bgA, '[data-studio-bg-b]': this.bgB, '[data-studio-angle]': this.angle, '[data-studio-grid]': this.grid,
@@ -11777,6 +11869,7 @@ class CoreStudio {
     { const Wp = a.stage.width, Hp = a.stage.height, px = { xf: (this.planetBase.x + this.x) / (2 * hw) + .5 + (this.shift ? this.shift.x : 0) / innerWidth, yf: .5 - (this.planetBase.y + this.y) / (2 * hh) + (this.shift ? this.shift.y : 0) / innerHeight, rf: this.planetR / (2 * hw) }, o = this.planetPx;
       if (!o || Math.abs(o.xf - px.xf) * Wp > .5 || Math.abs(o.yf - px.yf) * Hp > .5 || Math.abs(o.rf - px.rf) * Wp > .5) { this.planetPx = px; if (this.shadow > 0) this.paintBackground(); } }
     if (this.updateMultiUI) this.updateMultiUI();
+    if (this.updateXf) this.updateXf();
     this.paintVfx();
     if (this.rec) this.recFrame(performance.now());   // composite this frame for the video (the 3D canvas is only readable right after it was drawn)
     if (a.cap) a.captureStep();
