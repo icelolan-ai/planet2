@@ -10327,7 +10327,7 @@ class CoreStudio {
     const A = (dx, dy, big) => () => nudge(dx * (big ? 10 : 1), dy * (big ? 10 : 1));
     this.sc = { targets, spawn, snap, act };
     this.SHORTCUTS = [
-      { group: 'Tools', label: 'Move', keys: ['v'], tip: '[data-studio-tool="move"]', run: () => this.setTool('move') },
+      { group: 'Tools', label: 'Move (drag empty space to select)', keys: ['v'], tip: '[data-studio-tool="move"]', run: () => this.setTool('move') },
       { group: 'Tools', label: 'Hand (turn the planet)', keys: ['h'], tip: '[data-studio-tool="hand"]', run: () => this.setTool('hand') },
       { group: 'Tools', label: 'Select (box / lasso)', keys: ['m'], tip: '[data-studio-tool="select"]', run: () => this.setTool(this.tool === 'select' ? 'move' : 'select') },
       { group: 'Tools', label: 'Text', keys: ['t'], tip: '[data-studio-add="text"]', run: press('[data-studio-add="text"]') },
