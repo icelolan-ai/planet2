@@ -939,6 +939,16 @@ body.studio-on #studio{display:block}
 .studio-panel .studio-two label{display:grid;gap:6px;font:11px var(--f-sans);color:#aab3c4}
 .studio-preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .st-moods{margin-bottom:10px}
+#studio .st-layers{grid-template-columns:minmax(0,1fr)}
+#studio .st-layers>li{min-width:0;box-sizing:border-box;max-width:100%}
+#studio .st-layers>li>:is(button,.st-gcount){flex:none}
+#studio .st-ghead{overflow:hidden}
+#studio .st-layers :is(.st-layer,.st-ghead) .st-eye{width:28px!important;min-width:28px!important}
+#studio .st-layers .st-ghead{gap:4px;padding:6px 6px}
+#studio .st-layers .st-lname{min-width:20px}
+#studio .st-layers .st-layer.in-group{margin-left:8px}
+#studio .st-layers .st-ghead .st-lname{min-width:28px}
+#studio .st-layers .st-ghead .st-gcount{flex:none;margin:0 2px}
 #studio .st-layers>li:not(.is-drag){transition:transform .2s cubic-bezier(.3,.7,.2,1)}
 #studio .st-layers>li.is-drag{transition:none;z-index:3;position:relative;box-shadow:0 12px 28px #0009}
 .st-save-video{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.14)}
