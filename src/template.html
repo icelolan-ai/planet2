@@ -9229,6 +9229,7 @@ class CoreStudio {
       if (this.beginCanvasPress && this.beginCanvasPress(e)) return;
       this.select(null);
       if (this.tool !== 'hand' && this.subject < 0 && !app.hitCore(e.clientX, e.clientY)) return;
+      if (this.tool !== 'hand' && this.onPlanet(e.clientX, e.clientY)) { const pl = this.fxItem('planet'); if (pl) this.select(pl); }   // pressing Cerebra selects it (ring + its row in Layers), then dragging moves it
       e.preventDefault(); canvas.setPointerCapture(e.pointerId);
       this.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
       this.vx = this.vy = 0;
@@ -10955,7 +10956,11 @@ class CoreStudio {
     this.updateMultiUI = () => {
       const act = this.active && has() && !this.drawing && this.tool !== 'hand';
       this.items.forEach(i => i.el.classList.toggle('is-multi', !!act && this.multi.has(i.id)));
-      if (!act) { ring.hidden = box.hidden = bar.hidden = true; return; }
+      if (!act) {
+        const pl = this.active && this.sel && this.sel.fxType === 'planet' && !this.drawing && this.tool !== 'hand' && !has() ? planetCircle() : null;   // a single selected planet shows just its ring
+        ring.hidden = !pl; if (pl) Object.assign(ring.style, { left: (pl.x - pl.r) + 'px', top: (pl.y - pl.r) + 'px', width: (pl.r * 2) + 'px', height: (pl.r * 2) + 'px' });
+        box.hidden = bar.hidden = true; return;
+      }
       const c = this.multiPlanet ? planetCircle() : null; ring.hidden = !c;
       if (c) Object.assign(ring.style, { left: (c.x - c.r) + 'px', top: (c.y - c.r) + 'px', width: (c.r * 2) + 'px', height: (c.r * 2) + 'px' });
       let L = Infinity, T = Infinity, R = -Infinity, B = -Infinity; const set = members();
