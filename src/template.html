@@ -10590,14 +10590,16 @@ class CoreStudio {
       li.addEventListener('pointermove', e => { if (!sw || sw.id !== e.pointerId || sw.done) return; const dx = e.clientX - sw.x, dy = e.clientY - sw.y; if (dx > 46 && Math.abs(dy) < 26) { sw.done = true; this.swiped = true; setTimeout(() => { this.swiped = false; }, 350); this.selMode = true; this.toggleMulti(it, true); } else if (Math.abs(dy) > 30) sw = null; });
       li.addEventListener('pointerup', () => { sw = null; }); li.addEventListener('pointercancel', () => { sw = null; });
       const grip = li.querySelector('.st-grip');
-      grip.addEventListener('pointerdown', e => {
-        e.preventDefault(); grip.setPointerCapture(e.pointerId);
+      // Restacking: drag from the ⋮⋮ grip, or from any empty part of the row (mouse: drag up/down; touch: press and hold, then drag).
+      const startDrag = (e, cap) => {
+        cap.setPointerCapture(e.pointerId);
         const set = this.multi.has(it.id) ? this.items.filter(i => this.multi.has(i.id)) : [it];
         this.dragLayer = { id: e.pointerId, y: e.clientY, li, it, set, target: null };
         li.classList.add('is-drag'); if (set.length > 1) li.dataset.n = set.length;
         const z = document.createElement('li'); z.className = 'st-newgroup-zone'; z.textContent = 'Drop here → new group'; ul.append(z);
-      });
-      grip.addEventListener('pointermove', e => {
+        if (navigator.vibrate) try { navigator.vibrate(8); } catch (x) {}
+      };
+      const moveDrag = e => {
         const d = this.dragLayer; if (!d || d.id !== e.pointerId) return;
         li.style.transform = `translateY(${e.clientY - d.y}px)`;
         ul.querySelectorAll('.is-drop-in,.is-drop-above,.is-drop-below').forEach(n => n.classList.remove('is-drop-in', 'is-drop-above', 'is-drop-below'));
@@ -10611,15 +10613,34 @@ class CoreStudio {
             break;
           }
         }
-      });
+      };
       const drop = e => {
         const d = this.dragLayer; if (!d || d.id !== e.pointerId) return; this.dragLayer = null;
         li.classList.remove('is-drag'); li.style.transform = ''; delete li.dataset.n; ul.querySelector('.st-newgroup-zone')?.remove();
         const t = d.target, moved = Math.abs(e.clientY - d.y) > 6;
+        this.swiped = true; setTimeout(() => { this.swiped = false; }, 350);   // the tap that ends a drag must not also select the row
         if (t && moved) this.moveLayers(d.set, t);
         this.renderLayers();
       };
+      grip.addEventListener('pointerdown', e => { e.preventDefault(); startDrag(e, grip); });
+      grip.addEventListener('pointermove', moveDrag);
       grip.addEventListener('pointerup', drop); grip.addEventListener('pointercancel', drop);
+      let arm = null;
+      li.addEventListener('pointerdown', e => {
+        if (e.target.closest('.st-eye,.st-grip,.st-gedit,input,select,button') || (e.pointerType === 'mouse' && e.button !== 0) || this.dragLayer) return;
+        arm = { id: e.pointerId, x: e.clientX, y: e.clientY, touch: e.pointerType !== 'mouse' };
+        if (arm.touch) arm.t = setTimeout(() => { if (arm && !this.dragLayer) { startDrag({ pointerId: arm.id, clientY: arm.y }, li); arm.on = true; } }, 280);
+      });
+      li.addEventListener('pointermove', e => {
+        if (!arm || arm.id !== e.pointerId) return;
+        if (this.dragLayer && this.dragLayer.id === e.pointerId) { moveDrag(e); return; }
+        const dx = e.clientX - arm.x, dy = e.clientY - arm.y;
+        if (!arm.touch) { if (Math.abs(dy) > 6 && Math.abs(dy) > Math.abs(dx)) { startDrag(e, li); moveDrag(e); } }
+        else if (Math.hypot(dx, dy) > 9) clearTimeout(arm.t);   // moved before the hold finished: it is a scroll or a swipe, not a drag
+      });
+      const armEnd = e => { if (arm) clearTimeout(arm.t); if (this.dragLayer && this.dragLayer.id === e.pointerId && this.dragLayer.li === li) drop(e); arm = null; };
+      li.addEventListener('pointerup', armEnd); li.addEventListener('pointercancel', armEnd);
+      li.addEventListener('touchmove', e => { if (this.dragLayer && this.dragLayer.li === li) e.preventDefault(); }, { passive: false });
     });
   }
   // Frosted label: a child box carries the CSS backdrop blur; Save blurs a copy of the poster instead.
