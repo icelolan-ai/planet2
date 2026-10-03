@@ -954,7 +954,7 @@ html.st-lite #studio .st-glassbox{backdrop-filter:blur(6px)!important;-webkit-ba
 #studio .st-zoompill .st-btn{min-width:40px;min-height:40px;padding:0;font-size:20px;line-height:1;border-radius:999px}
 #studio .st-zoomgrip{display:grid;place-items:center;width:22px;min-height:40px;color:#ffffff66;font:700 12px var(--f-mono);letter-spacing:-2px;cursor:grab;touch-action:none;user-select:none}
 #studio .st-zoompill.is-dragging{opacity:.85;box-shadow:0 14px 40px #000a}
-#studio .st-zoompct{min-width:52px;min-height:40px;border:0;background:none;color:#ff9199;font:600 12px var(--f-mono);cursor:pointer}
+#studio .st-zoompct{flex:1 1 auto;text-align:center;display:grid;place-items:center;min-width:64px;min-height:40px;border:0;background:none;color:#ff9199;font:600 12px var(--f-mono);cursor:pointer}
 
 #studio.st-ui-off .st-zoompill{display:none}
 #studio .st-zoom{display:grid;gap:6px;padding:8px 10px;border-radius:14px;background:#ffffff0f;min-width:190px}
@@ -9188,7 +9188,7 @@ class CoreStudio {
     const gcb = saveMenu.querySelector('[data-save-grain]'); saveBtn.addEventListener('click', () => { gcb.checked = !!(this.grain && this.fxVisible('grain')); }, true);
     this.el.querySelector('[data-save-go]').onclick = () => { this.exportGrain = gcb.checked; saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); this.exportPoster(saveMenu.querySelector('[data-save-type]').value, +saveMenu.querySelector('[data-save-scale]').value); };
     const ctx = k => this.ctx.querySelector(`[data-ctx-${k}]`), withText = f => e => { const it = this.sel; if (it && it.kind === 'text') { f(it, e.target); it.edited = true; this.place(it); } };
-    ctx('content').oninput = withText((it, el) => { it.content = el.value; it.el.textContent = el.value; this.renderLayers(); });
+    ctx('content').oninput = withText((it, el) => { it.content = el.value; it.el.textContent = el.value; this.renderLayers(); this.commitSoon(); });
     ctx('content').addEventListener('pointerdown', () => { if (matchMedia('(pointer: coarse)').matches) this.el.classList.add('st-typing'); });
     ctx('content').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
     ctx('font').onchange = withText((it, el) => { it.font = el.value; });
@@ -9675,10 +9675,36 @@ class CoreStudio {
     }, true);
   }
   // ---- Cerebra size (zoom) ----
-  zoomBy(f) { const b = PlanetBody.active; if (!b || !this.active) return false; b.setView(b.zoomT * f); this.syncZoom(); }
+  // Size control: acts on the selected layer(s) (text size / shape width, kept in proportion), otherwise on Cerebra. 100% = the layer's size when it was first seen.
+  zoomTargets() { if (this.multi.size) return this.items.filter(i => this.multi.has(i.id) && i.kind !== 'fx'); const s = this.sel; return s && s.kind !== 'fx' ? [s] : null; }
+  baseOf(it) { if (it.zs == null) it.zs = it.kind === 'text' ? (it.size || 40) : (it.w || .2); return it.zs; }
+  scaleOf(it) { return (it.kind === 'text' ? it.size : it.w) / this.baseOf(it); }
+  setScaleOf(it, k) {
+    if (it.locked) return; const z = this.baseOf(it);
+    if (it.kind === 'text') it.size = clamp(Math.round(z * k), 6, 700);
+    else { const nw = clamp(z * k, .02, 3), r = nw / it.w; it.w = nw; it.h = clamp(it.h * r, .02, 3); }
+    this.place(it);
+  }
+  zoomStep(f) {
+    const t = this.zoomTargets();
+    if (t) { if (!t.length) return false; t.forEach(i => this.setScaleOf(i, this.scaleOf(i) * f)); this.updateFocus && this.updateFocus(); this.updateRotHandle && this.updateRotHandle(); this.renderLayers(); this.commit(); this.syncZoom(); return true; }
+    const b = PlanetBody.active; if (!b || !this.active) return false; b.setView(b.zoomT * f); this.syncZoom(); return true;
+  }
+  zoomTo(pct, final) {
+    const t = this.zoomTargets();
+    if (t) { t.forEach(i => this.setScaleOf(i, pct / 100)); this.updateFocus && this.updateFocus(); this.updateRotHandle && this.updateRotHandle(); if (final) { this.renderLayers(); this.commit(); } this.syncZoom(); return; }
+    const b = PlanetBody.active; if (b) b.setView(pct / 100); this.syncZoom();
+  }
+  zoomBy(f) { return this.zoomStep(f); }
   syncZoom() {
-    const b = PlanetBody.active, r = this.el.querySelector('[data-zoom-r]'), vs = this.el.querySelectorAll('[data-zoom-v]'); if (!b || !r) return; if (this.zoomPill) this.zoomPill.hidden = this.subject >= 0;
-    const pct = Math.round(b.zoomT * 100); if (document.activeElement !== r) r.value = pct; vs.forEach(v => { v.textContent = pct + '%'; }); r.style.setProperty('--p', ((pct - 45) / (240 - 45) * 100) + '%');
+    const b = PlanetBody.active, r = this.el.querySelector('[data-zoom-r]'), vs = this.el.querySelectorAll('[data-zoom-v]'); if (!r) return;
+    const t = this.zoomTargets(), obj = !!(t && t.length); if (this.zoomPill) this.zoomPill.hidden = !obj && this.subject >= 0;
+    let pct; if (obj) pct = Math.round(this.scaleOf(t[0]) * 100); else if (b) pct = Math.round(b.zoomT * 100); else return;
+    const lo = obj ? 10 : 45, hi = obj ? 500 : 240; r.min = lo; r.max = hi;
+    if (document.activeElement !== r) r.value = clamp(pct, lo, hi); vs.forEach(v => { v.textContent = pct + '%'; }); r.style.setProperty('--p', (clamp((pct - lo) / (hi - lo), 0, 1) * 100) + '%');
+    const label = obj ? (t.length > 1 ? 'selected layers' : 'this layer') : 'Cerebra';
+    this.el.querySelectorAll('[data-zoom="+"]').forEach(x => x.setAttribute('aria-label', `Make ${label} bigger`)); this.el.querySelectorAll('[data-zoom="-"]').forEach(x => x.setAttribute('aria-label', `Make ${label} smaller`));
+    this.el.querySelectorAll('.st-zoom-t').forEach(x => { x.textContent = obj ? 'Layer size' : 'Cerebra size'; });
   }
   initZoom() {
     const box = this.el.querySelector('[data-st-zoom]'); if (!box) return;
@@ -9695,9 +9721,9 @@ class CoreStudio {
     gr.addEventListener('pointermove', e => { if (!zd || zd.id !== e.pointerId) return; zd.pos = { x: (e.clientX - zd.dx) / innerWidth, y: (e.clientY - zd.dy) / innerHeight }; place(zd.pos); });
     const zend = e => { if (!zd || zd.id !== e.pointerId) return; pill.classList.remove('is-dragging'); if (zd.pos) { try { localStorage.setItem(KEY, JSON.stringify(zd.pos)); } catch (x) {} } zd = null; };
     gr.addEventListener('pointerup', zend); gr.addEventListener('pointercancel', zend);
-    pill.addEventListener('click', e => { const b = e.target.closest('[data-zoom]'); if (!b) return; const P = PlanetBody.active; if (!P) return; const z = b.dataset.zoom; if (z === '0') P.setView(1); else P.setView(P.zoomT * (z === '+' ? 1.1 : 1 / 1.1)); this.syncZoom(); });
-    box.addEventListener('click', e => { const b = e.target.closest('[data-zoom]'); if (!b) return; const P = PlanetBody.active; if (!P) return; const z = b.dataset.zoom; if (z === '0') P.setView(1); else P.setView(P.zoomT * (z === '+' ? 1.1 : 1 / 1.1)); this.syncZoom(); });
-    box.querySelector('[data-zoom-r]').addEventListener('input', e => { const P = PlanetBody.active; if (P) P.setView(+e.target.value / 100); this.syncZoom(); });
+    pill.addEventListener('click', e => { const b = e.target.closest('[data-zoom]'); if (!b) return; const z = b.dataset.zoom; if (z === '0') this.zoomTo(100, true); else this.zoomStep(z === '+' ? 1.1 : 1 / 1.1); });
+    box.addEventListener('click', e => { const b = e.target.closest('[data-zoom]'); if (!b) return; const z = b.dataset.zoom; if (z === '0') this.zoomTo(100, true); else this.zoomStep(z === '+' ? 1.1 : 1 / 1.1); });
+    const zr = box.querySelector('[data-zoom-r]'); zr.addEventListener('input', e => this.zoomTo(+e.target.value, false)); zr.addEventListener('change', e => this.zoomTo(+e.target.value, true));
     setInterval(() => { if (this.active) this.syncZoom(); }, 400);   // pinch / wheel / Reset view also move it
   }
   // ---- Safety: autosave + restore, and no accidental swipe-back out of Studio ----
@@ -9973,7 +9999,7 @@ class CoreStudio {
     el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
     if (kind === 'text') {
       el.addEventListener('keydown', e => { if (e.key === 'Enter' && !el.isContentEditable) { e.preventDefault(); this.select(it); this.editText(it); } });
-      el.addEventListener('input', () => { it.content = el.innerText; it.edited = true; this.ctx.querySelector('[data-ctx-content]').value = it.content; });
+      el.addEventListener('input', () => { it.content = el.innerText; it.edited = true; this.ctx.querySelector('[data-ctx-content]').value = it.content; this.commitSoon(); });
       el.addEventListener('blur', () => { if (el.isContentEditable) { el.contentEditable = 'false'; it.content = el.innerText; this.commit(); } });
     }
     if (kind === 'kit') this.applyKitMotion(it);
@@ -10070,7 +10096,7 @@ class CoreStudio {
   isHid(it) { return !!it.hide || (it.group != null && this.groups.some(g => g.id === it.group && g.hide)); }
   select(it) {
     if (this.sel && this.sel !== it && this.sel.el.isContentEditable) this.sel.el.blur();
-    const prev = this.sel; this.sel = it; if (this.lineSel && this.lineSel.it !== it) this.lineSel = null; this.items.forEach(i => i.el.classList.toggle('is-selected', i === it)); this.renderLayers();
+    const prev = this.sel; this.sel = it; this.syncZoom && this.syncZoom(); if (this.lineSel && this.lineSel.it !== it) this.lineSel = null; this.items.forEach(i => i.el.classList.toggle('is-selected', i === it)); this.renderLayers();
     const c = this.ctx, usable = !!it && it.kind !== 'fx'; if (!(usable && prev === it && this.ctxOpen)) this.ctxOpen = false;
     c.hidden = !(usable && this.ctxOpen); if (this.closeFly) this.closeFly(); if (!usable) { this.updateRotHandle(); return; }
     const text = it.kind === 'text';
@@ -11363,8 +11389,10 @@ class CoreStudio {
   }
   syncHist() { if (!this.undoBtn) return; this.undoBtn.disabled = this.hi <= 0; this.redoBtn.disabled = this.hi >= this.hist.length - 1; }
   // A Mood / Random look entry also carries the planet's look before (`pre`) and after (`pl`) so undo and redo move the planet with the scene.
-  undo() { if (this.hi > 0) { const from = this.hist[this.hi]; this.hi--; this.restore(this.hist[this.hi]); if (from.includes('"pre":')) { const d = JSON.parse(from); if (d.pre) this.showPlanet(d.pre); } } }
-  redo() { if (this.hi < this.hist.length - 1) { this.hi++; const to = this.hist[this.hi]; this.restore(to); if (to.includes('"pl":')) { const d = JSON.parse(to); if (d.pl) this.showPlanet(d.pl); } } }
+  commitSoon() { clearTimeout(this._ct); this._ct = setTimeout(() => { this._ct = 0; this.commit(); }, 600); }
+  flushCommit() { if (this._ct) { clearTimeout(this._ct); this._ct = 0; this.commit(); } }
+  undo() { this.flushCommit(); if (this.hi > 0) { const from = this.hist[this.hi]; this.hi--; this.restore(this.hist[this.hi]); if (from.includes('"pre":')) { const d = JSON.parse(from); if (d.pre) this.showPlanet(d.pre); } } }
+  redo() { this.flushCommit(); if (this.hi < this.hist.length - 1) { this.hi++; const to = this.hist[this.hi]; this.restore(to); if (to.includes('"pl":')) { const d = JSON.parse(to); if (d.pl) this.showPlanet(d.pl); } } }
   planetLook() { return this.subject < 0 && window.CerebraTune ? { snap: window.CerebraTune.snapshot(), fx: PLANETS.fx(this) } : null; }
   showPlanet(p) {
     const body = PlanetBody.active;
