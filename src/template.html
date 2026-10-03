@@ -9122,7 +9122,7 @@ class CoreStudio {
       this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioTool === this.tool && !this.drawing))); if (this.tool === 'hand' || this.tool === 'select') this.select(null); };
     this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.onclick = () => this.setTool(b.dataset.studioTool));
     this.el.querySelector('[data-studio-draw]').addEventListener('click', () => { if (this.drawing) { this.tool = 'move'; this.el.classList.remove('tool-hand'); } this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(!this.drawing && b.dataset.studioTool === this.tool))); });
-    this.initShortcuts(); this.initMarquee(); this.initMood(); this.initPicker(); this.initZoom(); this.initSafety();
+    this.initShortcuts(); this.initMarquee(); this.initMood(); this.initPicker(); this.initZoom(); this.initSafety(); this.initPickThrough();
     this.el.querySelector('[data-flyout="style"]').addEventListener('pointerdown', e => e.stopPropagation());
     this.el.querySelector('[data-studio-effect]').onchange = e => { this.effect = e.target.value; this.syncFxLayers(); this.el.querySelector('[data-studio-fx]').setAttribute('aria-pressed', String(this.fxOn)); this.commit(); };
     this.el.querySelector('[data-studio-grid]').onchange = e => { this.grid = e.target.checked; this.gridMode = this.grid ? 'always' : 'off'; this.setGridMode(this.gridMode); this.paintBackground(); };
@@ -9638,6 +9638,27 @@ class CoreStudio {
   setPicked(input, hex) {
     input.value = hex; input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); this.pkLast = input;
   }
+  // ---- The selected layer (picked in Layers or on the canvas) can be tapped or dragged wherever it is drawn, even under other layers.
+  hitItem(it, x, y) {
+    if (!it || !it.el || it.kind === 'fx' || this.isHid(it) || it.ref) return false;
+    const r = it.el.getBoundingClientRect(); if (!r.width && !r.height) return false;
+    const w = it.el.offsetWidth / 2, h = it.el.offsetHeight / 2, a = -(it.rot || 0) * Math.PI / 180, dx = x - (r.left + r.width / 2), dy = y - (r.top + r.height / 2);
+    const lx = dx * Math.cos(a) - dy * Math.sin(a), ly = dx * Math.sin(a) + dy * Math.cos(a);
+    return Math.abs(lx) <= w + 4 && Math.abs(ly) <= h + 4;
+  }
+  initPickThrough() {
+    this.stage.addEventListener('pointerdown', e => {
+      if (e.button !== 0 || e.defaultPrevented || e.__pt || !this.active || this.drawing || this.tool === 'hand' || this.tool === 'select') return;
+      if (e.target.closest && e.target.closest('.st-handle,.st-lock,.st-edit,.st-roth,[contenteditable=true]')) return;
+      const sel = this.sel, x = e.clientX, y = e.clientY;
+      const fwd = el => { const ev = new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: e.pointerId, pointerType: e.pointerType, isPrimary: e.isPrimary, clientX: x, clientY: y, button: 0, buttons: e.buttons, shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey }); ev.__pt = true; e.stopPropagation(); e.preventDefault(); el.dispatchEvent(ev); };
+      if (sel && sel.fxType === 'planet') { if (this.onPlanet(x, y) && e.target !== this.catcher) { e.stopPropagation(); e.preventDefault(); this.canvasDown(e); } return; }
+      const members = this.multi.size ? this.items.filter(i => this.multi.has(i.id)) : (sel && sel.kind !== 'fx' ? [sel] : []);
+      if (!members.length || members.some(i => i.el === e.target || i.el.contains(e.target))) return;
+      const hit = members.slice().reverse().find(i => this.hitItem(i, x, y));   // topmost selected layer under the finger
+      if (hit) fwd(hit.el);
+    }, true);
+  }
   // ---- Cerebra size (zoom) ----
   zoomBy(f) { const b = PlanetBody.active; if (!b || !this.active) return false; b.setView(b.zoomT * f); this.syncZoom(); }
   syncZoom() {
@@ -9884,7 +9905,7 @@ class CoreStudio {
     el.addEventListener('pointerdown', e => {
       if (e.button !== 0 || e.target.closest('.st-lock') || el.isContentEditable) return;
       e.stopPropagation(); e.preventDefault();
-      if (this.subject < 0 && this.belowPlanet(it) && this.tool !== 'select' && this.app.hitCore(e.clientX, e.clientY)) { this.canvasDown(e); return; }
+      if (this.subject < 0 && this.sel !== it && this.belowPlanet(it) && this.tool !== 'select' && this.app.hitCore(e.clientX, e.clientY)) { this.canvasDown(e); return; }
       if (this.beginItemPress && this.beginItemPress(it, e)) return;
       const lineHit = kind === 'stroke' && this.tool === 'move' ? this.pluckAt(it, e) : -1;
       const wasSel = this.sel === it; this.select(it); if (lineHit >= 0 && !it.rot) this.selectLine(it, lineHit); else if (this.lineSel) this.clearLineSel();
