@@ -1008,6 +1008,12 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 #studio input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-7px;border-radius:50%;background:#ff4655;box-shadow:0 0 0 3px #ff465533,0 2px 6px #0008}
 #studio input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radius:50%;background:#ff4655}
 #studio input[type=checkbox]{accent-color:#ff4655}
+/* every tick box is a clear on/off switch */
+#studio input[type=checkbox],.tune input[type=checkbox]{-webkit-appearance:none;appearance:none;position:relative;flex:none;width:44px;height:26px;min-height:0;padding:0;margin:0;border-radius:999px;border:1px solid #ffffff33;background:#ffffff1c;cursor:pointer;transition:background .15s,border-color .15s;box-sizing:border-box}
+#studio input[type=checkbox]::after,.tune input[type=checkbox]::after{content:"";position:absolute;left:3px;top:50%;width:18px;height:18px;margin-top:-9px;border-radius:50%;background:#d7dbe4;box-shadow:0 1px 3px #0006;transition:transform .15s,background .15s}
+#studio input[type=checkbox]:checked,.tune input[type=checkbox]:checked{background:linear-gradient(135deg,#7c5cff,#ff4655);border-color:transparent}
+#studio input[type=checkbox]:checked::after,.tune input[type=checkbox]:checked::after{transform:translateX(18px);background:#fff}
+#studio input[type=checkbox]:focus-visible,.tune input[type=checkbox]:focus-visible{outline:2px solid #c9a8ff;outline-offset:2px}
 /* Magic Bento */
 .mb{--mx:50%;--my:50%;--glow:255,70,85}
 .mb::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .35s;z-index:0;
@@ -1711,6 +1717,10 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .st-fly .st-fly-row{grid-template-columns:minmax(0,1fr) auto}
 #studio .st-fly select,#studio .st-fly input[type=text]{max-width:100%;min-width:0;text-overflow:ellipsis}
 #studio .st-fly .st-fly-row>span{overflow-wrap:anywhere}
+/* a label beside a dropdown / text box keeps its words whole (the box takes the rest) instead of being squeezed to one letter per line */
+#studio .st-fly .st-fly-row:has(>select),#studio .st-fly .st-fly-row:has(>input[type=text]){grid-template-columns:fit-content(48%) minmax(0,1fr)}
+#studio .st-fly .st-fly-row:has(>select)>span,#studio .st-fly .st-fly-row:has(>input[type=text])>span{overflow-wrap:break-word;hyphens:manual}
+#studio .st-fly .st-fly-row:has(>select)>select,#studio .st-fly .st-fly-row:has(>input[type=text])>input{width:100%;justify-self:stretch}
 #studio .st-fly [hidden]{display:none!important}
 #studio .st-glassbox{position:absolute;pointer-events:none}
 /* Surface style panel */
@@ -9031,7 +9041,7 @@ class CoreStudio {
       e.stopPropagation(); const f = this.el.querySelector(`[data-fly="${b.dataset.flyout}"]`), open = f.hidden; this.closeFly(); if (!open) return; f.style.removeProperty('--fdx'); f.style.removeProperty('--fdy');
       if (b.dataset.flyout === 'style') this.syncStyle(); else if (b.dataset.flyout === 'textdesign') this.syncText(); else if (b.dataset.flyout === 'kitdesign') this.syncKit(); else this.select(null); this.syncFly(); f.hidden = false; b.setAttribute('aria-expanded', 'true');
       const r = b.getBoundingClientRect(), W = innerWidth, H = innerHeight;
-      if (b.dataset.flyout === 'kitdesign') { f.style.maxHeight = Math.max(160, Math.min(H * .6, r.top - 20)) + 'px'; const kw = f.offsetWidth, kh = f.offsetHeight; f.style.left = `${clamp(r.left + r.width / 2 - kw / 2, 8, W - kw - 8)}px`; f.style.top = `${Math.max(8, r.top - kh - 12)}px`; return; }
+      if (b.dataset.flyout === 'kitdesign') { const cb = this.ctx && !this.ctx.hidden ? this.ctx.getBoundingClientRect().top : r.top, top = Math.min(r.top, cb); f.style.maxHeight = Math.max(160, Math.min(H * .6, top - 20)) + 'px'; const kw = f.offsetWidth, kh = f.offsetHeight; f.style.left = `${clamp(r.left + r.width / 2 - kw / 2, 8, W - kw - 8)}px`; f.style.top = `${Math.max(8, top - kh - 12)}px`; return; }
       f.style.maxHeight = ''; if (f.offsetHeight > H - 16) f.style.maxHeight = `${H - 16}px`;
       const fw = f.offsetWidth, fh = f.offsetHeight;
       let x = r.right + 12, y = r.top; if (x + fw > W - 8) x = r.left - fw - 12; if (x < 8) { x = clamp(r.left + r.width / 2 - fw / 2, 8, W - fw - 8); y = r.top - fh - 12; if (y < 8) y = r.bottom + 12; }
@@ -9245,7 +9255,7 @@ class CoreStudio {
       e.preventDefault(); e.shiftKey ? this.redo() : this.undo();
     });
   }
-  tools(on) { if (on && innerWidth <= 900 && this.closeGrp) this.closeGrp(); this.panel.hidden = !on; if (this.cptLayer) this.cptLayer.classList.toggle('is-off', !on); this.el.classList.toggle('panel-closed', !on); this.el.querySelector('[data-studio-tools]').setAttribute('aria-expanded', String(on)); this.layoutTrays(); }
+  tools(on) { if (on && this.closeFly) this.closeFly(); if (on && innerWidth <= 900 && this.closeGrp) this.closeGrp(); this.panel.hidden = !on; if (this.cptLayer) this.cptLayer.classList.toggle('is-off', !on); this.el.classList.toggle('panel-closed', !on); this.el.querySelector('[data-studio-tools]').setAttribute('aria-expanded', String(on)); this.layoutTrays(); }
   home() { this.x = this.y = this.vx = this.vy = 0; this.app.core.planet.resetView(); }
   point(e) { const r = this.app.stage.renderer.domElement.getBoundingClientRect(); return { x:clamp((e.clientX-r.left)/r.width,0,1), y:clamp((e.clientY-r.top)/r.height,0,1) }; }
   setSubject(index) {
