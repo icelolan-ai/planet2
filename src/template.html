@@ -8063,6 +8063,14 @@ const KIT_FONT_OPTS = [['mono', 'Geist Mono'], ['sans', 'Barlow'], ['cond', 'Bar
 const KIT_WEIGHTS = [['400', 'Regular'], ['500', 'Medium'], ['700', 'Bold']];
 const kitFont = (p, px) => `${p.weight || 500} ${px}px ${KIT_FONTS[p.font] || KIT_FONTS.sans}`;
 // Canvas text needs the web font loaded first; resolves true when something had to be waited for.
+/** Mark every decoded texture under `root` for re-upload. Tablets can drop GPU textures when the page is backgrounded or the context is reset; this restores them from the decoded images. */
+function reuploadTextures(root) {
+  const seen = new Set(), mark = t => {
+    if (!t || !t.isTexture || seen.has(t)) return; seen.add(t); const im = t.image;
+    if (im && ((im.width || im.videoWidth || im.naturalWidth) > 0) && im.complete !== false) t.needsUpdate = true;
+  };
+  root.traverse(o => { [].concat(o.material || []).forEach(m => { if (!m) return; Object.values(m).forEach(mark); if (m.uniforms) Object.values(m.uniforms).forEach(u => u && mark(u.value)); }); });
+}
 const kitFontWait = it => { const f = it.p && it.p.font ? kitFont(it.p, 16) : null; return f && document.fonts && !document.fonts.check(f) ? document.fonts.load(f).then(() => true, () => false) : Promise.resolve(false); };
 const kitRR = (g, x, y, w, h, r) => { r = Math.max(0, Math.min(r, w / 2, h / 2)); g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else { g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); } };
 // "Label: 40", "Label | 40" or "Label<tab>40" per line -> [label, value]
@@ -9287,6 +9295,7 @@ class CoreStudio {
     const name = this.subject < 0 ? 'Cerebra' : this.app.orrery.worlds[this.subject].def.name;
     this.el.querySelector('[data-studio-subject]').value = String(this.subject);
     this.el.querySelector('[data-tune-label]').textContent = this.subject < 0 ? 'Tune core' : 'Tune world';
+    if (this.subject >= 0) reuploadTextures(this.app.orrery.worlds[this.subject].group);
     this.updateAvail(); this.lastVfx = 0; this.paintVfx();
     const roles = { title: name, index: String(this.subject + 2).padStart(3, '0'), kicker: `${name} / studio study` };
     this.items.forEach(it => { if (it.role in roles && !it.edited) { it.content = roles[it.role]; it.el.textContent = it.content; } });
@@ -11984,12 +11993,12 @@ class App {
     this.ro = new ResizeObserver(() => this.scroll && this.scroll.measure());
     this.ro.observe($('#content'));
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) { cancelAnimationFrame(this.raf); this.raf = null; }
-      else if (!this.raf && !this.lost) { this.last = performance.now(); this.raf = requestAnimationFrame(this.frame); }
+      if (document.hidden) { this.hiddenAt = performance.now(); cancelAnimationFrame(this.raf); this.raf = null; }
+      else { if (performance.now() - (this.hiddenAt || 0) > 4000) reuploadTextures(this.stage.scene); if (!this.raf && !this.lost) { this.last = performance.now(); this.raf = requestAnimationFrame(this.frame); } }
     }, { signal });
     const canvas = this.stage.renderer.domElement;
     canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); this.lost = true; cancelAnimationFrame(this.raf); this.raf = null; }, { signal });
-    canvas.addEventListener('webglcontextrestored', () => { this.lost = false; this.last = performance.now(); this.raf = requestAnimationFrame(this.frame); }, { signal });
+    canvas.addEventListener('webglcontextrestored', () => { this.lost = false; reuploadTextures(this.stage.scene); this.last = performance.now(); this.raf = requestAnimationFrame(this.frame); }, { signal });
   }
 
   resize() {
