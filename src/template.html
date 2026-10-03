@@ -7955,7 +7955,22 @@ const KIT_ANIM = new WeakMap();
 const KIT_TEX = new WeakMap();
 // Motion: items with mOn get a running clock (KIT_T); draw() reads it through kitM. With motion off a is 0 and every kit draws its plain base layout.
 const KIT_T = new WeakMap();
-const kitM = it => it.mOn ? { a: it.mAmt ?? .6, t: KIT_T.get(it)?.t || 0 } : { a: 0, t: 0 };
+// Clock shaping (it.mDir / mPhase / mLoop / mCycle / mRhythm / mFps): every Kit's Motion reads time through here, so these work on all of them.
+const kitM = it => {
+  if (!it.mOn) return { a: 0, t: 0 };
+  let t = (KIT_T.get(it)?.t || 0) * (it.mDir === -1 ? -1 : 1) + (it.mPhase || 0);
+  if (it.mLoop === 'pingpong') { const P = Math.max(1, it.mCycle || 8), u = ((t % (2 * P)) + 2 * P) % (2 * P); t = u < P ? u : 2 * P - u; }
+  if (it.mRhythm === 'surge') t += .55 * Math.sin(t * .6); else if (it.mRhythm === 'steps') { const f = Math.max(1, it.mFps || 8); t = Math.floor(t * f) / f; }
+  return { a: it.mAmt ?? .6, t };
+};
+const KIT_MOTION_UI = [
+  { k: 'mDir', t: 'select', label: 'Direction', opts: [['1', 'Forward'], ['-1', 'Reverse']], def: '1' },
+  { k: 'mPhase', t: 'range', label: 'Start offset', min: 0, max: 20, step: .1, unit: 's', def: 0 },
+  { k: 'mLoop', t: 'select', label: 'Loop', opts: [['free', 'Keep running'], ['pingpong', 'Back and forth']], def: 'free' },
+  { k: 'mCycle', t: 'range', label: 'Cycle length', min: 2, max: 30, step: 1, unit: 's', def: 8, when: ['mLoop', 'pingpong'] },
+  { k: 'mRhythm', t: 'select', label: 'Rhythm', opts: [['steady', 'Steady'], ['surge', 'Surge (speeds up, slows down)'], ['steps', 'Stepped (stop-motion)']], def: 'steady' },
+  { k: 'mFps', t: 'range', label: 'Steps per second', min: 2, max: 24, step: 1, def: 8, when: ['mRhythm', 'steps'] },
+];
 const kitHash = (i, s) => { const v = Math.sin(i * 127.1 + s * 311.7) * 43758.5453; return v - Math.floor(v); }; // stable per-index randomness for motion phases (keeps the seeded layout untouched)
 const kitEsc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const KIT_MAX = { rows: 12, hud: 64, rings: 40, radial: 400, arc: 12, label: 120, ticks: 720, dots: 6000, bars: 200, tracks: 16 };
@@ -7987,21 +8002,36 @@ const L2 = {
     }
     g.drawImage(c.cv, x, y, w, h);
   },
+  // Shared look options (it.p.ldash, lop, cmode, dshape, dop): line style, line / dot opacity, dot shape and a blend of the two colours across the width.
   lines(o, segs, it, k, lw, glow, warp) {
-    const p = it.p;
-    for (let c = 0; c < 2; c++) {
-      const col = c ? p.c2 : it.fill; o.strokeStyle = o.shadowColor = col; o.lineCap = 'round'; o.beginPath(); let n = 0;
-      for (const s of segs) { if (s.c !== c) continue; let q = s.pts; if (warp) { q = q.slice(); for (let i = 0; i < q.length; i += 2) { const v = warp(q[i], q[i + 1]); q[i] = v[0]; q[i + 1] = v[1]; } } o.moveTo(q[0], q[1]); if (q.length === 4) o.lineTo(q[2], q[3]); else if (q.length === 6) o.quadraticCurveTo(q[2], q[3], q[4], q[5]); else if (q.length === 8) o.bezierCurveTo(q[2], q[3], q[4], q[5], q[6], q[7]); else for (let i = 2; i < q.length; i += 2) o.lineTo(q[i], q[i + 1]); n++; }
+    const p = it.p, dash = p.ldash || 'solid', lop = p.lop ?? 1, blend = p.cmode === 'blend', lwp = Math.max(.4, lw * k), W = o.canvas.width || 1;
+    const pat = dash === 'dashed' ? [lwp * 6, lwp * 4] : dash === 'dotted' ? [.1, lwp * 3.2] : dash === 'mixed' ? [lwp * 10, lwp * 3, lwp, lwp * 3] : [];
+    o.save(); o.globalAlpha *= lop; o.setLineDash(pat); o.lineCap = 'round';
+    const path = s => { let q = s.pts; if (warp) { q = q.slice(); for (let i = 0; i < q.length; i += 2) { const v = warp(q[i], q[i + 1]); q[i] = v[0]; q[i + 1] = v[1]; } } o.moveTo(q[0], q[1]); if (q.length === 4) o.lineTo(q[2], q[3]); else if (q.length === 6) o.quadraticCurveTo(q[2], q[3], q[4], q[5]); else if (q.length === 8) o.bezierCurveTo(q[2], q[3], q[4], q[5], q[6], q[7]); else for (let i = 2; i < q.length; i += 2) o.lineTo(q[i], q[i + 1]); return q; };
+    if (blend) {
+      o.lineWidth = lwp; for (const s of segs) { const q = path(s), t = clamp(((q[0] + q[q.length - 2]) / 2) / W, 0, 1), col = kitMix(it.fill, p.c2, t); o.strokeStyle = o.shadowColor = col; o.shadowBlur = glow > 0 ? glow * 7 * k : 0; o.stroke(); o.beginPath(); }
+    } else for (let c = 0; c < 2; c++) {
+      const col = c ? p.c2 : it.fill; o.strokeStyle = o.shadowColor = col; o.beginPath(); let n = 0;
+      for (const s of segs) { if (s.c !== c) continue; path(s); n++; }
       if (!n) continue;
       if (glow > 0) { o.save(); o.globalAlpha *= .35; o.shadowBlur = glow * 16 * k; o.lineWidth = lw * k * 2.6; o.stroke(); o.restore(); }
-      o.shadowBlur = 0; o.lineWidth = Math.max(.4, lw * k); o.stroke();
+      o.shadowBlur = 0; o.lineWidth = lwp; o.stroke();
     }
-    o.shadowBlur = 0;
+    o.restore(); o.shadowBlur = 0;
   },
   dots(o, dots, it, k, glow) {
-    const p = it.p;
-    for (const d of dots) { o.fillStyle = o.shadowColor = d[3] ? p.c2 : it.fill; o.shadowBlur = glow > 0 ? glow * 10 * k : 0; o.beginPath(); o.arc(d[0], d[1], Math.max(.6, d[2] * k), 0, Math.PI * 2); o.fill(); }
-    o.shadowBlur = 0;
+    const p = it.p, sh = p.dshape || 'circle', dop = p.dop ?? 1, blend = p.cmode === 'blend', W = o.canvas.width || 1, TAU = Math.PI * 2;
+    o.save(); o.globalAlpha *= dop;
+    for (const d of dots) {
+      const col = blend ? kitMix(it.fill, p.c2, clamp(d[0] / W, 0, 1)) : d[3] ? p.c2 : it.fill, r = Math.max(.6, d[2] * k);
+      o.fillStyle = o.strokeStyle = o.shadowColor = col; o.shadowBlur = glow > 0 ? glow * 10 * k : 0; o.lineWidth = Math.max(.6, k * .9); o.beginPath();
+      if (sh === 'square') o.rect(d[0] - r, d[1] - r, r * 2, r * 2);
+      else if (sh === 'diamond') { o.moveTo(d[0], d[1] - r * 1.3); o.lineTo(d[0] + r * 1.3, d[1]); o.lineTo(d[0], d[1] + r * 1.3); o.lineTo(d[0] - r * 1.3, d[1]); o.closePath(); }
+      else if (sh === 'cross') { o.moveTo(d[0] - r * 1.3, d[1]); o.lineTo(d[0] + r * 1.3, d[1]); o.moveTo(d[0], d[1] - r * 1.3); o.lineTo(d[0], d[1] + r * 1.3); }
+      else o.arc(d[0], d[1], r, 0, TAU);
+      if (sh === 'ring' || sh === 'cross') o.stroke(); else o.fill();
+    }
+    o.restore(); o.shadowBlur = 0;
   },
 };
 // Smooth 2D value noise (seeded) and a hex colour blend, shared by the flow kits.
@@ -8528,6 +8558,20 @@ Object.entries(KIT_MSTYLE).forEach(([key, opts]) => {
   const d = KIT[key]; if (!d) return;
   if (!opts.some(o => o[0] === d.defaults.mstyle)) d.defaults.mstyle = opts[0][0];
   const ui = d.ui.find(u => u.k === 'mstyle'); if (ui) ui.opts = opts; else d.ui.unshift({ k: 'mstyle', t: 'select', label: 'Motion style', opts });
+});
+
+// Look options shared by every kit drawn with the line engine (L2): line style, opacities, dot shape, colour blend.
+const KIT_L2_UI = [
+  { k: 'ldash', t: 'select', label: 'Line style', opts: KIT_DASH },
+  { k: 'lop', t: 'range', label: 'Line opacity', min: .1, max: 1, step: .05, pct: 1 },
+  { k: 'dshape', t: 'select', label: 'Dot shape', opts: [['circle', 'Circle'], ['ring', 'Ring'], ['square', 'Square'], ['diamond', 'Diamond'], ['cross', 'Cross']] },
+  { k: 'dop', t: 'range', label: 'Dot opacity', min: 0, max: 1, step: .05, pct: 1 },
+  { k: 'cmode', t: 'select', label: 'Colour mode', opts: [['share', 'Accent share'], ['blend', 'Blend across the width']] },
+];
+['hubNetwork', 'plexus2d', 'chord', 'bundle', 'neural', 'cellCluster', 'flowField', 'circularFlow', 'spiral'].forEach(key => {
+  const d = KIT[key]; if (!d) return;
+  Object.assign(d.defaults, { ldash: 'solid', lop: 1, dshape: 'circle', dop: 1, cmode: 'share' });
+  const at = d.ui.findIndex(u => u.k === 'c2'); d.ui.splice(at < 0 ? d.ui.length : at + 1, 0, ...KIT_L2_UI);
 });
 
 class CoreStudio {
@@ -10111,7 +10155,10 @@ class CoreStudio {
       + (def.anim ? `<label class="st-fly-row st-fly-check"><span>Motion (parts move)</span><input type="checkbox" data-kmo-on${it.mOn ? ' checked' : ''}></label>`
         + `<label class="st-fly-row"><span>Motion amount</span><output>${Math.round((it.mAmt ?? .6) * 100)}%</output><input type="range" min="0.05" max="1" step="0.05" value="${it.mAmt ?? .6}" data-kmo-amt></label>`
         + `<label class="st-fly-row"><span>Motion speed</span><output>${(it.mSpd ?? 1).toFixed(1)}×</output><input type="range" min="0.2" max="3" step="0.1" value="${it.mSpd ?? 1}" data-kmo-spd></label>`
-        + `<label class="st-fly-row"><span>Extra motion</span><select data-kmo-fx>${KIT_FX_OPTS.map(([v, n]) => `<option value="${v}"${(it.mFx || 'none') === v ? ' selected' : ''}>${n}</option>`).join('')}</select></label>` : '')
+        + `<label class="st-fly-row"><span>Extra motion</span><select data-kmo-fx>${KIT_FX_OPTS.map(([v, n]) => `<option value="${v}"${(it.mFx || 'none') === v ? ' selected' : ''}>${n}</option>`).join('')}</select></label>`
+        + KIT_MOTION_UI.filter(u => !u.when || String(it[u.when[0]] ?? KIT_MOTION_UI.find(x => x.k === u.when[0]).def) === u.when[1]).map(u => { const v = it[u.k] ?? u.def;
+          return u.t === 'range' ? `<label class="st-fly-row"><span>${u.label}</span><output>${fmt(u, v)}</output><input type="range" min="${u.min}" max="${u.max}" step="${u.step}" value="${v}" data-kmx="${u.k}"></label>`
+            : `<label class="st-fly-row"><span>${u.label}</span><select data-kmx="${u.k}">${u.opts.map(([o, n]) => `<option value="${o}"${String(o) === String(v) ? ' selected' : ''}>${n}</option>`).join('')}</select></label>`; }).join('') : '')
       + shown.map(u => {
       const v = it.p[u.k];
       if (u.t === 'range') return `<label class="st-fly-row"><span>${u.label}</span><output>${fmt(u, v)}</output><input type="range" min="${u.min}" max="${u.max}" step="${u.step}" value="${v}" data-kp="${u.k}"></label>`;
@@ -10133,6 +10180,12 @@ class CoreStudio {
       mSpd.addEventListener('input', () => { it.mSpd = +mSpd.value; mSpd.parentNode.querySelector('output').textContent = `${it.mSpd.toFixed(1)}×`; });
       const mFx = f.querySelector('[data-kmo-fx]'); mFx.addEventListener('change', () => { it.mFx = mFx.value; if (it.mFx !== 'none' && !it.mOn) { it.mOn = true; mOn.checked = true; } this.place(it); });
       [mOn, mAmt, mSpd, mFx].forEach(el => el.addEventListener('change', () => this.commit()));
+      f.querySelectorAll('[data-kmx]').forEach(el => {
+        const u = KIT_MOTION_UI.find(x => x.k === el.dataset.kmx), drives = KIT_MOTION_UI.some(x => x.when && x.when[0] === u.k);
+        const set = () => { it[u.k] = u.k === 'mDir' || el.type === 'range' ? +el.value : el.value; if (!it.mOn) { it.mOn = true; mOn.checked = true; } const o = el.parentNode.querySelector('output'); if (o) o.textContent = fmt(u, it[u.k]); this.place(it); };
+        el.addEventListener('input', set); el.addEventListener('change', () => { set(); this.commit(); if (drives) this.syncKit(); });
+        if (el.type === 'range') rangeFill(el);
+      });
     }
     f.querySelectorAll('[data-kp]').forEach(el => {
       const u = def.ui.find(x => x.k === el.dataset.kp), drives = def.ui.some(x => x.when && x.when[0] === u.k);
