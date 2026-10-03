@@ -1016,6 +1016,12 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 #studio input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-7px;border-radius:50%;background:#ff4655;box-shadow:0 0 0 3px #ff465533,0 2px 6px #0008}
 #studio input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radius:50%;background:#ff4655}
 #studio input[type=checkbox]{accent-color:#ff4655}
+/* every tick box is a clear on/off switch */
+#studio input[type=checkbox],.tune input[type=checkbox]{-webkit-appearance:none;appearance:none;position:relative;flex:none;width:44px;height:26px;min-height:0;padding:0;margin:0;border-radius:999px;border:1px solid #ffffff33;background:#ffffff1c;cursor:pointer;transition:background .15s,border-color .15s;box-sizing:border-box}
+#studio input[type=checkbox]::after,.tune input[type=checkbox]::after{content:"";position:absolute;left:3px;top:50%;width:18px;height:18px;margin-top:-9px;border-radius:50%;background:#d7dbe4;box-shadow:0 1px 3px #0006;transition:transform .15s,background .15s}
+#studio input[type=checkbox]:checked,.tune input[type=checkbox]:checked{background:linear-gradient(135deg,#7c5cff,#ff4655);border-color:transparent}
+#studio input[type=checkbox]:checked::after,.tune input[type=checkbox]:checked::after{transform:translateX(18px);background:#fff}
+#studio input[type=checkbox]:focus-visible,.tune input[type=checkbox]:focus-visible{outline:2px solid #c9a8ff;outline-offset:2px}
 /* Magic Bento */
 .mb{--mx:50%;--my:50%;--glow:255,70,85}
 .mb::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .35s;z-index:0;
@@ -1719,6 +1725,10 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .st-fly .st-fly-row{grid-template-columns:minmax(0,1fr) auto}
 #studio .st-fly select,#studio .st-fly input[type=text]{max-width:100%;min-width:0;text-overflow:ellipsis}
 #studio .st-fly .st-fly-row>span{overflow-wrap:anywhere}
+/* a label beside a dropdown / text box keeps its words whole (the box takes the rest) instead of being squeezed to one letter per line */
+#studio .st-fly .st-fly-row:has(>select),#studio .st-fly .st-fly-row:has(>input[type=text]){grid-template-columns:fit-content(48%) minmax(0,1fr)}
+#studio .st-fly .st-fly-row:has(>select)>span,#studio .st-fly .st-fly-row:has(>input[type=text])>span{overflow-wrap:break-word;hyphens:manual}
+#studio .st-fly .st-fly-row:has(>select)>select,#studio .st-fly .st-fly-row:has(>input[type=text])>input{width:100%;justify-self:stretch}
 #studio .st-fly [hidden]{display:none!important}
 #studio .st-glassbox{position:absolute;pointer-events:none}
 /* Surface style panel */
@@ -2351,6 +2361,6 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.3edd4a28e2.js", 719274]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.b0234daef9.js", 719400]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>
