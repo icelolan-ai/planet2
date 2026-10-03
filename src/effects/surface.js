@@ -4,7 +4,7 @@
 const SURFACE = Effects.register({
   id: 'surface', prefix: 's_', title: 'Surface style',
   controls: [
-    { key: 'style',   label: 'Style', type: 'select', options: [['none', 'Original surface'], ['dotgrid', 'Dot grid'], ['halftone', 'Halftone dots'], ['spike', 'Spikes'], ['threads', 'Curly threads'], ['fur', 'Fur bristles'], ['wire', 'Wire polyhedron'], ['plexus3d', 'Plexus 3D'], ['contour', 'Contour rings'], ['meridian', 'Meridian lines'], ['cloud', 'Particle cloud'], ['shards', 'Crystal shards']] },
+    { key: 'style',   label: 'Style', type: 'select', options: [['none', 'Original surface'], ['dotgrid', 'Dot grid'], ['halftone', 'Halftone dots'], ['spike', 'Spikes'], ['threads', 'Curly threads'], ['fur', 'Fur bristles'], ['wire', 'Wire polyhedron'], ['plexus3d', 'Plexus 3D'], ['contour', 'Contour rings'], ['meridian', 'Meridian lines'], ['cloud', 'Particle cloud'], ['shards', 'Crystal shards'], ['radial', 'Radial data spokes'], ['orrery', 'Orrery rings'], ['neural', 'Neural cells'], ['dataflow', 'Data flow arcs'], ['strands', 'Drifting strands']] },
     { key: 'density', label: 'Density',      min: 0.15, max: 1,   step: 0.01 },
     { key: 'colorA',  label: 'Colour A',     type: 'color' },
     { key: 'colorB',  label: 'Colour B',     type: 'color' },
@@ -19,7 +19,7 @@ const SURFACE = Effects.register({
   reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
   attach(w) {
     const g = new THREE.Group(); g.visible = false; w.spinG.add(g);
-    w.surf = { g, key: '', dirty: true, objs: [], mats: [], geoms: [], spin: 0 };
+    w.surf = { g, key: '', dirty: true, objs: [], mats: [], geoms: [], spin: 0, dm: [] };
   },
   apply(w, k) { if (w.surf) w.surf.dirty = true; },
   // Small seeded value noise on the CPU (the geometry is built once, not per frame).
@@ -30,7 +30,7 @@ const SURFACE = Effects.register({
   },
   fbm(x, y, z) { return this.noise3(x, y, z) * 0.62 + this.noise3(x * 2.3 + 5, y * 2.3, z * 2.3) * 0.38; },
   clear(w) {
-    const S = w.surf; S.objs.forEach(o => S.g.remove(o)); S.geoms.forEach(g => g.dispose()); S.mats.forEach(m => m.dispose()); S.objs = []; S.geoms = []; S.mats = [];
+    const S = w.surf; S.objs.forEach(o => S.g.remove(o)); S.geoms.forEach(g => g.dispose()); S.mats.forEach(m => m.dispose()); S.objs = []; S.geoms = []; S.mats = []; S.dm = []; S.pm = null; S.lm = null; S.shell = null;
   },
   fib(n, R, fn) {   // Fibonacci sphere: fn(x, y, z, i) with a unit vector
     const ga = Math.PI * (3 - Math.sqrt(5));
@@ -139,6 +139,81 @@ const SURFACE = Effects.register({
       });
       const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.BufferAttribute(lp, 3)); lg.setAttribute('color', new THREE.BufferAttribute(lc, 3));
       const lm = lineMat(); add(new THREE.LineSegments(lg, lm), lg, lm); S.lm = [lm];
+    } else if (['radial', 'orrery', 'neural', 'dataflow', 'strands'].includes(style)) {
+      // Data-poster looks (reference posters): lines + round heads, collected in plain arrays then uploaded once.
+      const LP = [], LC = [], DP = [], DC = [], DS = [], TAU = Math.PI * 2, mix = (a, b, t) => tmp.copy(a).lerp(b, Math.max(0, Math.min(1, t))).clone();
+      const seg = (a, b, ca, cb) => { LP.push(a[0], a[1], a[2], b[0], b[1], b[2]); LC.push(ca.r, ca.g, ca.b, cb.r, cb.g, cb.b); };
+      const dot = (p, c, sz) => { DP.push(p[0], p[1], p[2]); DC.push(c.r, c.g, c.b); DS.push(sz); };
+      const poly = (pts, ca, cb) => { for (let i = 0; i < pts.length - 1; i++) seg(pts[i], pts[i + 1], mix(ca, cb, i / (pts.length - 1)), mix(ca, cb, (i + 1) / (pts.length - 1))); };
+      const bez = (a, c, b, n) => { const o = []; for (let i = 0; i <= n; i++) { const t = i / n, u = 1 - t; o.push([u * u * a[0] + 2 * u * t * c[0] + t * t * b[0], u * u * a[1] + 2 * u * t * c[1] + t * t * b[1], u * u * a[2] + 2 * u * t * c[2] + t * t * b[2]]); } return o; };
+      const unit = () => { const u = rnd() * 2 - 1, th = rnd() * TAU, r = Math.sqrt(1 - u * u); return [r * Math.cos(th), u, r * Math.sin(th)]; };
+      const ring = (cx, cy, cz, r, ca, cb, tilt, n = 120, a0 = 0, a1 = TAU) => { const o = [], ct = Math.cos(tilt), st = Math.sin(tilt); for (let i = 0; i <= n; i++) { const a = a0 + (a1 - a0) * i / n, x = Math.cos(a) * r, z = Math.sin(a) * r; o.push([cx + x, cy + z * st, cz + z * ct]); } poly(o, ca, cb); };
+      if (style === 'radial') {
+        // Spokes of every length with a round head (pink / pale / a few gold), over faint concentric guide rings.
+        const n = Math.round(90 + 520 * dens);
+        for (let q = 0; q < 6; q++) { const r = R * (1.25 + q * 0.28 * size), f = tmp.copy(cA).lerp(cB, q / 5).clone().multiplyScalar(0.35); ring(0, 0, 0, r, f, f, 0.0, 150); }
+        this.fib(n, R, (x, y, z, i) => {
+          const nv = fbm(x, y, z, 2.4), len = R * (0.12 + Math.pow(rnd(), 1.8) * 1.7 * (0.25 + disp) * (0.5 + nv)) * size, b = R * 1.02, r0 = rnd(), tip = r0 < 0.08 ? cC : r0 < 0.45 ? cB : cA;
+          const e = [x * (b + len), y * (b + len), z * (b + len)], base = tmp.copy(tip).multiplyScalar(0.25).clone();
+          seg([x * b, y * b, z * b], e, base, tip); dot(e, tip, r0 < 0.08 ? 3.4 : 1.2 + rnd() * 1.6);
+        });
+      } else if (style === 'orrery') {
+        // Concentric rings, a thick band, bright arcs, long spokes ending in discs and bubble outlines (monochrome-friendly).
+        const tilt = 0.32, dim = tmp.copy(cA).multiplyScalar(0.55).clone();
+        [1.22, 1.4, 1.95, 2.3].forEach((m, q) => ring(0, 0, 0, R * m * size, dim, mix(cA, cB, q / 3), tilt, 160));
+        for (let q = 0; q < 7; q++) { const m = (1.5 + q * 0.04) * size; ring(0, 0, 0, R * m, dim, cA, tilt, 160); }
+        const arcs = Math.round(5 + 10 * dens);
+        for (let q = 0; q < arcs; q++) { const m = (1.15 + rnd() * 1.2) * size, a0 = rnd() * TAU, a1 = a0 + 0.5 + rnd() * 1.9; ring(0, 0, 0, R * m, cC, cC, tilt, 60, a0, a1); ring(0, 0, 0, R * (m + 0.012), cC, cC, tilt, 60, a0, a1); }
+        const spokes = Math.round(8 + 18 * dens), ct = Math.cos(tilt), st = Math.sin(tilt);
+        for (let q = 0; q < spokes; q++) {
+          const a = rnd() * TAU, r1 = R * (0.9 + rnd() * 0.3), r2 = R * (1.5 + rnd() * 1.4 * (0.4 + disp)) * size, d = [Math.cos(a), Math.sin(a) * st, Math.sin(a) * ct], f = (r) => [d[0] * r, d[1] * r, d[2] * r];
+          seg(f(r1), f(r2), mix(cA, cB, 0.2), cC); dot(f(r2), cC, 2.4 + rnd() * 1.4);
+          for (let k = 0; k < 3; k++) { const r = r1 + (r2 - r1) * (0.2 + rnd() * 0.7), c = mix(cB, cA, rnd()); dot(f(r), c, 1.1 + rnd() * 1.4); if (rnd() < 0.5) { const rr = R * (0.06 + rnd() * 0.16); ring(f(r)[0], f(r)[1], f(r)[2], rr, c, c, tilt + 0.6, 28); } }
+        }
+      } else if (style === 'neural') {
+        // Glowing cells joined by bundles of curved threads, each with a fine web of fibres and a ring or two.
+        const nodes = [], cnt = Math.round(7 + 12 * dens);
+        for (let q = 0; q < cnt; q++) { const u = unit(), rr = R * (0.55 + rnd() * 0.75 * (0.5 + disp)); nodes.push({ p: [u[0] * rr, u[1] * rr, u[2] * rr], c: q % 2 ? cB : cA, s: 3 + rnd() * 5 }); }
+        nodes.forEach((nd, q) => {
+          dot(nd.p, nd.c, nd.s * size * 1.4); dot(nd.p, cC, nd.s * size * 0.5);
+          const web = Math.round(10 + 22 * dens);
+          for (let k = 0; k < web; k++) { const u = unit(), l = R * (0.15 + rnd() * 0.5) * size, e = [nd.p[0] + u[0] * l, nd.p[1] + u[1] * l, nd.p[2] + u[2] * l], c = [(nd.p[0] + e[0]) / 2 + (rnd() - 0.5) * l, (nd.p[1] + e[1]) / 2 + (rnd() - 0.5) * l, (nd.p[2] + e[2]) / 2 + (rnd() - 0.5) * l]; poly(bez(nd.p, c, e, 10), nd.c, mix(nd.c, cB, 0.5)); if (rnd() < 0.4) dot(e, nd.c, 0.9 + rnd() * 0.9); }
+          const near = nodes.map((o, j) => [Math.hypot(o.p[0] - nd.p[0], o.p[1] - nd.p[1], o.p[2] - nd.p[2]), j]).filter(x => x[1] > q).sort((a, b) => a[0] - b[0]).slice(0, 2);
+          near.forEach(([d, j]) => { const o = nodes[j]; for (let k = 0; k < 4; k++) { const m = [(nd.p[0] + o.p[0]) / 2, (nd.p[1] + o.p[1]) / 2, (nd.p[2] + o.p[2]) / 2], l = Math.hypot(m[0], m[1], m[2]) || 1, push = R * (0.25 + k * 0.05), c = [m[0] / l * (l + push), m[1] / l * (l + push), m[2] / l * (l + push)]; poly(bez(nd.p, c, o.p, 18), nd.c, o.c); } });
+        });
+        for (let q = 0; q < 60 * dens + 20; q++) { const u = unit(), rr = R * (0.5 + rnd() * 1.1); dot([u[0] * rr, u[1] * rr, u[2] * rr], rnd() < 0.5 ? cA : cB, 0.8 + rnd()); }
+      } else if (style === 'dataflow') {
+        // Hundreds of curves bundled through the middle, coloured A -> B around the sphere, with white beads on them.
+        const n = Math.round(140 + 900 * dens), white = new THREE.Color(0xffffff);
+        for (let q = 0; q < n; q++) {
+          const a0 = this.fbm(q * 0.07, 1, 2) * TAU * 1.6 + rnd() * 0.5, a1 = a0 + Math.PI * (0.55 + rnd() * 0.9), la0 = (rnd() - 0.5) * 2.2, la1 = (rnd() - 0.5) * 2.2, k = R * (1.02 + (rnd() - 0.5) * disp * 0.2);
+          const pt = (a, la) => [Math.cos(a) * Math.cos(la) * k, Math.sin(la) * k, Math.sin(a) * Math.cos(la) * k], P0 = pt(a0, la0), P1 = pt(a1, la1), cl = 0.25 + rnd() * 0.35 * (1 - disp);
+          const c = [(P0[0] + P1[0]) * cl, (P0[1] + P1[1]) * cl, (P0[2] + P1[2]) * cl], cc = mix(cA, cB, (Math.sin(a0) * 0.5 + 0.5) * 0.7 + rnd() * 0.3), cd = mix(cB, cA, rnd());
+          poly(bez(P0, c, P1, 26), cc, cd); if (rnd() < 0.18) dot(bez(P0, c, P1, 4)[1 + (rnd() * 3 | 0)], rnd() < 0.5 ? white : cC, 0.9 + rnd() * 1.5);
+        }
+      } else {
+        // strands: smooth long fibres drifting away from the surface, bending toward the poles, each with a round bead at the tip.
+        const n = Math.round(120 + 560 * dens), steps = 30;
+        this.fib(n, R, (x, y, z, i) => {
+          let px = x * R * 1.01, py = y * R * 1.01, pz = z * R * 1.01, dx = x, dy = y, dz = z; const L = R * (0.5 + rnd() * 1.5) * size, st = L / steps, pts = [[px, py, pz]], sg = y >= 0 ? 1 : -1;
+          for (let k = 0; k < steps; k++) {
+            const f = k / steps; dx += (this.noise3(px * 1.3 + 3, py * 1.3, pz * 1.3 + i * 0.01) - 0.5) * (0.12 + disp * 0.5); dy += (this.noise3(px * 1.3, py * 1.3 + 9, pz * 1.3) - 0.5) * (0.12 + disp * 0.5) + sg * 0.05 * f;
+            dz += (this.noise3(px * 1.3 + 6, py * 1.3, pz * 1.3 + 4) - 0.5) * (0.12 + disp * 0.5); const dl = Math.hypot(dx, dy, dz) || 1; dx /= dl; dy /= dl; dz /= dl; px += dx * st; py += dy * st; pz += dz * st; pts.push([px, py, pz]);
+          }
+          const c0 = mix(cA, cB, rnd()), big = rnd() < 0.05; poly(pts, mix(c0, cA, 0.4).multiplyScalar(0.5), c0); dot(pts[steps], big ? cC : c0, big ? 4 : 1 + rnd() * 1.4);
+        });
+      }
+      if (LP.length) { const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(LP), 3)); lg.setAttribute('color', new THREE.BufferAttribute(new Float32Array(LC), 3)); const lm = lineMat(); add(new THREE.LineSegments(lg, lm), lg, lm); S.lm = [lm]; }
+      if (DP.length) {
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(DP), 3)); g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(DC), 3)); g.setAttribute('aS', new THREE.BufferAttribute(new Float32Array(DS), 1));
+        const m = new THREE.ShaderMaterial({
+          uniforms: { uOp: { value: 0 }, uSize: { value: R * 0.0075 }, uH: { value: uH } },
+          vertexShader: 'attribute float aS; attribute vec3 color; uniform float uSize, uH; varying vec3 vC; void main(){ vec4 mv = modelViewMatrix * vec4(position,1.); gl_Position = projectionMatrix * mv; vC = color; gl_PointSize = max(1.5, aS * uSize * projectionMatrix[1][1] * uH * 0.5 / -mv.z); }',
+          fragmentShader: 'uniform float uOp; varying vec3 vC; void main(){ float d = length(gl_PointCoord - 0.5); if (d > 0.5) discard; gl_FragColor = vec4(mix(vC, vec3(1.), smoothstep(0.3, 0.0, d) * 0.5), smoothstep(0.5, 0.32, d) * uOp); }',
+          transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+        });
+        add(new THREE.Points(g, m), g, m); S.dm.push(m);
+      }
     } else if (style === 'spike') {
       const n = Math.round(500 + 3500 * dens), lp = new Float32Array(n * 6), lc = new Float32Array(n * 6);
       this.fib(n, R, (x, y, z, i) => {
@@ -177,6 +252,7 @@ const SURFACE = Effects.register({
     if (S.shell) S.shell.rotation.y = -S.spin * 1.6;
     const o = Math.max(0, Math.min(1, w.reveal == null ? 1 : w.reveal));
     if (S.pm) S.pm.uniforms.uOp.value = o * 0.95;
-    if (S.lm) S.lm.forEach((m, i) => { m.opacity = o * ({ plexus3d: 0.5, spike: 0.8, threads: 0.55, fur: 0.45, contour: 0.75, meridian: 0.75, shards: 0.8 }[T.s_style] ?? (i ? 0.45 : 0.7)); });
+    S.dm.forEach(m => { m.uniforms.uOp.value = o * 0.95; });
+    if (S.lm) S.lm.forEach((m, i) => { m.opacity = o * ({ plexus3d: 0.5, spike: 0.8, threads: 0.55, fur: 0.45, contour: 0.75, meridian: 0.75, shards: 0.8, radial: 0.7, orrery: 0.65, neural: 0.5, dataflow: 0.3, strands: 0.55 }[T.s_style] ?? (i ? 0.45 : 0.7)); });
   },
 });

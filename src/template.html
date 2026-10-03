@@ -9126,7 +9126,7 @@ class CoreStudio {
   // Which Surface/Burst controls matter for the current choice; the rest are greyed out and locked.
   coreFxRelevant(t) {
     const st = t.tune.s_style, on = st !== 'none', bu = +t.tune.b_burst === 1 && t.tune.b_enabled !== 0, ri = +t.tune.b_ring === 1 && t.tune.b_enabled !== 0;
-    const colourC = ['spike', 'threads', 'fur', 'wire', 'shards'].includes(st), noSize = ['wire', 'contour', 'meridian'].includes(st);
+    const colourC = ['spike', 'threads', 'fur', 'wire', 'shards', 'radial', 'orrery', 'neural', 'dataflow', 'strands'].includes(st), noSize = ['wire', 'contour', 'meridian'].includes(st);
     return {
       s_hide: on, s_colorA: on, s_colorB: on, s_colorC: on && colourC, s_density: on, s_disp: on, s_size: on && !noSize, s_spin: on, s_shell: st === 'wire',
       b_lines: bu, b_len: bu, b_twist: bu, b_curl: bu, b_flow: bu, b_count: ri, b_rin: ri, b_rwid: ri, b_soft: ri, b_tilt: ri, b_rspin: ri, b_size: bu || ri, b_colorA: bu || ri, b_colorB: bu || ri,
@@ -9158,7 +9158,7 @@ class CoreStudio {
   }
   initCoreFx() {
     const box = this.el.querySelector('[data-studio-corefx]'); if (!box) return;
-    const ICON = { none: '○', dotgrid: '∷', halftone: '◉', spike: '✺', threads: '〰', fur: '✷', wire: '⬡', plexus3d: '⌬', contour: '≋', meridian: '◍', cloud: '☁', shards: '◆' };
+    const ICON = { none: '○', dotgrid: '∷', halftone: '◉', spike: '✺', threads: '〰', fur: '✷', wire: '⬡', plexus3d: '⌬', contour: '≋', meridian: '◍', cloud: '☁', shards: '◆', radial: '☼', orrery: '◎', neural: '❂', dataflow: '≈', strands: '⫶' };
     const ctl = (fx, key) => fx.controls.find(c => c.key === key), id = (fx, key) => fx.prefix + key;
     const slider = (fx, key) => { const c = ctl(fx, key), k = id(fx, key); return `<label class="studio-control" data-cfx-rel="${k}"><span>${c.label}</span><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" data-cfx="${k}"><output></output></label>`; };
     const sw = (fx, key) => { const c = ctl(fx, key), k = id(fx, key); return `<div class="cfx-row" data-cfx-rel="${k}"><span>${c.label}</span><div class="st-switch" data-cfx-sw="${k}"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>`; };
