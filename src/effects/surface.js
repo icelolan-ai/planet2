@@ -183,13 +183,14 @@ const SURFACE = Effects.register({
         });
         for (let q = 0; q < 60 * dens + 20; q++) { const u = unit(), rr = R * (0.5 + rnd() * 1.1); dot([u[0] * rr, u[1] * rr, u[2] * rr], rnd() < 0.5 ? cA : cB, 0.8 + rnd()); }
       } else if (style === 'dataflow') {
-        // Hundreds of curves bundled through the middle, coloured A -> B around the sphere, with white beads on them.
-        const n = Math.round(140 + 900 * dens), white = new THREE.Color(0xffffff);
+        // Curves bundled through the middle between points on a tilted ring (edge-bundling look), coloured A -> B around the ring, white beads on some.
+        const n = Math.round(110 + 520 * dens), white = new THREE.Color(0xffffff), tilt = 0.55, ct = Math.cos(tilt), st = Math.sin(tilt), spread = 0.1 + disp * 0.5;
+        const pt = (a, la, k) => { const x = Math.cos(a) * Math.cos(la) * k, y = Math.sin(la) * k, z = Math.sin(a) * Math.cos(la) * k; return [x, y * ct - z * st, y * st + z * ct]; };
         for (let q = 0; q < n; q++) {
-          const a0 = this.fbm(q * 0.07, 1, 2) * TAU * 1.6 + rnd() * 0.5, a1 = a0 + Math.PI * (0.55 + rnd() * 0.9), la0 = (rnd() - 0.5) * 2.2, la1 = (rnd() - 0.5) * 2.2, k = R * (1.02 + (rnd() - 0.5) * disp * 0.2);
-          const pt = (a, la) => [Math.cos(a) * Math.cos(la) * k, Math.sin(la) * k, Math.sin(a) * Math.cos(la) * k], P0 = pt(a0, la0), P1 = pt(a1, la1), cl = 0.25 + rnd() * 0.35 * (1 - disp);
-          const c = [(P0[0] + P1[0]) * cl, (P0[1] + P1[1]) * cl, (P0[2] + P1[2]) * cl], cc = mix(cA, cB, (Math.sin(a0) * 0.5 + 0.5) * 0.7 + rnd() * 0.3), cd = mix(cB, cA, rnd());
-          poly(bez(P0, c, P1, 26), cc, cd); if (rnd() < 0.18) dot(bez(P0, c, P1, 4)[1 + (rnd() * 3 | 0)], rnd() < 0.5 ? white : cC, 0.9 + rnd() * 1.5);
+          const a0 = Math.floor(rnd() * 14) / 14 * TAU + rnd() * 0.22, a1 = a0 + Math.PI * (0.45 + rnd() * 1.1), k = R * (1.04 + rnd() * 0.05) * size;
+          const P0 = pt(a0, (rnd() - 0.5) * spread, k), P1 = pt(a1, (rnd() - 0.5) * spread, k), cl = 0.12 + rnd() * 0.3;
+          const c = [(P0[0] + P1[0]) * cl, (P0[1] + P1[1]) * cl, (P0[2] + P1[2]) * cl], u = (Math.sin(a0 * 1.0) * 0.5 + 0.5), cc = mix(cA, cB, u), cd = mix(cA, cB, 1 - u);
+          const pts = bez(P0, c, P1, 30); poly(pts, cc, cd); if (rnd() < 0.2) dot(pts[(rnd() * 10 | 0) + 2], rnd() < 0.6 ? white : cC, 0.9 + rnd() * 1.5);
         }
       } else {
         // strands: smooth long fibres drifting away from the surface, bending toward the poles, each with a round bead at the tip.
