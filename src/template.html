@@ -10782,7 +10782,7 @@ class CoreStudio {
       const chk = (this.selMode || this.multi.size) ? `<button type="button" class="st-eye st-lcheck${this.multi.has(it.id) ? ' is-on' : ''}" role="checkbox" aria-checked="${this.multi.has(it.id)}" aria-label="Select layer">${this.multi.has(it.id) ? '✓' : ''}</button>` : '';
       return `<li class="st-layer${this.multi.has(it.id) ? ' is-multi' : ''}${inGroup ? ' in-group' : ''}${it === this.sel ? ' is-sel' : ''}${it.hide ? ' is-hidden' : ''}${this.isHid(it) && !it.hide ? ' is-ghidden' : ''}${it.fxType === 'planet' ? ' is-planet' : ''}" data-layer="${this.items.indexOf(it)}">${chk}<span class="st-grip" aria-label="Drag to restack or into a group">⋮⋮</span>${sw}<span class="st-lname">${name}</span>${lk}${it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-lmore" aria-haspopup="menu" aria-label="Layer options"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>`}<button type="button" class="st-eye" data-leye aria-pressed="${!it.hide}" aria-label="${it.hide ? 'Show' : 'Hide'} layer">${eye}</button><button type="button" class="st-eye st-ldel" aria-label="Delete layer">${this.icons.trash}</button>${it === this.sel ? `<label class="st-lop">Opacity<input type="range" min="0" max="1" step="0.05" value="${it.alpha ?? 1}" aria-label="Layer opacity"><output>${Math.round((it.alpha ?? 1) * 100)}%</output></label>` : ''}</li>`;
     };
-    const head = g => { const m = this.items.filter(i => i.group === g.id), allLocked = m.length && m.every(i => i.locked); return `<li class="st-ghead${g.hide ? ' is-hidden' : ''}${m.length && m.every(i => this.multi.has(i.id)) ? ' is-multi' : ''}" data-gid="${g.id}"><button type="button" class="st-eye st-gtog" aria-expanded="${!g.collapsed}" aria-label="${g.collapsed ? 'Expand' : 'Collapse'} group"><span class="st-chev${g.collapsed ? ' is-closed' : ''}" aria-hidden="true"></span></button>${folder}<span class="st-lname st-gname" data-gname>${esc(g.name)}</span><span class="st-gcount">${m.length}</span><button type="button" class="st-eye st-glock${allLocked ? ' is-on' : ''}" aria-pressed="${!!allLocked}" aria-label="Lock group">${allLocked ? this.icons.lock : this.icons.unlock}</button><button type="button" class="st-eye st-geye" aria-pressed="${!g.hide}" aria-label="${g.hide ? 'Show' : 'Hide'} group">${eye}</button><button type="button" class="st-eye st-gdel" aria-label="Ungroup">${this.icons.trash}</button></li>`; };
+    const head = g => { const m = this.items.filter(i => i.group === g.id), allLocked = m.length && m.every(i => i.locked); return `<li class="st-ghead${g.hide ? ' is-hidden' : ''}${m.length && m.every(i => this.multi.has(i.id)) ? ' is-multi' : ''}" data-gid="${g.id}">${(this.selMode || this.multi.size) && m.length ? `<button type="button" class="st-eye st-lcheck st-gcheck${m.every(i => this.multi.has(i.id)) ? ' is-on' : ''}" role="checkbox" aria-checked="${m.every(i => this.multi.has(i.id))}" aria-label="Select whole group">${m.every(i => this.multi.has(i.id)) ? '✓' : ''}</button>` : ''}<button type="button" class="st-eye st-gtog" aria-expanded="${!g.collapsed}" aria-label="${g.collapsed ? 'Expand' : 'Collapse'} group"><span class="st-chev${g.collapsed ? ' is-closed' : ''}" aria-hidden="true"></span></button>${folder}<span class="st-lname st-gname" data-gname>${esc(g.name)}</span><span class="st-gcount">${m.length}</span><button type="button" class="st-eye st-glock${allLocked ? ' is-on' : ''}" aria-pressed="${!!allLocked}" aria-label="Lock group">${allLocked ? this.icons.lock : this.icons.unlock}</button><button type="button" class="st-eye st-geye" aria-pressed="${!g.hide}" aria-label="${g.hide ? 'Show' : 'Hide'} group">${eye}</button><button type="button" class="st-eye st-gdel" aria-label="Ungroup">${this.icons.trash}</button></li>`; };
     const seen = new Set(), out = [];
     this.items.slice().reverse().forEach(it => {
       if (it.group == null || !this.groups.some(g => g.id === it.group)) { out.push(row(it, false)); return; }
@@ -10807,6 +10807,7 @@ class CoreStudio {
       // tapping a group row selects everything in it (box + bar, move together); a quick second tap on the name renames it
       li.addEventListener('click', e => {
         if (e.target.closest('.st-gtog,.st-geye,.st-glock,.st-gdel,.st-gedit')) return;
+        if (e.target.closest('.st-gcheck') || ((this.selMode || this.multi.size) && !e.target.closest('[data-gname]'))) { this.toggleGroup(g); return; }
         const t = performance.now(), gt = this.gTap;   // the row is re-drawn by the first tap, so the tap time lives on the Studio
         if (e.target.closest('[data-gname]') && gt && gt.id === g.id && t - gt.t < 700) { this.gTap = null; rename(); return; }
         this.gTap = { id: g.id, t };
@@ -11499,6 +11500,12 @@ class CoreStudio {
     h.addEventListener('dblclick', () => { this.laySize = null; try { localStorage.removeItem('cerebra-layers-size'); } catch (x) {} this.layoutTrays(); });
   }
   // Selecting a group from its row in Layers: every visible member is selected together (one box, one bar); tap again to clear.
+  // Select-mode: tick or untick every layer of a group at once (other ticked layers stay).
+  toggleGroup(g) {
+    const m = this.items.filter(i => i.group === g.id && !this.isHid(i)); if (!m.length) return;
+    const all = m.every(i => this.multi.has(i.id)); m.forEach(i => { if (all) this.multi.delete(i.id); else this.multi.add(i.id); });
+    this.select(null); this.selMode = true; this.renderLayers(); this.updateMultiUI();
+  }
   selectGroup(g) {
     const m = this.items.filter(i => i.group === g.id && !this.isHid(i)); if (!m.length) return;
     const same = !this.multiPlanet && this.multi.size === m.length && m.every(i => this.multi.has(i.id));
