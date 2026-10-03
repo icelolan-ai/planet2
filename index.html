@@ -1848,6 +1848,10 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .st-context [data-ctx-delete],#studio .st-context [data-ctx-close]{padding:0;width:44px;justify-content:center}
 #studio .st-context [data-ctx-close]{border-radius:50%}
 #studio .st-context .st-btn svg.st-i{width:18px;height:18px}
+/* Select mode: the tick circle stays small and the layer rows keep their height (no wrapping of the buttons) */
+#studio .st-layers :is(.st-layer,.st-ghead) .st-lcheck{width:22px!important;min-width:22px!important;height:22px!important;min-height:22px!important;padding:0!important;font-size:12px;line-height:1;flex:none;display:inline-grid;place-items:center;border-width:2px!important}
+#studio .st-layers .st-layer:not(.is-sel){flex-wrap:nowrap}
+#studio .st-layers .st-ghead .st-lcheck{margin-right:0}
 #studio .st-glassbox{position:absolute;pointer-events:none}
 /* Surface style panel */
 #studio .st-off{opacity:.36;filter:grayscale(1);pointer-events:none;transition:opacity .2s}
