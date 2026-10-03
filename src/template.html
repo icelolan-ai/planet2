@@ -10682,8 +10682,7 @@ class CoreStudio {
     ul.innerHTML = out.join('');
     const bar = this.el.querySelector('[data-lsel]'), sm = this.el.querySelector('[data-sel-mode]'); this.multi.forEach(id => { if (!this.items.some(i => i.id === id)) this.multi.delete(id); });
     sm.setAttribute('aria-pressed', String(this.selMode || this.multi.size > 0)); sm.textContent = this.selMode || this.multi.size ? 'Done' : 'Select';
-    bar.hidden = !this.multi.size;
-    if (this.multi.size) { bar.innerHTML = `<b>${this.multi.size} selected</b>${[['group', 'Group'], ['top', 'To top'], ['bottom', 'To bottom'], ['hide', 'Hide'], ['lock', 'Lock'], ['delete', 'Delete']].map(([k, l]) => `<button type="button" data-ma="${k}">${l}</button>`).join('')}<button type="button" data-ma="clear" aria-label="Clear selection">✕</button>`; bar.querySelectorAll('[data-ma]').forEach(b => b.onclick = () => b.dataset.ma === 'clear' ? this.clearMulti() : this.multiAct(b.dataset.ma)); }
+    bar.hidden = true;   // the on-canvas selection bar already has these actions; no second menu inside Layers
     // group headers
     ul.querySelectorAll('.st-ghead').forEach(li => {
       const g = this.groups.find(x => x.id === +li.dataset.gid), mem = () => this.items.filter(i => i.group === g.id);
