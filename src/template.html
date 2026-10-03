@@ -10439,7 +10439,7 @@ class CoreStudio {
       thumb = c.toDataURL('image/webp', .86); if (!thumb.startsWith('data:image/webp')) thumb = c.toDataURL('image/jpeg', .86);
     } catch (e) {}
     const name = (this.items.find(i => i.role === 'title') || {}).content || 'Untitled';
-    const a = this.libRead(); a.unshift({ id: Date.now(), name, date: new Date().toLocaleString(), subject: this.subject, state: this.snapshot(), thumb });
+    const a = this.libRead(); a.unshift({ id: Date.now(), name, date: new Date().toLocaleString(), subject: this.subject, state: this.snapshot(), pl: this.planetLook(), thumb });
     while (a.length && !this.libWrite(a.slice(0, 30))) a.pop();
     b.textContent = 'Kept ✓'; setTimeout(() => { b.textContent = 'Keep'; }, 1600);
   }
@@ -10450,7 +10450,7 @@ class CoreStudio {
     tr.innerHTML = a.map(w => `<article class="st-lib-card" data-id="${w.id}"><div class="st-lib-img" style="background-image:url('${w.thumb}')"></div><div class="st-lib-info"><b>${esc(w.name)}</b><small>${esc(w.date)}</small><div><button type="button" class="st-btn is-primary" data-lib-load>Open</button><button type="button" class="st-btn" data-lib-del aria-label="Delete">${this.icons.trash}</button></div></div></article>`).join('');
     tr.querySelectorAll('.st-lib-card').forEach((card, i) => { card.style.animationDelay = `${i * 70}ms`;
       const w = a.find(x => String(x.id) === card.dataset.id);
-      card.querySelector('[data-lib-load]').onclick = () => { this.setSubject(w.subject ?? -1); this.restore(w.state); this.commit(); this.libOpen(false); };
+      card.querySelector('[data-lib-load]').onclick = () => { this.setSubject(w.subject ?? -1); this.restore(w.state); if (w.pl) this.showPlanet(w.pl); this.layoutTrays && this.layoutTrays(); this.commit(); this.libOpen(false); };
       card.querySelector('[data-lib-del]').onclick = () => { this.libWrite(this.libRead().filter(x => x.id !== w.id)); this.libOpen(true); };
     });
     requestAnimationFrame(() => this.libParallax());
@@ -11615,13 +11615,13 @@ class CoreStudio {
     const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(this.bg, 0, 0);
   }
   exportProject() {
-    const data = JSON.stringify({ app: 'cerebra-studio', v: 1, subject: this.subject, preset: this.preset, state: this.snapshot() });
+    const data = JSON.stringify({ app: 'cerebra-studio', v: 1, subject: this.subject, preset: this.preset, state: this.snapshot(), pl: this.planetLook() });
     const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([data], { type: 'application/json' })); link.download = `cerebra-${this.preset}.cerebra`;
     document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(link.href), 4000);
   }
   importProject(file) {
     const r = new FileReader();
-    r.onload = () => { try { const d = JSON.parse(r.result); if (d.app !== 'cerebra-studio') throw Error('Not a Cerebra project'); this.setSubject(d.subject ?? -1); this.restore(d.state); this.commit(); } catch (e) { console.error(e); alert('This file is not a Cerebra project.'); } };
+    r.onload = () => { try { const d = JSON.parse(r.result); if (d.app !== 'cerebra-studio') throw Error('Not a Cerebra project'); this.setSubject(d.subject ?? -1); this.restore(d.state); if (d.pl) this.showPlanet(d.pl); this.commit(); } catch (e) { console.error(e); alert('This file is not a Cerebra project.'); } };
     r.readAsText(file);
   }
   drawTextCanvas(el,rot,gx,sx,sy){
