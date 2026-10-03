@@ -817,8 +817,13 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
 /* Studio is a separate, reversible view of the same core and tuning state. */
 html.studio-lock,html.studio-lock body{overflow:hidden!important;overscroll-behavior:none}
 body.studio-on> :not(#gl):not(#net-bg):not(#studio):not(#studio-bg):not(#studio-fx):not(#studio-vfx):not(#tune):not(#wtune):not(script),body.studio-on> :not(#gl):not(#net-bg):not(#studio):not(#studio-bg):not(#studio-fx):not(#studio-vfx):not(#tune):not(#wtune):not(script) *{visibility:hidden!important;pointer-events:none!important}
-body.studio-on #gl{transform:none!important;touch-action:none;pointer-events:auto;cursor:grab}
-body.studio-on #gl:active{cursor:grabbing}
+body.studio-on #gl{transform:none!important;pointer-events:none;position:absolute;inset:0;z-index:auto}
+/* Cerebra is a layer: inside Studio the canvas (with its colour-effect copies) lives in the item stack, so layers can sit above or below it. The catcher takes presses that hit no item. */
+.st-planetbox{position:absolute;inset:0;isolation:isolate;pointer-events:none;transition:translate .35s cubic-bezier(.3,.7,.2,1)}
+.st-planetbox>*{position:absolute!important;inset:0;z-index:auto!important}
+.st-catcher{position:absolute;left:-400px;top:-400px;right:-400px;bottom:-400px;pointer-events:auto;touch-action:none;cursor:grab}
+.st-catcher:active{cursor:grabbing}
+#studio .st-layer.is-planet .st-ldel{display:none}
 #studio-bg{position:fixed;inset:0;z-index:0;pointer-events:none;display:none}
 body.studio-on #studio-bg{display:block}
 #studio-fx,#studio-vfx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;display:none}
@@ -934,11 +939,11 @@ body.studio-on #studio{display:block}
 .studio-panel .studio-two label{display:grid;gap:6px;font:11px var(--f-sans);color:#aab3c4}
 .studio-preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .st-moods{margin-bottom:10px}
-#studio .st-zoompill{position:absolute;z-index:6;left:max(12px,env(safe-area-inset-left));bottom:150px;display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;pointer-events:auto}
+#studio .st-zoompill{position:absolute;z-index:6;left:calc(max(12px,env(safe-area-inset-left)) + 52px);top:max(12px,env(safe-area-inset-top));display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;pointer-events:auto}
 #studio .st-zoompill[hidden]{display:none}
 #studio .st-zoompill .st-btn{min-width:40px;min-height:40px;padding:0;font-size:20px;line-height:1;border-radius:999px}
 #studio .st-zoompct{min-width:52px;min-height:40px;border:0;background:none;color:#ff9199;font:600 12px var(--f-mono);cursor:pointer}
-@media (min-width:901px){#studio .st-zoompill{left:92px;bottom:92px}}
+@media (min-width:901px){#studio .st-zoompill{left:92px;top:auto;bottom:92px}}
 #studio.st-ui-off .st-zoompill{display:none}
 #studio .st-zoom{display:grid;gap:6px;padding:8px 10px;border-radius:14px;background:#ffffff0f;min-width:190px}
 #studio .st-zoom-t{font:600 10px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:#d9ccff}
@@ -2375,6 +2380,6 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
 <script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.1dca83722a.js", 724649]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.81cda9899c.js", 727335]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>

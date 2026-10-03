@@ -809,8 +809,13 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
 /* Studio is a separate, reversible view of the same core and tuning state. */
 html.studio-lock,html.studio-lock body{overflow:hidden!important;overscroll-behavior:none}
 body.studio-on> :not(#gl):not(#net-bg):not(#studio):not(#studio-bg):not(#studio-fx):not(#studio-vfx):not(#tune):not(#wtune):not(script),body.studio-on> :not(#gl):not(#net-bg):not(#studio):not(#studio-bg):not(#studio-fx):not(#studio-vfx):not(#tune):not(#wtune):not(script) *{visibility:hidden!important;pointer-events:none!important}
-body.studio-on #gl{transform:none!important;touch-action:none;pointer-events:auto;cursor:grab}
-body.studio-on #gl:active{cursor:grabbing}
+body.studio-on #gl{transform:none!important;pointer-events:none;position:absolute;inset:0;z-index:auto}
+/* Cerebra is a layer: inside Studio the canvas (with its colour-effect copies) lives in the item stack, so layers can sit above or below it. The catcher takes presses that hit no item. */
+.st-planetbox{position:absolute;inset:0;isolation:isolate;pointer-events:none;transition:translate .35s cubic-bezier(.3,.7,.2,1)}
+.st-planetbox>*{position:absolute!important;inset:0;z-index:auto!important}
+.st-catcher{position:absolute;left:-400px;top:-400px;right:-400px;bottom:-400px;pointer-events:auto;touch-action:none;cursor:grab}
+.st-catcher:active{cursor:grabbing}
+#studio .st-layer.is-planet .st-ldel{display:none}
 #studio-bg{position:fixed;inset:0;z-index:0;pointer-events:none;display:none}
 body.studio-on #studio-bg{display:block}
 #studio-fx,#studio-vfx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;display:none}
@@ -926,11 +931,11 @@ body.studio-on #studio{display:block}
 .studio-panel .studio-two label{display:grid;gap:6px;font:11px var(--f-sans);color:#aab3c4}
 .studio-preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .st-moods{margin-bottom:10px}
-#studio .st-zoompill{position:absolute;z-index:6;left:max(12px,env(safe-area-inset-left));bottom:150px;display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;pointer-events:auto}
+#studio .st-zoompill{position:absolute;z-index:6;left:calc(max(12px,env(safe-area-inset-left)) + 52px);top:max(12px,env(safe-area-inset-top));display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;pointer-events:auto}
 #studio .st-zoompill[hidden]{display:none}
 #studio .st-zoompill .st-btn{min-width:40px;min-height:40px;padding:0;font-size:20px;line-height:1;border-radius:999px}
 #studio .st-zoompct{min-width:52px;min-height:40px;border:0;background:none;color:#ff9199;font:600 12px var(--f-mono);cursor:pointer}
-@media (min-width:901px){#studio .st-zoompill{left:92px;bottom:92px}}
+@media (min-width:901px){#studio .st-zoompill{left:92px;top:auto;bottom:92px}}
 #studio.st-ui-off .st-zoompill{display:none}
 #studio .st-zoom{display:grid;gap:6px;padding:8px 10px;border-radius:14px;background:#ffffff0f;min-width:190px}
 #studio .st-zoom-t{font:600 10px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:#d9ccff}
@@ -3115,7 +3120,7 @@ const WorldTune = (() => {
     /* ---- picking, turning and zooming the planet while the drawer is open ---- */
     const canvas = () => document.getElementById('gl');
     const pickAt = (x, y) => { const b = body(); const cv = canvas(); return b && cv && PlanetBody.camera ? b.pick(x, y, PlanetBody.camera, cv.getBoundingClientRect()) : null; };
-    const inUI = t => panel.contains(t) || toggle.contains(t) || (t.closest && t.closest('.hud a,.hud button,.picker,.rail,#studio'));
+    const inUI = t => panel.contains(t) || toggle.contains(t) || (t.closest && !t.closest('.st-catcher') && t.closest('.hud a,.hud button,.picker,.rail,#studio'));
     let down = null, pinch = null;
     addEventListener('pointerdown', e => {
       if (!isOpen() || inUI(e.target)) return;
@@ -8887,7 +8892,7 @@ class CoreStudio {
       <button type="button" class="st-btn st-reset" data-studio-reset>Reset settings</button></aside>
       <aside class="studio-panel st-layers-tray st-glass" data-tray="layers" aria-label="Layers"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-layers-fold aria-expanded="true"><h2>Layers</h2><span class="st-chev" aria-hidden="true"></span></button><div class="st-layer-bar"><button type="button" class="st-btn st-addgroup" data-add-group aria-label="Add a group">+ Group</button><button type="button" class="st-btn st-addgroup" data-sel-mode aria-pressed="false">Select</button></div><div class="st-lsel" data-lsel hidden></div><button type="button" class="st-lresize" data-lresize aria-label="Resize layers panel"></button><ul class="st-layers" data-studio-objects></ul><p class="studio-note" data-objects-empty>Add text, shapes or decor. Drag ⋮⋮ to restack, the eye hides a layer.</p></aside>`;
     document.body.append(this.bg, this.fx, this.vfx, this.el);
-    this.panel = this.el.querySelector('.studio-panel'); this.stage = this.el.querySelector('[data-studio-stage]'); this.ctx = this.el.querySelector('[data-studio-context]');
+    this.panel = this.el.querySelector('.studio-panel'); this.stage = this.el.querySelector('[data-studio-stage]'); this.catcher = document.createElement('div'); this.catcher.className = 'st-catcher'; this.planetBox = document.createElement('div'); this.planetBox.className = 'st-planetbox'; this.planetBox.setAttribute('aria-hidden', 'true'); this.stage.prepend(this.catcher); this.ctx = this.el.querySelector('[data-studio-context]');
     this.items = []; this.itemId = 0; this.sel = null; this.groups = []; this.multi = new Set(); this.selMode = false; this.rotSnap = 0; try { this.rotSnap = +localStorage.getItem('cerebra-rot-snap') || 0; } catch (e) {}
     const typing = e => e.target.matches && (e.target.matches('input[type=text],textarea') || e.target.isContentEditable);
     this.el.addEventListener('focusin', e => { if (typing(e) && matchMedia('(pointer: coarse)').matches) this.el.classList.add('st-typing'); });
@@ -9157,7 +9162,7 @@ class CoreStudio {
     this.el.querySelector('[data-studio-gravity]').onclick = e => { this.gravity = !this.gravity; e.currentTarget.setAttribute('aria-pressed', String(this.gravity)); };
     this.el.querySelector('[data-studio-home]').onclick = () => this.home();
     const resetCanvas = () => {
-      this.items.slice().forEach(it => this.removeItem(it, true)); this.groups = []; this.multi.clear(); this.multiPlanet = false; this.selMode = false;
+      this.items.slice().forEach(it => this.removeItem(it, true)); { const pl = this.fxItem('planet'); if (pl) { pl.hide = false; pl.alpha = 1; pl.group = null; } } this.groups = []; this.multi.clear(); this.multiPlanet = false; this.selMode = false;
       Object.keys(this.layers).forEach(k => { this.layers[k] = k !== 'dust'; }); this.coreLayers.fill(true);
       this.blur = 8; this.dim = 0; this.focusInv = 0; this.focusText = false; this.focusObj = false; this.guides = true; this.el.classList.remove('hide-guides');
       this.frozen = false; this.showSubject = true; this.fxOn = false; this.grain = false; NET.set('on', false);
@@ -9207,11 +9212,11 @@ class CoreStudio {
       else { const it = this.fxItem('colour'); if (it) { it.hide = !it.hide; this.applyFx(); this.renderLayers(); } }
       e.currentTarget.setAttribute('aria-pressed', String(this.fxOn)); this.commit();
     };
-    this.el.querySelector('[data-studio-show]').onclick = e => { this.showSubject = !this.showSubject; const b = e.currentTarget; b.setAttribute('aria-pressed', String(this.showSubject)); b.setAttribute('aria-label', this.showSubject ? 'Hide subject' : 'Show subject'); this.paintBackground(); };
+    this.el.querySelector('[data-studio-show]').onclick = e => { this.showSubject = !this.showSubject; { const pl = this.fxItem('planet'); if (pl) { pl.hide = !this.showSubject; this.renderLayers(); } } const b = e.currentTarget; b.setAttribute('aria-pressed', String(this.showSubject)); b.setAttribute('aria-label', this.showSubject ? 'Hide subject' : 'Show subject'); this.paintBackground(); };
     this.el.querySelectorAll('[data-studio-layer]').forEach(b => b.onclick = () => { const k = b.dataset.studioLayer; this.layers[k] = !this.layers[k]; b.setAttribute('aria-pressed', String(this.layers[k])); });
     this.el.querySelectorAll('[data-studio-core]').forEach(b => b.onclick = () => { const i = +b.dataset.studioCore; this.coreLayers[i] = !this.coreLayers[i]; b.setAttribute('aria-pressed', String(this.coreLayers[i])); b.setAttribute('aria-label', `${this.coreLayers[i] ? 'Hide' : 'Show'} ${LAYER_NAMES[i]}`); });
-    const signal = app.ac.signal, canvas = app.stage.renderer.domElement;
-    canvas.addEventListener('pointerdown', e => {
+    const signal = app.ac.signal, canvas = this.catcher;
+    this.canvasDown = e => {
       if (!this.active || document.body.classList.contains('tune-open') || this.drag || e.button !== 0) return;
       if (this.beginCanvasPress && this.beginCanvasPress(e)) return;
       this.select(null);
@@ -9219,7 +9224,8 @@ class CoreStudio {
       e.preventDefault(); canvas.setPointerCapture(e.pointerId);
       this.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
       this.vx = this.vy = 0;
-    }, { signal });
+    };
+    canvas.addEventListener('pointerdown', this.canvasDown, { signal });
     canvas.addEventListener('pointermove', e => {
       const d = this.drag; if (!d || d.id !== e.pointerId) return;
       const now = performance.now(), dt = Math.max(.008, (now - d.t) / 1000);
@@ -9258,6 +9264,7 @@ class CoreStudio {
     this.applyPreset('ember');
     this.undoBtn = this.el.querySelector('[data-studio-undo]'); this.redoBtn = this.el.querySelector('[data-studio-redo]');
     this.undoBtn.onclick = () => this.undo(); this.redoBtn.onclick = () => this.redo();
+    if (!this.fxItem('planet')) this.addItem('fx', { fxType: 'planet' });
     this.hist = []; this.hi = -1; this.commit();
     // Settings changes are history steps too (committed when a control is let go).
     this.panel.addEventListener('change', e => { if (!e.target.closest('.net-host')) this.commit(); });
@@ -9731,10 +9738,15 @@ class CoreStudio {
   compCentre() { const W = innerWidth, H = innerHeight; return W > 900 ? { x: (W - 148) / 2, y: (H - 76) / 2 } : { x: W / 2 + 36, y: H / 2 - 40 }; }
   // Shape sizes are in units of the screen's short side, which never changes with rotation or the on-screen keyboard.
   U() { return Math.min(screen.width, screen.height) || Math.min(innerWidth, innerHeight); }
+  // DOM order = stacking order. Cerebra's box is one of the items, so layers can sit above or below the planet.
+  stackDom() { let prev = this.catcher; this.items.forEach(i => { if (i.el.parentNode !== this.stage || i.el.previousSibling !== prev) prev.after(i.el); prev = i.el; }); }
+  belowPlanet(it) { const pi = this.items.findIndex(i => i.kind === 'fx' && i.fxType === 'planet'); return pi > 0 && this.items.indexOf(it) < pi; }
   addItem(kind, o = {}) {
     if (kind === 'fx') {
-      const fx = { id: ++this.itemId, kind: 'fx', locked: false, alpha: 1, hide: false, ...o, el: document.createElement('div') };
-      this.items.push(fx); this.renderLayers(); if (!this.restoring) this.applyFx(); return fx;
+      const planet = o.fxType === 'planet', fx = { id: ++this.itemId, kind: 'fx', locked: false, alpha: 1, hide: false, ...o, el: planet ? this.planetBox : document.createElement('div') };
+      if (planet && !this.restoring) this.items.unshift(fx); else this.items.push(fx);
+      if (planet) this.stackDom();
+      this.renderLayers(); if (!this.restoring) this.applyFx(); return fx;
     }
     if (kind === 'stroke' && !o.strokes && o.pts) { o = { ...o, strokes: [{ pts: o.pts, color: (o.st && o.st.lineColor) || o.fill || '#ffffff', size: (o.st && o.st.lineW) || 4, opacity: o.opacity ?? 1, dash: (o.st && o.st.dash) || 'solid' }] }; delete o.pts; }
     const W = innerWidth, H = innerHeight, side = .2;
@@ -9760,6 +9772,7 @@ class CoreStudio {
     el.addEventListener('pointerdown', e => {
       if (e.button !== 0 || e.target.closest('.st-lock') || el.isContentEditable) return;
       e.stopPropagation(); e.preventDefault();
+      if (this.subject < 0 && this.belowPlanet(it) && this.tool !== 'select' && this.app.hitCore(e.clientX, e.clientY)) { this.canvasDown(e); return; }
       if (this.beginItemPress && this.beginItemPress(it, e)) return;
       const lineHit = kind === 'stroke' && this.tool === 'move' ? this.pluckAt(it, e) : -1;
       const wasSel = this.sel === it; this.select(it); if (lineHit >= 0 && !it.rot) this.selectLine(it, lineHit); else if (this.lineSel) this.clearLineSel();
@@ -10464,7 +10477,7 @@ class CoreStudio {
   fxVisible(type) { const it = this.fxItem(type); return !!it && !it.hide; }
   syncFxLayers() {
     if (!this.items) return; this.fxSyncing = true;
-    const want = { colour: this.effect !== 'off', grain: !!this.grain, network: !!NET.get().on };
+    const want = { planet: true, colour: this.effect !== 'off', grain: !!this.grain, network: !!NET.get().on };
     Object.entries(want).forEach(([type, on]) => { const it = this.fxItem(type); if (on && !it) this.addItem('fx', { fxType: type }); else if (!on && it) this.removeItem(it, true); });
     this.fxSyncing = false; this.applyFx(); this.renderLayers();
   }
@@ -10479,26 +10492,32 @@ class CoreStudio {
     const col = this.fxItem('colour'), gr = this.fxItem('grain'), nt = this.fxItem('network');
     this.fxOn = !!col && !col.hide && this.effect !== 'off'; this.lastVfx = 0;
     this.vfx.style.opacity = col ? col.alpha : 1;
+    const pl = this.fxItem('planet');
+    if (pl) {
+      this.planetBox.style.opacity = pl.alpha ?? 1;
+      const vis = !pl.hide && !this.isHid(pl);
+      if (this.showSubject !== vis && !this.restoring) { this.showSubject = vis; const b = this.el.querySelector('[data-studio-show]'); if (b) { b.setAttribute('aria-pressed', String(vis)); b.setAttribute('aria-label', vis ? 'Hide subject' : 'Show subject'); } this.paintBackground(); }
+    }
     if (this.grainEl) { this.grainEl.hidden = !(this.grain && gr && !gr.hide); this.grainEl.style.opacity = this.grainAmt * (gr ? gr.alpha : 1); }
     const nb = document.getElementById('net-bg'); if (nb) { nb.style.opacity = NET.get().opacity * (nt ? nt.alpha : 1); nb.style.visibility = nt && nt.hide ? 'hidden' : ''; }
     this.paintVfx();
   }
-  fxName(it) { return it.fxType === 'colour' ? `Effect · ${({ chromatic: 'Chromatic', rgb: 'RGB split', color: 'Colour split', vhs: 'VHS', glitch: 'Glitch' })[this.effect] || 'Colour'}` : it.fxType === 'grain' ? 'Film grain' : 'Network'; }
+  fxName(it) { if (it.fxType === 'planet') return this.subject < 0 ? 'Cerebra' : this.app.orrery.worlds[this.subject].def.name; return it.fxType === 'colour' ? `Effect · ${({ chromatic: 'Chromatic', rgb: 'RGB split', color: 'Colour split', vhs: 'VHS', glitch: 'Glitch' })[this.effect] || 'Colour'}` : it.fxType === 'grain' ? 'Film grain' : 'Network'; }
   label(it) { if (it.name) return it.name; return it.kind === 'fx' ? this.fxName(it) : it.kind === 'kit' ? KIT[it.kit].label : it.kind === 'text' ? 'Text' : it.kind === 'stroke' ? 'Drawing' : (it.decor ? '' : 'Focus ') + { tri: 'triangle', rect: 'square', circle: 'circle' }[it.kind]; }
   // Photoshop-style layer list: top of the list is the front. Drag ⋮⋮ to restack, the eye hides, a tap selects.
   renderLayers() {
     const ul = this.el.querySelector('[data-studio-objects]'); if (!ul || this.dragLayer) return;
     cancelAnimationFrame(this.relayRaf); this.relayRaf = requestAnimationFrame(() => this.layoutTrays());
-    this.el.querySelector('[data-objects-empty]').hidden = this.items.length > 0 || this.groups.length > 0;
+    this.el.querySelector('[data-objects-empty]').hidden = this.items.some(i => i.fxType !== 'planet') || this.groups.length > 0;
     const eye = '<svg class="studio-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg>';
     const folder = '<svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
     const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const row = (it, inGroup) => {
-      const sw = it.kind === 'fx' ? `<i class="st-sw is-fx">${{ colour: '◐', grain: '▒', network: '⌘' }[it.fxType]}</i>` : it.kind === 'text' ? `<i class="st-sw" style="color:${it.color}">T</i>` : `<i class="st-sw ${it.decor ? 'is-fill' : ''}" style="color:${it.decor ? it.fill : '#fff'}">${this.icons[it.kind]}</i>`;
+      const sw = it.kind === 'fx' ? `<i class="st-sw is-fx">${{ colour: '◐', grain: '▒', network: '⌘', planet: '●' }[it.fxType]}</i>` : it.kind === 'text' ? `<i class="st-sw" style="color:${it.color}">T</i>` : `<i class="st-sw ${it.decor ? 'is-fill' : ''}" style="color:${it.decor ? it.fill : '#fff'}">${this.icons[it.kind]}</i>`;
       const name = it.name ? esc(it.name) : it.kind === 'text' ? esc((it.content || '').split('\n')[0].slice(0, 24) || 'Text') : this.label(it);
       const lk = it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-llock${it.locked ? ' is-on' : ''}" aria-pressed="${!!it.locked}" aria-label="${it.locked ? 'Unlock' : 'Lock'} layer">${it.locked ? this.icons.lock : this.icons.unlock}</button>`;
       const chk = (this.selMode || this.multi.size) ? `<button type="button" class="st-eye st-lcheck${this.multi.has(it.id) ? ' is-on' : ''}" role="checkbox" aria-checked="${this.multi.has(it.id)}" aria-label="Select layer">${this.multi.has(it.id) ? '✓' : ''}</button>` : '';
-      return `<li class="st-layer${this.multi.has(it.id) ? ' is-multi' : ''}${inGroup ? ' in-group' : ''}${it === this.sel ? ' is-sel' : ''}${it.hide ? ' is-hidden' : ''}${this.isHid(it) && !it.hide ? ' is-ghidden' : ''}" data-layer="${this.items.indexOf(it)}">${chk}<span class="st-grip" aria-label="Drag to restack or into a group">⋮⋮</span>${sw}<span class="st-lname">${name}</span>${lk}${it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-lmore" aria-haspopup="menu" aria-label="Layer options"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>`}<button type="button" class="st-eye" data-leye aria-pressed="${!it.hide}" aria-label="${it.hide ? 'Show' : 'Hide'} layer">${eye}</button><button type="button" class="st-eye st-ldel" aria-label="Delete layer">${this.icons.trash}</button>${it === this.sel ? `<label class="st-lop">Opacity<input type="range" min="0" max="1" step="0.05" value="${it.alpha ?? 1}" aria-label="Layer opacity"><output>${Math.round((it.alpha ?? 1) * 100)}%</output></label>` : ''}</li>`;
+      return `<li class="st-layer${this.multi.has(it.id) ? ' is-multi' : ''}${inGroup ? ' in-group' : ''}${it === this.sel ? ' is-sel' : ''}${it.hide ? ' is-hidden' : ''}${this.isHid(it) && !it.hide ? ' is-ghidden' : ''}${it.fxType === 'planet' ? ' is-planet' : ''}" data-layer="${this.items.indexOf(it)}">${chk}<span class="st-grip" aria-label="Drag to restack or into a group">⋮⋮</span>${sw}<span class="st-lname">${name}</span>${lk}${it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-lmore" aria-haspopup="menu" aria-label="Layer options"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>`}<button type="button" class="st-eye" data-leye aria-pressed="${!it.hide}" aria-label="${it.hide ? 'Show' : 'Hide'} layer">${eye}</button><button type="button" class="st-eye st-ldel" aria-label="Delete layer">${this.icons.trash}</button>${it === this.sel ? `<label class="st-lop">Opacity<input type="range" min="0" max="1" step="0.05" value="${it.alpha ?? 1}" aria-label="Layer opacity"><output>${Math.round((it.alpha ?? 1) * 100)}%</output></label>` : ''}</li>`;
     };
     const head = g => { const m = this.items.filter(i => i.group === g.id), allLocked = m.length && m.every(i => i.locked); return `<li class="st-ghead${g.hide ? ' is-hidden' : ''}" data-gid="${g.id}"><button type="button" class="st-eye st-gtog" aria-expanded="${!g.collapsed}" aria-label="${g.collapsed ? 'Expand' : 'Collapse'} group"><span class="st-chev${g.collapsed ? ' is-closed' : ''}" aria-hidden="true"></span></button>${folder}<span class="st-lname st-gname" data-gname>${esc(g.name)}</span><span class="st-gcount">${m.length}</span><button type="button" class="st-eye st-glock${allLocked ? ' is-on' : ''}" aria-pressed="${!!allLocked}" aria-label="Lock group">${allLocked ? this.icons.lock : this.icons.unlock}</button><button type="button" class="st-eye st-geye" aria-pressed="${!g.hide}" aria-label="${g.hide ? 'Show' : 'Hide'} group">${eye}</button><button type="button" class="st-eye st-gdel" aria-label="Ungroup">${this.icons.trash}</button></li>`; };
     const seen = new Set(), out = [];
@@ -10708,7 +10727,7 @@ class CoreStudio {
       const r = this.stage.getBoundingClientRect(); set.forEach(i => { i.x = clamp(i.x + dx / r.width, 0, 1); i.y = clamp(i.y + dy / r.height, 0, 1); this.place(i); });
       if (this.updateEditBtn) this.updateEditBtn(); if (this.updateRotHandle) this.updateRotHandle(); clearTimeout(this._nudgeT); this._nudgeT = setTimeout(() => this.commit(), 450);
     };
-    const restack = () => { this.items.forEach(i => this.stage.append(i.el)); this.items.forEach(i => this.place(i)); this.updateFocus(); this.renderLayers(); this.commit(); };
+    const restack = () => { this.stackDom(); this.items.forEach(i => this.place(i)); this.updateFocus(); this.renderLayers(); this.commit(); };
     const step = dir => {
       const set = targets(); if (!set.length) return false; const a = this.items;
       if (dir > 0) { for (let i = a.length - 2; i >= 0; i--) if (set.includes(a[i]) && !set.includes(a[i + 1])) [a[i], a[i + 1]] = [a[i + 1], a[i]]; }
@@ -10794,7 +10813,7 @@ class CoreStudio {
   }
   // ---- S3: marquee / lasso selection that can include the planet, group move, and the multi-selection bar.
   initMarquee() {
-    const app = this.app, canvas = app.stage.renderer.domElement, mk = (tag, cls, html) => { const n = document.createElement(tag); n.className = cls; if (html) n.innerHTML = html; n.hidden = true; this.el.append(n); return n; };
+    const app = this.app, canvas = this.catcher, mk = (tag, cls, html) => { const n = document.createElement(tag); n.className = cls; if (html) n.innerHTML = html; n.hidden = true; this.el.append(n); return n; };
     this.multiPlanet = false; this.selShape = 'box'; this.selHit = 'touch';
     const ov = this.mqEl = mk('div', 'st-mq', '<svg width="100%" height="100%" aria-hidden="true"><rect class="st-mq-r" rx="3"/><polyline class="st-mq-l"/></svg>');
     const ring = this.planetRing = mk('div', 'st-planet-sel'), box = this.multiBox = mk('div', 'st-multibox');
@@ -10947,7 +10966,7 @@ class CoreStudio {
     const { el, id, drawCur, ...rest } = it, o = JSON.parse(JSON.stringify(rest));
     o.x = clamp(o.x + .03, 0, 1); o.y = clamp(o.y + .03, 0, 1); o.locked = false; o.silent = true;
     const n = this.addItem(it.kind, o), k = this.items.indexOf(n), j = this.items.indexOf(it);
-    if (k !== j + 1) { this.items.splice(k, 1); this.items.splice(j + 1, 0, n); this.items.forEach(i => this.stage.append(i.el)); }
+    if (k !== j + 1) { this.items.splice(k, 1); this.items.splice(j + 1, 0, n); this.stackDom(); }
     this.place(n); this.updateFocus(); this.select(n); this.commit(); return n;
   }
   // ---- Layer menu (Procreate style): Rename, Select, Copy, Fill, Clear, Alpha Lock, Mask, Drawing Assist, Invert, Reference, Blend ----
@@ -11045,13 +11064,13 @@ class CoreStudio {
       this.items = this.items.filter(i => !set.includes(i)); const k = this.items.indexOf(t.it); this.items.splice(t.above ? k + 1 : k, 0, ...order);
       order.forEach(i => { i.group = t.it.group ?? null; });
     }
-    this.items.forEach(i => this.stage.append(i.el)); order.forEach(i => this.place(i)); this.updateFocus(); this.commit();
+    this.stackDom(); order.forEach(i => this.place(i)); this.updateFocus(); this.commit();
   }
   multiAct(act) {
     const set = this.items.filter(i => this.multi.has(i.id)); if (!set.length) return;
     if (act === 'group') this.moveLayers(set, { kind: 'new' });
-    else if (act === 'top') { this.items = this.items.filter(i => !set.includes(i)).concat(set); this.items.forEach(i => this.stage.append(i.el)); this.commit(); }
-    else if (act === 'bottom') { this.items = set.concat(this.items.filter(i => !set.includes(i))); this.items.forEach(i => this.stage.append(i.el)); this.commit(); }
+    else if (act === 'top') { this.items = this.items.filter(i => !set.includes(i)).concat(set); this.stackDom(); this.commit(); }
+    else if (act === 'bottom') { this.items = set.concat(this.items.filter(i => !set.includes(i))); this.stackDom(); this.commit(); }
     else if (act === 'hide') { const h = !set.every(i => i.hide); set.forEach(i => { i.hide = h; this.place(i); }); this.updateFocus(); this.commit(); }
     else if (act === 'lock') { const l = !set.every(i => i.locked); set.forEach(i => { i.locked = l; this.place(i); }); this.commit(); }
     else if (act === 'delete') { set.forEach(i => this.removeItem(i, true)); this.commit(); this.multi.clear(); this.selMode = false; }
@@ -11079,6 +11098,7 @@ class CoreStudio {
   }
   lockItem(it, on) { it.locked = on; this.place(it); this.select(it); this.renderLayers(); this.commit(); }
   removeItem(it, quiet) {
+    if (it.kind === 'fx' && it.fxType === 'planet' && !this.restoring) return;   // Cerebra's layer stays
     it.el.remove(); this.items = this.items.filter(i => i !== it); this.multi.delete(it.id); if (this.lineSel && this.lineSel.it === it) this.lineSel = null; if (this._movers) this._movers.delete(it); this.renderLayers();
     if (it.kind === 'fx' && !this.restoring && !this.fxSyncing) this.fxOff(it.fxType);
     if (this.sel === it) this.select(null);
@@ -11121,7 +11141,7 @@ class CoreStudio {
     this.el.querySelectorAll('[data-studio-layer]').forEach(b => b.setAttribute('aria-pressed', String(this.layers[b.dataset.studioLayer])));
     this.el.querySelectorAll('[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(this.coreLayers[+b.dataset.studioCore])));
     this.el.classList.toggle('hide-guides', this.guides === false); if (this.syncGrain) this.syncGrain(); this.cpts = JSON.parse(JSON.stringify(this.cpts || [])); this.renderCpts(); this.fxSyncing = true; NET.set('on', !!this.fxItem('network')); this.fxSyncing = false; this.applyFx(); this.updateFocus(); this.paintBackground(); this.paintVfx();
-    this.restoring = false; this.syncHist();
+    this.restoring = false; if (!this.fxItem('planet')) this.addItem('fx', { fxType: 'planet' }); this.stackDom(); this.applyFx(); this.syncHist();
   }
 
   // Shapes keep their area sharp: the scene is blurred and a clipped, sharp copy sits on top. Works in Safari, unlike masked backdrop blur.
@@ -11179,14 +11199,37 @@ class CoreStudio {
     r.onload = () => { try { const d = JSON.parse(r.result); if (d.app !== 'cerebra-studio') throw Error('Not a Cerebra project'); this.setSubject(d.subject ?? -1); this.restore(d.state); this.commit(); } catch (e) { console.error(e); alert('This file is not a Cerebra project.'); } };
     r.readAsText(file);
   }
+  drawTextCanvas(el,rot,gx,sx,sy){
+        const style=getComputedStyle(el);let r=el.getBoundingClientRect();if(!r.width||!r.height)return;
+        gx.save();if(rot){const cx=r.left+r.width/2,cy=r.top+r.height/2,cw=el.offsetWidth,ch=el.offsetHeight;r={left:cx-cw/2,top:cy-ch/2,width:cw,height:ch,right:cx+cw/2};gx.translate(cx*sx,cy*sy);gx.rotate(rot*Math.PI/180);gx.translate(-cx*sx,-cy*sy);}const bg=style.backgroundColor;if(bg&&!/rgba\(0, 0, 0, 0\)|transparent/.test(bg)&&el.contentEditable!=='true'){gx.globalAlpha=+style.opacity||1;gx.fillStyle=bg;const rr=(parseFloat(style.borderTopLeftRadius)||0)*Math.min(sx,sy);gx.beginPath();if(gx.roundRect)gx.roundRect(r.left*sx,r.top*sy,r.width*sx,r.height*sy,rr);else gx.rect(r.left*sx,r.top*sy,r.width*sx,r.height*sy);gx.fill();}
+        gx.fillStyle=style.color;gx.globalAlpha=+style.opacity||1;gx.font=`${style.fontStyle==='italic'?'italic ':''}${style.fontWeight} ${parseFloat(style.fontSize)*sy}px ${style.fontFamily}`;if('wordSpacing' in gx)gx.wordSpacing=`${(parseFloat(style.wordSpacing)||0)*sx}px`;const stroked=parseFloat(style.webkitTextStrokeWidth)>0&&/transparent|rgba\(0, 0, 0, 0\)/.test(style.webkitTextFillColor||'');
+        if('letterSpacing' in gx)gx.letterSpacing=`${(parseFloat(style.letterSpacing)||0)*sx}px`;
+        gx.textBaseline='top';const upper=style.textTransform==='uppercase',pad=parseFloat(style.paddingLeft)||0,lines=el.innerText.split(/\n/);let yy=(r.top+(parseFloat(style.paddingTop)||0))*sy;
+        for(const raw of lines){const line=upper?raw.toUpperCase():raw;gx.textAlign=style.textAlign==='right'?'right':style.textAlign==='center'?'center':'left';
+          const xx=gx.textAlign==='right'?(r.right-pad)*sx:gx.textAlign==='center'?(r.left+r.width/2)*sx:(r.left+pad)*sx;if(stroked){gx.strokeStyle=style.color;gx.lineWidth=parseFloat(style.webkitTextStrokeWidth)*sx;gx.lineJoin='round';gx.strokeText(line,xx,yy);}else gx.fillText(line,xx,yy);if(/underline/.test(style.textDecorationLine||style.textDecoration)){const wl=gx.measureText(line).width,x0=gx.textAlign==='right'?xx-wl:gx.textAlign==='center'?xx-wl/2:xx,fs=parseFloat(style.fontSize)*sy;gx.fillRect(x0,yy+fs*.98,wl,Math.max(1,fs*.06));}yy+=(parseFloat(style.lineHeight)||parseFloat(style.fontSize)*1.05)*sy;}
+        gx.restore();
+      }
+  paintItemCanvas(i,g,width,height,sx,sy,shapes){
+        if(i.kind==='fx'||i.ref)return;
+        const bp=this.itemBlurPx(i,shapes)*Math.max(sx,sy);
+        let tg=g,tc=null;if(bp>0){tc=document.createElement('canvas');tc.width=width;tc.height=height;tg=tc.getContext('2d');}
+        const g0=g;
+        if(i.kind==='text'){tg.save();tg.globalCompositeOperation=bp>0?'source-over':this.blendOp(i);this.drawTextCanvas(i.el,i.rot,tg,sx,sy);tg.restore();}
+        else{const U2=this.U()*sx,ww=i.w*U2,hh=i.h*U2*(sy/sx);this.drawShapeCanvas(bp>0?tg:g,i,i.x*width-ww/2,i.y*height-hh/2,ww,hh,sx);}
+        if(bp>0){g0.save();g0.globalCompositeOperation=this.blendOp(i);g0.drawImage(softBlur(tc,bp),0,0);g0.restore();}
+      }
   async composePoster(scale = 2, noCrop = false) {
     if(this.sel)this.select(null);
-      const {blob,width,height}=await this.app.capture({type:'image/png',scale,transparent:false});
+      const planetIdx0=this.items.findIndex(i=>i.kind==='fx'&&i.fxType==='planet'),hasBelow=planetIdx0>0&&this.items.slice(0,planetIdx0).some(i=>i.kind!=='fx'&&!i.ref&&!this.isHid(i));
+      await Promise.all(this.items.filter(i=>i.kind==='kit').map(kitFontWait));
+      const {blob,width,height}=await this.app.capture({type:'image/png',scale,transparent:false,bare:hasBelow});
       if(!blob)throw Error('Canvas capture failed');
       const bitmap=await createImageBitmap(blob), out=document.createElement('canvas');out.width=width;out.height=height;
       const g=out.getContext('2d'),sx=width/this.app.stage.width,sy=height/this.app.stage.height;
-      g.drawImage(bitmap,0,0);bitmap.close();
       const U=this.U(),shapes=this.items.filter(i=>i.kind!=='text'&&i.kind!=='fx'&&!i.decor&&!i.ref&&!this.isHid(i));
+      const planetIdx=this.items.findIndex(i=>i.kind==='fx'&&i.fxType==='planet'),below=hasBelow?this.items.slice(0,planetIdx).filter(i=>i.kind!=='fx'&&!i.ref&&!this.isHid(i)):[];
+      if(hasBelow){this.paint(g,width,height);below.forEach(i=>this.paintItemCanvas(i,g,width,height,sx,sy,shapes));}
+      g.drawImage(bitmap,0,0);bitmap.close();
       if(shapes.length&&(this.blur>0||this.dim>0)){
         const blurred=document.createElement('canvas');blurred.width=width;blurred.height=height;
         const b=blurred.getContext('2d');b.drawImage(softBlur(out,(this.focusScene===false?0:this.blur)*Math.max(sx,sy)),0,0);if(this.dim>0){b.fillStyle=`rgba(0,0,0,${this.dim})`;b.fillRect(0,0,width,height);}
@@ -11197,26 +11240,7 @@ class CoreStudio {
         b.fill();b.globalCompositeOperation='source-over';if(this.focusInv){g.save();g.drawImage(blurred,0,0);g.restore();}else g.drawImage(blurred,0,0);
       }
       if(this.fxLive()&&this.effect!=='off'&&this.effectAmount>0){g.save();g.globalAlpha=(this.fxItem('colour')||{alpha:1}).alpha;g.drawImage(this.vfx,0,0,width,height);g.restore();}
-      const drawText=(el,rot,gx)=>{
-        const style=getComputedStyle(el);let r=el.getBoundingClientRect();if(!r.width||!r.height)return;
-        gx.save();if(rot){const cx=r.left+r.width/2,cy=r.top+r.height/2,cw=el.offsetWidth,ch=el.offsetHeight;r={left:cx-cw/2,top:cy-ch/2,width:cw,height:ch,right:cx+cw/2};gx.translate(cx*sx,cy*sy);gx.rotate(rot*Math.PI/180);gx.translate(-cx*sx,-cy*sy);}const bg=style.backgroundColor;if(bg&&!/rgba\(0, 0, 0, 0\)|transparent/.test(bg)&&el.contentEditable!=='true'){gx.globalAlpha=+style.opacity||1;gx.fillStyle=bg;const rr=(parseFloat(style.borderTopLeftRadius)||0)*Math.min(sx,sy);gx.beginPath();if(gx.roundRect)gx.roundRect(r.left*sx,r.top*sy,r.width*sx,r.height*sy,rr);else gx.rect(r.left*sx,r.top*sy,r.width*sx,r.height*sy);gx.fill();}
-        gx.fillStyle=style.color;gx.globalAlpha=+style.opacity||1;gx.font=`${style.fontStyle==='italic'?'italic ':''}${style.fontWeight} ${parseFloat(style.fontSize)*sy}px ${style.fontFamily}`;if('wordSpacing' in gx)gx.wordSpacing=`${(parseFloat(style.wordSpacing)||0)*sx}px`;const stroked=parseFloat(style.webkitTextStrokeWidth)>0&&/transparent|rgba\(0, 0, 0, 0\)/.test(style.webkitTextFillColor||'');
-        if('letterSpacing' in gx)gx.letterSpacing=`${(parseFloat(style.letterSpacing)||0)*sx}px`;
-        gx.textBaseline='top';const upper=style.textTransform==='uppercase',pad=parseFloat(style.paddingLeft)||0,lines=el.innerText.split(/\n/);let yy=(r.top+(parseFloat(style.paddingTop)||0))*sy;
-        for(const raw of lines){const line=upper?raw.toUpperCase():raw;gx.textAlign=style.textAlign==='right'?'right':style.textAlign==='center'?'center':'left';
-          const xx=gx.textAlign==='right'?(r.right-pad)*sx:gx.textAlign==='center'?(r.left+r.width/2)*sx:(r.left+pad)*sx;if(stroked){gx.strokeStyle=style.color;gx.lineWidth=parseFloat(style.webkitTextStrokeWidth)*sx;gx.lineJoin='round';gx.strokeText(line,xx,yy);}else gx.fillText(line,xx,yy);if(/underline/.test(style.textDecorationLine||style.textDecoration)){const wl=gx.measureText(line).width,x0=gx.textAlign==='right'?xx-wl:gx.textAlign==='center'?xx-wl/2:xx,fs=parseFloat(style.fontSize)*sy;gx.fillRect(x0,yy+fs*.98,wl,Math.max(1,fs*.06));}yy+=(parseFloat(style.lineHeight)||parseFloat(style.fontSize)*1.05)*sy;}
-        gx.restore();
-      };
-      await Promise.all(this.items.filter(i=>i.kind==='kit').map(kitFontWait));
-      this.items.filter(i=>!this.isHid(i)).forEach(i=>{
-        if(i.kind==='fx'||i.ref)return;
-        const bp=this.itemBlurPx(i,shapes)*Math.max(sx,sy);
-        let tg=g,tc=null;if(bp>0){tc=document.createElement('canvas');tc.width=width;tc.height=height;tg=tc.getContext('2d');}
-        const g0=g;
-        if(i.kind==='text'){tg.save();tg.globalCompositeOperation=bp>0?'source-over':this.blendOp(i);drawText(i.el,i.rot,tg);tg.restore();}
-        else{const U2=this.U()*sx,ww=i.w*U2,hh=i.h*U2*(sy/sx);this.drawShapeCanvas(bp>0?tg:g,i,i.x*width-ww/2,i.y*height-hh/2,ww,hh,sx);}
-        if(bp>0){g0.save();g0.globalCompositeOperation=this.blendOp(i);g0.drawImage(softBlur(tc,bp),0,0);g0.restore();}
-      });
+      this.items.filter(i=>!this.isHid(i)&&!below.includes(i)).forEach(i=>this.paintItemCanvas(i,g,width,height,sx,sy,shapes));
       // Crop to the poster: the band under the side menus is not part of the composition.
       let fin=out;
       if(innerWidth>900&&!noCrop){const c0=this.compCentre(),sh=this.shift||{x:0,y:0},cx=(c0.x+sh.x)*sx,half=Math.min(cx,width-cx);
@@ -11241,13 +11265,16 @@ class CoreStudio {
     if(c.width!==Math.ceil(w/2)||c.height!==Math.ceil(h/2)){c.width=Math.ceil(w/2);c.height=Math.ceil(h/2);}
     const g=c.getContext('2d');
     if(!this.active||!this.fxLive()||this.effect==='off'||this.effectAmount<=0){g.clearRect(0,0,c.width,c.height);return;}
-    if(now-(this.lastVfx||0)<70)return;
+    if(now-(this.lastVfx||0)<(this.coarse===undefined?(this.coarse=matchMedia('(pointer: coarse)').matches):this.coarse)*40+70)return;
     g.clearRect(0,0,c.width,c.height);
     this.lastVfx=now;
-    const src=this.app.stage.renderer.domElement, dx=this.effectAmount/2;
+    // The big WebGL canvas is read ONCE per update (a costly copy on tablets); every colour pass then works from this small copy.
+    const base=this.vfxBase||(this.vfxBase=document.createElement('canvas'));if(base.width!==c.width||base.height!==c.height){base.width=c.width;base.height=c.height;}
+    const bgx=base.getContext('2d');bgx.clearRect(0,0,base.width,base.height);bgx.drawImage(this.app.stage.renderer.domElement,0,0,base.width,base.height);
+    const dx=this.effectAmount/2;
     const tint=(color,x,y,alpha)=>{
       const t=this.tint||(this.tint=document.createElement('canvas'));if(t.width!==c.width||t.height!==c.height){t.width=c.width;t.height=c.height;}
-      const p=t.getContext('2d');p.clearRect(0,0,t.width,t.height);p.globalCompositeOperation='source-over';p.drawImage(src,0,0,t.width,t.height);
+      const p=t.getContext('2d');p.clearRect(0,0,t.width,t.height);p.globalCompositeOperation='source-over';p.drawImage(base,0,0);
       p.globalCompositeOperation='source-in';p.fillStyle=color;p.fillRect(0,0,t.width,t.height);p.globalCompositeOperation='source-over';
       g.globalAlpha=alpha;g.drawImage(t,x,y);g.globalAlpha=1;
     };
@@ -11261,7 +11288,7 @@ class CoreStudio {
     if(this.effect==='glitch'){
       for(let i=0;i<7;i++){
         const y=Math.floor(((i*79+Math.floor(now/190)*53)%c.height)),hh=Math.max(2,Math.round(this.effectAmount/2));
-        g.globalAlpha=.45;g.drawImage(src,0,y*2,w,hh*2,(i%2?-1:1)*dx,y,c.width,hh);
+        g.globalAlpha=.45;g.drawImage(base,0,y,c.width,hh,(i%2?-1:1)*dx,y,c.width,hh);
       }g.globalAlpha=1;
     }
   }
@@ -11279,6 +11306,7 @@ class CoreStudio {
     // Keep hidden page controls out of keyboard and accessibility navigation, too.
     [...document.body.children].forEach(el => { if (![this.bg, this.fx, this.vfx, this.el, document.getElementById('gl'), document.getElementById('net-bg'), document.getElementById('tune'), document.getElementById('wtune')].includes(el) && el.tagName !== 'SCRIPT') { this.saved.inert.push([el, el.inert]); el.inert = true; } });
     a.stage.scene.traverse(o => this.saved.visibility.set(o, o.visible));
+    { const gl = document.getElementById('gl'); this._glHome = { parent: gl.parentNode, next: gl.nextSibling }; this.planetBox.append(gl, this.fx, this.vfx); this.stackDom(); this.syncFxLayers(); }
     document.documentElement.classList.add('studio-lock'); document.body.classList.add('studio-on');
     this.paintBackground(); this.updateFocus(); this.el.querySelector('[data-studio-exit]').focus();
     if (this.guardOn) { this.guardOn(); this.offerDraft(); }
@@ -11290,6 +11318,7 @@ class CoreStudio {
     WorldTune.open(false); if (this.drawing) this.setDrawing(false); this.select(null); this.fx.style.display='none'; this.bg.style.filter='';this.vfx.getContext('2d').clearRect(0,0,this.vfx.width,this.vfx.height);
     document.querySelector('[data-tune-close]').click();
     document.documentElement.classList.remove('studio-lock'); document.body.classList.remove('studio-on');
+    { const gl = document.getElementById('gl'), h = this._glHome; if (gl && h && h.parent) h.parent.insertBefore(gl, h.next && h.next.parentNode === h.parent ? h.next : null); }
     document.body.style.backgroundColor = this.saved.background;
     a.stage.renderer.domElement.style.filter='';
     this.saved.inert.forEach(([el, value]) => { el.inert = value; });
@@ -11363,7 +11392,7 @@ class CoreStudio {
       else cc.y = Math.max(110, (H - r.height) / 2 + 10);
     } else if (!wide && !this.panel.hidden) cc.y = Math.max(110, (H - this.panel.getBoundingClientRect().height - 80) / 2 + 10);
     const sx = Math.round(cc.x - c0.x), sy = Math.round(cc.y - c0.y);
-    if (!this.shift || this.shift.x !== sx || this.shift.y !== sy) { this.shift = { x: sx, y: sy }; this.stage.style.transform = sx || sy ? `translate(${sx}px,${sy}px)` : ''; this.updateFocus(); this.updateRotHandle(); }
+    if (!this.shift || this.shift.x !== sx || this.shift.y !== sy) { this.shift = { x: sx, y: sy }; this.stage.style.transform = sx || sy ? `translate(${sx}px,${sy}px)` : ''; this.planetBox.style.translate = sx || sy ? `${-sx}px ${-sy}px` : ''; this.updateFocus(); this.updateRotHandle(); }
     const x = (cc.x - W / 2) / W * 2 * hw, y = (H / 2 - cc.y) / H * 2 * hh;
     if (a.reduced || tuning) this.vx = this.vy = 0;
     if (!this.drag && !a.reduced && !tuning) {
@@ -12378,7 +12407,8 @@ class App {
     out.width = src.width; out.height = src.height;
     const g = out.getContext('2d', { willReadFrequently: true });
     const opaque = C.o.type === 'image/jpeg' || !C.o.transparent;
-    if (opaque) {
+    if (C.o.bare) { g.drawImage(src, 0, 0); }   // the planet alone (the poster paints the background and the layers below it itself)
+    else if (opaque) {
       if (this.studio && this.studio.active) this.studio.paint(g, out.width, out.height);
       else { g.fillStyle = getComputedStyle(document.body).backgroundColor || '#05070a'; g.fillRect(0, 0, out.width, out.height); }
       g.drawImage(src, 0, 0);
