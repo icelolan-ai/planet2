@@ -1852,6 +1852,21 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .st-layers :is(.st-layer,.st-ghead) .st-lcheck{width:22px!important;min-width:22px!important;height:22px!important;min-height:22px!important;padding:0!important;font-size:12px;line-height:1;flex:none;display:inline-grid;place-items:center;border-width:2px!important}
 #studio .st-layers .st-layer:not(.is-sel){flex-wrap:nowrap}
 #studio .st-layers .st-ghead .st-lcheck{margin-right:0}
+/* Compact Layers list: smaller rows, icons and buttons so more layers fit */
+#studio .st-layers{gap:3px}
+#studio .st-layers .st-layer{min-height:30px;padding:0 3px 0 2px;border-radius:9px}
+#studio .st-layers :is(.st-layer,.st-ghead) .st-eye{width:22px!important;min-width:22px!important;height:24px!important;min-height:0!important;border-radius:7px}
+#studio .st-layers :is(.st-layer,.st-ghead) .st-eye svg,#studio .st-layers :is(.st-layer,.st-ghead) .st-eye .st-i{width:14px;height:14px}
+#studio .st-layers .st-lcheck{width:18px!important;min-width:18px!important;height:18px!important;font-size:11px}
+#studio .st-layers .st-sw{width:20px;height:20px;font-size:12px;border-radius:6px}
+#studio .st-layers .st-sw svg{width:13px;height:13px}
+#studio .st-layers .st-grip{font-size:9px;width:12px;height:28px;letter-spacing:-2px}
+#studio .st-layers .st-lname{font-size:11px}
+#studio .st-layers .st-ghead{padding:3px 4px;margin:2px 0;border-radius:10px;gap:3px}
+#studio .st-layers .st-ghead .st-gcount{font-size:9px;padding:1px 5px}
+#studio .st-layers .st-ghead .st-chev{transform-origin:center}
+#studio .st-layer-bar{gap:6px;margin:0 0 6px}
+#studio .st-layer-bar .st-addgroup,#studio .st-addgroup{min-height:26px!important;padding:0 8px;font-size:9px;border-radius:9px}
 #studio .st-glassbox{position:absolute;pointer-events:none}
 /* Surface style panel */
 #studio .st-off{opacity:.36;filter:grayscale(1);pointer-events:none;transition:opacity .2s}
