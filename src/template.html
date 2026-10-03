@@ -11968,6 +11968,19 @@ class App {
       if (pending) return; pending = true;
       requestAnimationFrame(() => { pending = false; this.resize(); });
     }, { signal });
+    // Tablets (Stage Manager, split view, fold / rotate) can change the window without a final resize event, which leaves the canvases at the old size.
+    // Compare the real window with what was last applied, and repair it with the normal resize path.
+    {
+      const key = () => `${innerWidth}x${innerHeight}`; let last = key(), settle = 0;
+      const stale = () => key() !== last || this.stage.width !== innerWidth || this.stage.height !== innerHeight;
+      addEventListener('resize', () => { last = key(); }, { signal });
+      const fix = () => { if (!stale()) return; last = key(); dispatchEvent(new Event('resize')); clearTimeout(settle); settle = setTimeout(() => { if (stale()) { last = key(); dispatchEvent(new Event('resize')); } }, 450); };
+      const later = () => { [120, 450, 1000].forEach(t => setTimeout(fix, t)); };
+      if (window.visualViewport) visualViewport.addEventListener('resize', later, { signal });
+      addEventListener('orientationchange', later, { signal });
+      addEventListener('pageshow', later, { signal });
+      setInterval(() => { if (!document.hidden) fix(); }, 500);
+    }
     this.ro = new ResizeObserver(() => this.scroll && this.scroll.measure());
     this.ro.observe($('#content'));
     document.addEventListener('visibilitychange', () => {
