@@ -160,11 +160,11 @@
     });
     (async () => {
       if (!(typeof SURFACE !== 'undefined' && SURFACE.__shapePatch)) {
-        await load('src/effects/surface-shapes.js?v=20261004c', 'data-surface-shapes');
+        await load('src/effects/z-surface-shapes.js?v=20261004d', 'data-surface-shapes');
       }
       const s = window.__cerebra && window.__cerebra.studio;
       if (!(s && s.__deepSurfaceTune)) {
-        await load('src/effects/surface-tune-core.js?v=20261004c', 'data-deep-surface-tune');
+        await load('src/effects/surface-tune-core.js?v=20261004d', 'data-deep-surface-tune');
       }
     })().catch(e => console.error('Cerebra Surface loader failed', e)).finally(() => { window.__cerebraSurfaceLoader = false; });
   }, 900);
