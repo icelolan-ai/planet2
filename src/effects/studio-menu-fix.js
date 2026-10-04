@@ -15,18 +15,17 @@
     touchStyle.textContent = `
       #studio [data-studio-tools].is-on{background:var(--ink)!important;color:var(--bg)!important;border-color:var(--ink)!important}
       @media (pointer:coarse), (max-width:760px){
-        #studio [data-tray="layers"] .st-eye,
-        #studio [data-tray="layers"] .st-gtog,
-        #studio [data-tray="layers"] [data-sel-mode],
-        #studio [data-tray="layers"] [data-lsel],
-        #studio [data-tray="layers"] .st-panel-head button{
+        #studio .st-layers .st-eye,
+        #studio .st-layers .st-gtog,
+        #studio .st-layers [data-sel-mode],
+        #studio .st-layers [data-lsel]{
           width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important
         }
-        #studio [data-tray="layers"] .st-lcheck{
+        #studio .st-layers .st-lcheck{
           width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important
         }
-        #studio [data-tray="layers"] .st-layer,
-        #studio [data-tray="layers"] .st-ghead{min-height:44px!important}
+        #studio .st-layers .st-layer,
+        #studio .st-layers .st-ghead{min-height:44px!important}
       }
     `;
     document.head.append(touchStyle);
