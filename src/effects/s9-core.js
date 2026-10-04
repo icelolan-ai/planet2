@@ -10,7 +10,9 @@
   const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(_){}};
   const api=window.__cerebraS9={KEY,TYPES,DEF,clone,merge,get:()=>state,set:v=>{state=merge(v);save();api.sync&&api.sync()},save,snapshot:()=>clone(state)};
   function boot(){
-    const app=window.__cerebra,s=app&&app.studio,T=window.THREE;
+    // Cerebra's vendor bundle currently exposes Three.js as KY. Keep THREE as a
+    // compatibility fallback for development/standalone environments.
+    const app=window.__cerebra,s=app&&app.studio,T=window.KY||window.THREE;
     if(!app||!s||!T||!app.stage||!app.core){setTimeout(boot,220);return}
     if(api.ready)return; api.ready=true; api.app=app; api.studio=s;
     const scene=app.stage.scene,reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches,coarse=matchMedia('(pointer: coarse)').matches;
