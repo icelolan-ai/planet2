@@ -8,6 +8,7 @@ This document is the primary map for humans and AI agents working on this reposi
 - `src/worlds.json` — world metadata.
 - `src/effects/` — feature modules layered onto the main runtime.
 - `src/build_web.py` — builds the deployable root `index.html` and hashed files in `assets/`.
+- `.github/workflows/build-generated.yml` — safety-net build on `main` whenever source files change.
 - Root `index.html` and `assets/` are generated output. Do not hand-edit them.
 
 ## Feature ownership
@@ -25,7 +26,7 @@ When changing Surface Style, inspect all three files. Keep the renderer state un
 Rule: one floating menu at a time. Starting a drawing gesture must clear obstructing controls from the canvas.
 
 ### Drawing
-- `src/effects/s7-brush.js` — Tentacle, Branch, Pen/Line symmetry and drawing compatibility bootstrap.
+- `src/effects/s7-brush.js` — Tentacle, Branch and Pen/Line symmetry.
 
 Drawing additions must use the existing Studio stroke layer and undo/save path rather than a second canvas-state system.
 
@@ -34,6 +35,9 @@ Drawing additions must use the existing Studio stroke layer and undo/save path r
 - `src/effects/s9-ui.js` — Lab UI, project JSON, onboarding.
 
 WebGPU is intentionally not part of this layer unless explicitly approved.
+
+### Compatibility only
+- `src/effects/runtime-compat.js` — temporary bridge used only when the legacy split loader source-loads newer Studio modules. It must not contain feature logic and must do nothing inside a normal rebuilt bundle.
 
 ### Other render effects
 - `core.js` — Effects registry; must load before registered effects.
@@ -45,7 +49,9 @@ WebGPU is intentionally not part of this layer unless explicitly approved.
 2. `surface.js` must initialize before `surface-shapes.js`.
 3. `surface-shapes.js` and `surface.js` must be available before Surface Tune is validated.
 4. Studio extensions must patch the existing `window.__cerebra.studio`; do not create a second Studio controller.
-5. Feature modules must guard against duplicate initialization because the current Pages deployment can use compatibility source loading as well as rebuilt bundles.
+5. Feature modules must guard against duplicate initialization.
+6. `src/build_web.py` contains the authoritative explicit effect-module order. Do not rely on filename alphabetical order.
+7. `runtime-compat.js` is legacy-only; a rebuilt hashed bundle must not source-load feature modules again.
 
 ## State rules
 
@@ -63,13 +69,17 @@ WebGPU is intentionally not part of this layer unless explicitly approved.
 
 ## Build and deploy
 
-Run:
+Local/source validation still uses:
 
 ```bash
 python3 src/build_web.py
 ```
 
-Then commit the generated root `index.html` and `assets/` produced by the build. Validate the deployed site after merge.
+The generated root `index.html` and `assets/` must come from that script only. Never edit them by hand.
+
+On `main`, `.github/workflows/build-generated.yml` reruns the same build when `src/template.html`, `src/worlds.json`, `src/effects/**`, or `src/build_web.py` changes. If generated output differs, the workflow commits it back to `main`. The generated-only commit does not retrigger the workflow because of the path filter.
+
+After the generated build lands, validate the deployed GitHub Pages site, not only repository source.
 
 ## Refactor policy
 
