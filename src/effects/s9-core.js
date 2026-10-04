@@ -10,7 +10,7 @@
   const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(_){}};
   const api=window.__cerebraS9={KEY,TYPES,DEF,clone,merge,get:()=>state,set:v=>{state=merge(v);save();api.sync&&api.sync()},save,snapshot:()=>clone(state)};
   function boot(){
-    const app=window.__cerebra,s=app&&app.studio,T=window.KY;
+    const app=window.__cerebra,s=app&&app.studio,T=window.THREE;
     if(!app||!s||!T||!app.stage||!app.core){setTimeout(boot,220);return}
     if(api.ready)return; api.ready=true; api.app=app; api.studio=s;
     const scene=app.stage.scene,reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches,coarse=matchMedia('(pointer: coarse)').matches;
@@ -28,7 +28,7 @@
     api.stopSound=()=>{const p=app.core&&app.core.planet;p&&p.stopAudio&&p.stopAudio();state.sound.on=false;api.syncMicUI(false);save();sync()};
     const centre=new T.Vector3();let last=performance.now(),smooth=0;
     const level=()=>{const a=app.core&&app.core.planet&&app.core.planet.audio;return a?Math.max(0,Math.min(1.5,a.level||0)):0};
-    const frame=now=>{requestAnimationFrame(frame);const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;sync();if(!s.active||s.subject>=0||document.hidden)return;app.core.group.getWorldPosition(centre);fluidRoot.position.copy(centre);lifeRoot.position.copy(centre);const raw=state.sound.on?level()*state.sound.gain:0;smooth+=(raw-smooth)*(1-Math.exp(-7*dt));const t=now/1000,motion=reduced()?0:1,flow=state.fluid.flow*(1+smooth*2.2)*motion;if(fluidRoot.visible){U.uTime.value=reduced()?0:t*.32;U.uFlow.value=Math.max(.08,flow);U.uAudio.value=smooth}TYPES.forEach(([type],ti)=>{const g=lifeGroups[type];if(!g.visible)return;g.children.forEach((m,i)=>{const d=m.userData;if(!d||d.seed==null)return;const a=d.seed+t*d.sp*(1+smooth*2.8)*motion;m.position.set(Math.cos(a)*d.r,d.y+Math.sin(a*1.7)*.32,Math.sin(a)*d.r*.55-.1);m.rotation.x+=dt*(.18+ti*.02)*motion;m.rotation.y+=dt*(.3+i*.03)*motion;const p=1+smooth*(type==='jelly'||type==='cell'?.8:.35);if(type!=='jelly'&&type!=='cloud')m.scale.setScalar(p);else if(type==='jelly')m.scale.set(p,.72/Math.max(.7,p),p)})})};
+    const frame=now=>{requestAnimationFrame(frame);const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;sync();if(!s.active||s.subject>=0||document.hidden)return;app.core.group.getWorldPosition(centre);fluidRoot.position.copy(centre);lifeRoot.position.copy(centre);const raw=state.sound.on?level()*state.sound.gain:0;smooth+=(raw-smooth)*(1-Math.exp(-7*dt));const t=now/1000,motion=reduced()?0:1,flow=state.fluid.flow*(1+smooth*2.2)*motion;if(fluidRoot.visible){U.uTime.value=reduced()?0:t*.32;U.uFlow.value=Math.max(.08,flow);U.uAudio.value=smooth}TYPES.forEach(([type],ti)=>{const g=lifeGroups[type];if(!g.visible)return;g.children.forEach((m,i)=>{const d=m.userData;if(!d||d.seed==null)return;const a=d.seed+t*d.sp*(1+smooth*2.8)*motion;m.position.set(Math.cos(a)*d.r,d.y+Math.sin(a*1.7)*.32,Math.sin(a)*d.r*.55-.1);m.rotation.x+=dt*(.18+ti*.02)*motion;m.rotation.y+=dt*(.3+i*.03)*motion;const react=(type==='jelly'||type==='cell')?.8:.35,p=1+smooth*react;if(type!=='jelly'&&type!=='cloud')m.scale.setScalar(p);else if(type==='jelly')m.scale.set(p,.72/Math.max(.7,p),p)})})};
     sync();requestAnimationFrame(frame);
   }
   setTimeout(boot,0);
