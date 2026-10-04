@@ -16,12 +16,21 @@ This document is the primary map for humans and AI agents working on this reposi
 ### Planet surface
 - `src/effects/surface.js` — renderer, styles, defaults, style-specific controls.
 - `src/effects/surface-shapes.js` — generated-surface base-shape deformation and shape controls.
-- `src/effects/surface-tune-core.js` — Surface tab inside Tune Core and style-aware deep controls.
+- `src/effects/surface-tune-core.js` — style-aware deep controls used by Tune Core.
+- `src/effects/studio-tune-core-ux.js` — Studio-only Tune Core scope and duplicate-control cleanup.
 
-When changing Surface Style, inspect all three files. Keep the renderer state under the existing `s_` keys so undo/save/reset remain compatible.
+When changing Surface Style, inspect all four files. Keep the renderer state under the existing `s_` keys so undo/save/reset remain compatible.
+
+Surface workflow is intentionally split:
+- **Design** chooses the Surface Style and Base Shape.
+- **Tune Core** edits deeper parameters for the already-selected Surface/Shape.
+- Tune Core must not repeat the Surface Style or Base Shape selector.
+- Save/export lives in the Studio Save menu, not Tune Core.
+- Tune Core is Studio-only; Explore/Atelier pages must not expose it.
 
 ### Studio menus
 - `src/effects/studio-menu-fix.js` — floating-menu exclusivity, drawing-menu collapse, Tune Core tab visibility.
+- `src/effects/studio-tune-core-ux.js` — Tune Core scope/ownership rules described above.
 
 Rule: one floating menu at a time. Starting a drawing gesture must clear obstructing controls from the canvas.
 
@@ -48,10 +57,11 @@ WebGPU is intentionally not part of this layer unless explicitly approved.
 1. `core.js` must exist before any `Effects.register(...)` module.
 2. `surface.js` must initialize before `surface-shapes.js`.
 3. `surface-shapes.js` and `surface.js` must be available before Surface Tune is validated.
-4. Studio extensions must patch the existing `window.__cerebra.studio`; do not create a second Studio controller.
-5. Feature modules must guard against duplicate initialization.
-6. `src/build_web.py` contains the authoritative explicit effect-module order. Do not rely on filename alphabetical order.
-7. `runtime-compat.js` is legacy-only; a rebuilt hashed bundle must not source-load feature modules again.
+4. `studio-tune-core-ux.js` must load after `surface-tune-core.js`.
+5. Studio extensions must patch the existing `window.__cerebra.studio`; do not create a second Studio controller.
+6. Feature modules must guard against duplicate initialization.
+7. `src/build_web.py` contains the authoritative explicit effect-module order. Do not rely on filename alphabetical order.
+8. `runtime-compat.js` is legacy-only; a rebuilt hashed bundle must not source-load feature modules again.
 
 ## State rules
 
@@ -63,6 +73,9 @@ WebGPU is intentionally not part of this layer unless explicitly approved.
 ## UI rules
 
 - Controls with no effect for the current Surface Style should be hidden, not disabled/greyed.
+- Surface Style and Base Shape are selected in Design; Tune Core only exposes deeper controls.
+- Tune Core is available only while Studio is active.
+- Save/export is owned by the Studio Save menu.
 - On mobile/tablet, menus should preserve canvas visibility and avoid horizontal overflow.
 - Only one floating menu/panel should remain open at a time.
 - Touch targets should remain usable on coarse pointers.
