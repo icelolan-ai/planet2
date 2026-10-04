@@ -144,4 +144,20 @@
     s.drawPad.addEventListener('pointercancel', onEnd, true);
   }
   setTimeout(boot, 0);
+
+  // Compatibility for the current split deployment: once the existing S7 loader has
+  // finished, bring in S9 source modules directly. A normal build already embeds them,
+  // so the presence of __cerebraS9 makes this a no-op there.
+  setTimeout(() => {
+    if (window.__cerebraS9 || window.__cerebraS9Loading) return;
+    window.__cerebraS9Loading = true;
+    const load = src => new Promise((ok, no) => {
+      const el = document.createElement('script'); el.src = src; el.async = false; el.onload = ok; el.onerror = no; document.body.appendChild(el);
+    });
+    (async () => {
+      await load('src/effects/studio-menu-fix.js?v=8aa3e378');
+      await load('src/effects/s9-core.js?v=78da5a51');
+      await load('src/effects/s9-ui.js?v=bb877382');
+    })().catch(e => console.error('Cerebra S9 loader', e)).finally(() => { window.__cerebraS9Loading = false; });
+  }, 600);
 })();
