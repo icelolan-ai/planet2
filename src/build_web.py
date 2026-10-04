@@ -82,7 +82,7 @@ for i, w in enumerate(worlds):
     </div>
   </section>''')
     index.append(f'<li style="--a:{w["accent"]}"><button type="button" data-open-world="{i}" data-cursor="Land"><span class="wi">{num}</span><span class="wn">{esc(w["name"])}</span><span class="wd"></span></button></li>')
-    rail.append(f'<button type="button" class="w" data-target="{i + 4}" style="--a:{w["accent"]}" aria-label="Go to world {num}, {esc(w['name'])}"><span>{esc(w['name'])}</span><i></i></button>')
+    rail.append(f'<button type="button" class="w" data-target="{i + 4}" style="--a:{w["accent"]}" aria-label="Go to world {num}, {esc(w["name"])}"><span>{esc(w["name"])}</span><i></i></button>')
     loader.append(f'<li style="--a:{w["accent"]}"><i></i>{esc(w["name"])}</li>')
 
 js_worlds = json.dumps([{k: w[k] for k in ('id', 'name', 'kicker', 'accent', 'radius', 'orbit', 'incl', 'phase', 'tilt', 'spin', 'lede', 'body', 'exports')} for w in worlds], ensure_ascii=False)
