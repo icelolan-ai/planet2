@@ -37,7 +37,9 @@
       const grid = detailPane.querySelector('.dst-grid'); if (grid) grid.hidden = true;
       const tg = detailPane.querySelector('.ss-tune-group');
       if (tg) {
-        const h = tg.querySelector('h4'); if (h) h.textContent = 'Shape detail';
+        // This pane is observed below: replacing an unchanged text node would
+        // retrigger the observer forever and starve rendering/input.
+        const h = tg.querySelector('h4'); if (h && h.textContent !== 'Shape detail') h.textContent = 'Shape detail';
         const shapeSelect = tg.querySelector('[data-ss-tshape]');
         if (shapeSelect) { const row = shapeSelect.closest('label,.tune-row'); if (row) row.hidden = true; }
       }

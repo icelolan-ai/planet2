@@ -29,6 +29,9 @@
   Object.assign(SURFACE.defaults, { shape: 'sphere', shapeAmt: 1, shapeAspect: 1.25, shapeHole: 0.45 });
 
   const planes = geom => {
+    // BoxGeometry is indexed. Read actual triangles, rather than treating its
+    // vertex storage as consecutive faces (which produces near-zero planes).
+    if (geom.index) { const triangles = geom.toNonIndexed(); geom.dispose(); geom = triangles; }
     const p = geom.attributes.position, out = [], A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3(), N = new THREE.Vector3(), M = new THREE.Vector3();
     for (let i = 0; i + 2 < p.count; i += 3) {
       A.fromBufferAttribute(p, i); B.fromBufferAttribute(p, i + 1); C.fromBufferAttribute(p, i + 2);
@@ -113,6 +116,44 @@
     }
     const bs = s.syncCoreFx.bind(s); s.syncCoreFx = (...a) => { const r = bs(...a); queueMicrotask(sync); return r; };
     const observer = new MutationObserver(sync); observer.observe(design, { subtree: true, attributes: true, attributeFilter: ['aria-pressed'] }); sync(); setTimeout(sync, 400); setTimeout(sync, 1000);
+
+    // Serialize the existing tune object into Studio's existing history/project
+    // snapshots. There is still only one live Surface state and one undo stack.
+    const capture = () => {
+      const t = s.coreFxTarget();
+      return t && { subject: s.subject, values: Object.fromEntries(Object.entries(t.tune).filter(([k]) => k.startsWith('s_'))) };
+    };
+    const snapshot = s.snapshot.bind(s);
+    s.snapshot = extra => {
+      const state = JSON.parse(snapshot(extra)); state.surfaceTune = capture(); return JSON.stringify(state);
+    };
+    if (Array.isArray(s.hist)) s.hist = s.hist.map(text => {
+      const state = JSON.parse(text); state.surfaceTune = capture(); return JSON.stringify(state);
+    });
+    let restoringSurface = false;
+    const restore = s.restore.bind(s);
+    s.restore = text => {
+      const state = JSON.parse(text), surface = state.surfaceTune;
+      restoringSurface = true;
+      try {
+        const result = restore(text);
+        if (surface && surface.subject === s.subject && surface.values) {
+          const values = Object.fromEntries(Object.entries(surface.values).filter(([k]) => k.startsWith('s_')));
+          Object.entries(values).forEach(([k, v]) => s.coreFxSet(k, v));
+        }
+        return result;
+      } finally { restoringSurface = false; }
+    };
+    const setFx = s.coreFxSet.bind(s);
+    s.coreFxSet = (k, v) => {
+      const discrete = k === 's_style' || k === 's_shape';
+      if (!restoringSurface && discrete) s.flushCommit();
+      const result = setFx(k, v);
+      if (!restoringSurface && k.startsWith('s_') && s.active) {
+        if (discrete) s.commit(); else s.commitSoon();
+      }
+      return result;
+    };
   }
   setTimeout(boot, 0);
 })();

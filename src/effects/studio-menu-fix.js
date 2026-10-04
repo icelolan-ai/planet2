@@ -109,13 +109,17 @@
     s.collapseDrawMenus = () => { closeExtras(); collapseAssist(); };
 
     root.addEventListener('pointerdown', e => {
-      const closest = e.target.closest && e.target.closest.bind(e.target);
-      if (!closest) return;
-      if (s.drawing && closest('.st-draw-pad')) {
+      if (s.drawing && e.target.closest && e.target.closest('.st-draw-pad')) {
         closeExtras();
         collapseAssist();
-        return;
       }
+    }, true);
+
+    // A submenu must survive pointerdown until its button receives click.
+    // Closing its parent tray earlier prevents Save/Library/Keys from firing.
+    root.addEventListener('click', e => {
+      const closest = e.target.closest && e.target.closest.bind(e.target);
+      if (!closest) return;
       const t = closest('[data-flyout],[data-grp-btn],[data-studio-tools],.st-edit,.st-lmore,[data-studio-keys],[data-studio-lib],[data-studio-export]');
       if (!t) return;
       if (t.matches('[data-flyout]')) closeExtras('fly');
