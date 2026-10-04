@@ -120,6 +120,28 @@
     };
     watchLab();
     new MutationObserver(watchLab).observe(root, { childList: true, subtree: true });
+
+    // Surface styles can replace/hide Cerebra's original core. When that is
+    // actually true in the renderer, Shape/Colour/Core/Motion have no visible
+    // effect, so remove those tabs instead of leaving dead controls on screen.
+    const syncCoreTabs = () => {
+      const tune = document.getElementById('tune'); if (!tune) return;
+      const hide = s.subject < 0 && !!(s.coreFxHidden && s.coreFxHidden());
+      let selectedHidden = false;
+      ['shape','colour','core','motion'].forEach(k => {
+        const b = tune.querySelector(`[data-tab="${k}"]`); if (!b) return;
+        if (hide && b.getAttribute('aria-selected') === 'true') selectedHidden = true;
+        b.hidden = hide;
+        const p = tune.querySelector(`[data-pane="${k}"]`); if (p && hide) p.hidden = true;
+      });
+      if (hide && selectedHidden) {
+        const surface = tune.querySelector('[data-tab="surface-deep"]');
+        if (surface && !surface.hidden) surface.click();
+      }
+    };
+    const baseAvail = s.updateAvail && s.updateAvail.bind(s);
+    if (baseAvail) s.updateAvail = (...a) => { const out = baseAvail(...a); queueMicrotask(syncCoreTabs); return out; };
+    setTimeout(syncCoreTabs, 1200);
   }
   setTimeout(boot, 0);
 
