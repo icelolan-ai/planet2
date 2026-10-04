@@ -25,13 +25,15 @@
 
     const style = document.createElement('style');
     style.textContent = `
-      #studio .st-s7-row{display:flex;align-items:center;gap:8px;min-width:0;padding:7px 0 1px;border-top:1px solid #ffffff18}
+      #studio .st-assist-seg[aria-label="Tool"]{flex-wrap:wrap;max-width:100%}
+      #studio .st-s7-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0;padding:7px 0 1px;border-top:1px solid #ffffff18}
       #studio .st-s7-lab{font:600 9px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;color:#aeb5c2;white-space:nowrap}
-      #studio .st-s7-row .st-assist-seg{min-width:0;overflow-x:auto;scrollbar-width:none}
+      #studio .st-s7-row .st-assist-seg{min-width:0;max-width:100%;flex-wrap:wrap}
       #studio .st-s7-row .st-assist-seg::-webkit-scrollbar{display:none}
       #studio .st-s7-row button{min-height:36px;white-space:nowrap}
       #studio .st-s7-n{display:flex;align-items:center;gap:5px;color:#ccd2dc;font:10px var(--f-cond);white-space:nowrap}
       #studio .st-s7-n input{width:64px}
+      #studio .st-s7-n[hidden]{display:none!important}
       @media(max-width:760px){#studio .st-s7-row{gap:6px}.st-s7-lab{display:none!important}#studio .st-s7-row button{min-height:40px}}
     `;
     document.head.append(style);
