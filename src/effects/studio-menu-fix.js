@@ -23,6 +23,9 @@
       body #studio .st-dock.is-h.is-compact:not(.is-folded)>.st-group>.st-btn{min-width:0!important;width:100%!important;padding:0 2px!important}
       body #studio .st-dock.is-h.is-compact .st-dock-fold{flex:0 0 30px!important;min-width:30px!important}
       body #studio .st-dock.is-h.is-compact select{flex:0 0 62px!important;min-width:0!important;max-width:62px!important;padding:0 4px!important}
+      #studio .st-rail.is-v{overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+      #studio .st-rail.is-v>.st-btn{flex-shrink:0}
+      #studio .st-rail.is-v::-webkit-scrollbar{display:none}
       @media (pointer:coarse), (max-width:760px){
         #studio .st-layers .st-eye,
         #studio .st-layers .st-gtog,
