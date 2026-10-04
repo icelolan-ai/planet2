@@ -1,72 +1,232 @@
-/* Deep Surface Tune: expose only controls that affect the selected surface style. */
+/* Deep per-style Surface controls for Studio -> Tune Core. */
 (() => {
-  const SPEC={
-    none:['Original surface',[]],
-    dotgrid:['Dot pattern',['s_freq','s_grad']],
-    halftone:['Halftone pattern',['s_freq','s_grad']],
-    spike:['Spike geometry',['s_colorC','s_freq','s_len','s_tipdots','s_dsize']],
-    threads:['Thread fibres',['s_colorC','s_len','s_curl','s_steps','s_tipdots','s_dsize']],
-    fur:['Bristle fibres',['s_len','s_curl']],
-    wire:['Wire geometry',['s_colorC','s_freq','s_grad','s_twist','s_wdetail','s_shell']],
-    plexus3d:['Network topology',['s_freq','s_grad','s_links']],
-    contour:['Contour lines',['s_freq','s_count']],
-    meridian:['Meridian lines',['s_freq','s_count']],
-    cloud:['Cloud volume',['s_grad','s_depth','s_hole','s_clump']],
-    shards:['Crystal geometry',['s_colorC','s_freq','s_len','s_wide','s_tipdots','s_dsize']],
-    radial:['Spoke system',['s_colorC','s_rrings','s_rvar','s_rgold','s_rn','s_dsize']],
-    orrery:['Orrery system',['s_colorC','s_orings','s_oband','s_oarcs','s_ospokes','s_obubble','s_dsize']],
-    neural:['Cells & fibres',['s_colorC','s_nn','s_nweb','s_nlinks','s_nstr','s_nscatter','s_dsize']],
-    dataflow:['Flow curves',['s_colorC','s_dn','s_dbundle','s_dbow','s_dbeads','s_dtilt','s_dsize']],
-    strands:['Drifting fibres',['s_colorC','s_tn','s_tlen','s_tdrift','s_tpole','s_tbig','s_dsize']]
+  const STYLE = {
+    none:{title:'Original surface',group:'Original material',keys:[]},
+    dotgrid:{title:'Dot grid',group:'Dot pattern',keys:['s_freq','s_grad']},
+    halftone:{title:'Halftone dots',group:'Halftone pattern',keys:['s_freq','s_grad']},
+    spike:{title:'Spikes',group:'Spike geometry',keys:['s_freq','s_len','s_tipdots','s_dsize']},
+    threads:{title:'Curly threads',group:'Thread fibres',keys:['s_len','s_curl','s_steps','s_tipdots','s_dsize']},
+    fur:{title:'Fur bristles',group:'Bristle fibres',keys:['s_len','s_curl']},
+    wire:{title:'Wire polyhedron',group:'Wire geometry',keys:['s_freq','s_grad','s_twist','s_wdetail','s_shell']},
+    plexus3d:{title:'Plexus 3D',group:'Network topology',keys:['s_freq','s_grad','s_links']},
+    contour:{title:'Contour rings',group:'Contour lines',keys:['s_freq','s_count']},
+    meridian:{title:'Meridian lines',group:'Meridian lines',keys:['s_freq','s_count']},
+    cloud:{title:'Particle cloud',group:'Cloud volume',keys:['s_grad','s_depth','s_hole','s_clump']},
+    shards:{title:'Crystal shards',group:'Crystal geometry',keys:['s_freq','s_len','s_wide','s_tipdots','s_dsize']},
+    radial:{title:'Radial data spokes',group:'Spoke system',keys:['s_rrings','s_rvar','s_rgold','s_rn','s_dsize']},
+    orrery:{title:'Orrery rings',group:'Orrery system',keys:['s_orings','s_oband','s_oarcs','s_ospokes','s_obubble','s_dsize']},
+    neural:{title:'Neural cells',group:'Cells & fibres',keys:['s_nn','s_nweb','s_nlinks','s_nstr','s_nscatter','s_dsize']},
+    dataflow:{title:'Data flow arcs',group:'Flow curves',keys:['s_dn','s_dbundle','s_dbow','s_dbeads','s_dtilt','s_dsize']},
+    strands:{title:'Drifting strands',group:'Drifting fibres',keys:['s_tn','s_tlen','s_tdrift','s_tpole','s_tbig','s_dsize']}
   };
-  const COMMON=['s_hide','s_colorA','s_colorB','s_bright','s_density','s_disp','s_size'];
+  const COMMON=['s_hide','s_colorA','s_colorB','s_colorC','s_bright','s_density','s_disp','s_size'];
+  const LOOK={
+    none:[],
+    dotgrid:['s_hide','s_colorA','s_colorB','s_bright','s_density','s_disp','s_size'],
+    halftone:['s_hide','s_colorA','s_colorB','s_bright','s_density','s_disp','s_size'],
+    spike:['s_hide','s_colorA','s_colorB','s_colorC','s_bright','s_density','s_disp','s_size'],
+    threads:['s_hide','s_colorA','s_colorB','s_colorC','s_bright','s_density','s_disp','s_size'],
+    fur:['s_hide','s_colorA','s_colorB','s_colorC','s_bright','s_density','s_disp','s_size'],
+    wire:['s_hide','s_colorA','s_colorB','s_colorC','s_bright','s_density','s_disp'],
+    plexus3d:['s_hide','s_colorA','s_colorB','s_bright','s_density','s_disp','s_size'],
+    contour:['s_hide','s_colorA','s_colorB','s_bright','s_density','s_disp'],
+    meridian:['s_hide','s_colorA','s_colorB','s_bright','s_density','s_disp'],
+    cloud:['s_hide','s_colorA','s_colorB','s_bright','s_density','s_disp','s_size'],
+    shards:['s_hide','s_colorA','s_colorB','s_colorC','s_bright','s_density','s_disp','s_size'],
+    radial:['s_hide','s_colorA','s_colorB','s_colorC','s_bright','s_density','s_disp','s_size'],
+    orrery:['s_hide','s_colorA','s_colorB','s_colorC','s_bright','s_density','s_disp','s_size'],
+    neural:['s_hide','s_colorA','s_colorB','s_colorC','s_bright','s_density','s_disp','s_size'],
+    dataflow:['s_hide','s_colorA','s_colorB','s_colorC','s_bright','s_density','s_disp','s_size'],
+    strands:['s_hide','s_colorA','s_colorB','s_colorC','s_bright','s_density','s_disp','s_size']
+  };
   const MOTION=['s_spin','s_scale','s_tilt','s_roll','s_breath','s_bspeed','s_pulse','s_seed'];
-  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const SEED_STYLES=new Set(['threads','cloud','radial','orrery','neural','dataflow','strands']);
+  const CORE_ONLY_TABS=new Set(['shape','colour','core','motion']);
+  const DEFAULTS={
+    s_hide:1,s_colorA:'#7a5cff',s_colorB:'#38c8ff',s_colorC:'#ffe9a8',s_bright:1,s_density:.55,s_disp:.35,s_size:1,
+    s_spin:.15,s_scale:1,s_tilt:0,s_roll:0,s_breath:0,s_bspeed:.8,s_pulse:0,s_seed:7,s_freq:1,s_grad:'auto',
+    s_links:3,s_len:1,s_curl:1,s_steps:34,s_wide:1,s_tipdots:0,s_twist:1,s_wdetail:0,s_shell:1,s_count:0,
+    s_depth:1,s_hole:.45,s_clump:1.8,s_dsize:1,s_rrings:6,s_rvar:1,s_rgold:.08,s_rn:0,s_orings:4,s_oband:7,
+    s_oarcs:8,s_ospokes:14,s_obubble:1,s_nn:12,s_nweb:22,s_nlinks:2,s_nstr:4,s_nscatter:50,s_dn:400,
+    s_dbundle:14,s_dbow:.5,s_dbeads:.2,s_dtilt:1.1,s_tn:400,s_tlen:1,s_tdrift:1,s_tpole:.05,s_tbig:.05,s_shape:'sphere',s_shapeAmt:1,s_shapeAspect:1.25,s_shapeHole:.45
+  };
+  const esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
   function boot(){
-    const app=window.__cerebra,s=app&&app.studio,tune=document.getElementById('tune');
-    const src=s&&s.el&&s.el.querySelector('[data-studio-corefx]');
-    if(!s||!tune||!src||!src.dataset.ready||!s.coreFxTarget||!s.coreFxSet){setTimeout(boot,180);return}
-    if(s.__deepSurfaceTune)return;s.__deepSurfaceTune=true;
-    const nav=tune.querySelector('.tune-tabs'),panes=[...tune.querySelectorAll('[data-pane]')];if(!nav||!panes.length)return;
-    const originalTabs=[...nav.querySelectorAll('[data-tab]')];
-
-    const css=document.createElement('style');css.textContent=`
-      #tune .dst-pane{overflow-x:hidden}#tune .dst-note{margin:0 0 10px;padding:10px 11px;border:1px solid #ffffff18;border-radius:13px;background:#ffffff08;font:11px/1.45 var(--f-sans);color:#a8b1bf}
-      #tune .dst-note b{display:block;margin-bottom:3px;color:#fff;font:600 12px var(--f-cond);letter-spacing:.1em;text-transform:uppercase}
-      #tune .dst-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:12px}#tune .dst-grid button{min-height:42px;padding:7px 8px;border:1px solid #ffffff18;border-radius:12px;background:#ffffff09;color:#cbd3df;font:600 9px var(--f-cond);letter-spacing:.05em;text-transform:uppercase}
-      #tune .dst-grid button[aria-pressed=true]{background:var(--cyg)!important;color:#fff;border-color:transparent;box-shadow:0 0 16px #8b5cf655}
-      #tune .dst-group{margin:0 0 11px;padding:9px;border:1px solid #ffffff12;border-radius:14px;background:#0002}#tune .dst-group h4{margin:0 0 9px;font:600 10px var(--f-cond);letter-spacing:.13em;text-transform:uppercase;color:#d9ccff}
-      #tune .dst-group .tune-row:last-child{margin-bottom:0}#tune .dst-reset{width:100%;min-height:42px;justify-content:center}
-      @media(max-width:600px){#tune .dst-grid button,#tune .dst-reset{min-height:44px}}
-    `;document.head.append(css);
-
-    const tab=document.createElement('button');tab.type='button';tab.dataset.tab='surface-deep';tab.setAttribute('role','tab');tab.setAttribute('aria-selected','false');tab.textContent='Surface';nav.append(tab);
-    const pane=document.createElement('div');pane.className='tune-pane dst-pane';pane.dataset.pane='surface-deep';pane.hidden=true;panes[0].parentNode.append(pane);
-    const styleBtns=[...src.querySelectorAll('[data-cfx-style]')].map(b=>[b.dataset.cfxStyle,b.textContent.trim()]);
-    pane.innerHTML=`<div class="dst-note"><b data-dst-title>Surface</b><span data-dst-note></span></div><div class="dst-grid">${styleBtns.map(([k,n])=>`<button type="button" data-dst-style="${k}" aria-pressed="false">${esc(n)}</button>`).join('')}</div><section class="dst-group" data-dst-commonwrap><h4>Surface look</h4><div data-dst-common></div></section><section class="dst-group" data-dst-motionwrap><h4>Transform & motion</h4><div data-dst-motion></div></section><section class="dst-group" data-dst-specwrap><h4 data-dst-spech>Style detail</h4><div data-dst-spec></div></section><button type="button" class="tune-reset dst-reset" data-dst-reset>Reset this surface</button>`;
-
-    const source=k=>src.querySelector(`[data-cfx="${k}"]`)||src.querySelector(`[data-cfx-sw="${k}"]`);
-    const label=k=>{const x=source(k),r=x&&(x.closest('[data-cfx-rel]')||x.closest('label,.cfx-row')),z=r&&r.querySelector(':scope > span');return z?z.textContent.trim():k.replace(/^s_/,'')};
-    const html=k=>{const x=src.querySelector(`[data-cfx="${k}"]`),sw=src.querySelector(`[data-cfx-sw="${k}"]`),n=esc(label(k));if(sw)return `<div class="tune-row"><span>${n}</span><div class="tune-seg" data-dst-sw="${k}"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>`;if(!x)return'';if(x.type==='color')return `<label class="tune-row"><span>${n}</span><input type="color" data-dst="${k}"></label>`;if(x.tagName==='SELECT')return `<label class="tune-row"><span>${n}</span><select data-dst="${k}">${[...x.options].map(o=>`<option value="${esc(o.value)}">${esc(o.textContent)}</option>`).join('')}</select></label>`;return `<label class="tune-row"><span>${n}</span><input type="range" min="${x.min}" max="${x.max}" step="${x.step}" data-dst="${k}"><b data-out></b></label>`};
-    pane.querySelector('[data-dst-common]').innerHTML=COMMON.map(html).join('');pane.querySelector('[data-dst-motion]').innerHTML=MOTION.map(html).join('');
-    let specStyle='';
-    const bind=root=>{root.querySelectorAll('[data-dst]').forEach(el=>el.addEventListener(el.tagName==='SELECT'?'change':'input',()=>{s.coreFxSet(el.dataset.dst,el.type==='range'?+el.value:el.value);sync()}));root.querySelectorAll('[data-dst-sw]').forEach(g=>g.querySelectorAll('button').forEach(b=>b.onclick=()=>{s.coreFxSet(g.dataset.dstSw,+b.dataset.v);sync()}))};bind(pane);
-    const renderSpec=st=>{if(specStyle===st)return;specStyle=st;const [title,keys]=SPEC[st]||SPEC.none,box=pane.querySelector('[data-dst-spec]');pane.querySelector('[data-dst-spech]').textContent=title;box.innerHTML=keys.map(html).join('');pane.querySelector('[data-dst-specwrap]').hidden=!keys.length;bind(box)};
-    const show=()=>{originalTabs.forEach(b=>b.setAttribute('aria-selected','false'));[...tune.querySelectorAll('[data-pane]')].forEach(p=>p.hidden=p!==pane);tab.setAttribute('aria-selected','true');sync()};tab.onclick=show;originalTabs.forEach(b=>b.addEventListener('click',()=>{tab.setAttribute('aria-selected','false');pane.hidden=true}));
-    pane.querySelectorAll('[data-dst-style]').forEach(b=>b.onclick=()=>{s.coreFxSet('s_style',b.dataset.dstStyle);sync()});
-    pane.querySelector('[data-dst-reset]').onclick=()=>{const t=s.coreFxTarget(),st=t&&t.tune.s_style||'none';if(s.resetFx)s.resetFx('subject');s.coreFxSet('s_style',st);sync()};
-
-    const hideIrrelevantDesign=()=>src.querySelectorAll('[data-cfx-rel]').forEach(el=>{el.hidden=el.classList.contains('st-off')||el.classList.contains('cfx-hide')});
-    function sync(){const t=s.coreFxTarget();if(!t||!t.tune)return;const v=t.tune,st=v.s_style||'none',[title]=SPEC[st]||SPEC.none;renderSpec(st);pane.querySelector('[data-dst-title]').textContent=title;pane.querySelector('[data-dst-note]').textContent=st==='none'?'Original surface is active. Its normal Tune Core tabs remain available.':'Only controls that affect this surface are shown.';pane.querySelectorAll('[data-dst-style]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.dstStyle===st)));
-      const generated=st!=='none';pane.querySelector('[data-dst-commonwrap]').hidden=!generated;pane.querySelector('[data-dst-motionwrap]').hidden=!generated;pane.querySelector('[data-dst-reset]').hidden=!generated;
-      pane.querySelectorAll('[data-dst],[data-dst-sw]').forEach(el=>{const k=el.dataset.dst||el.dataset.dstSw,val=v[k];if(el.dataset.dst){if(el.type==='range'){el.value=val;const out=el.parentNode.querySelector('[data-out]');if(out)out.textContent=(+val).toFixed(+el.step>=1?0:2)}else el.value=val}if(el.dataset.dstSw)el.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.v===+(val??0))))});
-      const surfaceOnly=generated&&+(v.s_hide??1)===1;originalTabs.forEach(b=>{const hide=surfaceOnly&&['shape','colour','core','motion'].includes(b.dataset.tab);b.hidden=hide;const p=tune.querySelector(`[data-pane="${b.dataset.tab}"]`);if(p&&hide)p.hidden=true});if(surfaceOnly&&originalTabs.some(b=>b.hidden&&b.getAttribute('aria-selected')==='true'))show();hideIrrelevantDesign();
+    const app=window.__cerebra, studio=app&&app.studio, tune=document.getElementById('tune');
+    const design=studio&&studio.el&&studio.el.querySelector('[data-studio-corefx]');
+    if(!studio||!tune||!design||design.dataset.ready!=='1'||!studio.coreFxTarget||!studio.coreFxSet){
+      setTimeout(boot,180); return;
     }
-    const baseSync=s.syncCoreFx&&s.syncCoreFx.bind(s);if(baseSync)s.syncCoreFx=(...a)=>{const r=baseSync(...a);sync();return r};
-    const baseAvail=s.updateAvail&&s.updateAvail.bind(s);if(baseAvail)s.updateAvail=(...a)=>{const r=baseAvail(...a);[s.fxSection,s.coreSection,s.partsSection,s.worldSection,s.el.querySelector('[data-studio-fx]'),s.fxBox].forEach(el=>{if(el)el.hidden=el.classList.contains('st-off')});return r};
-    const mo=new MutationObserver(sync);mo.observe(src,{attributes:true,subtree:true,attributeFilter:['aria-pressed','class']});
-    sync();s.updateAvail&&s.updateAvail();
+    if(studio.__surfaceTuneCoreReady)return;
+    studio.__surfaceTuneCoreReady=true;
+
+    const css=document.createElement('style');
+    css.textContent=`
+      #tune .tc-surface-tab{white-space:nowrap}
+      #tune .tc-surface-pane{overflow-x:hidden}
+      #tune .tc-surface-intro{display:grid;gap:6px;margin:0 0 10px;padding:10px 11px;border:1px solid #ffffff18;border-radius:13px;background:#ffffff08}
+      #tune .tc-surface-intro b{font:600 12px var(--f-cond);letter-spacing:.1em;text-transform:uppercase;color:#fff}
+      #tune .tc-surface-intro small{font:11px/1.45 var(--f-sans);color:#9ca7b7}
+      #tune .tc-stylegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:10px}
+      #tune .tc-stylegrid button{min-height:42px;padding:7px 8px;border:1px solid #ffffff18;border-radius:10px;background:#ffffff09;color:#cbd3df;font:600 9px var(--f-cond);letter-spacing:.055em;text-transform:uppercase}
+      #tune .tc-stylegrid button[aria-pressed="true"]{background:var(--cyg);color:#fff;border-color:transparent;box-shadow:0 0 16px #8b5cf64f}
+      #tune .tc-surface-group{display:grid;gap:8px;margin:0 0 10px;padding:9px;border:1px solid #ffffff12;border-radius:13px;background:#00000016}
+      #tune .tc-surface-group>h4{margin:0;padding:0 0 6px;border-bottom:1px solid #ffffff12;font:600 10px var(--f-cond);letter-spacing:.13em;text-transform:uppercase;color:#d9ccff}
+      #tune .tc-surface-group[hidden]{display:none!important}
+      #tune .tc-row-lock{display:none!important}
+      #tune .tune-tabs button.tc-tab-lock{display:none!important}
+      #tune [data-pane].tc-pane-lock{display:none!important}
+      #studio [data-studio-corefx] [data-cfx-rel].tc-hide-unused{display:none!important}
+      #tune .tc-reset{width:100%;min-height:42px;justify-content:center}
+      @media(max-width:600px){#tune .tc-stylegrid button,#tune .tc-reset{min-height:44px}}
+    `;
+    document.head.append(css);
+
+    const tabs=tune.querySelector('.tune-tabs');
+    const panes=[...tune.querySelectorAll('[data-pane]')];
+    if(!tabs||!panes.length)return;
+
+    const originalTabs=[...tabs.querySelectorAll('button')];
+    const tab=document.createElement('button');
+    tab.type='button'; tab.className='tc-surface-tab'; tab.dataset.tab='surface'; tab.textContent='Surface'; tab.setAttribute('role','tab'); tab.setAttribute('selected','false'); tab.setAttribute('aria-selected','false');
+    tabs.append(tab);
+
+    const pane=document.createElement('div');
+    pane.className='tune-pane tc-surface-pane'; pane.dataset.pane='surface'; pane.setAttribute('role','tabpanel'); pane.hidden=true;
+    panes[0].parentNode.insertBefore(pane,panes[0].nextSibling);
+
+    const styleButtons=[...design.querySelectorAll('[data-cfx-style]')].map(b=>({key:b.dataset.cfxStyle,name:b.textContent.trim()}));
+    pane.innerHTML=`<div class="tc-surface-intro"><b data-tcs-title>Surface</b><small data-tcs-note></small></div>
+      <div class="tc-stylegrid">${styleButtons.map(x=>`<button type="button" data-tcs-style="${x.key}" aria-pressed="false">${esc(x.name)}</button>`).join('')}</div>
+      <section class="tc-surface-group" data-tcs-group="common"><h4>Surface look & material</h4><div data-tcs-common></div></section>
+      <section class="tc-surface-group" data-tcs-group="motion"><h4>Transform & motion</h4><div data-tcs-motion></div></section>
+      <section class="tc-surface-group" data-tcs-group="specific"><h4 data-tcs-specific-title>Style options</h4><div data-tcs-specific></div></section>
+      <button type="button" class="tune-btn tc-reset" data-tcs-reset>Reset current surface</button>`;
+
+    const srcFor=key=>design.querySelector(`[data-cfx="${key}"]`)||design.querySelector(`[data-cfx-sw="${key}"]`);
+    const labelFor=key=>{
+      const src=srcFor(key),row=src&&(src.closest('[data-cfx-rel]')||src.closest('label,.cfx-row')),sp=row&&row.querySelector(':scope > span');
+      return sp?sp.textContent.trim():key.replace(/^s_/,'');
+    };
+    const control=key=>{
+      const src=design.querySelector(`[data-cfx="${key}"]`), sw=design.querySelector(`[data-cfx-sw="${key}"]`), label=esc(labelFor(key));
+      if(sw)return `<div class="tune-row" data-tcs-row="${key}"><span>${label}</span><div class="tune-seg" data-tcs-sw="${key}"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>`;
+      if(!src)return '';
+      if(src.type==='color')return `<label class="tune-row" data-tcs-row="${key}"><span>${label}</span><input type="color" data-tcs="${key}"></label>`;
+      if(src.tagName==='SELECT')return `<label class="tune-row" data-tcs-row="${key}"><span>${label}</span><select data-tcs="${key}">${[...src.options].map(o=>`<option value="${esc(o.value)}">${esc(o.textContent)}</option>`).join('')}</select></label>`;
+      return `<label class="tune-row" data-tcs-row="${key}"><span>${label}</span><input type="range" min="${src.min}" max="${src.max}" step="${src.step}" data-tcs="${key}"><b data-tcs-out></b></label>`;
+    };
+    pane.querySelector('[data-tcs-common]').innerHTML=COMMON.map(control).join('');
+    pane.querySelector('[data-tcs-motion]').innerHTML=MOTION.map(control).join('');
+
+    const setValue=(key,val)=>{studio.coreFxSet(key,val); sync();};
+    const bindBox=root=>{
+      root.querySelectorAll('[data-tcs]').forEach(el=>{
+        const ev=el.tagName==='SELECT'?'change':'input';
+        el.addEventListener(ev,()=>setValue(el.dataset.tcs,el.type==='range'?+el.value:el.value));
+      });
+      root.querySelectorAll('[data-tcs-sw]').forEach(g=>g.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>setValue(g.dataset.tcsSw,+b.dataset.v))));
+    };
+    bindBox(pane);
+
+    let currentSpecific='';
+    const renderSpecific=style=>{
+      const meta=STYLE[style]||STYLE.none;
+      if(currentSpecific===style)return;
+      currentSpecific=style;
+      pane.querySelector('[data-tcs-specific-title]').textContent=meta.group;
+      const box=pane.querySelector('[data-tcs-specific]');
+      box.innerHTML=meta.keys.map(control).join('');
+      bindBox(box);
+    };
+
+    const showSurface=()=>{
+      originalTabs.forEach(b=>{b.setAttribute('selected','false');b.setAttribute('aria-selected','false')});
+      tab.setAttribute('selected','true');tab.setAttribute('aria-selected','true');
+      [...tune.querySelectorAll('[data-pane]')].forEach(p=>{p.hidden=p!==pane});
+      sync();
+    };
+    tab.addEventListener('click',showSurface);
+    originalTabs.forEach(b=>b.addEventListener('click',()=>{tab.setAttribute('selected','false');tab.setAttribute('aria-selected','false');pane.hidden=true}));
+    pane.querySelectorAll('[data-tcs-style]').forEach(b=>b.addEventListener('click',()=>setValue('s_style',b.dataset.tcsStyle)));
+
+    function sync(){
+      const target=studio.coreFxTarget();
+      if(!target||!target.tune)return;
+      const v=target.tune, style=v.s_style||'none', meta=STYLE[style]||STYLE.none;
+      renderSpecific(style);
+      pane.querySelector('[data-tcs-title]').textContent=meta.title;
+      pane.querySelector('[data-tcs-note]').textContent=style==='none'
+        ? 'Original Cerebra material is active. Core material, structure and layer controls remain available.'
+        : `${meta.group}. Tune Core now edits this generated surface directly.`;
+      pane.querySelectorAll('[data-tcs-style]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tcsStyle===style)));
+
+      const originalHidden=style!=='none' && +(v.s_hide??1)===1;
+      tune.classList.toggle('is-surface-exclusive',originalHidden);
+      const lockedTabs=[];
+      originalTabs.forEach(b=>{
+        const shouldLock=originalHidden&&CORE_ONLY_TABS.has(b.dataset.tab);
+        b.disabled=shouldLock; b.classList.toggle('tc-tab-lock',shouldLock);
+        b.setAttribute('aria-disabled',String(shouldLock));
+        b.title=shouldLock?'Locked: this generated surface hides the Original surface, so these controls have no visible effect.':'';
+        const p=tune.querySelector(`[data-pane="${b.dataset.tab}"]`); if(p)p.classList.toggle('tc-pane-lock',shouldLock);
+        if(shouldLock)lockedTabs.push(b);
+      });
+      const selectedLocked=lockedTabs.find(b=>b.getAttribute('selected')==='true'||b.getAttribute('aria-selected')==='true');
+      if(selectedLocked)showSurface();
+
+      const visible=new Set([...(LOOK[style]||[]),...MOTION.filter(k=>k!=='s_seed'||SEED_STYLES.has(style)),...meta.keys]);
+      const allKeys=[...COMMON,...MOTION,...meta.keys];
+      allKeys.forEach(key=>{
+        const row=pane.querySelector(`[data-tcs-row="${key}"]`);
+        if(!row)return;
+        const relevant=style!=='none'&&visible.has(key);
+        row.classList.toggle('tc-row-lock',!relevant);
+        row.hidden=!relevant;
+        row.querySelectorAll('input,select,button').forEach(el=>{el.disabled=!relevant});
+      });
+      design.querySelectorAll('[data-cfx-rel]').forEach(row=>{
+        const key=row.dataset.cfxRel;if(!key||!key.startsWith('s_'))return;
+        const show=style!=='none'&&visible.has(key);
+        row.classList.toggle('tc-hide-unused',!show);row.hidden=!show;
+      });
+      design.querySelectorAll('.cfx-cols').forEach(g=>{const rows=[...g.querySelectorAll('[data-cfx-rel]')];if(rows.length)g.hidden=rows.every(r=>r.hidden)});
+      pane.querySelector('[data-tcs-group="common"]').hidden=style==='none';
+      pane.querySelector('[data-tcs-group="motion"]').hidden=style==='none';
+      pane.querySelector('[data-tcs-group="specific"]').hidden=style==='none'||!meta.keys.length;
+
+      pane.querySelectorAll('[data-tcs]').forEach(el=>{
+        const val=v[el.dataset.tcs];
+        if(val==null)return;
+        if(document.activeElement!==el)el.value=String(val);
+        if(el.type==='range'){
+          const out=el.parentNode.querySelector('[data-tcs-out]');
+          if(out)out.textContent=+el.step>=1?String(Math.round(+val)):(+val).toFixed(2);
+          const min=+el.min,max=+el.max;
+          el.style.setProperty('--p',((+val-min)/(max-min)*100)+'%');
+        }
+      });
+      pane.querySelectorAll('[data-tcs-sw]').forEach(g=>{
+        const val=+(v[g.dataset.tcsSw]??0);
+        g.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.v===val)));
+      });
+    }
+
+    pane.querySelector('[data-tcs-reset]').addEventListener('click',()=>{
+      const target=studio.coreFxTarget(),style=target&&target.tune?target.tune.s_style:'none';
+      new Set([...COMMON,...MOTION,...((STYLE[style]||STYLE.none).keys),'s_shape','s_shapeAmt','s_shapeAspect','s_shapeHole']).forEach(key=>{
+        if(DEFAULTS[key]!==undefined)studio.coreFxSet(key,DEFAULTS[key]);
+      });
+      studio.coreFxSet('s_style',style);
+      sync();
+    });
+
+    const baseSync=studio.syncCoreFx.bind(studio);
+    studio.syncCoreFx=(...args)=>{const out=baseSync(...args);queueMicrotask(sync);return out;};
+    const baseSet=studio.coreFxSet.bind(studio);
+    studio.coreFxSet=(...args)=>{const out=baseSet(...args);queueMicrotask(sync);return out;};
+    sync();
   }
   setTimeout(boot,0);
 })();
