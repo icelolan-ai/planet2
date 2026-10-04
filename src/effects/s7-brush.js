@@ -1,6 +1,7 @@
 /* S7 — Tentacle / Branch brushes + symmetry for Studio drawings.
    Loaded with the other effect modules, then patched onto CoreStudio after app startup. */
 (() => {
+  const standalone = !!(document.currentScript && /\/src\/effects\/s7-brush\.js(?:[?#]|$)/.test(document.currentScript.src || ''));
   const savePrefs = s => { try { localStorage.setItem('cerebra-studio-pencil', JSON.stringify(s.drawSet)); } catch (_) {} };
   const thin = pts => {
     if (pts.length <= 120) return pts;
@@ -145,12 +146,13 @@
   }
   setTimeout(boot, 0);
 
-  // Legacy Pages bridge. Keep feature loading out of the brush implementation itself.
-  setTimeout(() => {
+  // Legacy Pages bridge. A normal rebuilt bundle must never source-load modules again.
+  if (standalone) setTimeout(() => {
     if (window.__cerebraCompatLoading || document.querySelector('script[data-cerebra-compat]')) return;
+    window.__cerebraLegacyBridgeWanted = true;
     window.__cerebraCompatLoading = true;
     const el = document.createElement('script');
-    el.src = 'src/effects/runtime-compat.js?v=20261004e';
+    el.src = 'src/effects/runtime-compat.js?v=20261004f';
     el.async = false;
     el.dataset.cerebraCompat = '1';
     el.onload = () => { window.__cerebraCompatLoading = false; };
