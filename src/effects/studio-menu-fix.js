@@ -145,17 +145,27 @@
   }
   setTimeout(boot, 0);
 
-  // Current GitHub Pages split build loads this file directly. Load the new
-  // Surface Tune source too; a normal rebuilt bundle already contains it, so
-  // the ready flag prevents a duplicate UI.
+  // Current GitHub Pages split build loads this file directly. Load the Base
+  // Shape patch first, then Surface Tune. A normal rebuilt bundle already has
+  // both modules and their ready flags make these calls no-ops.
   setTimeout(() => {
-    const s = window.__cerebra && window.__cerebra.studio;
-    if ((s && s.__deepSurfaceTune) || document.querySelector('script[data-deep-surface-tune]')) return;
-    const el = document.createElement('script');
-    el.src = 'src/effects/surface-tune-core.js?v=7c034e65';
-    el.async = false;
-    el.dataset.deepSurfaceTune = '1';
-    el.onerror = () => console.error('Cerebra Surface Tune loader failed');
-    document.body.appendChild(el);
+    if (window.__cerebraSurfaceLoader) return;
+    window.__cerebraSurfaceLoader = true;
+    const load = (src, mark) => new Promise((ok, no) => {
+      if (mark && document.querySelector(`script[${mark}]`)) { ok(); return; }
+      const el = document.createElement('script');
+      el.src = src; el.async = false;
+      if (mark) el.setAttribute(mark, '1');
+      el.onload = ok; el.onerror = no; document.body.appendChild(el);
+    });
+    (async () => {
+      if (!(typeof SURFACE !== 'undefined' && SURFACE.__shapePatch)) {
+        await load('src/effects/surface-shapes.js?v=20261004c', 'data-surface-shapes');
+      }
+      const s = window.__cerebra && window.__cerebra.studio;
+      if (!(s && s.__deepSurfaceTune)) {
+        await load('src/effects/surface-tune-core.js?v=20261004c', 'data-deep-surface-tune');
+      }
+    })().catch(e => console.error('Cerebra Surface loader failed', e)).finally(() => { window.__cerebraSurfaceLoader = false; });
   }, 900);
 })();
