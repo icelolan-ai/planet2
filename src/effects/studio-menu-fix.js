@@ -144,28 +144,4 @@
     setTimeout(syncCoreTabs, 1200);
   }
   setTimeout(boot, 0);
-
-  // Current GitHub Pages split build loads this file directly. Load the Base
-  // Shape patch first, then Surface Tune. A normal rebuilt bundle already has
-  // both modules and their ready flags make these calls no-ops.
-  setTimeout(() => {
-    if (window.__cerebraSurfaceLoader) return;
-    window.__cerebraSurfaceLoader = true;
-    const load = (src, mark) => new Promise((ok, no) => {
-      if (mark && document.querySelector(`script[${mark}]`)) { ok(); return; }
-      const el = document.createElement('script');
-      el.src = src; el.async = false;
-      if (mark) el.setAttribute(mark, '1');
-      el.onload = ok; el.onerror = no; document.body.appendChild(el);
-    });
-    (async () => {
-      if (!(typeof SURFACE !== 'undefined' && SURFACE.__shapePatch)) {
-        await load('src/effects/surface-shapes.js?v=20261004c', 'data-surface-shapes');
-      }
-      const s = window.__cerebra && window.__cerebra.studio;
-      if (!(s && s.__deepSurfaceTune)) {
-        await load('src/effects/surface-tune-core.js?v=20261004c', 'data-deep-surface-tune');
-      }
-    })().catch(e => console.error('Cerebra Surface loader failed', e)).finally(() => { window.__cerebraSurfaceLoader = false; });
-  }, 900);
 })();

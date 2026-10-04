@@ -145,19 +145,16 @@
   }
   setTimeout(boot, 0);
 
-  // Compatibility for the current split deployment: once the existing S7 loader has
-  // finished, bring in S9 source modules directly. A normal build already embeds them,
-  // so the presence of __cerebraS9 makes this a no-op there.
+  // Legacy Pages bridge. Keep feature loading out of the brush implementation itself.
   setTimeout(() => {
-    if (window.__cerebraS9 || window.__cerebraS9Loading) return;
-    window.__cerebraS9Loading = true;
-    const load = src => new Promise((ok, no) => {
-      const el = document.createElement('script'); el.src = src; el.async = false; el.onload = ok; el.onerror = no; document.body.appendChild(el);
-    });
-    (async () => {
-      await load('src/effects/studio-menu-fix.js?v=8aa3e378');
-      await load('src/effects/s9-core.js?v=78da5a51');
-      await load('src/effects/s9-ui.js?v=bb877382');
-    })().catch(e => console.error('Cerebra S9 loader', e)).finally(() => { window.__cerebraS9Loading = false; });
+    if (window.__cerebraCompatLoading || document.querySelector('script[data-cerebra-compat]')) return;
+    window.__cerebraCompatLoading = true;
+    const el = document.createElement('script');
+    el.src = 'src/effects/runtime-compat.js?v=20261004e';
+    el.async = false;
+    el.dataset.cerebraCompat = '1';
+    el.onload = () => { window.__cerebraCompatLoading = false; };
+    el.onerror = e => { window.__cerebraCompatLoading = false; console.error('Cerebra compatibility loader', e); };
+    document.body.appendChild(el);
   }, 600);
 })();
