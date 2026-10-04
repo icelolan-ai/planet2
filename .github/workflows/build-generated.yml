@@ -1,0 +1,59 @@
+name: Build generated site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/template.html'
+      - 'src/worlds.json'
+      - 'src/effects/**'
+      - 'src/build_web.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cerebra-generated-main
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build generated site
+        run: python3 src/build_web.py
+
+      - name: Verify generated files changed only as expected
+        run: |
+          git status --short
+          test -f index.html
+          test -d assets
+
+      - name: Commit generated output
+        run: |
+          if git diff --quiet -- index.html assets; then
+            echo 'Generated output already current.'
+            exit 0
+          fi
+          git config user.name 'cerebra-build-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html assets
+          git commit -m 'Build generated site'
+          git push origin HEAD:main
