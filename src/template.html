@@ -5682,7 +5682,27 @@ class AICore {
   buildEnergy(count) { this.energy = new EnergyNetwork(this.shared, count); this.spin.add(this.energy.group); this.parts.push(this.energy); }
   buildTelemetry() { this.orbit = new DataOrbit(this.shared); this.group.add(this.orbit.group); this.parts.push(this.orbit); }
 
+  restoreSurfaceVisibility() {
+    if (!this.surfaceMask) return;
+    this.surfaceMask.forEach((visible, object) => { object.visible = visible; });
+    this.surfaceMask = null;
+  }
+
+  maskOriginalSurface() {
+    const studio = window.__cerebra && window.__cerebra.studio, cw = studio && studio._cw;
+    if (!cw || studio.active || !studio.coreFxHidden()) return;
+    // The adapter's model is a visibility placeholder. Mask the actual original
+    // Core objects in Atelier/Explore, preserving their tuned visibility for the
+    // next frame. Generated Surface and Burst groups keep their existing state.
+    const effects = new Set([cw.surf.g, cw.burst.gb, cw.burst.gr]);
+    const originals = [this.shells.group, this.rings.group, this.field.points, this.energy.group,
+      this.planet.axis, ...this.planet.group.children.filter(object => !effects.has(object))];
+    this.surfaceMask = new Map(originals.map(object => [object, object.visible]));
+    originals.forEach(object => { object.visible = false; });
+  }
+
   update(dt, t, f) {
+    this.restoreSurfaceVisibility();
     const S = this.shared;
     S.uTime.value = t; S.uExpand.value = f.expand; S.uSeparation.value = f.separation; S.uStack.value = f.stack;
     S.uMorph.value = f.morph; S.uIntro.value = f.intro; S.uMotion.value = f.motion; S.uFocus.value = f.focus;
@@ -5713,6 +5733,7 @@ class AICore {
     this.orbit.update(dt, t, f);
     this.glow.update(dt, f);
     this.planet.update(dt, f);
+    this.maskOriginalSurface();
   }
   dispose() { this.parts.forEach(p => p.dispose()); this.parts = []; }
 }
@@ -11772,6 +11793,7 @@ class CoreStudio {
     OrbitBuilder.open(false); WorldTune.open(false);
     document.querySelector('[data-tune-close]').click();
     this.saved = { y: scrollY, inert: [], visibility: new Map(), background: document.body.style.backgroundColor };
+    a.core.restoreSurfaceVisibility();
     this.ringVisibility=new Map(a.core.planet.runners.map(r=>[r,r.pivot.visible]));this.ringsWasOn=true;
     // Keep hidden page controls out of keyboard and accessibility navigation, too.
     [...document.body.children].forEach(el => { if (![this.bg, this.fx, this.vfx, this.el, document.getElementById('gl'), document.getElementById('net-bg'), document.getElementById('tune'), document.getElementById('wtune')].includes(el) && el.tagName !== 'SCRIPT') { this.saved.inert.push([el, el.inert]); el.inert = true; } });
