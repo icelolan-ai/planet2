@@ -82,7 +82,7 @@ for i, w in enumerate(worlds):
     </div>
   </section>''')
     index.append(f'<li style="--a:{w["accent"]}"><button type="button" data-open-world="{i}" data-cursor="Land"><span class="wi">{num}</span><span class="wn">{esc(w["name"])}</span><span class="wd"></span></button></li>')
-    rail.append(f'<button type="button" class="w" data-target="{i + 4}" style="--a:{w["accent"]}" aria-label="Go to world {num}, {esc(w["name"])}"><span>{esc(w["name"])}</span><i></i></button>')
+    rail.append(f'<button type="button" class="w" data-target="{i + 4}" style="--a:{w["accent"]}" aria-label="Go to world {num}, {esc(w['name'])}"><span>{esc(w['name'])}</span><i></i></button>')
     loader.append(f'<li style="--a:{w["accent"]}"><i></i>{esc(w["name"])}</li>')
 
 js_worlds = json.dumps([{k: w[k] for k in ('id', 'name', 'kicker', 'accent', 'radius', 'orbit', 'incl', 'phase', 'tilt', 'spin', 'lede', 'body', 'exports')} for w in worlds], ensure_ascii=False)
@@ -93,9 +93,33 @@ assert '</script' not in vendor
 i = tpl.index('/*__WORLDS__*/')
 a = tpl.rindex('<script>', 0, i)
 b = tpl.index('</script>', i) + len('</script>')
-# Effects live in src/effects/ (core.js first) and are spliced into the app script.
+
+# Effects live in src/effects/. Keep dependency order explicit so adding/renaming
+# a file cannot silently change runtime behaviour just because of alphabetic order.
 fx_dir = os.path.join(HERE, 'effects')
-fx_files = ['core.js'] + sorted(f for f in os.listdir(fx_dir) if f.endswith('.js') and f != 'core.js')
+fx_order = [
+    'core.js',
+    'surface.js',
+    'surface-shapes.js',
+    'surface-tune-core.js',
+    'camera.js',
+    'fog.js',
+    'formation.js',
+    'hologram.js',
+    'burst.js',
+    'post-stack.js',
+    'diagnostics.js',
+    'studio-menu-fix.js',
+    's7-brush.js',
+    's9-core.js',
+    's9-ui.js',
+    'runtime-compat.js',
+]
+fx_found = {f for f in os.listdir(fx_dir) if f.endswith('.js')}
+fx_files = [f for f in fx_order if f in fx_found]
+fx_files += sorted(fx_found - set(fx_files))
+if not fx_files or fx_files[0] != 'core.js':
+    raise RuntimeError('src/effects/core.js must be the first effect module')
 effects_js = '\n'.join(open(os.path.join(fx_dir, f), encoding='utf-8').read() for f in fx_files)
 app_src = tpl[a + len('<script>'):b - len('</script>')].replace('/*__WORLDS__*/', js_worlds).replace('/*__EFFECTS__*/', effects_js)
 
