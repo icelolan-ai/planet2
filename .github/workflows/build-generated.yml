@@ -1,6 +1,10 @@
 name: Build generated site
 
 on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - '.github/workflows/build-generated.yml'
   push:
     branches: [main]
     paths:
@@ -8,23 +12,23 @@ on:
       - 'src/worlds.json'
       - 'src/effects/**'
       - 'src/build_web.py'
+      - '.github/workflows/build-generated.yml'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: cerebra-generated-main
+  group: cerebra-generated-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: main
           fetch-depth: 0
 
       - name: Set up Python
@@ -40,13 +44,15 @@ jobs:
       - name: Build generated site
         run: python3 src/build_web.py
 
-      - name: Verify generated files changed only as expected
+      - name: Validate generated output
         run: |
+          git diff --check
           git status --short
           test -f index.html
           test -d assets
 
-      - name: Commit generated output
+      - name: Commit generated output on main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           if git diff --quiet -- index.html assets; then
             echo 'Generated output already current.'
