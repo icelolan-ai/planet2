@@ -15,6 +15,7 @@
     touchStyle.textContent = `
       #studio [data-studio-tools].is-on{background:var(--ink)!important;color:var(--bg)!important;border-color:var(--ink)!important}
       #studio .st-dock:has(.st-group.is-open){z-index:40}
+      #studio .st-sub-wide{justify-content:flex-start}
       /* Compact horizontal docks must fit their allocated space, including
          narrow desktop layouts with the Layers column still open. */
       body #studio .st-dock.is-h.is-compact:not(.is-folded){gap:3px!important;padding:6px!important}
