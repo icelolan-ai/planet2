@@ -144,20 +144,22 @@
     s.drawPad.addEventListener('pointercancel', onEnd, true);
   }
   setTimeout(boot, 0);
+})();
 
-  // Compatibility for the current split deployment: once the existing S7 loader has
-  // finished, bring in S9 source modules directly. A normal build already embeds them,
-  // so the presence of __cerebraS9 makes this a no-op there.
-  setTimeout(() => {
-    if (window.__cerebraS9 || window.__cerebraS9Loading) return;
-    window.__cerebraS9Loading = true;
-    const load = src => new Promise((ok, no) => {
-      const el = document.createElement('script'); el.src = src; el.async = false; el.onload = ok; el.onerror = no; document.body.appendChild(el);
-    });
-    (async () => {
+/* Compatibility loader for the current split Pages deployment. Normal builds embed these modules. */
+setTimeout(() => {
+  if (window.__cerebraCompatLoading) return;
+  window.__cerebraCompatLoading = true;
+  const load = src => new Promise((ok, no) => {
+    const el = document.createElement('script'); el.src = src; el.async = false; el.onload = ok; el.onerror = no; document.body.appendChild(el);
+  });
+  (async () => {
+    if (!window.__cerebraS9) {
       await load('src/effects/studio-menu-fix.js?v=8aa3e378');
       await load('src/effects/s9-core.js?v=78da5a51');
       await load('src/effects/s9-ui.js?v=bb877382');
-    })().catch(e => console.error('Cerebra S9 loader', e)).finally(() => { window.__cerebraS9Loading = false; });
-  }, 600);
-})();
+    }
+    if (!(typeof SURFACE !== 'undefined' && SURFACE.__shapePatch)) await load('src/effects/surface-shapes.js?v=20261004b');
+    if (!(window.__cerebra && window.__cerebra.studio && window.__cerebra.studio.__surfaceTuneCoreReady)) await load('src/effects/surface-tune-core.js?v=20261004b');
+  })().catch(e => console.error('Cerebra compatibility loader', e)).finally(() => { window.__cerebraCompatLoading = false; });
+}, 600);
