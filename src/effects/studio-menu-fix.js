@@ -8,6 +8,21 @@
     const root = s.el;
     const assist = root.querySelector('.st-assist');
     const drawBtn = root.querySelector('[data-studio-draw]');
+    const compact = () => innerWidth <= 900 || matchMedia('(pointer: coarse)').matches;
+
+    const touchStyle = document.createElement('style');
+    touchStyle.textContent = `
+      @media (pointer:coarse), (max-width:760px){
+        #studio [data-tray="layers"] .st-eye,
+        #studio [data-tray="layers"] .st-gtog,
+        #studio [data-tray="layers"] [data-sel-mode],
+        #studio [data-tray="layers"] [data-lsel],
+        #studio [data-tray="layers"] .st-panel-head button{min-width:40px;min-height:40px}
+        #studio [data-tray="layers"] .st-layer,
+        #studio [data-tray="layers"] .st-ghead{min-height:42px}
+      }
+    `;
+    document.head.append(touchStyle);
 
     const collapseAssist = () => {
       if (!assist || !s.drawing) return;
@@ -46,6 +61,22 @@
       root.querySelectorAll('.st-save').forEach(el => { if (!el.hidden) el.hidden = true; });
       root.querySelectorAll('[data-studio-export]').forEach(el => el.setAttribute('aria-expanded', 'false'));
     };
+    let folding = false;
+    const foldMobileTrays = keep => {
+      if (!compact() || folding || !s.trays) return;
+      folding = true;
+      let changed = false;
+      ['layers', 'panel'].forEach(name => {
+        if (name === keep) return;
+        const tray = s.trays[name];
+        if (tray && !tray.hidden && !tray.classList.contains('is-folded')) {
+          tray.classList.add('is-folded');
+          changed = true;
+        }
+      });
+      if (changed) queueMicrotask(() => s.layoutTrays && s.layoutTrays());
+      folding = false;
+    };
 
     const closeExtras = (keep = '') => {
       if (keep !== 'fly') s.closeFly && s.closeFly();
@@ -58,6 +89,7 @@
       if (keep !== 'save') closeSave();
       if (keep !== 'lab') closeLab();
       if (keep !== 'assist') collapseAssist();
+      if (keep !== 'layers') foldMobileTrays(keep === 'panel' ? 'panel' : '');
     };
     s.closeStudioMenus = closeExtras;
     s.collapseDrawMenus = () => { closeExtras(); collapseAssist(); };
@@ -76,7 +108,7 @@
       else if (t.matches('[data-grp-btn]')) closeExtras('dock');
       else if (t.matches('[data-studio-tools]')) closeExtras('panel');
       else if (t.matches('.st-edit')) closeExtras('ctx');
-      else if (t.matches('.st-lmore')) closeExtras('layer');
+      else if (t.matches('.st-lmore')) { closeExtras('layer'); foldMobileTrays('layers'); }
       else if (t.matches('[data-studio-keys]')) closeExtras('help');
       else if (t.matches('[data-studio-lib]')) closeExtras('lib');
       else if (t.matches('[data-studio-export]')) closeExtras('save');
@@ -110,7 +142,22 @@
     };
 
     const baseTools = s.tools && s.tools.bind(s);
-    if (baseTools) s.tools = on => { if (on) closeExtras('panel'); return baseTools(on); };
+    if (baseTools) s.tools = on => {
+      if (on) { closeExtras('panel'); foldMobileTrays('panel'); }
+      return baseTools(on);
+    };
+
+    const watchCompactTrays = () => {
+      const layers = s.trays && s.trays.layers;
+      if (!layers || layers.__exclusiveWatch) return;
+      layers.__exclusiveWatch = true;
+      new MutationObserver(() => {
+        if (!compact() || folding || layers.hidden || layers.classList.contains('is-folded')) return;
+        closeExtras('layers');
+      }).observe(layers, { attributes: true, attributeFilter: ['class', 'hidden'] });
+    };
+    watchCompactTrays();
+    setTimeout(watchCompactTrays, 700);
 
     const watchLab = () => {
       const lab = root.querySelector('.st-s9-panel');
@@ -119,7 +166,7 @@
       new MutationObserver(() => { if (!lab.hidden) closeExtras('lab'); }).observe(lab, { attributes: true, attributeFilter: ['hidden'] });
     };
     watchLab();
-    new MutationObserver(watchLab).observe(root, { childList: true, subtree: true });
+    new MutationObserver(() => { watchLab(); watchCompactTrays(); }).observe(root, { childList: true, subtree: true });
 
     // Surface styles can replace/hide Cerebra's original core. When that is
     // actually true in the renderer, Shape/Colour/Core/Motion have no visible
