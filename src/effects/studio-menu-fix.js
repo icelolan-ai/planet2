@@ -122,4 +122,18 @@
     new MutationObserver(watchLab).observe(root, { childList: true, subtree: true });
   }
   setTimeout(boot, 0);
+
+  // Current GitHub Pages split build loads this file directly. Load the new
+  // Surface Tune source too; a normal rebuilt bundle already contains it, so
+  // the ready flag prevents a duplicate UI.
+  setTimeout(() => {
+    const s = window.__cerebra && window.__cerebra.studio;
+    if ((s && s.__deepSurfaceTune) || document.querySelector('script[data-deep-surface-tune]')) return;
+    const el = document.createElement('script');
+    el.src = 'src/effects/surface-tune-core.js?v=7c034e65';
+    el.async = false;
+    el.dataset.deepSurfaceTune = '1';
+    el.onerror = () => console.error('Cerebra Surface Tune loader failed');
+    document.body.appendChild(el);
+  }, 900);
 })();
