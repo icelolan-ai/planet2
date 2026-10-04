@@ -8,21 +8,35 @@
     const root = s.el;
     const assist = root.querySelector('.st-assist');
     const drawBtn = root.querySelector('[data-studio-draw]');
+    const designBtn = root.querySelector('[data-studio-tools]');
     const compact = () => innerWidth <= 900 || matchMedia('(pointer: coarse)').matches;
 
     const touchStyle = document.createElement('style');
     touchStyle.textContent = `
+      #studio [data-studio-tools].is-on{background:var(--ink)!important;color:var(--bg)!important;border-color:var(--ink)!important}
       @media (pointer:coarse), (max-width:760px){
         #studio [data-tray="layers"] .st-eye,
         #studio [data-tray="layers"] .st-gtog,
         #studio [data-tray="layers"] [data-sel-mode],
         #studio [data-tray="layers"] [data-lsel],
-        #studio [data-tray="layers"] .st-panel-head button{min-width:40px;min-height:40px}
+        #studio [data-tray="layers"] .st-panel-head button{
+          width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important
+        }
+        #studio [data-tray="layers"] .st-lcheck{
+          width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important
+        }
         #studio [data-tray="layers"] .st-layer,
-        #studio [data-tray="layers"] .st-ghead{min-height:42px}
+        #studio [data-tray="layers"] .st-ghead{min-height:44px!important}
       }
     `;
     document.head.append(touchStyle);
+
+    const syncDesignState = () => {
+      if (!designBtn || !s.panel) return;
+      const open = !s.panel.hidden;
+      designBtn.classList.toggle('is-on', open);
+      designBtn.setAttribute('aria-expanded', String(open));
+    };
 
     const collapseAssist = () => {
       if (!assist || !s.drawing) return;
@@ -52,6 +66,7 @@
     };
     const closePanel = () => {
       if (s.panel && !s.panel.hidden && s.tools) s.tools(false);
+      queueMicrotask(syncDesignState);
     };
     const closeLab = () => {
       const lab = root.querySelector('.st-s9-panel');
@@ -144,8 +159,11 @@
     const baseTools = s.tools && s.tools.bind(s);
     if (baseTools) s.tools = on => {
       if (on) { closeExtras('panel'); foldMobileTrays('panel'); }
-      return baseTools(on);
+      const out = baseTools(on);
+      queueMicrotask(syncDesignState);
+      return out;
     };
+    syncDesignState();
 
     const watchCompactTrays = () => {
       const layers = s.trays && s.trays.layers;
