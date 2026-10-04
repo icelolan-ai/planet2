@@ -1,1 +1,0 @@
-(()=>{const L=u=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});(async()=>{await L('assets/app-core.2f4011f58f.js');await L('src/effects/s7-brush.js?v=bee41734')})().catch(e=>console.error('Cerebra S7 loader',e))})();
