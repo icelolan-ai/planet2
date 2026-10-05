@@ -11195,7 +11195,7 @@ class CoreStudio {
     const arrow = { arrowleft: [-1, 0], arrowright: [1, 0], arrowup: [0, -1], arrowdown: [0, 1] };
     this.SHORTCUTS.forEach(s => { if (s.run === null) s.run = e => { const k = e.key.toLowerCase(), v = arrow[k]; return v ? A(v[0], v[1], e.shiftKey)() : false; }; });
     const map = new Map(); this.SHORTCUTS.forEach(s => s.keys.forEach(k => map.set(k, s)));
-    const canon = e => { let k = e.key === ' ' ? 'space' : e.key.toLowerCase(); if (k.length === 1 && !/[a-z0-9\x20-\x7e]/.test(k) && /^Key[A-Z]$/.test(e.code)) k = e.code.slice(3).toLowerCase(); const parts = []; if (e.ctrlKey || e.metaKey) parts.push('mod'); if (e.altKey) parts.push('alt'); if (e.shiftKey && (k.length > 1 || /[a-z0-9]/.test(k))) parts.push('shift'); parts.push(k); return parts.join('+'); };
+    const canon = e => { let k = e.key === ' ' ? 'space' : e.key.toLowerCase(); if (k.length === 1 && !/[a-z]/.test(k) && /^Key[A-Z]$/.test(e.code)) k = e.code.slice(3).toLowerCase(); const parts = []; if (e.ctrlKey || e.metaKey) parts.push('mod'); if (e.altKey) parts.push('alt'); if (e.shiftKey && (k.length > 1 || /[a-z0-9]/.test(k))) parts.push('shift'); parts.push(k); return parts.join('+'); };
     const typing = e => !!(e.target && e.target.closest && e.target.closest('input,textarea,select,[contenteditable=true],[contenteditable=""],[role=slider],.st-knob'));
     const editingText = e => { const t = e.target; if (!t || !t.closest) return false; if (t.isContentEditable) return true; const input = t.closest('input,textarea'); return !!input && (input.tagName === 'TEXTAREA' || !['range','checkbox','radio','color','button','submit','reset'].includes(input.type)); };
     // human-readable keys (⌘ on Mac) for the sheet and tooltips
