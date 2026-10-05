@@ -83,6 +83,43 @@
     });
   };
 
+  // Apply the same radial base-shape deformation to the assembled original Core.
+  // Clip-space reconstruction supports its existing point/line/mesh shaders without a second scene.
+  const originalU = { uOriginalShape: {value:0}, uOriginalAmount:{value:0}, uOriginalAspect:{value:1.35}, uOriginalHole:{value:.45}, uOriginalPlanes:{value:Array.from({length:80},()=>new THREE.Vector4())}, uOriginalPlaneCount:{value:0}, uOriginalPolyScale:{value:1}, uOriginalToCore:{value:new THREE.Matrix4()}, uOriginalFromCore:{value:new THREE.Matrix4()} };
+  SURFACE.resetOriginalShape = () => { originalU.uOriginalAmount.value = 0; };
+  SURFACE.shapeOriginal = (studio, core, camera) => {
+    const t = studio.coreFxTarget()?.tune || {}, shape = t.s_shape || 'sphere';
+    const active = studio.subject < 0 && (t.s_style || 'none') === 'none' && shape !== 'sphere';
+    originalU.uOriginalAmount.value = active ? +(t.s_shapeAmt ?? 1) : 0;
+    if (!active) return;
+    originalU.uOriginalShape.value = shape === 'football' ? 1 : shape === 'torus' ? 2 : 3;
+    originalU.uOriginalAspect.value = +(t.s_shapeAspect ?? 1.35); originalU.uOriginalHole.value = +(t.s_shapeHole ?? .45);
+    const poly = POLY[shape]; originalU.uOriginalPlaneCount.value = poly ? poly.p.length : 0; originalU.uOriginalPolyScale.value = poly ? poly.k : 1;
+    if (poly) poly.p.forEach((q,i)=>originalU.uOriginalPlanes.value[i].set(...q));
+    core.group.updateMatrixWorld(true);
+    originalU.uOriginalToCore.value.copy(core.group.matrixWorld).invert().multiply(camera.matrixWorld).multiply(camera.projectionMatrixInverse);
+    originalU.uOriginalFromCore.value.copy(camera.projectionMatrix).multiply(camera.matrixWorldInverse).multiply(core.group.matrixWorld);
+    core.group.traverse(o => {
+      if (o.isSprite) return;
+      for (const m of (Array.isArray(o.material) ? o.material : o.material ? [o.material] : [])) {
+        if (m.__originalShape) continue; m.__originalShape = true;
+        const compile = m.onBeforeCompile.bind(m), key = m.customProgramCacheKey.bind(m);
+        m.customProgramCacheKey = () => key() + '|original-base-shape-v1';
+        m.onBeforeCompile = (shader, renderer) => {
+          compile(shader, renderer); Object.assign(shader.uniforms, originalU);
+          shader.vertexShader = `uniform float uOriginalShape,uOriginalAmount,uOriginalAspect,uOriginalHole,uOriginalPolyScale;
+            uniform int uOriginalPlaneCount; uniform vec4 uOriginalPlanes[80]; uniform mat4 uOriginalToCore,uOriginalFromCore;
+            ` + shader.vertexShader.replace(/void\s+main\s*\(\s*\)/, 'void originalSurfaceMain()') + `
+            void main(){ originalSurfaceMain(); if(uOriginalAmount>0.0){vec4 local=uOriginalToCore*gl_Position;vec3 p=local.xyz/local.w;float r=length(p);if(r>0.00001){vec3 d=p/r,q=p;
+            if(uOriginalShape<1.5)q=p*vec3(inversesqrt(uOriginalAspect),uOriginalAspect,inversesqrt(uOriginalAspect));
+            else if(uOriginalShape<2.5){float th=atan(d.z,d.x),ph=asin(clamp(d.y,-1.0,1.0)),major=.5+uOriginalHole*.42,minor=.52-uOriginalHole*.24,n=1.0/(major+minor);q=vec3((major+minor*cos(ph))*cos(th),minor*sin(ph),(major+minor*cos(ph))*sin(th))*r*n;}
+            else{float hit=10000.0;for(int i=0;i<80;i++){if(i>=uOriginalPlaneCount)break;float den=dot(uOriginalPlanes[i].xyz,d);if(den>.00001)hit=min(hit,uOriginalPlanes[i].w/den);}q=d*r*hit*uOriginalPolyScale;}
+            gl_Position=uOriginalFromCore*vec4(mix(p,q,uOriginalAmount),1.0);}}}`;
+        }; m.needsUpdate = true;
+      }
+    });
+  };
+
   function boot() {
     const app = window.__cerebra, s = app && app.studio, design = s && s.el && s.el.querySelector('[data-studio-corefx]');
     if (!s || !design || design.dataset.ready !== '1' || !s.coreFxSet) { setTimeout(boot, 180); return; }
@@ -110,9 +147,9 @@
     function sync() {
       const t = s.coreFxTarget && s.coreFxTarget(); if (!t || !t.tune) return; const v = t.tune, style = v.s_style || 'none'; let sh = v.s_shape || 'sphere';
       const ok = fill(sel, style, sh); if (ok !== sh) { s.coreFxSet('s_shape', ok); sh = ok; }
-      wrap.hidden = style === 'none'; wrap.querySelector('[data-ss-amt]').hidden = sh === 'sphere'; wrap.querySelector('[data-ss-aspect]').hidden = sh !== 'football'; wrap.querySelector('[data-ss-hole]').hidden = sh !== 'torus';
+      wrap.hidden = false; wrap.querySelector('[data-ss-amt]').hidden = sh === 'sphere'; wrap.querySelector('[data-ss-aspect]').hidden = sh !== 'football'; wrap.querySelector('[data-ss-hole]').hidden = sh !== 'torus';
       wrap.querySelectorAll('[data-ss]').forEach(el => { const val = +(v[el.dataset.ss] ?? SURFACE.defaults[el.dataset.ss.slice(2)] ?? 0); el.value = val; const out = el.parentNode.querySelector('[data-out]'); if (out) out.textContent = val.toFixed(2); });
-      const tg = ensureTune(); if (tg) { tg.hidden = style === 'none'; const ts = tg.querySelector('[data-ss-tshape]'); sh = fill(ts, style, sh); tg.querySelector('[data-ss-tamt]').hidden = sh === 'sphere'; tg.querySelector('[data-ss-taspect]').hidden = sh !== 'football'; tg.querySelector('[data-ss-thole]').hidden = sh !== 'torus'; tg.querySelectorAll('[data-ss-t]').forEach(el => { const val = +(v[el.dataset.ssT] ?? SURFACE.defaults[el.dataset.ssT.slice(2)] ?? 0); el.value = val; const out = el.parentNode.querySelector('[data-out]'); if (out) out.textContent = val.toFixed(2); }); }
+      const tg = ensureTune(); if (tg) { tg.hidden = style === 'none' || sh === 'sphere'; const ts = tg.querySelector('[data-ss-tshape]'); sh = fill(ts, style, sh); tg.querySelector('[data-ss-tamt]').hidden = sh === 'sphere'; tg.querySelector('[data-ss-taspect]').hidden = sh !== 'football'; tg.querySelector('[data-ss-thole]').hidden = sh !== 'torus'; tg.querySelectorAll('[data-ss-t]').forEach(el => { const val = +(v[el.dataset.ssT] ?? SURFACE.defaults[el.dataset.ssT.slice(2)] ?? 0); el.value = val; const out = el.parentNode.querySelector('[data-out]'); if (out) out.textContent = val.toFixed(2); }); }
     }
     const bs = s.syncCoreFx.bind(s); s.syncCoreFx = (...a) => { const r = bs(...a); queueMicrotask(sync); return r; };
     const observer = new MutationObserver(sync); observer.observe(design, { subtree: true, attributes: true, attributeFilter: ['aria-pressed'] }); sync(); setTimeout(sync, 400); setTimeout(sync, 1000);

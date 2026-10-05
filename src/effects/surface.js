@@ -13,7 +13,6 @@ const SURFACE = Effects.register({
     { key: 'size',    label: 'Size',         min: 0.3,  max: 3,   step: 0.01 },
     { key: 'spin',    label: 'Spin',         min: -2,   max: 2,   step: 0.01 },
     { key: 'shell',   label: 'Outer polyhedron (wire)', type: 'toggle' },
-    { key: 'hide',    label: 'Hide original surface', type: 'toggle' },
     // --- Transform & motion (every style)
     { key: 'bright',  label: 'Brightness',        min: 0.2, max: 2,   step: 0.01, group: 'move' },
     { key: 'scale',   label: 'Overall scale',     min: 0.5, max: 1.6, step: 0.01, group: 'move' },
@@ -305,7 +304,7 @@ const SURFACE = Effects.register({
     const key = this.controls.filter(c => !this.LIVE.includes(c.key)).map(c => T['s_' + c.key]).join('|');
     if (on && (S.dirty || key !== S.key)) { this.build(w); S.key = key; S.dirty = false; }
     if (!on && S.objs.length) { this.clear(w); S.key = ''; }
-    if (w.model) w.model.visible = !(on && +T.s_hide);
+    if (w.model) w.model.visible = !on;
     S.g.visible = !!on && S.objs.length > 0; if (!S.g.visible) return;
     const calm = this.reduced ? 0 : 1; S.spin += dt * T.s_spin * 0.3 * calm; S.t += dt * calm; S.g.rotation.y = S.spin;
     S.g.rotation.x = P('tilt') * Math.PI / 180; S.g.rotation.z = P('roll') * Math.PI / 180;

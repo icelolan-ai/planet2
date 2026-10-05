@@ -776,7 +776,6 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
 }
 #wtune .tune-tabs button{flex:1 0 auto}
 .cerebra-debug-status{position:fixed;bottom:12px;right:12px;z-index:121;padding:6px 10px;background:#10151e;color:#eef0f6;font:12px sans-serif;max-width:calc(100vw - 24px)}
-.life-actions{margin:10px 0 16px;gap:6px}.life-actions button{min-width:0;min-height:44px;letter-spacing:.06em;padding:10px 6px}.life-actions button:disabled{opacity:.35;cursor:default}
 /* Keep orbit controls within the drawer at narrow desktop and phone widths. */
 #obuild{width:min(420px,100vw);overflow-x:hidden;touch-action:pan-y}
 #obuild .tune-row{grid-template-columns:minmax(70px,90px) minmax(0,1fr) 36px;gap:8px}
@@ -1085,19 +1084,20 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 .st-save-planet{flex:1 1 100%;display:grid;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.14)}
 .st-save-planet input{font:inherit;font-size:13px;padding:8px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:inherit;min-width:0}
 .st-save-planet small{font-size:11px;opacity:.7;line-height:1.35}
-.st-lib{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;justify-content:center;gap:18px;background:#07080dcc;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);pointer-events:auto}
+.st-lib{position:absolute;inset:0;z-index:90;display:flex;flex-direction:column;justify-content:center;gap:18px;background:#07080dcc;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);pointer-events:auto}
 .st-lib[hidden]{display:none}
 .st-lib-head{display:flex;align-items:center;gap:14px;padding:0 max(24px,6vw)}
 .st-lib-head b{font:400 clamp(28px,4vw,52px) var(--f-display);letter-spacing:.04em;text-transform:uppercase}
 .st-lib-head span{flex:1;color:#97a1b3;font:11px var(--f-mono)}
-.st-lib-track{display:flex;gap:28px;overflow-x:auto;scroll-snap-type:x mandatory;padding:20px calc(50vw - min(34vw,190px));scrollbar-width:none}
-.st-lib-track::-webkit-scrollbar{display:none}
+.st-lib-track{display:flex;gap:28px;overflow-x:auto;scroll-snap-type:x mandatory;padding:20px clamp(16px,3vw,48px);scrollbar-width:none;touch-action:pan-y;cursor:grab}
+.st-lib-track.is-dragging{cursor:grabbing;scroll-snap-type:none;user-select:none}.st-lib-track::-webkit-scrollbar{display:none}
 .st-lib-card{flex:0 0 min(68vw,380px);scroll-snap-align:center;border-radius:26px;overflow:hidden;background:#141821;border:1px solid #ffffff1c;box-shadow:0 30px 70px #000a;transition:transform .2s,opacity .2s}
 .st-lib-img{height:min(62vh,480px);background-size:cover;background-repeat:no-repeat;background-color:#0b0d13}
 .st-lib-info{padding:16px 18px;display:grid;gap:4px}
 .st-lib-info b{font:600 14.5px var(--f-sans)}.st-lib-info small{color:#97a1b3}
 .st-lib-info div{display:flex;gap:8px;margin-top:8px}
 .st-lib-empty{text-align:center;color:#97a1b3}
+@media(max-width:600px){.st-lib-head{flex-wrap:wrap;padding:0 16px;gap:8px}.st-lib-head b{flex:1}.st-lib-head span{flex:0 0 auto}.st-lib-head .st-btn{min-height:40px;min-width:40px}}
 .rb-ribbons{position:fixed;inset:0;width:100%;height:100%;z-index:40;pointer-events:none;mix-blend-mode:screen}
 .rb-galaxy{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;mix-blend-mode:screen}
 .rb-spark{position:fixed;width:0;height:0;z-index:200;pointer-events:none}
@@ -2119,7 +2119,6 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
     <button type="button" role="tab" data-tab="core" aria-selected="false">Core</button>
     <button type="button" role="tab" data-tab="motion" aria-selected="false">Motion</button>
     <button type="button" role="tab" data-tab="fx" aria-selected="false">Effects</button>
-    <button type="button" role="tab" data-tab="life" aria-selected="false">Life</button>
     <button type="button" role="tab" data-tab="save" aria-selected="false">Save</button>
   </nav>
 
@@ -2267,7 +2266,6 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
     
   </div>
 
-<div class="tune-pane" data-pane="life" hidden><p class="tune-sub">Life inside Cerebra</p><label class="tune-row"><span>Organisms</span><input aria-label="Organisms" type="range" min="0" max="16" step="1" data-life="count"><b data-out></b></label><div class="tune-btns life-actions"><button type="button" class="tune-btn" data-life-add aria-label="Add organism">+ Add</button><button type="button" class="tune-btn" data-life-remove aria-label="Remove one organism">− Remove</button><button type="button" class="tune-reset" data-life-clear>Clear all</button></div><label class="tune-row"><span>Organism size</span><input aria-label="Organism size" type="range" min="0.05" max="0.28" step="0.01" data-life="size"><b data-out></b></label><label class="tune-row"><span>Shape</span><select data-life="shape" aria-label="Organism shape"><option value="0">Jelly</option><option value="1">Spindle</option><option value="2">Urchin</option><option value="3">Amoeba</option></select></label><label class="tune-row"><span>Filaments</span><input aria-label="Filaments" type="range" min="0" max="24" step="1" data-life="filaments"><b data-out></b></label><label class="tune-row"><span>Inflation</span><input aria-label="Inflation" type="range" min="0" max="1.5" step="0.05" data-life="breath"><b data-out></b></label><label class="tune-row"><span>Life speed</span><input aria-label="Life speed" type="range" min="0" max="3" step="0.05" data-life="speed"><b data-out></b></label><label class="tune-row"><span>Movement</span><input aria-label="Movement" type="range" min="0" max="2" step="0.05" data-life="motion"><b data-out></b></label><label class="tune-row"><span>Behaviour</span><select data-life="behavior" aria-label="Organism behaviour"><option value="0">Wander</option><option value="1">School</option><option value="2">Orbit</option><option value="3">Curious</option></select></label><label class="tune-row"><span>Colour</span><input type="color" data-life="color" aria-label="Organism colour"></label><button type="button" class="tune-reset" data-life-reset>Reset life</button><p class="tune-hint">Each visit starts empty. Add or remove one organism, or clear them all. Appearance settings are shared. Reduced motion pauses movement.</p></div>
   <div class="tune-pane" data-pane="save" hidden>
     <p class="tune-sub">Reset &amp; randomize</p>
     <div class="tune-btns"><button type="button" class="tune-btn" data-t-random>&#9861; Randomize</button><button type="button" class="tune-reset" data-t-reset>Reset</button></div>
@@ -3085,11 +3083,15 @@ const WorldTune = (() => {
     const ptrs = range('[data-t-ptrs]', v => call('setPointer', null, v), times);
     const gain = range('[data-t-gain]', v => { const b = body(); if (b) b.audioGain = v; }, times);
     const zoom = range('[data-t-zoom]', v => call('setView', v), v => v.toFixed(2) + 'x');
+    const syncStudioLens = () => {
+      const s = window.__cerebra?.studio;
+      if (s?.active) { s.lensOn = !!LENS_U.uLensOn.value; s.el.querySelector('[data-studio-lens]').checked = s.lensOn; s.commitSoon(); }
+    };
     const f3 = v => v.toFixed(3), f2 = v => v.toFixed(2);
-    const aberr = range('[data-t-aberr]', v => { LENS_U.uLensAberr.value = v; LENS_U.user = true; }, f3);
-    const blur = range('[data-t-blur]', v => { LENS_U.uLensBlur.value = v; LENS_U.user = true; }, f2);
-    const bloom = range('[data-t-bloom]', v => { LENS_U.uLensBloom.value = v; LENS_U.user = true; }, f2);
-    const lens = seg('[data-t-lens]', v => { LENS_U.uLensOn.value = v; LENS_U.user = true; });
+    const aberr = range('[data-t-aberr]', v => { LENS_U.uLensAberr.value = v; LENS_U.user = true; syncStudioLens(); }, f3);
+    const blur = range('[data-t-blur]', v => { LENS_U.uLensBlur.value = v; LENS_U.user = true; syncStudioLens(); }, f2);
+    const bloom = range('[data-t-bloom]', v => { LENS_U.uLensBloom.value = v; LENS_U.user = true; syncStudioLens(); }, f2);
+    const lens = seg('[data-t-lens]', v => { LENS_U.uLensOn.value = v; LENS_U.user = true; syncStudioLens(); });
     // Phones start lighter; the tuner shows whatever is live.
     setRange(aberr, LENS_U.uLensAberr.value, f3); setRange(blur, LENS_U.uLensBlur.value, f2); setRange(bloom, LENS_U.uLensBloom.value, f2);
     const dir = seg('[data-t-dir]', v => call('setDirection', v));
@@ -7620,57 +7622,6 @@ class AmbientDots {
   dispose(){this.geometry.dispose();this.material.dispose();this.app.stage.scene.remove(this.points);}
 }
 
-/** Small procedural life inside the glass: two draw calls with bounded preallocated buffers. */
-class Organisms {
-  constructor(app){
-    this.app=app;this.time=0;this.max=16;this.segments=10;
-    this.defaults={count:0,size:.14,shape:0,filaments:8,breath:.7,speed:.7,motion:1,behavior:0,color:'#7ae5db'};this.settings={...this.defaults};
-    try{this.assign(JSON.parse(localStorage.getItem('cerebra.life.v1')||'{}'));}catch(e){}
-    // Appearance persists; each visit starts empty until the visitor adds life.
-    this.settings.count=0;
-    this.group=new THREE.Group();app.core.orient.add(this.group);
-    this.bodyMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{uTime:{value:0},uShape:{value:0},uBreath:{value:.7},uColor:{value:new THREE.Color(this.settings.color)}},
-      vertexShader:`uniform float uTime,uShape,uBreath;varying vec3 vN,vV;
-        void main(){vec3 p=position;float lobes=sin(p.x*6.+uTime*.43)*sin(p.y*5.-uTime*.31)*sin(p.z*7.+uTime*.23);
-          p*=1.+lobes*.17*uBreath;if(uShape<.5)p.y*=.65;else if(uShape<1.5){p.xz*=.6;p.y*=1.35;}else if(uShape>2.5)p*=1.+.18*sin(p.x*9.+p.y*7.+uTime*.4);
-          vec4 world=modelMatrix*instanceMatrix*vec4(p,1.);vN=normalize(mat3(modelMatrix*instanceMatrix)*normal);vV=cameraPosition-world.xyz;gl_Position=projectionMatrix*viewMatrix*world;}`,
-      fragmentShader:`uniform vec3 uColor;varying vec3 vN,vV;void main(){float rim=pow(1.-abs(dot(normalize(vN),normalize(vV))),2.);gl_FragColor=vec4(uColor*(.35+rim*1.4),.25+rim*.6);}`});
-    this.body=new THREE.InstancedMesh(new THREE.SphereGeometry(1,20,14),this.bodyMat,this.max);this.body.frustumCulled=false;this.group.add(this.body);
-    this.positions=new Float32Array(this.max*24*this.segments*2*3);this.linesGeom=new THREE.BufferGeometry();this.linesGeom.setAttribute('position',new THREE.BufferAttribute(this.positions,3));
-    this.linesMat=new THREE.LineBasicMaterial({color:this.settings.color,transparent:true,opacity:.48,depthWrite:false,blending:THREE.AdditiveBlending});this.lines=new THREE.LineSegments(this.linesGeom,this.linesMat);this.lines.frustumCulled=false;this.group.add(this.lines);
-    this.dummy=new THREE.Object3D();this.a=new THREE.Vector3();this.b=new THREE.Vector3();this.sync();this.wire();
-  }
-  assign(v){if(!v||typeof v!=='object')return;const ranges={count:[0,16],size:[.05,.28],shape:[0,3],filaments:[0,24],breath:[0,1.5],speed:[0,3],motion:[0,2],behavior:[0,3]};
-    for(const[k,[lo,hi]]of Object.entries(ranges))if(Number.isFinite(v[k]))this.settings[k]=clamp(v[k],lo,hi);
-    for(const k of ['count','shape','filaments','behavior'])this.settings[k]=Math.round(this.settings[k]);
-    if(typeof v.color==='string'&&/^#[0-9a-f]{6}$/i.test(v.color))this.settings.color=v.color;
-  }
-  change(v){this.assign(v);this.sync();try{localStorage.setItem('cerebra.life.v1',JSON.stringify(this.settings));}catch(e){}}
-  sync(){const s=this.settings;this.group.visible=s.count>0;document.querySelector('[data-life-add]').disabled=s.count>=this.max;document.querySelector('[data-life-remove]').disabled=s.count===0;document.querySelector('[data-life-clear]').disabled=s.count===0;this.body.count=s.count;this.linesGeom.setDrawRange(0,s.count*s.filaments*this.segments*2);this.bodyMat.uniforms.uColor.value.set(s.color);this.linesMat.color.set(s.color);this.bodyMat.uniforms.uShape.value=s.shape;this.bodyMat.uniforms.uBreath.value=s.breath;
-    document.querySelectorAll('[data-life]').forEach(el=>{el.value=s[el.dataset.life];const out=el.parentElement.querySelector('[data-out]');if(out)out.textContent=String(s[el.dataset.life]);if(el.type==='range')el.style.setProperty('--p',(+el.value-el.min)/(el.max-el.min)*100+'%');});
-  }
-  wire(){document.querySelectorAll('[data-life]').forEach(el=>el.addEventListener('input',()=>this.change({[el.dataset.life]:el.type==='color'?el.value:+el.value})));document.querySelector('[data-life-add]').onclick=()=>this.change({count:this.settings.count+1});document.querySelector('[data-life-remove]').onclick=()=>this.change({count:this.settings.count-1});document.querySelector('[data-life-clear]').onclick=()=>this.change({count:0});document.querySelector('[data-life-reset]').onclick=()=>this.change(this.defaults);}
-  update(dt,reduced){
-    const s=this.settings;this.group.visible=s.count>0;if(!this.group.visible)return;if(!reduced)this.time+=dt*s.speed;
-    const t=this.time,moveT=t*s.motion;this.bodyMat.uniforms.uTime.value=t;let out=0;
-    for(let i=0;i<s.count;i++){
-      const phase=i*2.399,d=this.dummy,travel=s.motion*.28,ang=phase+moveT*.23;
-      if(s.behavior===1)d.position.set(Math.sin(t*.17)*travel+Math.cos(phase)*.17,Math.cos(t*.21)*travel+Math.sin(phase)*.17,Math.sin(phase*1.7)*.2);
-      else if(s.behavior===2)d.position.set(Math.cos(ang)*.48,Math.sin(phase+t*.11)*.2,Math.sin(ang)*.48);
-      else{d.position.set(Math.sin(t*.17+phase)*travel+Math.cos(phase)*.15,Math.sin(t*.23+phase*1.3)*travel,Math.cos(t*.13+phase)*travel);if(s.behavior===3&&!reduced){d.position.x+=this.app.pointer.nx*.2;d.position.y+=this.app.pointer.ny*.2;}}
-      if(d.position.length()>.7)d.position.setLength(.7);
-      const pulse=1+(reduced?0:Math.sin(t*1.5+phase)*s.breath*.16);d.scale.setScalar(s.size*pulse);d.rotation.set(Math.sin(t*.12+phase)*.25,ang*.3,Math.cos(t*.19+phase)*.2);d.updateMatrix();this.body.setMatrixAt(i,d.matrix);
-      const point=(arm,q,v)=>{const a=arm/Math.max(1,s.filaments)*Math.PI*2;
-        if(s.shape===2){const y=1-2*(arm+.5)/Math.max(1,s.filaments),r=Math.sqrt(1-y*y),th=arm*2.399;v.set(Math.cos(th)*r,y,Math.sin(th)*r).multiplyScalar(1+q*1.45);}
-        else{const rad=(s.shape===1?.4:.75)*(1-q*.25);v.set(Math.cos(a)*rad,-.25-q*1.8,Math.sin(a)*rad);}
-        const sway=reduced?0:s.motion*q*q*.25;v.x+=Math.sin(t*1.4+phase+arm*.8+q*5)*sway;v.z+=Math.cos(t*1.1+phase+arm+q*4)*sway;return v.applyMatrix4(d.matrix);};
-      for(let arm=0;arm<s.filaments;arm++)for(let j=0;j<this.segments;j++){point(arm,j/this.segments,this.a);point(arm,(j+1)/this.segments,this.b);this.a.toArray(this.positions,out);out+=3;this.b.toArray(this.positions,out);out+=3;}
-    }
-    this.body.instanceMatrix.needsUpdate=true;this.linesGeom.attributes.position.needsUpdate=true;
-  }
-  dispose(){this.app.core.orient.remove(this.group);this.body.geometry.dispose();this.bodyMat.dispose();this.linesGeom.dispose();this.linesMat.dispose();}
-}
-
 /** Shared settings for the drifting network: the chooser uses fixed looks, the atelier and studio backdrop follow these. */
 const NET = (() => {
   const def = { on: false, color: '#ff2832', density: 90, link: 130, speed: 1, opacity: .45 };
@@ -8102,7 +8053,6 @@ class WorldAtelier {
     this.el.hidden = false; this.track.scrollTop = 0; this.progress = 0; this.select(0);
     this.saved = new Map(); a.stage.scene.traverse(o => this.saved.set(o, o.visible));
     if (a.ambient) a.ambient.points.visible = false;
-    if (a.organisms) a.organisms.group.visible = false;
     a.orrery.group.visible = true;
     a.orrery.group.children.forEach(o => { o.visible = o === a.orrery.stars.points || a.orrery.worlds.some(w => w.group === o); });
     this.active = true;
@@ -8937,7 +8887,7 @@ class CoreStudio {
     this.blur = 8;
     this.effect = 'off'; this.effectAmount = 5; this.light = 1; this.lightX=4; this.shadow = .65; this.shadowSoft = .6;
     this.sun=new THREE.Vector3(4,2,7);
-    this.layers = { atmo: true, stars: true, shells: true, rings: true, bands: true, particles: true, comets: true, energy: true, dust: false, glass: true, life: true };
+    this.layers = { atmo: true, stars: true, shells: true, rings: true, bands: true, particles: true, comets: true, energy: true, dust: false, glass: true };
     this.coreLayers = [true, true, true, true, true];
     this.x = 0; this.y = 0; this.vx = 0; this.vy = 0; this.drag = null;
     this.bg = document.createElement('canvas'); this.bg.id = 'studio-bg'; this.bg.setAttribute('aria-hidden', 'true');
@@ -9042,7 +8992,7 @@ class CoreStudio {
           <button type="button" class="st-btn is-primary" data-vid-go>Record</button>
           <small data-vid-msg role="status">Records the planet, spinning Kits and moving lines as they move now.</small></div>
         <div class="st-save-planet"><span class="st-ctx-kind">Save planet</span><input type="text" data-planet-name maxlength="24" placeholder="Name your planet" aria-label="Planet name"><button type="button" class="st-btn" data-planet-save>Save planet</button><small data-planet-msg role="status">Keeps your Cerebra core look and shows it first in World Atelier.</small></div></div>
-      <div class="st-lib" data-studio-library hidden><div class="st-lib-head"><b>Library</b><span data-lib-count></span><button type="button" class="st-btn" data-lib-mode aria-pressed="false">Circular</button><button type="button" class="st-btn" data-lib-close aria-label="Close library">✕</button></div>
+      <div class="st-lib" data-studio-library hidden><div class="st-lib-head"><b>Library</b><span data-lib-count></span><button type="button" class="st-btn" data-lib-step="-1" aria-label="Previous saved work">←</button><button type="button" class="st-btn" data-lib-step="1" aria-label="Next saved work">→</button><button type="button" class="st-btn" data-lib-mode aria-pressed="false">Circular</button><button type="button" class="st-btn" data-lib-close aria-label="Close library">✕</button></div>
         <div class="st-lib-track" data-lib-track></div><p class="st-lib-empty" data-lib-empty>Nothing kept yet. Press Keep in the toolbar to save this composition.</p></div>
       <div class="st-dock st-glass" data-tray="dock" role="toolbar" aria-label="Studio"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button>
         <button type="button" class="st-btn st-dock-fold" data-dock-fold aria-expanded="true" aria-label="Fold toolbar"><span class="st-chev" aria-hidden="true"></span></button>
@@ -9095,7 +9045,7 @@ class CoreStudio {
       <h3>Light &amp; floor shadow</h3><label class="studio-control"><span>Film grain</span><input type="checkbox" data-studio-grain></label><label class="studio-control"><span>Grain amount</span><input type="range" min="0.02" max="0.3" step="0.01" value="0.1" data-studio-grain-amt><output>10%</output></label><label class="studio-control"><span>Camera lens (depth blur &amp; colour fringe)</span><input type="checkbox" data-studio-lens></label><label class="studio-control"><span>Key light</span><input type="range" min="0.4" max="1.8" step="0.05" value="1" data-studio-light><output>1.00×</output></label><label class="studio-control"><span>Light direction</span><input type="range" min="-6" max="6" step="0.25" value="4" data-studio-light-x><output>4</output></label><label class="studio-control"><span>Shadow</span><input type="range" min="0" max="1" step="0.05" value="0.65" data-studio-shadow><output>65%</output></label><label class="studio-control"><span>Softness</span><input type="range" min="0" max="1" step="0.05" value="0.6" data-studio-shadow-soft><output>60%</output></label>
       <h3>World parts</h3><div class="studio-layers"><button type="button" class="studio-layer" data-studio-layer="atmo" aria-pressed="true" aria-label="Hide atmosphere"><span>Atmosphere glow</span>${eye}</button><button type="button" class="studio-layer" data-studio-layer="stars" aria-pressed="true" aria-label="Hide stars"><span>Background stars</span>${eye}</button></div>
       <h3>Planet parts</h3><div class="studio-layers">${Object.keys(names).map(k => `<button type="button" class="studio-layer" data-studio-layer="${k}" aria-pressed="${k !== 'dust'}" aria-label="Show ${names[k]}"><span>${names[k]}</span>${eye}</button>`).join('')}</div>
-      <h3>Inside the core</h3><div class="studio-layers">${LAYER_NAMES.map((name, i) => `<button type="button" class="studio-layer" data-studio-core="${i}" aria-pressed="true" aria-label="Hide ${name}"><span>${name}</span>${eye}</button>`).join('')}<button type="button" class="studio-layer" data-studio-layer="life" aria-pressed="true" aria-label="Hide organisms"><span>Organisms</span>${eye}</button></div>
+      <h3>Inside the core</h3><div class="studio-layers">${LAYER_NAMES.map((name, i) => `<button type="button" class="studio-layer" data-studio-core="${i}" aria-pressed="true" aria-label="Hide ${name}"><span>${name}</span>${eye}</button>`).join('')}</div>
       <button type="button" class="st-btn st-reset" data-studio-reset>Reset settings</button></aside>
       <aside class="studio-panel st-layers-tray st-glass" data-tray="layers" aria-label="Layers"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-layers-fold aria-expanded="true"><h2>Layers</h2><span class="st-chev" aria-hidden="true"></span></button><div class="st-layer-bar"><button type="button" class="st-btn st-addgroup" data-add-group aria-label="Add a group">+ Group</button><button type="button" class="st-btn st-addgroup" data-sel-mode aria-pressed="false">Select</button></div><div class="st-lsel" data-lsel hidden></div><button type="button" class="st-lresize" data-lresize aria-label="Resize layers panel"></button><ul class="st-layers" data-studio-objects></ul><p class="studio-note" data-objects-empty>Add text, shapes or decor. Drag ⋮⋮ to restack, the eye hides a layer.</p></aside>`;
     document.body.append(this.bg, this.fx, this.vfx, this.el);
@@ -9423,8 +9373,20 @@ class CoreStudio {
     this.el.querySelector('[data-studio-lib]').onclick = () => this.libOpen(true);
     this.el.querySelector('[data-lib-close]').onclick = () => this.libOpen(false);
     this.el.querySelector('[data-lib-mode]').onclick = e => { const on = this.lib.classList.toggle('is-circular'); e.currentTarget.setAttribute('aria-pressed', String(on)); this.libParallax(); };
-    this.el.querySelector('[data-lib-track]').addEventListener('scroll', () => this.libParallax(), { passive: true });
-    this.el.querySelector('[data-studio-lens]').onchange = e => { this.lensOn = e.target.checked; };
+    const libTrack = this.el.querySelector('[data-lib-track]');
+    libTrack.tabIndex = 0; libTrack.setAttribute('aria-label', 'Saved works carousel');
+    libTrack.addEventListener('scroll', () => this.libParallax(), { passive: true });
+    const stepLibrary = dir => { const card = libTrack.querySelector('.st-lib-card'); if (card) libTrack.scrollBy({left:dir*(card.offsetWidth+28),behavior:'smooth'}); };
+    this.el.querySelectorAll('[data-lib-step]').forEach(b=>b.onclick=()=>stepLibrary(+b.dataset.libStep));
+    libTrack.addEventListener('keydown', e => { if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();stepLibrary(e.key==='ArrowLeft'?-1:1);} });
+    let libDrag = null, libSuppressClick = 0;
+    libTrack.addEventListener('pointerdown', e => { if(e.button!==0||e.target.closest('button,input'))return;libDrag={id:e.pointerId,x:e.clientX,left:libTrack.scrollLeft,moved:false}; });
+    libTrack.addEventListener('pointermove', e => { const d=libDrag;if(!d||d.id!==e.pointerId)return;const dx=e.clientX-d.x;if(!d.moved&&Math.abs(dx)<6)return;d.moved=true;libTrack.setPointerCapture(e.pointerId);libTrack.classList.add('is-dragging');e.preventDefault();libTrack.scrollLeft=d.left-dx; });
+    const endLibraryDrag = e => { const d=libDrag;if(!d||d.id!==e.pointerId)return;libDrag=null;libTrack.classList.remove('is-dragging');if(libTrack.hasPointerCapture(e.pointerId))libTrack.releasePointerCapture(e.pointerId);if(d.moved)libSuppressClick=performance.now()+250; };
+    libTrack.addEventListener('pointerup',endLibraryDrag);libTrack.addEventListener('pointercancel',endLibraryDrag);
+    libTrack.addEventListener('click', e => { if(performance.now()<libSuppressClick){e.preventDefault();e.stopPropagation();return;}if(e.target.closest('button'))return;const card=e.target.closest('.st-lib-card');if(card)libTrack.scrollTo({left:card.offsetLeft-(libTrack.clientWidth-card.offsetWidth)/2,behavior:'smooth'}); },true);
+    libTrack.addEventListener('wheel', e => { if(Math.abs(e.deltaY)>Math.abs(e.deltaX)&&libTrack.scrollWidth>libTrack.clientWidth){e.preventDefault();libTrack.scrollLeft+=e.deltaY;} },{passive:false});
+    this.el.querySelector('[data-studio-lens]').onchange = e => { this.lensOn = e.target.checked; LENS_U.uLensOn.value = +this.lensOn; LENS_U.user = true; document.querySelectorAll('[data-t-lens] button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === +this.lensOn))); this.commit(); };
     this.el.querySelector('[data-studio-freeze]').onclick = e => { this.frozen = !this.frozen; const b = e.currentTarget; b.setAttribute('aria-pressed', String(this.frozen)); b.setAttribute('aria-label', this.frozen ? 'Resume motion' : 'Freeze motion'); b.querySelector('[data-freeze-label]').textContent = this.frozen ? 'Play' : 'Stop'; };
     this.showSubject = true;
     // The colour split ghost suits the glassy core only; worlds never get it.
@@ -9562,7 +9524,7 @@ class CoreStudio {
     addEventListener('resize', close); this.panel.addEventListener('scroll', close, { passive: true });
   }
   coreFxTarget() { return this.subject < 0 ? this.coreFxObj() : this.app.orrery.worlds[this.subject]; }
-  coreFxHidden() { const t = this._cw; return !!(t && t.tune.s_enabled && t.tune.s_style !== 'none' && +t.tune.s_hide); }
+  coreFxHidden() { const t = this._cw; return !!(t && t.tune.s_enabled && t.tune.s_style !== 'none'); }
   coreFxSet(key, val) {
     const t = this.coreFxTarget(); if (!t) return;
     if (t.isCore) { Effects.set(t, key, val); try { const o = {}; Object.keys(t.tune).forEach(k => { o[k] = t.tune[k]; }); localStorage.setItem('cerebra.corefx.v1', JSON.stringify(o)); } catch (e) {} }
@@ -9574,7 +9536,7 @@ class CoreStudio {
     const st = t.tune.s_style, on = st !== 'none', bu = +t.tune.b_burst === 1 && t.tune.b_enabled !== 0, ri = +t.tune.b_ring === 1 && t.tune.b_enabled !== 0;
     const colourC = ['spike', 'threads', 'fur', 'wire', 'shards', 'radial', 'orrery', 'neural', 'dataflow', 'strands'].includes(st), noSize = ['wire', 'contour', 'meridian'].includes(st);
     return {
-      s_hide: on, s_bright: on, s_scale: on, s_tilt: on, s_roll: on, s_breath: on, s_bspeed: on, s_pulse: on, s_seed: on, s_colorA: on, s_colorB: on, s_colorC: on && colourC, s_density: on, s_disp: on, s_size: on && !noSize, s_spin: on, s_shell: st === 'wire',
+      s_bright: on, s_scale: on, s_tilt: on, s_roll: on, s_breath: on, s_bspeed: on, s_pulse: on, s_seed: on, s_colorA: on, s_colorB: on, s_colorC: on && colourC, s_density: on, s_disp: on, s_size: on && !noSize, s_spin: on, s_shell: st === 'wire',
       b_lines: bu, b_len: bu, b_twist: bu, b_curl: bu, b_flow: bu, b_count: ri, b_rin: ri, b_rwid: ri, b_soft: ri, b_tilt: ri, b_rspin: ri, b_size: bu || ri, b_colorA: bu || ri, b_colorB: bu || ri,
     };
   }
@@ -9616,7 +9578,7 @@ class CoreStudio {
     const cols = (fx, keys) => `<div class="cfx-cols">${keys.map(([key, name]) => `<label class="cfx-col" data-cfx-rel="${id(fx, key)}"><input type="color" data-cfx="${id(fx, key)}" aria-label="${name}"><span>${name}</span></label>`).join('')}</div>`;
     const styleOpts = ctl(SURFACE, 'style').options;
     box.innerHTML = `<div class="cfx-chips" role="group" aria-label="Surface style">${styleOpts.map(([v, n]) => `<button type="button" class="cfx-chip" data-cfx-style="${v}" aria-pressed="false"><i aria-hidden="true">${ICON[v] || '•'}</i>${n}</button>`).join('')}</div>`
-      + sw(SURFACE, 'hide') + cols(SURFACE, [['colorA', 'Colour A'], ['colorB', 'Colour B'], ['colorC', 'Colour C']])
+      + cols(SURFACE, [['colorA', 'Colour A'], ['colorB', 'Colour B'], ['colorC', 'Colour C']])
       + ['density', 'disp', 'size', 'spin'].map(k => slider(SURFACE, k)).join('') + sw(SURFACE, 'shell')
       + `<p class="cfx-sub" data-cfx-head="move">Transform &amp; motion</p>` + SURFACE.controls.filter(c => c.group === 'move').map(c => any(SURFACE, c)).join('')
       + `<p class="cfx-sub" data-cfx-head="opts">Style options</p>` + SURFACE.controls.filter(c => c.styles).map(c => any(SURFACE, c)).join('')
@@ -9925,6 +9887,7 @@ class CoreStudio {
     if (this.rec || this.exporting || this.app.cap || !this.active) return;
     const mime = this.recMime(); if (!mime || !HTMLCanvasElement.prototype.captureStream) return;
     this.select(null); this.clearGroup && this.groupActive && this.groupActive() && this.clearGroup();
+    this.update(0); // Settle menu/layout offsets before freezing the video crop.
     const W = innerWidth, H = innerHeight, wide = W > 900, c0 = this.compCentre(), sh = this.shift || { x: 0, y: 0 }, cxv = c0.x + sh.x;
     const half = wide ? Math.min(cxv, W - cxv) : W / 2, x0 = wide ? cxv - half : 0, cw = wide ? half * 2 : W;   // the same poster crop as Save image
     const k = Math.min(2, size / Math.max(cw, H)), rw = 2 * Math.round(cw * k / 2), rh = 2 * Math.round(H * k / 2), FW = Math.round(W * k), FH = Math.round(H * k);
@@ -9955,19 +9918,24 @@ class CoreStudio {
     if (!force && now - R.last < 1000 / 30 - 3) return; R.last = now;
     const el = (now - R.t0) / 1000; R.bar.querySelector('[data-rec-t]').textContent = `${Math.min(el, R.secs).toFixed(1)} / ${R.secs} s`;
     if (el >= R.secs) { this.stopRecord(false); return; }
-    const g = R.rg, rc = R.rc, crop = (src, f) => g.drawImage(src, R.x0 * f, 0, R.cw * f, R.H * f, 0, 0, rc.width, rc.height);
-    g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; g.fillStyle = '#000'; g.fillRect(0, 0, rc.width, rc.height);
-    crop(this.bg, this.bg.width / R.W);
+    const frame = R.frame || (R.frame = document.createElement('canvas'));
+    if (frame.width !== R.FW || frame.height !== R.FH) { frame.width = R.FW; frame.height = R.FH; }
+    const g = frame.getContext('2d'), draw = src => g.drawImage(src, 0, 0, frame.width, frame.height);
+    g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, frame.width, frame.height);
+    draw(this.bg);
     R.seq.forEach(p => {
-      if (p.t === 'static') crop(p.cv, R.FW / R.W);
+      if (p.t === 'static') draw(p.cv);
       else if (p.t === 'planet') {
-        const waterVisible = window.__cerebraS9 && window.__cerebraS9.visible && window.__cerebraS9.visible();
+        const waterVisible = window.__cerebraS9?.visible?.();
         if ((this.showSubject === false || (p.it && p.it.hide)) && !waterVisible) return;
-        const gl = this.app.stage.renderer.domElement; g.save(); g.globalAlpha = waterVisible ? 1 : p.it ? (p.it.alpha ?? 1) : 1; crop(gl, gl.width / R.W);
-        if (this.fxLive() && this.effect !== 'off' && this.effectAmount > 0) { g.globalAlpha *= (this.fxItem('colour') || { alpha: 1 }).alpha; crop(this.vfx, this.vfx.width / R.W); }
-        g.restore();
-      } else { g.save(); g.translate(-R.x0 * R.k, 0); this.paintItemCanvas(p.it, g, R.FW, R.FH, R.sx, R.sy, R.shapes); g.restore(); }
+        g.save(); g.globalAlpha = waterVisible ? 1 : p.it ? (p.it.alpha ?? 1) : 1;
+        g.filter = `brightness(${this.light})`; draw(this.app.stage.renderer.domElement); g.filter = 'none';
+        if (this.fxLive() && this.effect !== 'off' && this.effectAmount > 0) { g.globalAlpha *= (this.fxItem('colour') || { alpha: 1 }).alpha; draw(this.vfx); }
+        g.restore(); this.compositeFocus(frame, R.shapes, R.sx, R.sy);
+      } else this.paintItemCanvas(p.it, g, R.FW, R.FH, R.sx, R.sy, R.shapes);
     });
+    const dst = R.rg; dst.clearRect(0, 0, R.rc.width, R.rc.height);
+    dst.drawImage(frame, R.x0 * R.k, 0, R.cw * R.k, frame.height, 0, 0, R.rc.width, R.rc.height);
   }
   stopRecord(cancel) {
     const R = this.rec; if (!R || R.stopping) return; R.stopping = true; R.cancel = !!cancel;
@@ -10092,7 +10060,7 @@ class CoreStudio {
       used[e] += (h || el.offsetHeight) + gap;
     });
     Object.entries(cfg.free || {}).filter(([n]) => this.trays[n] && vis(n)).forEach(([n, pos]) => {
-      const el0 = this.trays[n], bw = el0.offsetWidth || 80, bh = el0.offsetHeight || 80; pos = { x: clamp(pos.x, gap / W, Math.max(gap / W, (W - bw - gap) / W)), y: clamp(pos.y, gap / H, Math.max(gap / H, (H - Math.min(bh, H - 2 * gap) - gap) / H)) };
+      const el0 = this.trays[n], bw = el0.offsetWidth || 80, bh = el0.offsetHeight || 80; pos = { x: clamp(pos.x, gap / W, Math.max(gap / W, (W - bw - gap) / W)), y: clamp(pos.y, gap / H, Math.max(gap / H, (H - 140 - gap) / H)) };
       const el = this.trays[n], horiz = n === 'dock';
       el.classList.toggle('is-h', horiz); el.classList.toggle('is-v', !horiz);
       const w = n === 'panel' || n === 'layers' ? Math.min(262, W - 2 * gap) : horiz ? null : (small ? 50 : 54);
@@ -11339,7 +11307,12 @@ class CoreStudio {
     const has = () => this.multi.size > 0 || this.multiPlanet;
     const members = () => this.items.filter(i => this.multi.has(i.id));
     this.groupActive = has;
-    this.clearGroup = () => { this.multi.clear(); this.multiPlanet = false; this.selMode = false; this.items.forEach(i => i.el.classList.remove('is-multi')); this.renderLayers(); this.updateMultiUI(); };
+    this.clearGroup = () => { this.mq = null; ov.hidden = true; this.multi.clear(); this.multiPlanet = false; this.selMode = false; this.items.forEach(i => i.el.classList.remove('is-multi')); this.renderLayers(); this.updateMultiUI(); };
+    this.el.addEventListener('pointerdown', e => {
+      if (!this.active || !has() || e.shiftKey || e.altKey) return;
+      if (e.target.closest('.st-item,.st-multibar,.st-selbar,.studio-panel,.st-dock,.st-fly,.st-save,.st-lib,.st-tool')) return;
+      if (!this.onPlanet(e.clientX, e.clientY)) { this.clearGroup(); this.select(null); }
+    }, true);
     // ---- where the planet is on screen, and whether a point is on it
     const planetCircle = () => { if (this.subject < 0) { app.hitCore(-1e5, -1e5); const c = app.coreScreen; return c && c.r > 0 ? { x: c.x, y: c.y, r: c.r } : null; } const w = app.orrery.worlds[this.subject], sc = w && w.screen; return sc && sc.on ? { x: sc.x, y: sc.y, r: sc.r } : null; };
     this.planetCircle = planetCircle;
@@ -11381,6 +11354,7 @@ class CoreStudio {
       canvas.setPointerCapture(e.pointerId);
     };
     this.beginCanvasPress = e => {
+      if (!e.shiftKey && !e.altKey && has() && !e.target.closest('.st-item,.st-multibar,.st-multibox') && !this.onPlanet(e.clientX, e.clientY)) this.clearGroup();
       if (this.drawing) return false;
       const onP = this.onPlanet(e.clientX, e.clientY);
       if (onP && this.multiPlanet && has() && this.tool !== 'hand') { e.preventDefault(); startGroup(e); return true; }
@@ -11669,9 +11643,9 @@ class CoreStudio {
     if (!quiet) this.commit();
   }  // Undo/redo: whole-composition snapshots (items, shape blur and the look settings).
   snapshot(extra) {
-    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'grain', 'grainAmt', 'cpts', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides', 'groups', 'gridStyle', 'focusInv', 'focusScene', 'focusText', 'focusObj', 'x', 'y'];
+    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'grain', 'grainAmt', 'lensOn', 'cpts', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides', 'groups', 'gridStyle', 'focusInv', 'focusScene', 'focusText', 'focusObj', 'x', 'y'];
     const P = typeof PlanetBody !== 'undefined' && PlanetBody.active;
-    return JSON.stringify({ pz: P ? +P.zoomT.toFixed(3) : undefined, s: Object.fromEntries(keys.map(k => [k, this[k]])), layers: this.layers, core: this.coreLayers,
+    return JSON.stringify({ lens: { on: this.lensOn, aberr: LENS_U.uLensAberr.value, blur: LENS_U.uLensBlur.value, bloom: LENS_U.uLensBloom.value }, pz: P ? +P.zoomT.toFixed(3) : undefined, s: Object.fromEntries(keys.map(k => [k, this[k]])), layers: this.layers, core: this.coreLayers,
       items: this.items.map(({ el, id, ...rest }) => rest), ...extra });
   }
   commit(extra) {
@@ -11699,6 +11673,7 @@ class CoreStudio {
     const d = JSON.parse(json); this.restoring = true;
     this.select(null); this.lineSel = null; this.multi.clear(); this.multiPlanet = false; this.selMode = false; this.items.slice().forEach(it => this.removeItem(it, true));
     if (d.pz != null && PlanetBody.active) PlanetBody.active.setView(d.pz);
+    if (d.lens) { LENS_U.uLensOn.value = +d.lens.on; LENS_U.uLensAberr.value = d.lens.aberr; LENS_U.uLensBlur.value = d.lens.blur; LENS_U.uLensBloom.value = d.lens.bloom; LENS_U.user = true; }
     Object.assign(this, d.s); this.vx = this.vy = 0; this.groups = this.groups || []; this.gridStyle = this.gridStyle || { auto: true, c: '#ffffff', a: .25, t: 1, n: 24 }; if (this.syncGridUI) this.syncGridUI(); this.setGridMode(this.gridMode || 'always'); Object.assign(this.layers, d.layers); d.core.forEach((v, i) => { this.coreLayers[i] = v; });
     d.items.forEach(o => this.addItem(o.kind, { ...o, silent: true }));
     const v = { '[data-studio-background]': this.background, '[data-studio-bg-a]': this.bgA, '[data-studio-bg-b]': this.bgB, '[data-studio-angle]': this.angle, '[data-studio-grid]': this.grid,
@@ -11782,9 +11757,21 @@ class CoreStudio {
         let tg=g,tc=null;if(bp>0){tc=document.createElement('canvas');tc.width=width;tc.height=height;tg=tc.getContext('2d');}
         const g0=g;
         if(i.kind==='text'){tg.save();tg.globalCompositeOperation=bp>0?'source-over':this.blendOp(i);this.drawTextCanvas(i.el,i.rot,tg,sx,sy);tg.restore();}
-        else{const U2=this.U()*sx,ww=i.w*U2,hh=i.h*U2*(sy/sx);this.drawShapeCanvas(bp>0?tg:g,i,i.x*width-ww/2,i.y*height-hh/2,ww,hh,sx);}
+        else{const U2=this.U()*sx,ww=i.w*U2,hh=i.h*U2*(sy/sx);this.drawShapeCanvas(bp>0?tg:g,i,i.x*width+(this.shift?.x||0)*sx-ww/2,i.y*height+(this.shift?.y||0)*sy-hh/2,ww,hh,sx);}
         if(bp>0){g0.save();g0.globalCompositeOperation=this.blendOp(i);g0.drawImage(softBlur(tc,bp),0,0);g0.restore();}
       }
+  compositeFocus(out, shapes, sx, sy) {
+    const width = out.width, height = out.height, g = out.getContext('2d'), U = this.U();
+      if(this.focusOn&&shapes.length&&(this.blur>0||this.dim>0)){
+        const blurred=out._focusOverlay||(out._focusOverlay=document.createElement('canvas'));if(blurred.width!==width||blurred.height!==height){blurred.width=width;blurred.height=height;}
+        const b=blurred.getContext('2d');b.globalCompositeOperation='source-over';b.clearRect(0,0,width,height);b.drawImage(softBlur(out,(this.focusScene===false?0:this.blur)*Math.max(sx,sy)),0,0);if(this.dim>0){b.fillStyle=`rgba(0,0,0,${this.dim})`;b.fillRect(0,0,width,height);}
+        b.globalCompositeOperation=this.focusInv?'destination-in':'destination-out';b.beginPath();
+        const roundedList=[];shapes.forEach(s=>{const x=s.x*width+(this.shift?.x||0)*sx,y=s.y*height+(this.shift?.y||0)*sy,rx=s.w*U*sx/2,ry=s.h*U*sy/2,a=(s.rot||0)*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a),P=(u,v)=>[x+u*ca-v*sa,y+u*sa+v*ca];b.moveTo(x+rx,y);
+          if(s.kind==='circle')b.ellipse(x,y,rx,ry,a,0,Math.PI*2);
+          else if(s.kind==='rect'&&s.rad&&s.rad.some(v=>v>0)){roundedList.push(new Path2D(this.roundedD(rx,ry,s.rad,(u,v)=>{const q=P(u,v);return [q[0],q[1]];})));}else{const pts=s.kind==='tri'?[[0,-ry],[rx,ry],[-rx,ry]]:[[-rx,-ry],[rx,-ry],[rx,ry],[-rx,ry]];pts.forEach(([u,v],i)=>{const q=P(u,v);i?b.lineTo(q[0],q[1]):b.moveTo(q[0],q[1]);});b.closePath();}});roundedList.forEach(pp=>b.fill(pp));
+        b.fill();b.globalCompositeOperation='source-over';if(this.focusInv){g.save();g.drawImage(blurred,0,0);g.restore();}else g.drawImage(blurred,0,0);
+      }
+  }
   async composePoster(scale = 2, noCrop = false) {
     if(this.sel)this.select(null);
       const planetIdx0=this.items.findIndex(i=>i.kind==='fx'&&i.fxType==='planet'),hasBelow=planetIdx0>0&&this.items.slice(0,planetIdx0).some(i=>i.kind!=='fx'&&!i.ref&&!this.isHid(i));
@@ -11797,15 +11784,7 @@ class CoreStudio {
       const planetIdx=this.items.findIndex(i=>i.kind==='fx'&&i.fxType==='planet'),below=hasBelow?this.items.slice(0,planetIdx).filter(i=>i.kind!=='fx'&&!i.ref&&!this.isHid(i)):[];
       if(hasBelow){this.paint(g,width,height);below.forEach(i=>this.paintItemCanvas(i,g,width,height,sx,sy,shapes));}
       g.drawImage(bitmap,0,0);bitmap.close();
-      if(shapes.length&&(this.blur>0||this.dim>0)){
-        const blurred=document.createElement('canvas');blurred.width=width;blurred.height=height;
-        const b=blurred.getContext('2d');b.drawImage(softBlur(out,(this.focusScene===false?0:this.blur)*Math.max(sx,sy)),0,0);if(this.dim>0){b.fillStyle=`rgba(0,0,0,${this.dim})`;b.fillRect(0,0,width,height);}
-        b.globalCompositeOperation=this.focusInv?'destination-in':'destination-out';b.beginPath();
-        const roundedList=[];shapes.forEach(s=>{const x=s.x*width,y=s.y*height,rx=s.w*U*sx/2,ry=s.h*U*sy/2,a=(s.rot||0)*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a),P=(u,v)=>[x+u*ca-v*sa,y+u*sa+v*ca];b.moveTo(x+rx,y);
-          if(s.kind==='circle')b.ellipse(x,y,rx,ry,a,0,Math.PI*2);
-          else if(s.kind==='rect'&&s.rad&&s.rad.some(v=>v>0)){roundedList.push(new Path2D(this.roundedD(rx,ry,s.rad,(u,v)=>{const q=P(u,v);return [q[0],q[1]];})));}else{const pts=s.kind==='tri'?[[0,-ry],[rx,ry],[-rx,ry]]:[[-rx,-ry],[rx,-ry],[rx,ry],[-rx,ry]];pts.forEach(([u,v],i)=>{const q=P(u,v);i?b.lineTo(q[0],q[1]):b.moveTo(q[0],q[1]);});b.closePath();}});roundedList.forEach(pp=>b.fill(pp));
-        b.fill();b.globalCompositeOperation='source-over';if(this.focusInv){g.save();g.drawImage(blurred,0,0);g.restore();}else g.drawImage(blurred,0,0);
-      }
+      this.compositeFocus(out, shapes, sx, sy);
       if(this.fxLive()&&this.effect!=='off'&&this.effectAmount>0){g.save();g.globalAlpha=(this.fxItem('colour')||{alpha:1}).alpha;g.drawImage(this.vfx,0,0,width,height);g.restore();}
       this.items.filter(i=>!this.isHid(i)&&!below.includes(i)).forEach(i=>this.paintItemCanvas(i,g,width,height,sx,sy,shapes));
       // Crop to the poster: the band under the side menus is not part of the composition.
@@ -11883,6 +11862,7 @@ class CoreStudio {
   }
   close() {
     if (!this.active) { this.pending = false; return; }
+    if (typeof SURFACE !== 'undefined' && SURFACE.resetOriginalShape) SURFACE.resetOriginalShape();
     if (this.draftNow) this.draftNow();
     if (this._dpr0 !== undefined) { this.app.stage.maxDPR = this._dpr0; this.app.resize(); }
     const a = this.app; this.active = false; this.drag = null; if (this.guardOff) this.guardOff();
@@ -11997,9 +11977,8 @@ class CoreStudio {
       c.orbit.group.visible=false;p.axis.visible=false;
       a.orrery.group.visible=this.background==='space';
       if(a.orrery.group.visible)a.orrery.group.children.forEach(o=>o.visible=o===a.orrery.stars.points);
-      if(a.organisms){a.organisms.update(dt,a.reduced);a.organisms.group.visible=L.life;}
     }else{
-      c.group.visible=false;if(a.organisms)a.organisms.group.visible=false;
+      c.group.visible=false;
       const w=a.orrery.worlds[this.subject];a.orrery.group.visible=true;
       a.orrery.group.children.forEach(o=>o.visible=o===w.group||(o===a.orrery.stars.points&&this.background==='space'));
       w.solo=false;w.reveal=1;w.hover=0;
@@ -12009,13 +11988,14 @@ class CoreStudio {
       w.orbitLine.visible=false;w.U.uKyCenter.value.copy(w.group.position);
       w.atmoMat.uniforms.uLight.value.copy(this.sun).sub(w.group.position).normalize();
     }
-    if (!this.showSubject) { c.group.visible = false; if (a.organisms) a.organisms.group.visible = false; a.orrery.worlds.forEach(w => { w.group.visible = false; }); }
+    if (!this.showSubject) { c.group.visible = false; a.orrery.worlds.forEach(w => { w.group.visible = false; }); }
     a.stage.scene.updateMatrixWorld();
+    if (typeof SURFACE !== 'undefined' && SURFACE.shapeOriginal) SURFACE.shapeOriginal(this, c, cam);
     // Studio renders sharp: the explore view's lens (depth blur, colour fringe) is only applied when asked for.
-    const lensKeep = [LENS_U.uLensAberr.value, LENS_U.uLensBlur.value];
-    if (!this.lensOn) { LENS_U.uLensAberr.value = 0; LENS_U.uLensBlur.value = 0; }
+    const lensKeep = LENS_U.uLensOn.value;
+    LENS_U.uLensOn.value = +this.lensOn;
     a.stage.render(cam);
-    LENS_U.uLensAberr.value = lensKeep[0]; LENS_U.uLensBlur.value = lensKeep[1];
+    LENS_U.uLensOn.value = lensKeep;
     if (this.focusOn) { const src = a.stage.renderer.domElement, c = this.fxGl; if (c.width !== src.width || c.height !== src.height) { c.width = src.width; c.height = src.height; } const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(src, 0, 0); }
     { const Wp = a.stage.width, Hp = a.stage.height, px = { xf: (this.planetBase.x + this.x) / (2 * hw) + .5 + (this.shift ? this.shift.x : 0) / innerWidth, yf: .5 - (this.planetBase.y + this.y) / (2 * hh) + (this.shift ? this.shift.y : 0) / innerHeight, rf: this.planetR / (2 * hw) }, o = this.planetPx;
       if (!o || Math.abs(o.xf - px.xf) * Wp > .5 || Math.abs(o.yf - px.yf) * Hp > .5 || Math.abs(o.rf - px.rf) * Wp > .5) { this.planetPx = px; if (this.shadow > 0) this.paintBackground(); } }
@@ -12190,7 +12170,6 @@ class App {
     this.orrery.creations = new Creations(this.orrery);
     WorldTune.wire(this);
     OrbitBuilder.wire(this); Fab.wire(this); Settings.wire(this);
-    this.organisms = new Organisms(this);
     this.studio = new CoreStudio(this); netBackdrop();
     this.orrery.environment = new OrbitEnvironment(this);
     this.ambient = new AmbientDots(this);
@@ -12916,7 +12895,6 @@ class App {
       G, rotX: this.rotX.value, rotY: this.rotY.value, sun: coreK,
       spinVel: this.spinVel, pixelRatio: this.stage.pixelRatio, sizeScale: (this.rig.baseZ / 7.2) * (1 + coreK * 1.7)
     });
-    if (this.organisms) this.organisms.update(dt,reduced);
     this.stage.scene.updateMatrixWorld();
 
     // Worlds on screen: hover, tags, typography.
@@ -13132,7 +13110,6 @@ class App {
     gsap.killTweensOf(this.fly);
     if (this.ro) this.ro.disconnect();
     if (this.labels) this.labels.dispose();
-    if (this.organisms) this.organisms.dispose();
     if (this.core) { this.stage.scene.remove(this.core.group); this.core.dispose(); }
     if (this.orrery) { if (this.orrery.environment) this.orrery.environment.dispose(); this.stage.scene.remove(this.orrery.group); this.orrery.dispose(); }
     if (this.ambient) this.ambient.dispose();

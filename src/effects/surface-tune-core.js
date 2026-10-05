@@ -19,7 +19,7 @@
     dataflow:['Flow curves',['s_colorC','s_dn','s_dbundle','s_dbow','s_dbeads','s_dtilt','s_dsize']],
     strands:['Drifting fibres',['s_colorC','s_tn','s_tlen','s_tdrift','s_tpole','s_tbig','s_dsize']]
   };
-  const COMMON=['s_hide','s_colorA','s_colorB','s_bright','s_density','s_disp','s_size'];
+  const COMMON=['s_colorA','s_colorB','s_bright','s_density','s_disp','s_size'];
   const MOTION=['s_spin','s_scale','s_tilt','s_roll','s_breath','s_bspeed','s_pulse','s_seed'];
   const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -62,7 +62,7 @@
       const generated=st!=='none';pane.querySelector('[data-dst-commonwrap]').hidden=!generated;pane.querySelector('[data-dst-motionwrap]').hidden=!generated;pane.querySelector('[data-dst-reset]').hidden=!generated;
       const relevant=s.coreFxRelevant?s.coreFxRelevant(t):{};
       pane.querySelectorAll('[data-dst],[data-dst-sw]').forEach(el=>{const k=el.dataset.dst||el.dataset.dstSw,val=v[k];const row=el.closest('.tune-row');if(row)row.hidden=relevant[k]===false;if(el.dataset.dst){if(el.type==='range'){el.value=val;const out=el.parentNode.querySelector('[data-out]');if(out)out.textContent=(+val).toFixed(+el.step>=1?0:2)}else el.value=val}if(el.dataset.dstSw)el.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.v===+(val??0))))});
-      const surfaceOnly=generated&&+(v.s_hide??1)===1;originalTabs.forEach(b=>{const hide=surfaceOnly&&['shape','colour','core','motion'].includes(b.dataset.tab);b.hidden=hide;const p=tune.querySelector(`[data-pane="${b.dataset.tab}"]`);if(p&&hide)p.hidden=true});if(surfaceOnly&&originalTabs.some(b=>b.hidden&&b.getAttribute('aria-selected')==='true'))show();hideIrrelevantDesign();
+      const surfaceOnly=generated;originalTabs.forEach(b=>{const hide=surfaceOnly&&['shape','colour','core','motion'].includes(b.dataset.tab);b.hidden=hide;const p=tune.querySelector(`[data-pane="${b.dataset.tab}"]`);if(p&&hide)p.hidden=true});if(surfaceOnly&&originalTabs.some(b=>b.hidden&&b.getAttribute('aria-selected')==='true'))show();hideIrrelevantDesign();
     }
     const baseSync=s.syncCoreFx&&s.syncCoreFx.bind(s);if(baseSync)s.syncCoreFx=(...a)=>{const r=baseSync(...a);sync();return r};
     const baseAvail=s.updateAvail&&s.updateAvail.bind(s);if(baseAvail)s.updateAvail=(...a)=>{const r=baseAvail(...a);[s.fxSection,s.coreSection,s.partsSection,s.worldSection,s.el.querySelector('[data-studio-fx]'),s.fxBox].forEach(el=>{if(el)el.hidden=el.classList.contains('st-off')});return r};

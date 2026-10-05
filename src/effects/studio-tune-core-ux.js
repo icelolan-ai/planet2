@@ -78,14 +78,33 @@
       syncing = false;
     };
 
-    const sync = () => { removeDuplicateSave(); sanitizeDetail(); scopeTuneCore(); };
+    const syncLens = () => {
+      const available = s.subject < 0 && !(s.coreFxHidden && s.coreFxHidden());
+      const toggle = tune.querySelector('[data-t-lens]');
+      const row = toggle && toggle.closest('.tune-row');
+      if (row) row.hidden = !available;
+      if (toggle) toggle.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === +s.lensOn)));
+      ['aberr','blur','bloom'].forEach(k => {
+        const input = tune.querySelector(`[data-t-${k}]`), r = input && input.closest('.tune-row');
+        if (r) r.hidden = !available || !s.lensOn;
+        const group = r && r.closest('.dial-grp'); if (group) group.hidden = !available || !s.lensOn;
+      });
+      const studioToggle = s.el.querySelector('[data-studio-lens]');
+      if (studioToggle) { studioToggle.checked = !!s.lensOn; studioToggle.closest('label').hidden = !available; }
+    };
+    tune.addEventListener('input', e => { if (e.target.matches('[data-t-aberr],[data-t-blur],[data-t-bloom]')) syncLens(); });
+    tune.addEventListener('click', e => { if (e.target.closest('[data-t-lens]')) syncLens(); });
+    s.el.querySelector('[data-studio-lens]')?.addEventListener('change', syncLens);
+    const sync = () => { removeDuplicateSave(); sanitizeDetail(); scopeTuneCore(); syncLens(); };
     sync();
+
+    const restore = s.restore.bind(s); s.restore = text => { const r = restore(text); queueMicrotask(sync); return r; };
 
     const baseSync = s.syncCoreFx && s.syncCoreFx.bind(s);
     if (baseSync) s.syncCoreFx = (...a) => { const r = baseSync(...a); queueMicrotask(sync); return r; };
 
     new MutationObserver(() => queueMicrotask(sync)).observe(document.body, { attributes: true, attributeFilter: ['class'] });
-    new MutationObserver(() => queueMicrotask(scopeTuneCore)).observe(tune, { attributes: true, attributeFilter: ['data-open'] });
+    new MutationObserver(() => queueMicrotask(sync)).observe(tune, { attributes: true, attributeFilter: ['data-open'] });
     const detailPane = tune.querySelector('[data-pane="surface-deep"]');
     if (detailPane) new MutationObserver(() => queueMicrotask(sanitizeDetail)).observe(detailPane, { childList: true, subtree: true });
 
