@@ -10643,7 +10643,21 @@ class CoreStudio {
     const eraseAt = p0 => {
       const U = this.U(), W = innerWidth, H = innerHeight, sh = this.shift || { x: 0, y: 0 }, r = this.drawSet.esize;
       this.items.slice().forEach(t => {
-        if (t.kind !== 'stroke' || !t.strokes || t.locked || this.isHid(t)) return;
+        if (t.locked || this.isHid(t)) return;
+        if (['tri','rect','circle'].includes(t.kind)) {
+          const cx=t.x*W+sh.x,cy=t.y*H+sh.y,a=-(t.rot||0)*Math.PI/180,dx=p0[0]-cx,dy=p0[1]-cy,w=t.w*U,h=t.h*U;
+          const lx=dx*Math.cos(a)-dy*Math.sin(a)+w/2,ly=dx*Math.sin(a)+dy*Math.cos(a)+h/2;
+          if(lx < -r || lx > w+r || ly < -r || ly > h+r) return;
+          const path=new Path2D(this.shapeD(t.kind,w,h,t)),ctx=this._eraseHit||(this._eraseHit=document.createElement('canvas').getContext('2d'));
+          ctx.lineWidth=r*2; if(!ctx.isPointInPath(path,lx,ly)&&!ctx.isPointInStroke(path,lx,ly))return;
+          // Focus shapes define complete regions; remove the region itself.
+          if(!t.decor){this.removeItem(t,true);er.changed=true;return;}
+          if(!t.mask?.on)t.mask={on:true,strokes:[]};
+          let stroke=er.shapes.get(t.id);if(!stroke){stroke={mode:'hide',size:r*2,pts:[]};er.shapes.set(t.id,stroke);t.mask.strokes.push(stroke)}
+          const q=[+(lx/w).toFixed(4),+(ly/h).toFixed(4)],prev=stroke.pts.at(-1);
+          if(!prev||Math.hypot((q[0]-prev[0])*w,(q[1]-prev[1])*h)>2){stroke.pts.push(q);this.place(t);er.changed=true}return;
+        }
+        if (t.kind !== 'stroke' || !t.strokes) return;
         const kx = t.w / t.w0 * U, ky = t.h / t.h0 * U, left = t.x * W + sh.x - t.w * U / 2, top = t.y * H + sh.y - t.h * U / 2;
         const p = t.rot ? (() => { const a = -t.rot * Math.PI / 180, cx = t.x * W + sh.x, cy = t.y * H + sh.y, dx = p0[0] - cx, dy = p0[1] - cy; return [cx + dx * Math.cos(a) - dy * Math.sin(a), cy + dx * Math.sin(a) + dy * Math.cos(a)]; })() : p0;
         let changed = false; const out = [];
@@ -10693,7 +10707,7 @@ class CoreStudio {
     pad.addEventListener('pointerup', lineEnd); pad.addEventListener('pointercancel', lineEnd);
     pad.addEventListener('pointerdown', e => {
       if (e.button !== 0) return; e.preventDefault(); pad.setPointerCapture(e.pointerId); this.closeFly();
-      if (this.drawTool === 'erase') { er = { id: e.pointerId, changed: false }; eraseAt(pt(e)); return; }
+      if (this.drawTool === 'erase') { this.flushCommit(); er = { id: e.pointerId, changed: false, shapes:new Map() }; eraseAt(pt(e)); return; }
       if (this.drawTool === 'line') { const q = linePt(e, this.lineA); ln = { id: e.pointerId, a: this.lineA || q, b: q, moved: false, click: !!this.lineA }; this.lineA = null; linePreview(ln.a, ln.b); return; }
       const D = this.drawSet; this.ink.setAttribute('stroke', D.color); this.ink.setAttribute('stroke-width', D.size); this.ink.setAttribute('opacity', D.opacity);
       this.ink.setAttribute('stroke-dasharray', this.dashArr({ lineW: D.size, dash: D.dash }).join(' '));

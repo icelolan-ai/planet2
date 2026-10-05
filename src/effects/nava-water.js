@@ -5,7 +5,7 @@
  */
 (() => {
   window.CerebraNavaWater = function(T, renderer, settings) {
-    let state=settings, freezeProgress=0, obstacle={x:0,y:0,r:0};
+    let state=settings, freezeProgress=0, obstacle={x:0,y:0,r:0}, collisionMap=null;
     const textures=[];
     const fluidCanvas={width:1,height:1};
     const assign=(slot,...values)=>{if(values.length===1)slot.value=values[0];else slot.value=values.length===2?new T.Vector2(...values):values.length===3?new T.Vector3(...values):new T.Vector4(...values)};
@@ -52,7 +52,7 @@ uniform sampler2D uSource;
 uniform vec2 texel;
 uniform float dt;
 uniform float dissipation;
-uniform vec3 obstacle;uniform float aspect;uniform float dyePass;
+uniform vec3 obstacle;uniform float aspect;uniform float dyePass;uniform sampler2D collisionMap;uniform float meshCollision;
 void main(){
   vec2 vel = texture2D(uVelocity, vUv).xy;
   vec2 coord = vUv - dt*vel*texel*20.0;
@@ -60,6 +60,11 @@ void main(){
     vec2 here=(vUv-obstacle.xy)*vec2(aspect,1.);if(length(here)<obstacle.z){gl_FragColor=vec4(0.);return;}
     vec2 from=(coord-obstacle.xy)*vec2(aspect,1.);float d=length(from);
     if(d<obstacle.z)coord=obstacle.xy+normalize(from+vec2(.00001))*(obstacle.z+texel.y*2.)/vec2(aspect,1.);
+  }
+  if(dyePass>.5&&meshCollision>.5){
+    if(texture2D(collisionMap,vUv).r>.5){gl_FragColor=vec4(0.);return;}
+    // Never backtrace through a solid: keep the incoming colour outside it.
+    for(int i=1;i<=6;i++){vec2 q=mix(vUv,coord,float(i)/6.);if(texture2D(collisionMap,q).r>.5){coord=mix(vUv,coord,float(i-1)/6.);break;}}
   }
   vec4 result = texture2D(uSource, clamp(coord,vec2(0.),vec2(1.)));
   gl_FragColor = dissipation * result;
@@ -221,10 +226,15 @@ void main(){
 // Preserve Nava's dye intensity and highlight rolloff. Studio owns the
 // background; alpha is coverage, not an extra 1.6x colour gain or edge light.
 // A screen-space solid boundary for Studio's projected Cerebra sphere.
-const FS_OBSTACLE = `precision highp float;varying vec2 vUv;uniform sampler2D uTexture;uniform vec3 obstacle;uniform float aspect;uniform vec2 texel;uniform float bounce;
-void main(){vec4 c=texture2D(uTexture,vUv);vec2 d=(vUv-obstacle.xy)*vec2(aspect,1.);float r=length(d);if(obstacle.z>0.){
-if(r<obstacle.z)c.xy=vec2(0.);else if(r<obstacle.z+texel.y*3.){vec2 n=d/max(r,.00001);float inward=dot(c.xy,n);if(inward<0.)c.xy-=(1.+bounce)*inward*n;}}
+const FS_OBSTACLE = `precision highp float;varying vec2 vUv;uniform sampler2D uTexture;uniform vec3 obstacle;uniform float aspect;uniform vec2 texel;uniform float bounce;uniform sampler2D collisionMap;uniform float meshCollision;uniform float spread;
+void main(){vec4 c=texture2D(uTexture,vUv);vec2 n=vec2(0.);float inside=0.,edge=0.;
+if(meshCollision>.5){inside=texture2D(collisionMap,vUv).r;vec2 e=texel*2.;float l=texture2D(collisionMap,vUv-vec2(e.x,0.)).r,r=texture2D(collisionMap,vUv+vec2(e.x,0.)).r;
+float b=texture2D(collisionMap,vUv-vec2(0.,e.y)).r,t=texture2D(collisionMap,vUv+vec2(0.,e.y)).r;n=vec2(l-r,b-t);edge=step(.01,length(n));n/=max(length(n),.00001);}
+else if(obstacle.z>0.){vec2 d=(vUv-obstacle.xy)*vec2(aspect,1.);float r=length(d);inside=1.-step(obstacle.z,r);edge=1.-step(obstacle.z+texel.y*3.,r);n=d/max(r,.00001);}
+if(inside>.5)c.xy=vec2(0.);else if(edge>.5){float inward=dot(c.xy,n);if(inward<0.){c.xy-=(1.+bounce)*inward*n;vec2 tangent=vec2(-n.y,n.x);float side=dot(c.xy,tangent);c.xy+=tangent*sign(side+.00001)*min(-inward*spread,8.);}}
 gl_FragColor=c;}`;
+const IMPACT = `precision highp float;varying vec2 vUv;uniform sampler2D uTexture;uniform sampler2D collisionMap;uniform vec2 texel;
+void main(){if(texture2D(collisionMap,vUv).r<.5){gl_FragColor=vec4(0.);return;}vec3 col=vec3(0.);for(int x=-1;x<=1;x++){for(int y=-1;y<=1;y++){vec2 q=vUv+vec2(float(x),float(y))*texel*2.;if(texture2D(collisionMap,q).r<.5)col=max(col,texture2D(uTexture,q).rgb);}}gl_FragColor=vec4(col,1.);}`;
 const DISPLAY = `precision highp float;varying vec2 vUv;uniform sampler2D uDye;uniform float clarity;uniform float glowAmount;uniform float opacity;
 void main(){vec3 dye=max(texture2D(uDye,vUv).rgb,vec3(0.));
 float detail=clamp((clarity-1.)/4.,0.,1.);vec3 col=mix(dye,smoothstep(.16,.82,dye),detail*.75);
@@ -242,7 +252,7 @@ class FluidSim {
   const gl=renderer.getContext();if(!(gl instanceof WebGL2RenderingContext)||!gl.getExtension('EXT_color_buffer_float'))throw Error('Water Lab needs floating-point WebGL2 render targets.');
   const compact=Math.min(innerWidth,innerHeight)<900;
   this.type=T.HalfFloatType;this.simRes=compact?96:128;this.dyeRes=compact?384:512;
-  for(const [key,shader] of Object.entries({Splat:FS_SPLAT,Advect:FS_ADVECT,Div:FS_DIVERGENCE,Curl:FS_CURL,Vort:FS_VORTICITY,Pressure:FS_PRESSURE,Gradient:FS_GRADIENT,Clear:FS_CLEAR,Mask:FS_MASK,Tension:FS_TENSION,Display:DISPLAY,Obstacle:FS_OBSTACLE,Pack:PACK,Unpack:UNPACK}))this['prog'+key]=program(shader);
+  for(const [key,shader] of Object.entries({Splat:FS_SPLAT,Advect:FS_ADVECT,Div:FS_DIVERGENCE,Curl:FS_CURL,Vort:FS_VORTICITY,Pressure:FS_PRESSURE,Gradient:FS_GRADIENT,Clear:FS_CLEAR,Mask:FS_MASK,Tension:FS_TENSION,Display:DISPLAY,Impact:IMPACT,Obstacle:FS_OBSTACLE,Pack:PACK,Unpack:UNPACK}))this['prog'+key]=program(shader);
  }
  createFBO(w,h,type=this.type){const rt=new T.WebGLRenderTarget(w,h,{type,minFilter:T.LinearFilter,magFilter:T.LinearFilter,depthBuffer:false,stencilBuffer:false});rt.texture.generateMipmaps=false;rt.texture.colorSpace=T.NoColorSpace;return{rt,tex:rt.texture,w,h,texel:[1/w,1/h]};}
  createDoubleFBO(w,h){return{a:this.createFBO(w,h),b:this.createFBO(w,h),swap(){const t=this.a;this.a=this.b;this.b=t}};}
@@ -406,7 +416,7 @@ class FluidSim {
     textures[1] = this.velocity.a.tex;
     assign(this.progAdvect.uniforms.uSource, textures[1]);
     assign(this.progAdvect.uniforms.dt, dt);
-    assign(this.progAdvect.uniforms.obstacle,obstacle.x,obstacle.y,obstacle.r);assign(this.progAdvect.uniforms.aspect,fluidCanvas.width/fluidCanvas.height);assign(this.progAdvect.uniforms.dyePass,0);
+    assign(this.progAdvect.uniforms.obstacle,obstacle.x,obstacle.y,obstacle.r);assign(this.progAdvect.uniforms.aspect,fluidCanvas.width/fluidCanvas.height);assign(this.progAdvect.uniforms.dyePass,0);assign(this.progAdvect.uniforms.collisionMap,collisionMap);assign(this.progAdvect.uniforms.meshCollision,collisionMap?1:0);
     // recentShearRate decays back toward rest on its own whenever nothing
     // is actively painting, so the fluid re-thickens after a stroke ends
     // rather than staying "thinned out" forever.
@@ -444,7 +454,7 @@ class FluidSim {
     this.draw(this.dye.b); this.dye.swap();
   }
 
-  applyObstacle(){if(!obstacle.r)return;const u=this.progObstacle.uniforms;this.bindQuad(this.progObstacle,this.velocity.a.texel);assign(u.uTexture,this.velocity.a.tex);assign(u.obstacle,obstacle.x,obstacle.y,obstacle.r);assign(u.aspect,fluidCanvas.width/fluidCanvas.height);assign(u.bounce,Number.isFinite(state.collisionBounce)?state.collisionBounce:.5);this.draw(this.velocity.b);this.velocity.swap()}
+  applyObstacle(){if(!obstacle.r&&!collisionMap)return;const u=this.progObstacle.uniforms;this.bindQuad(this.progObstacle,this.velocity.a.texel);assign(u.uTexture,this.velocity.a.tex);assign(u.obstacle,obstacle.x,obstacle.y,obstacle.r);assign(u.aspect,fluidCanvas.width/fluidCanvas.height);assign(u.bounce,Number.isFinite(state.collisionBounce)?state.collisionBounce:.5);assign(u.collisionMap,collisionMap);assign(u.meshCollision,collisionMap?1:0);assign(u.spread,state.collisionSpread??.5);this.draw(this.velocity.b);this.velocity.swap()}
  stopVelocity(){
   const previous=renderer.getRenderTarget(),color=renderer.getClearColor(new T.Color()),alpha=renderer.getClearAlpha();renderer.setClearColor(0,0);
   for(const key of ['velocity','pressure'])for(const f of [this[key].a,this[key].b]){renderer.setRenderTarget(f.rt);renderer.clear()}
@@ -473,6 +483,7 @@ class FluidSim {
 
 
  render(){const u=this.progDisplay.uniforms;this.bindQuad(this.progDisplay,this.dye.a.texel);assign(u.uDye,this.dye.a.tex);assign(u.clarity,state.clarity);assign(u.glowAmount,state.glow);assign(u.opacity,state.opacity);this.draw(this.output);}
+ sampleImpact(){const u=this.progImpact.uniforms;this.bindQuad(this.progImpact,this.velocity.a.texel);assign(u.uTexture,this.dye.a.tex);assign(u.collisionMap,collisionMap);this.draw(this.sample);return this.read(this.sample);}
  sampleDye(){this.copy(this.dye.a,this.sample);const data=new Uint8Array(128*128*4);renderer.readRenderTargetPixels(this.sample.rt,0,0,128,128,data);return data;}
  read(target){const data=new Uint8Array(target.w*target.h*4);renderer.readRenderTargetPixels(target.rt,0,0,target.w,target.h,data);return data;}
  checkpoint(){const byte=this.createFBO(this.dye.a.w,this.dye.a.h,T.UnsignedByteType);this.copy(this.dye.a,byte);const encode=f=>{const bytes=this.read(f);let text='';for(let i=0;i<bytes.length;i+=8192)text+=String.fromCharCode(...bytes.subarray(i,i+8192));return{w:f.w,h:f.h,data:btoa(text)}};const dye=encode(byte);byte.rt.dispose();this.copy(this.velocity.a,this.packed,this.progPack);return {dye,velocity:encode(this.packed)};}
@@ -1000,7 +1011,7 @@ const ripple=(x,y)=>{const col=activeBrushColor().slice();for(let i=0;i<12;i++)p
 const tickRipples=dt=>{for(const p of pendingRipples)p.delay-=dt;pendingRipples.sort((a,b)=>a.delay-b.delay);while(pendingRipples.length&&pendingRipples[0].delay<=0){const p=pendingRipples.shift();splatSym(p.x,p.y,Math.cos(p.angle)*4.5,Math.sin(p.angle)*4.5,p.col,.003*p.size)}};
 const finishRipples=()=>{for(let i=0;pendingRipples.length&&i<16;i++){tickRipples(.014);fluidSim.step(.014)}};
 return{solver:fluidSim,canvas:fluidCanvas,particles,pointers:pointerData,brushes:tentacleBrushes,particleCanvas:jellyCanvas,
-setObstacle:v=>{obstacle=v||{x:0,y:0,r:0}},color:activeBrushColor,finishRipples,cancelRipples:()=>{pendingRipples.length=0},setState:v=>{state=v},seed:seedParticles,addParticles:addMoreParticles,splat:splatSym,ripple,
+setObstacle:v=>{obstacle=v||{x:0,y:0,r:0}},setCollisionMap:v=>{collisionMap=v||null},color:activeBrushColor,finishRipples,cancelRipples:()=>{pendingRipples.length=0},setState:v=>{state=v},seed:seedParticles,addParticles:addMoreParticles,splat:splatSym,ripple,
 startTentacle:startTentacleBrush,endTentacle:endTentacleBrush,pick:(x,y)=>{sampleDyeField();return dyeAt(x,y)},
 frame(dt,frozen,elapsed=dt){
 if(frozen&&state.paused)freezeProgress=1;
