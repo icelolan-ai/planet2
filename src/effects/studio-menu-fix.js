@@ -85,6 +85,13 @@
       const lab = root.querySelector('.st-s9-panel');
       if (lab && !lab.hidden) lab.hidden = true;
     };
+    const tune = document.getElementById('tune');
+    const closeTune = () => {
+      if (tune && tune.dataset.open === 'true') {
+        const close = tune.querySelector('[data-tune-close]');
+        if (close) close.click();
+      }
+    };
     const closeSave = () => {
       root.querySelectorAll('.st-save').forEach(el => { if (!el.hidden) el.hidden = true; });
       root.querySelectorAll('[data-studio-export]').forEach(el => el.setAttribute('aria-expanded', 'false'));
@@ -116,6 +123,7 @@
       if (keep !== 'lib') closeLibrary();
       if (keep !== 'save') closeSave();
       if (keep !== 'lab') closeLab();
+      if (keep !== 'tune') closeTune();
       if (keep !== 'assist') collapseAssist();
       if (keep !== 'layers') foldMobileTrays(keep === 'panel' ? 'panel' : '');
     };
@@ -134,7 +142,7 @@
     root.addEventListener('click', e => {
       const closest = e.target.closest && e.target.closest.bind(e.target);
       if (!closest) return;
-      const t = closest('[data-flyout],[data-grp-btn],[data-studio-tools],.st-edit,.st-lmore,[data-studio-keys],[data-studio-lib],[data-studio-export]');
+      const t = closest('[data-flyout],[data-grp-btn],[data-studio-tools],.st-edit,.st-lmore,[data-studio-keys],[data-studio-lib],[data-studio-export],[data-studio-tune]');
       if (!t) return;
       if (t.matches('[data-flyout]')) closeExtras('fly');
       else if (t.matches('[data-grp-btn]')) closeExtras('dock');
@@ -144,6 +152,7 @@
       else if (t.matches('[data-studio-keys]')) closeExtras('help');
       else if (t.matches('[data-studio-lib]')) closeExtras('lib');
       else if (t.matches('[data-studio-export]')) closeExtras('save');
+      else if (t.matches('[data-studio-tune]')) closeExtras('tune');
     }, true);
 
     if (drawBtn) drawBtn.addEventListener('click', e => {
@@ -193,6 +202,12 @@
     };
     watchCompactTrays();
     setTimeout(watchCompactTrays, 700);
+
+    // Tune lives outside the Studio root and can also open via T or a custom
+    // event, so observe its real drawer state as well as the dock button.
+    if (tune) new MutationObserver(() => {
+      if (s.active && tune.dataset.open === 'true') closeExtras('tune');
+    }).observe(tune, { attributes: true, attributeFilter: ['data-open'] });
 
     const watchLab = () => {
       const lab = root.querySelector('.st-s9-panel');
