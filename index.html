@@ -784,7 +784,6 @@ body.tune-open .tune-toggle,body:has(.picker[data-open="true"]) .tune-toggle{opa
 }
 #wtune .tune-tabs button{flex:1 0 auto}
 .cerebra-debug-status{position:fixed;bottom:12px;right:12px;z-index:121;padding:6px 10px;background:#10151e;color:#eef0f6;font:12px sans-serif;max-width:calc(100vw - 24px)}
-.life-actions{margin:10px 0 16px;gap:6px}.life-actions button{min-width:0;min-height:44px;letter-spacing:.06em;padding:10px 6px}.life-actions button:disabled{opacity:.35;cursor:default}
 /* Keep orbit controls within the drawer at narrow desktop and phone widths. */
 #obuild{width:min(420px,100vw);overflow-x:hidden;touch-action:pan-y}
 #obuild .tune-row{grid-template-columns:minmax(70px,90px) minmax(0,1fr) 36px;gap:8px}
@@ -1093,19 +1092,20 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 .st-save-planet{flex:1 1 100%;display:grid;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.14)}
 .st-save-planet input{font:inherit;font-size:13px;padding:8px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:inherit;min-width:0}
 .st-save-planet small{font-size:11px;opacity:.7;line-height:1.35}
-.st-lib{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;justify-content:center;gap:18px;background:#07080dcc;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);pointer-events:auto}
+.st-lib{position:absolute;inset:0;z-index:90;display:flex;flex-direction:column;justify-content:center;gap:18px;background:#07080dcc;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);pointer-events:auto}
 .st-lib[hidden]{display:none}
 .st-lib-head{display:flex;align-items:center;gap:14px;padding:0 max(24px,6vw)}
 .st-lib-head b{font:400 clamp(28px,4vw,52px) var(--f-display);letter-spacing:.04em;text-transform:uppercase}
 .st-lib-head span{flex:1;color:#97a1b3;font:11px var(--f-mono)}
-.st-lib-track{display:flex;gap:28px;overflow-x:auto;scroll-snap-type:x mandatory;padding:20px calc(50vw - min(34vw,190px));scrollbar-width:none}
-.st-lib-track::-webkit-scrollbar{display:none}
+.st-lib-track{display:flex;gap:28px;overflow-x:auto;scroll-snap-type:x mandatory;padding:20px clamp(16px,3vw,48px);scrollbar-width:none;touch-action:pan-y;cursor:grab}
+.st-lib-track.is-dragging{cursor:grabbing;scroll-snap-type:none;user-select:none}.st-lib-track::-webkit-scrollbar{display:none}
 .st-lib-card{flex:0 0 min(68vw,380px);scroll-snap-align:center;border-radius:26px;overflow:hidden;background:#141821;border:1px solid #ffffff1c;box-shadow:0 30px 70px #000a;transition:transform .2s,opacity .2s}
 .st-lib-img{height:min(62vh,480px);background-size:cover;background-repeat:no-repeat;background-color:#0b0d13}
 .st-lib-info{padding:16px 18px;display:grid;gap:4px}
 .st-lib-info b{font:600 14.5px var(--f-sans)}.st-lib-info small{color:#97a1b3}
 .st-lib-info div{display:flex;gap:8px;margin-top:8px}
 .st-lib-empty{text-align:center;color:#97a1b3}
+@media(max-width:600px){.st-lib-head{flex-wrap:wrap;padding:0 16px;gap:8px}.st-lib-head b{flex:1}.st-lib-head span{flex:0 0 auto}.st-lib-head .st-btn{min-height:40px;min-width:40px}}
 .rb-ribbons{position:fixed;inset:0;width:100%;height:100%;z-index:40;pointer-events:none;mix-blend-mode:screen}
 .rb-galaxy{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;mix-blend-mode:screen}
 .rb-spark{position:fixed;width:0;height:0;z-index:200;pointer-events:none}
@@ -2127,7 +2127,6 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
     <button type="button" role="tab" data-tab="core" aria-selected="false">Core</button>
     <button type="button" role="tab" data-tab="motion" aria-selected="false">Motion</button>
     <button type="button" role="tab" data-tab="fx" aria-selected="false">Effects</button>
-    <button type="button" role="tab" data-tab="life" aria-selected="false">Life</button>
     <button type="button" role="tab" data-tab="save" aria-selected="false">Save</button>
   </nav>
 
@@ -2275,7 +2274,6 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
     
   </div>
 
-<div class="tune-pane" data-pane="life" hidden><p class="tune-sub">Life inside Cerebra</p><label class="tune-row"><span>Organisms</span><input aria-label="Organisms" type="range" min="0" max="16" step="1" data-life="count"><b data-out></b></label><div class="tune-btns life-actions"><button type="button" class="tune-btn" data-life-add aria-label="Add organism">+ Add</button><button type="button" class="tune-btn" data-life-remove aria-label="Remove one organism">− Remove</button><button type="button" class="tune-reset" data-life-clear>Clear all</button></div><label class="tune-row"><span>Organism size</span><input aria-label="Organism size" type="range" min="0.05" max="0.28" step="0.01" data-life="size"><b data-out></b></label><label class="tune-row"><span>Shape</span><select data-life="shape" aria-label="Organism shape"><option value="0">Jelly</option><option value="1">Spindle</option><option value="2">Urchin</option><option value="3">Amoeba</option></select></label><label class="tune-row"><span>Filaments</span><input aria-label="Filaments" type="range" min="0" max="24" step="1" data-life="filaments"><b data-out></b></label><label class="tune-row"><span>Inflation</span><input aria-label="Inflation" type="range" min="0" max="1.5" step="0.05" data-life="breath"><b data-out></b></label><label class="tune-row"><span>Life speed</span><input aria-label="Life speed" type="range" min="0" max="3" step="0.05" data-life="speed"><b data-out></b></label><label class="tune-row"><span>Movement</span><input aria-label="Movement" type="range" min="0" max="2" step="0.05" data-life="motion"><b data-out></b></label><label class="tune-row"><span>Behaviour</span><select data-life="behavior" aria-label="Organism behaviour"><option value="0">Wander</option><option value="1">School</option><option value="2">Orbit</option><option value="3">Curious</option></select></label><label class="tune-row"><span>Colour</span><input type="color" data-life="color" aria-label="Organism colour"></label><button type="button" class="tune-reset" data-life-reset>Reset life</button><p class="tune-hint">Each visit starts empty. Add or remove one organism, or clear them all. Appearance settings are shared. Reduced motion pauses movement.</p></div>
   <div class="tune-pane" data-pane="save" hidden>
     <p class="tune-sub">Reset &amp; randomize</p>
     <div class="tune-btns"><button type="button" class="tune-btn" data-t-random>&#9861; Randomize</button><button type="button" class="tune-reset" data-t-reset>Reset</button></div>
@@ -2502,7 +2500,7 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
-<script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}, "build": "assets/app.e7e188361f.js"};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.e7e188361f.js", 858690]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}, "build": "assets/app.f81c5e22ba.js"};</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.f81c5e22ba.js", 859404]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>
