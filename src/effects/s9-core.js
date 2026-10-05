@@ -1,47 +1,107 @@
-/* S9 core — lightweight fluid wisps + life layers + sound response.
-   Uses Cerebra's existing WebGL renderer and microphone analyser. No WebGPU / second GL context. */
+/* Water Lab — Nava solver on Studio's renderer, input and existing history.
+   Art modes are intentionally limited to Particle Flow. Old Lab state is not revived. */
 (() => {
-  const KEY='cerebra-s9-lab-v2',LEGACY_KEY='cerebra-s9-lab-v1';
-  const TYPES=[['planet','Planet'],['cloud','Cloud'],['jelly','Jelly'],['cell','Cell'],['venom','Venom'],['germ','Germ'],['blackhole','Black hole']];
-  const DEF={fluid:{on:false,amount:7,flow:1,color:'#8b5cf6',opacity:.48},life:{planet:false,cloud:false,jelly:false,cell:false,venom:false,germ:false,blackhole:false},sound:{on:false,gain:1.4}};
-  const clone=v=>JSON.parse(JSON.stringify(v));
-  const merge=v=>({fluid:{...DEF.fluid,...(v&&v.fluid||{})},life:{...DEF.life,...(v&&v.life||{})},sound:{...DEF.sound,...(v&&v.sound||{})}});
-  let state=clone(DEF);
-  try{
-    const saved=localStorage.getItem(KEY);
-    state=merge(JSON.parse(saved||localStorage.getItem(LEGACY_KEY)||'null'));
-    // Older releases enabled the background wisps automatically. Clear that
-    // inherited opt-in once; future explicit Lab choices remain persistent.
-    if(saved===null)state.fluid.on=false;
-  }catch(_){} state.sound.on=false;
+  const KEY='cerebra-water-lab-v3';
+  const DEF={on:false,particles:false,layer:'front',paused:false,tool:'paint',brushColor:[53,190,255],brushSize:1,
+    viscosity:.35,dissipation:.995,curl:20,timeScale:1,realWater:true,cohesion:5,splash:5,canvasFrame:true,
+    clarity:2,wispiness:5,glow:1,opacity:.8,flowEnabled:false,flowSpeed:5,flowDir:{x:1,y:0},
+    motion:'normal',symmetry:1,mirror:false,gradientBrush:false,gradientSpeed:5,tentacleLength:9,tentacleSway:5,
+    particleCount:380,particleSpeed:5,particleSize:2.4,particleTrail:5,particleAlpha:70,particleInteract:'none',particleInteractAmt:5,
+    particleColorCount:3,particleColors:[[53,190,255],[167,113,255],[255,169,206]],audioReactive:0};
+  const clone=v=>JSON.parse(JSON.stringify(v)),merge=v=>{const out=clone(DEF);if(v&&typeof v==='object')for(const k of Object.keys(DEF))if(k in v&&typeof v[k]===typeof DEF[k])out[k]=clone(v[k]);const ranges={brushSize:[.2,3],viscosity:[.01,.98],dissipation:[.97,1],curl:[0,50],timeScale:[.1,2],cohesion:[0,10],splash:[0,10],clarity:[1,5],wispiness:[1,10],glow:[0,5],opacity:[.1,1],flowSpeed:[1,10],symmetry:[1,12],gradientSpeed:[1,10],tentacleLength:[5,15],tentacleSway:[0,10],particleCount:[50,1200],particleSpeed:[1,10],particleSize:[.5,6],particleTrail:[0,10],particleAlpha:[10,100],particleInteractAmt:[1,10],particleColorCount:[1,5]};
+    for(const [k,[lo,hi]]of Object.entries(ranges))out[k]=Number.isFinite(out[k])?Math.max(lo,Math.min(hi,out[k])):DEF[k];
+    for(const k of ['symmetry','tentacleLength','particleCount','particleColorCount'])out[k]=Math.round(out[k]);
+    const color=v=>Array.isArray(v)&&v.length===3&&v.every(Number.isFinite)?v.map(n=>Math.max(0,Math.min(255,n))):DEF.brushColor.slice();out.brushColor=color(out.brushColor);out.particleColors=Array.isArray(out.particleColors)?out.particleColors.slice(0,5).map(color):clone(DEF.particleColors);
+    if(!out.flowDir||!Number.isFinite(out.flowDir.x)||!Number.isFinite(out.flowDir.y))out.flowDir=clone(DEF.flowDir);else out.flowDir={x:Math.max(-1,Math.min(1,out.flowDir.x)),y:Math.max(-1,Math.min(1,out.flowDir.y))};
+    for(const [k,choices]of Object.entries({tool:['paint','drop','pour','ripple','tentacle','stretch','eraser','picker'],layer:['front','back'],motion:['normal','spin','zigzag','wave','radial'],particleInteract:['none','absorb','deposit','bounce','carry','charged','sph']}))if(!choices.includes(out[k]))out[k]=DEF[k];out.audioReactive=0;return out};
+  let state=clone(DEF),engine=null,cached=null,dirty=false;
+  try{state=merge(JSON.parse(localStorage.getItem(KEY)||'null'))}catch(_){}state.on=false;state.particles=false;
   const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(_){}};
-  save();
-  const api=window.__cerebraS9={KEY,TYPES,DEF,clone,merge,get:()=>state,set:v=>{state=merge(v);save();api.sync&&api.sync()},save,snapshot:()=>clone(state)};
+  const api=window.__cerebraS9={KEY,DEF,clone,merge,get:()=>state,save};
   function boot(){
-    // Cerebra's vendor bundle currently exposes Three.js as KY. Keep THREE as a
-    // compatibility fallback for development/standalone environments.
     const app=window.__cerebra,s=app&&app.studio,T=window.KY||window.THREE;
-    if(!app||!s||!T||!app.stage||!app.core){setTimeout(boot,220);return}
-    if(api.ready)return; api.ready=true; api.app=app; api.studio=s;
-    const scene=app.stage.scene,reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches,coarse=matchMedia('(pointer: coarse)').matches;
-    const fluidRoot=new T.Group(),lifeRoot=new T.Group(); fluidRoot.name='S9 Fluid Wisps';lifeRoot.name='S9 Life Layers';scene.add(fluidRoot,lifeRoot);
-    const U={uTime:{value:0},uColor:{value:new T.Color(state.fluid.color)},uOpacity:{value:state.fluid.opacity},uFlow:{value:state.fluid.flow},uBands:{value:state.fluid.amount},uAudio:{value:0}};
-    const mat=new T.ShaderMaterial({uniforms:U,transparent:true,depthWrite:false,depthTest:true,blending:T.AdditiveBlending,vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'precision mediump float;varying vec2 vUv;uniform float uTime,uOpacity,uFlow,uBands,uAudio;uniform vec3 uColor;void main(){vec2 p=(vUv-.5)*3.;float radius=length(p);if(radius>=1.42)discard;float t=uTime*uFlow;float q=sin(p.x*(2.2+uBands*.08)+sin(p.y*3.4-t*.72)+t);q+=.72*sin(p.y*(3.1+uBands*.06)+cos(p.x*4.2+t*.55)-t*.8);q+=.38*sin((p.x+p.y)*6.+sin(t*.7+p.x*2.));float w=1.-smoothstep(.04,.48,abs(q*.36));float r=1.-smoothstep(.45,1.42,radius);float h=smoothstep(.16,.58,radius);float a=w*r*h*uOpacity*(.72+uAudio*.55);vec3 c=uColor*(.82+uAudio*.45)+vec3(.12,.08,.2)*w;gl_FragColor=vec4(c,a);}'});
-    // Keep the same world-space pattern scale (3.4 units per shader unit), but
-    // contain the entire circular fade inside the mesh instead of a square mask.
-    const plane=new T.Mesh(new T.PlaneGeometry(10.2,10.2,1,1),mat);plane.position.z=-1.05;plane.frustumCulled=false;fluidRoot.add(plane);
-    const lifeGroups={},geos={},colors={planet:'#79b8ff',cloud:'#d7e4ff',jelly:'#7ae5db',cell:'#ff74b8',venom:'#b967ff',germ:'#9dff4c',blackhole:'#07070b'};
-    const geo=type=>geos[type]||(geos[type]=type==='planet'?new T.SphereGeometry(.12,12,8):type==='cloud'?new T.SphereGeometry(.16,9,6):type==='jelly'?new T.SphereGeometry(.13,12,8):type==='cell'?new T.DodecahedronGeometry(.13,0):type==='venom'?new T.TetrahedronGeometry(.15,0):type==='germ'?new T.IcosahedronGeometry(.14,1):new T.SphereGeometry(.11,12,8));
-    const count=coarse?3:4;
-    TYPES.forEach(([type],ti)=>{const g=lifeGroups[type]=new T.Group();g.name='S9 '+type;lifeRoot.add(g);for(let i=0;i<count;i++){const mm=new T.MeshBasicMaterial({color:colors[type],transparent:true,opacity:type==='cloud'?.24:.8,depthWrite:false,wireframe:type==='cell'}),m=new T.Mesh(geo(type),mm),seed=i*2.37+ti*.83;m.userData={seed,r:1.95+(seed%1.7)*.55,sp:.16+(seed%.9)*.13,y:((seed*1.7)%1-.5)*1.2};if(type==='jelly')m.scale.set(1,.72,1);if(type==='cloud')m.scale.set(1.7,.65,1.1);g.add(m);if(type==='planet'){const ring=new T.Mesh(new T.TorusGeometry(.18,.012,5,24),new T.MeshBasicMaterial({color:'#b8d7ff',transparent:true,opacity:.5,depthWrite:false}));ring.rotation.x=1.1;m.add(ring)}if(type==='blackhole'){const ring=new T.Mesh(new T.TorusGeometry(.22,.035,8,32),new T.MeshBasicMaterial({color:'#b04cff',transparent:true,opacity:.6,depthWrite:false,blending:T.AdditiveBlending}));ring.rotation.x=1.22;m.add(ring)}}});
-    const sync=api.sync=()=>{state=api.get();fluidRoot.visible=!!(s.active&&s.subject<0&&state.fluid.on);U.uColor.value.set(state.fluid.color);U.uOpacity.value=state.fluid.opacity;U.uFlow.value=state.fluid.flow;U.uBands.value=state.fluid.amount;lifeRoot.visible=!!(s.active&&s.subject<0);TYPES.forEach(([type])=>lifeGroups[type].visible=!!state.life[type]);api.onSync&&api.onSync()};
-    api.maxWisps=coarse?8:12;api.syncMicUI=on=>document.querySelectorAll('[data-t-mic] button').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.v==='1')===!!on)));
-    api.startSound=async()=>{const p=app.core&&app.core.planet;if(!p||!p.startAudio)return false;const ok=await p.startAudio();if(!ok){state.sound.on=false;api.syncMicUI(false);save();sync()}else api.syncMicUI(true);return !!ok};
-    api.stopSound=()=>{const p=app.core&&app.core.planet;p&&p.stopAudio&&p.stopAudio();state.sound.on=false;api.syncMicUI(false);save();sync()};
-    const centre=new T.Vector3();let last=performance.now(),smooth=0;
-    const level=()=>{const a=app.core&&app.core.planet&&app.core.planet.audio;return a?Math.max(0,Math.min(1.5,a.level||0)):0};
-    const frame=now=>{requestAnimationFrame(frame);const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;sync();if(!s.active||s.subject>=0||document.hidden)return;app.core.group.getWorldPosition(centre);fluidRoot.position.copy(centre);lifeRoot.position.copy(centre);const raw=state.sound.on?level()*state.sound.gain:0;smooth+=(raw-smooth)*(1-Math.exp(-7*dt));const t=now/1000,motion=reduced()?0:1,flow=state.fluid.flow*(1+smooth*2.2)*motion;if(fluidRoot.visible){U.uTime.value=reduced()?0:t*.32;U.uFlow.value=Math.max(.08,flow);U.uAudio.value=smooth}TYPES.forEach(([type],ti)=>{const g=lifeGroups[type];if(!g.visible)return;g.children.forEach((m,i)=>{const d=m.userData;if(!d||d.seed==null)return;const a=d.seed+t*d.sp*(1+smooth*2.8)*motion;m.position.set(Math.cos(a)*d.r,d.y+Math.sin(a*1.7)*.32,Math.sin(a)*d.r*.55-.1);m.rotation.x+=dt*(.18+ti*.02)*motion;m.rotation.y+=dt*(.3+i*.03)*motion;const react=(type==='jelly'||type==='cell')?.8:.35,p=1+smooth*react;if(type!=='jelly'&&type!=='cloud')m.scale.setScalar(p);else if(type==='jelly')m.scale.set(p,.72/Math.max(.7,p),p)})})};
-    sync();requestAnimationFrame(frame);
+    if(!s||!s.el||!app.stage||!T||!window.CerebraNavaWater){setTimeout(boot,180);return}if(api.ready)return;
+    api.ready=true;api.app=app;api.studio=s;
+    const stage=app.stage,renderer=stage.renderer,root=new T.Group();root.name='Nava Water Lab';stage.scene.add(root);
+    const quadMat=texture=>new T.ShaderMaterial({uniforms:{map:{value:texture}},transparent:true,depthTest:false,depthWrite:false,toneMapped:false,
+      vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,.999,1.);}',
+      fragmentShader:'varying vec2 vUv;uniform sampler2D map;void main(){gl_FragColor=texture2D(map,vUv);}' });
+    let water,particleMesh,particleTexture,last=performance.now(),size='';
+    const dimensions=()=>{const r=renderer.domElement.getBoundingClientRect();return[Math.max(1,Math.round(r.width)),Math.max(1,Math.round(r.height))]};
+    const ensure=()=>{
+      if(engine)return true;
+      try{engine=window.CerebraNavaWater(T,renderer,state);engine.resize(...dimensions());water=new T.Mesh(new T.PlaneGeometry(2,2),quadMat(engine.solver.output.tex));
+        particleTexture=new T.CanvasTexture(engine.particleCanvas);particleMesh=new T.Mesh(new T.PlaneGeometry(2,2),quadMat(particleTexture));
+        water.frustumCulled=particleMesh.frustumCulled=false;root.add(water,particleMesh);api.engine=engine;api.error=null;return true;
+      }catch(e){engine=null;api.error=e.message;api.onSync&&api.onSync();return false}
+    };
+    const checkpoint=()=>{if(engine){engine.finishRipples();cached={field:engine.solver.checkpoint(),particles:clone(engine.particles)};dirty=false}};
+    api.snapshot=()=>{if(dirty)checkpoint();return{version:3,settings:clone(state),...(cached||{})}};
+    api.capture=()=>{if(engine)checkpoint();return api.snapshot()};
+    api.set=v=>{
+      api.activate(false,state.tool,false);state=merge(v&&v.version===3?v.settings:v);cached=v&&v.version===3?{field:v.field||null,particles:Array.isArray(v.particles)?v.particles.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.a)&&Array.isArray(p.color)&&p.color.length===3&&p.color.every(Number.isFinite)).slice(0,1200):[]}:null;dirty=false;
+      if(engine)engine.setState(state);
+      if(state.on||state.particles||cached&&cached.field){if(ensure()){engine.setState(state);engine.cancelRipples();engine.solver.load(cached&&cached.field);engine.particles.splice(0,engine.particles.length,...(cached&&cached.particles||[]));if(state.particles&&!engine.particles.length)engine.seed()}}
+      else if(engine)engine.clear();save();api.onSync&&api.onSync();
+    };
+    api.change=(key,value,commit=false)=>{
+      state[key]=value;if(engine)engine.setState(state);
+      if((state.on||state.particles)&&ensure()){if(key==='particles'&&value)engine.seed();if(key==='particleCount'&&state.particles)engine.seed();if(key==='particleColors'||key==='particleColorCount')engine.particles.forEach((p,i)=>p.color=(state.particleColors[i%state.particleColorCount]||state.brushColor).slice());dirty=true}
+      save();api.onSync&&api.onSync();if(commit)s.commit();
+    };
+    api.clear=()=>{if(engine){engine.clear();dirty=true}cached=null;s.commit();api.onSync&&api.onSync()};
+    const pad=document.createElement('div');pad.className='st-water-pad';pad.hidden=true;pad.setAttribute('aria-label','Water drawing canvas');s.el.append(pad);
+    const badge=document.createElement('div');badge.className='st-water-active st-glass';badge.hidden=true;badge.innerHTML='<span>Water brush</span><button type="button">Done</button>';s.el.append(badge);badge.querySelector('button').onclick=()=>api.activate(false);
+    let active=false;
+    api.activate=(on,tool=state.tool,commit=true)=>{
+      if(on){state.tool=tool;state.on=true;if(!ensure())return;engine.setState(state);s.setDrawing(false);originalSetTool&&originalSetTool('move')}
+      if(!on&&engine){for(const id of Object.keys(engine.pointers)){engine.endTentacle(id);delete engine.pointers[id]}if(dirty&&commit)s.commit()}
+      active=!!on;pad.hidden=badge.hidden=!active;badge.querySelector('span').textContent=`Water · ${state.tool==='paint'?'Pen':state.tool}`;api.active=active;api.onSync&&api.onSync();save();
+    };
+    const originalSetTool=s.setTool&&s.setTool.bind(s);if(originalSetTool)s.setTool=(...args)=>{if(active)api.activate(false);return originalSetTool(...args)};
+    const originalDrawing=s.setDrawing.bind(s);s.setDrawing=(on,...args)=>{if(on&&active)api.activate(false);return originalDrawing(on,...args)};
+    const originalClose=s.close.bind(s);s.close=(...args)=>{api.activate(false);return originalClose(...args)};
+    const point=e=>{const r=renderer.domElement.getBoundingClientRect(),margin=state.canvasFrame?.05:0;return{x:Math.max(margin,Math.min(1-margin,(e.clientX-r.left)/r.width)),y:Math.max(margin,Math.min(1-margin,1-(e.clientY-r.top)/r.height))}};
+    let motionTimer=0;
+    const dab=(p,pd,dx=0,dy=0,first=false)=>{
+      const color=engine.color(),radius=.0032*state.brushSize;
+      if(state.tool==='drop'&&!first)return;
+      if(state.tool==='picker'){const c=engine.pick(p.x,p.y);if(c&&Math.max(...c)>1)state.brushColor=c.slice(0,3);api.onSync&&api.onSync();return}
+      if(state.tool==='tentacle'){if(first)engine.startTentacle(pd.id,p.x,p.y);return}
+      if(state.tool==='ripple'){if(first||Math.hypot(dx,dy)>.02)engine.ripple(p.x,p.y);return}
+      if(state.tool==='stretch'){engine.solver.splatVelocityOnly(p.x,p.y,dx*46*state.brushSize,dy*46*state.brushSize,.026*state.brushSize);engine.particles.forEach(q=>{if(Math.hypot(q.x-p.x,q.y-p.y)<.16){q.x+=dx;q.y+=dy}});return}
+      if(state.tool==='eraser'){engine.splat(p.x,p.y,0,0,[0,0,0],radius*2);for(let i=engine.particles.length-1;i>=0;i--)if(Math.hypot(engine.particles[i].x-p.x,engine.particles[i].y-p.y)<Math.sqrt(radius))engine.particles.splice(i,1);return}
+      let fx=dx*6,fy=dy*6;motionTimer+=.05;
+      if(state.motion==='spin'){fx-=dy*16;fy+=dx*16}
+      else if(state.motion==='zigzag'){const sign=Math.sin(motionTimer*10)>0?1:-1;fx-=dy*20*sign;fy+=dx*20*sign}
+      else if(state.motion==='wave'){const w=Math.sin(motionTimer*14);fx+=dx*w*9-dy*w*6;fy+=dy*w*9+dx*w*6}
+      else if(state.motion==='radial'){fx+=dx*22;fy+=dy*22}
+      pd.color=pd.color.map((v,i)=>v*.7+color[i]*.3);engine.splat(p.x,p.y,fx,fy,pd.color,state.tool==='drop'?radius*2:radius);
+    };
+    pad.addEventListener('pointerdown',e=>{if(!active||!s.active||e.button>0)return;e.preventDefault();pad.setPointerCapture(e.pointerId);s.flushCommit();if(dirty)checkpoint();s.closeStudioMenus&&s.closeStudioMenus();const p=point(e),pd={id:e.pointerId,down:true,lx:p.x,ly:p.y,color:engine.color().slice()};engine.pointers[e.pointerId]=pd;dab(p,pd,0,0,true);dirty=true});
+    pad.addEventListener('pointermove',e=>{const pd=engine&&engine.pointers[e.pointerId];if(!pd)return;e.preventDefault();const p=point(e);dab(p,pd,p.x-pd.lx,p.y-pd.ly);pd.lx=p.x;pd.ly=p.y;dirty=true});
+    const finish=e=>{if(!engine||!engine.pointers[e.pointerId])return;engine.endTentacle(e.pointerId);delete engine.pointers[e.pointerId];if(!Object.keys(engine.pointers).length){s.commit();save()}};
+    pad.addEventListener('pointerup',finish);pad.addEventListener('pointercancel',finish);pad.addEventListener('lostpointercapture',finish);
+    const originalRender=stage.render.bind(stage);stage.render=(...args)=>{
+      root.visible=!!s.active&&!!engine&&(state.on||state.particles);
+      const now=performance.now(),dt=Math.min(.033,Math.max(.001,(now-last)/1000));last=now;
+      if(root.visible){const dims=dimensions(),key=dims.join('x');if(key!==size){engine.resize(...dims);size=key;water.material.uniforms.map.value=engine.solver.output.tex}
+        if(active&&state.tool==='pour'&&!state.paused&&!s.frozen)for(const pd of Object.values(engine.pointers))engine.splat(pd.lx,pd.ly,0,-1.8,engine.color(),.006*state.brushSize);
+        engine.frame(dt,state.paused||s.frozen);water.visible=state.on;particleMesh.visible=state.particles||Object.keys(engine.brushes).length>0;particleTexture.needsUpdate=true;
+        const order=state.layer==='back'?-1000:1000;water.renderOrder=order;particleMesh.renderOrder=order+1;water.material.depthTest=particleMesh.material.depthTest=state.layer==='back';
+      }
+      return originalRender(...args);
+    };
+    api.visible=()=>!!engine&&(state.on||state.particles);
+    const originalSnapshot=s.snapshot.bind(s);s.snapshot=extra=>{const v=JSON.parse(originalSnapshot(extra));v.s9=api.snapshot();return JSON.stringify(v)};
+    const originalRestore=s.restore.bind(s);s.restore=text=>{const v=JSON.parse(text);const out=originalRestore(text);api.set(v.s9&&v.s9.version===3?v.s9:DEF);return out};
+    s.s9State=api.snapshot;s.s9Apply=api.set;
+    const resetCanvas=s.el.querySelector('[data-rs=canvas]');if(resetCanvas){const fn=resetCanvas.onclick;resetCanvas.onclick=e=>{api.set(DEF);return fn.call(resetCanvas,e)}}
+    const resetFull=s.el.querySelector('[data-rs=full]');if(resetFull){const fn=resetFull.onclick;resetFull.onclick=e=>{const hist=s.hist;const result=fn.call(resetFull,e);if(hist!==s.hist){api.set(DEF);s.hist=[s.snapshot()];s.hi=0;s.syncHist()}return result}}
+    if(s.hist)s.hist=s.hist.map(text=>{try{const v=JSON.parse(text);v.s9={version:3,settings:clone(state)};return JSON.stringify(v)}catch(_){return text}});
+    // Save/library/export capture the current flow, while normal history keeps
+    // gesture checkpoints stable rather than creating a new undo every frame.
+    for(const name of ['exportProject','composePoster','libSave'])if(typeof s[name]==='function'){const fn=s[name].bind(s);s[name]=(...args)=>{api.capture();return fn(...args)}}
   }
-  setTimeout(boot,0);
+  boot();
 })();

@@ -15,7 +15,7 @@
       button.type = 'button';
       button.className = 'st-btn st-s9-entry';
       button.dataset.s9Entry = '1';
-      button.setAttribute('aria-label', 'Open S9 Lab');
+      button.setAttribute('aria-label', 'Open Water Lab');
       button.setAttribute('aria-expanded', 'false');
       button.innerHTML = '<span aria-hidden="true">✦</span><span class="st-label">Lab</span>';
 

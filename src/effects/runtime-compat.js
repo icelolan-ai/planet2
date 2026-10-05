@@ -33,11 +33,14 @@
       await load('src/effects/surface-tune-core.js?v=20261004f', 'data-deep-surface-tune');
     }
 
+    if (!window.CerebraNavaWater) {
+      await load('src/effects/nava-water.js?v=20261005water', 'data-nava-water');
+    }
     if (!window.__cerebraS9) {
-      await load('src/effects/s9-core.js?v=20261004f', 'data-s9-core');
+      await load('src/effects/s9-core.js?v=20261005water', 'data-s9-core');
     }
     if (!document.querySelector('.st-s9-panel')) {
-      await load('src/effects/s9-ui.js?v=20261004f', 'data-s9-ui');
+      await load('src/effects/s9-ui.js?v=20261005water', 'data-s9-ui');
     }
   })().catch(e => console.error('Cerebra compatibility bridge failed', e));
 })();
