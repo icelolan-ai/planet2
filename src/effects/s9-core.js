@@ -7,11 +7,11 @@
     realWater:false,cohesion:1,splash:1,canvasFrame:false,clarity:1,wispiness:1,glow:1,opacity:1,
     flowEnabled:false,flowSpeed:1,flowDir:{x:0,y:0},motion:'normal',symmetry:1,mirror:false,
     gradientBrush:false,gradientSpeed:1,tentacleLength:5,tentacleSway:1};
-  const DEF={on:false,particles:false,layer:'front',paused:false,collision:false,collisionBounce:.5,waterColors:[[0,240,255],[255,0,200],[255,52,52]],...NAVA,
+  const DEF={on:false,particles:false,layer:'front',paused:false,collision:false,collisionBounce:.5,collisionSpread:.5,collisionStick:.6,collisionStain:.65,stainSpread:.5,stainLifetime:30,waterColors:[[0,240,255],[255,0,200],[255,52,52]],...NAVA,
     particleCount:380,particleSpeed:5,particleSize:2.4,particleTrail:5,particleAlpha:70,particleInteract:'none',particleInteractAmt:5,
     particleColorCount:3,particleColors:[[53,190,255],[167,113,255],[255,169,206]],audioReactive:0};
   const clone=v=>JSON.parse(JSON.stringify(v)),merge=v=>{const out=clone(DEF);if(v&&typeof v==='object')for(const k of Object.keys(DEF))if(k in v&&typeof v[k]===typeof DEF[k])out[k]=clone(v[k]);const ranges={brushSize:[.2,3],viscosity:[.01,1],dissipation:[.97,1],curl:[0,50],timeScale:[.1,2],cohesion:[0,10],splash:[0,10],clarity:[1,5],wispiness:[1,10],glow:[0,5],opacity:[.1,1],flowSpeed:[1,10],symmetry:[1,12],gradientSpeed:[1,10],tentacleLength:[5,15],tentacleSway:[0,10],particleCount:[50,1200],particleSpeed:[1,10],particleSize:[.5,6],particleTrail:[0,10],particleAlpha:[10,100],particleInteractAmt:[1,10],particleColorCount:[1,5]};
-    ranges.collisionBounce=[0,1];
+    ranges.collisionBounce=[0,1];ranges.collisionSpread=[0,2];ranges.collisionStick=[0,1];ranges.collisionStain=[0,1];ranges.stainSpread=[0,2];ranges.stainLifetime=[0,120];
     for(const [k,[lo,hi]]of Object.entries(ranges))out[k]=Number.isFinite(out[k])?Math.max(lo,Math.min(hi,out[k])):DEF[k];
     for(const k of ['symmetry','tentacleLength','particleCount','particleColorCount'])out[k]=Math.round(out[k]);
     const color=v=>Array.isArray(v)&&v.length===3&&v.every(Number.isFinite)?v.map(n=>Math.max(0,Math.min(255,n))):DEF.brushColor.slice();out.brushColor=color(out.brushColor);out.waterColors=Array.from({length:3},(_,i)=>color(out.waterColors?.[i]||DEF.waterColors[i]));out.particleColors=Array.isArray(out.particleColors)?out.particleColors.slice(0,5).map(color):clone(DEF.particleColors);
@@ -25,10 +25,11 @@
     const app=window.__cerebra,s=app&&app.studio,T=window.KY||window.THREE;
     if(!s||!s.el||!app.stage||!T||!window.CerebraNavaWater){setTimeout(boot,180);return}if(api.ready)return;
     api.ready=true;api.app=app;api.studio=s;
-    const stage=app.stage,renderer=stage.renderer,root=new T.Group();root.name='Nava Water Lab';stage.scene.add(root);
+    const stage=app.stage,renderer=stage.renderer,collision=window.CerebraWaterCollision(T,app,s,stage.renderer),root=new T.Group();root.name='Nava Water Lab';stage.scene.add(root);
     const quadMat=texture=>new T.ShaderMaterial({uniforms:{map:{value:texture}},transparent:true,depthTest:false,depthWrite:false,toneMapped:false,
       vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,.999,1.);}',
       fragmentShader:'varying vec2 vUv;uniform sampler2D map;void main(){gl_FragColor=texture2D(map,vUv);}' });
+    api.collision=collision;
     let water,particleMesh,particleTexture,last=performance.now(),size='';
     const dimensions=()=>{const r=renderer.domElement.getBoundingClientRect();return[Math.max(1,Math.round(r.width)),Math.max(1,Math.round(r.height))]};
     const ensure=()=>{
@@ -39,11 +40,11 @@
       }catch(e){engine=null;api.error=e.message;api.onSync&&api.onSync();return false}
     };
     const checkpoint=()=>{if(engine){engine.finishRipples();cached={field:engine.solver.checkpoint(),particles:clone(engine.particles)};dirty=false}};
-    api.snapshot=()=>{if(dirty)checkpoint();return{version:3,settings:clone(state),...(cached||{})}};
+    api.snapshot=()=>{if(dirty)checkpoint();return{version:3,settings:clone(state),...(cached||{}),stains:collision.snapshot()}};
     api.capture=()=>{if(engine)checkpoint();return api.snapshot()};
     api.set=v=>{
       api.activate(false,state.tool,false);state=merge(v&&v.version===3?v.settings:v);cached=v&&v.version===3?{field:v.field||null,particles:Array.isArray(v.particles)?v.particles.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.a)&&Array.isArray(p.color)&&p.color.length===3&&p.color.every(Number.isFinite)).slice(0,1200):[]}:null;dirty=false;
-      if(engine)engine.setState(state);
+      collision.load(v&&v.version===3?v.stains:null);if(engine)engine.setState(state);
       if(state.on||state.particles||cached&&cached.field){if(ensure()){engine.setState(state);engine.cancelRipples();engine.solver.load(cached&&cached.field);engine.particles.splice(0,engine.particles.length,...(cached&&cached.particles||[]));if(state.particles&&!engine.particles.length)engine.seed()}}
       else if(engine)engine.clear();save();api.onSync&&api.onSync();
     };
@@ -58,7 +59,7 @@
     api.navaFlow=()=>{Object.assign(state,clone(NAVA),{paused:false});if(engine){engine.cancelRipples();engine.solver.stopVelocity();dirty=true}api.activate(true,state.tool);s.commit()};
     api.stopFlow=(freeze=true)=>{state.paused=freeze;state.flowEnabled=false;state.flowDir={x:0,y:0};if(engine){engine.cancelRipples();engine.solver.stopVelocity();dirty=true}save();api.onSync&&api.onSync();s.commit()};
     api.resetMotion=()=>{motionTimer=0;Object.assign(state,{motion:NAVA.motion,symmetry:NAVA.symmetry,mirror:NAVA.mirror,flowSpeed:NAVA.flowSpeed,timeScale:NAVA.timeScale,tentacleLength:NAVA.tentacleLength,tentacleSway:NAVA.tentacleSway});api.stopFlow(false)};
-    api.clear=()=>{if(engine){engine.clear();dirty=true}cached=null;s.commit();api.onSync&&api.onSync()};
+    api.clear=()=>{collision.clear();if(engine){engine.clear();dirty=true}cached=null;s.commit();api.onSync&&api.onSync()};
     const pad=document.createElement('div');pad.className='st-water-pad';pad.hidden=true;pad.setAttribute('aria-label','Water drawing canvas');s.el.append(pad);
     const badge=document.createElement('div');badge.className='st-water-active st-glass';badge.hidden=true;badge.innerHTML='<span>Water brush</span><button type="button">Done</button>';s.el.append(badge);badge.querySelector('button').onclick=()=>api.activate(false);
     let active=false;
@@ -78,6 +79,7 @@
     const dab=(p,pd,dx=0,dy=0,first=false)=>{
       const color=engine.color(),radius=(first ? .004 : .0032)*state.brushSize;
       if(state.tool==='drop'&&!first)return;
+      if(['paint','drop','pour','ripple'].includes(state.tool))collision.hit(p.x,p.y,color,radius,state);
       if(state.tool==='picker'){const c=engine.pick(p.x,p.y);if(c&&Math.max(...c)>1)state.brushColor=c.slice(0,3);api.onSync&&api.onSync();return}
       if(state.tool==='tentacle'){if(first)engine.startTentacle(pd.id,p.x,p.y);return}
       if(state.tool==='ripple'){if(first||Math.hypot(dx,dy)>.02)engine.ripple(p.x,p.y);return}
@@ -97,10 +99,11 @@
     const originalRender=stage.render.bind(stage);stage.render=(...args)=>{
       root.visible=!!s.active&&!!engine&&(state.on||state.particles);
       const now=performance.now(),elapsed=Math.max(.001,(now-last)/1000),dt=Math.min(.033,elapsed);last=now;
+      if(!root.visible)collision.hide();
       if(root.visible){const dims=dimensions(),key=dims.join('x');if(key!==size){engine.resize(...dims);size=key;water.material.uniforms.map.value=engine.solver.output.tex}
-        if(state.collision&&s.subject<0&&app.hitCore){app.hitCore(0,0);const c=app.coreScreen;engine.setObstacle({x:c.x/dims[0],y:1-c.y/dims[1],r:c.r/dims[1]})}else engine.setObstacle(null);
+        engine.setObstacle(null);collision.update(state,engine,dt);
         if(active&&state.tool==='pour'&&!state.paused&&!s.frozen)for(const pd of Object.values(engine.pointers))engine.splat(pd.lx,pd.ly,0,-1.8,engine.color(),.006*state.brushSize);
-        engine.frame(dt,state.paused||s.frozen,elapsed);water.visible=state.on;particleMesh.visible=state.particles||Object.keys(engine.brushes).length>0;particleTexture.needsUpdate=true;
+        engine.frame(dt,state.paused||s.frozen,elapsed);if(collision.revision!==api.stainRevision){api.stainRevision=collision.revision;dirty=true}water.visible=state.on;particleMesh.visible=state.particles||Object.keys(engine.brushes).length>0;particleTexture.needsUpdate=true;
         const order=state.layer==='back'?-1000:1000;water.renderOrder=order;particleMesh.renderOrder=order+1;water.material.depthTest=particleMesh.material.depthTest=state.layer==='back';
       }
       return originalRender(...args);

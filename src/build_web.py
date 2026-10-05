@@ -113,6 +113,7 @@ fx_order = [
     'studio-menu-fix.js',
     's7-brush.js',
     'nava-water.js',
+    'water-collision.js',
     's9-core.js',
     's9-ui.js',
     'runtime-compat.js',

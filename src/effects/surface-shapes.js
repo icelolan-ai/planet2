@@ -60,10 +60,21 @@
     if (style === 'none' || shape === 'sphere') return;
     if (!compatible(style, shape)) shape = 'sphere';
     if (shape === 'sphere') return;
-    const R = w.def.radius || 1, amt = Math.max(0, Math.min(1, +(T.s_shapeAmt ?? this.defaults.shapeAmt))), aspect = Math.max(.85, +(T.s_shapeAspect ?? this.defaults.shapeAspect)), hole = Math.max(.15, Math.min(.75, +(T.s_shapeHole ?? this.defaults.shapeHole)));
+    const warp = this.baseShapeWarp(w.tune, w.def.radius || 1);
+    const seen = new Set();
+    w.surf.geoms.forEach(g => {
+      if (!g || seen.has(g) || !g.attributes || !g.attributes.position) return; seen.add(g); const p = g.attributes.position;
+      for (let i = 0; i < p.count; i++) { const v = warp(p.getX(i), p.getY(i), p.getZ(i)); p.setXYZ(i, v.x, v.y, v.z); }
+      p.needsUpdate = true; g.computeBoundingSphere();
+    });
+  };
+
+  SURFACE.baseShapeWarp = function(tune, R = 1) {
+    const T = tune || {}, shape = compatible(T.s_style || "none",T.s_shape) && SHAPES.some(([k])=>k===T.s_shape) ? T.s_shape : "sphere", amt = Math.max(0, Math.min(1, +(T.s_shapeAmt ?? this.defaults.shapeAmt))), aspect = Math.max(.85, +(T.s_shapeAspect ?? this.defaults.shapeAspect)), hole = Math.max(.15, Math.min(.75, +(T.s_shapeHole ?? this.defaults.shapeHole)));
     const O = new THREE.Vector3(), D = new THREE.Vector3(), Q = new THREE.Vector3();
-    const warp = (x, y, z) => {
+    return (x, y, z) => {
       O.set(x, y, z); const L = O.length(); if (L < 1e-6) return O; D.copy(O).multiplyScalar(1 / L); const rel = L / R;
+      if (shape === 'sphere') return O;
       if (shape === 'football') {
         const sx = 1 / Math.sqrt(aspect); Q.set(D.x * sx, D.y * aspect, D.z * sx).multiplyScalar(R * rel);
       } else if (shape === 'torus') {
@@ -75,12 +86,6 @@
       }
       return O.lerp(Q, amt);
     };
-    const seen = new Set();
-    w.surf.geoms.forEach(g => {
-      if (!g || seen.has(g) || !g.attributes || !g.attributes.position) return; seen.add(g); const p = g.attributes.position;
-      for (let i = 0; i < p.count; i++) { const v = warp(p.getX(i), p.getY(i), p.getZ(i)); p.setXYZ(i, v.x, v.y, v.z); }
-      p.needsUpdate = true; g.computeBoundingSphere();
-    });
   };
 
   // Apply the same radial base-shape deformation to the assembled original Core.
