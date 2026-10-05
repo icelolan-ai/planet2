@@ -1,13 +1,21 @@
 /* S9 core — lightweight fluid wisps + life layers + sound response.
    Uses Cerebra's existing WebGL renderer and microphone analyser. No WebGPU / second GL context. */
 (() => {
-  const KEY='cerebra-s9-lab-v1';
+  const KEY='cerebra-s9-lab-v2',LEGACY_KEY='cerebra-s9-lab-v1';
   const TYPES=[['planet','Planet'],['cloud','Cloud'],['jelly','Jelly'],['cell','Cell'],['venom','Venom'],['germ','Germ'],['blackhole','Black hole']];
-  const DEF={fluid:{on:true,amount:7,flow:1,color:'#8b5cf6',opacity:.48},life:{planet:false,cloud:false,jelly:false,cell:false,venom:false,germ:false,blackhole:false},sound:{on:false,gain:1.4}};
+  const DEF={fluid:{on:false,amount:7,flow:1,color:'#8b5cf6',opacity:.48},life:{planet:false,cloud:false,jelly:false,cell:false,venom:false,germ:false,blackhole:false},sound:{on:false,gain:1.4}};
   const clone=v=>JSON.parse(JSON.stringify(v));
   const merge=v=>({fluid:{...DEF.fluid,...(v&&v.fluid||{})},life:{...DEF.life,...(v&&v.life||{})},sound:{...DEF.sound,...(v&&v.sound||{})}});
-  let state=clone(DEF); try{state=merge(JSON.parse(localStorage.getItem(KEY)||'null'))}catch(_){} state.sound.on=false;
+  let state=clone(DEF);
+  try{
+    const saved=localStorage.getItem(KEY);
+    state=merge(JSON.parse(saved||localStorage.getItem(LEGACY_KEY)||'null'));
+    // Older releases enabled the background wisps automatically. Clear that
+    // inherited opt-in once; future explicit Lab choices remain persistent.
+    if(saved===null)state.fluid.on=false;
+  }catch(_){} state.sound.on=false;
   const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(_){}};
+  save();
   const api=window.__cerebraS9={KEY,TYPES,DEF,clone,merge,get:()=>state,set:v=>{state=merge(v);save();api.sync&&api.sync()},save,snapshot:()=>clone(state)};
   function boot(){
     // Cerebra's vendor bundle currently exposes Three.js as KY. Keep THREE as a
