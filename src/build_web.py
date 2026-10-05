@@ -112,6 +112,7 @@ fx_order = [
     'diagnostics.js',
     'studio-menu-fix.js',
     's7-brush.js',
+    'nava-water.js',
     's9-core.js',
     's9-ui.js',
     'runtime-compat.js',
