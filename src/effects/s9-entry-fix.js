@@ -34,7 +34,7 @@
       const open = panel.hidden;
       if (open && s.closeStudioMenus) s.closeStudioMenus('lab');
       panel.hidden = !open;
-      if (open && api.onSync) api.onSync();
+      if (open) api.activate(true,api.get().tool);
       syncButton();
     });
 
