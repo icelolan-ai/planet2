@@ -63,6 +63,8 @@
     };
     const originalSetTool=s.setTool&&s.setTool.bind(s);if(originalSetTool)s.setTool=(...args)=>{if(active)api.activate(false);return originalSetTool(...args)};
     const originalDrawing=s.setDrawing.bind(s);s.setDrawing=(on,...args)=>{if(on&&active)api.activate(false);return originalDrawing(on,...args)};
+    // Dock actions must leave water input before their normal handlers run.
+    s.el.addEventListener('click',e=>{if(active&&e.target.closest('[data-studio-tune],[data-studio-tools],[data-grp-btn],[data-studio-export],[data-studio-lib],[data-studio-subject],[data-studio-keys],[data-flyout]'))api.activate(false)},true);
     const originalClose=s.close.bind(s);s.close=(...args)=>{api.activate(false);return originalClose(...args)};
     const point=e=>{const r=renderer.domElement.getBoundingClientRect(),margin=state.canvasFrame?.05:0;return{x:Math.max(margin,Math.min(1-margin,(e.clientX-r.left)/r.width)),y:Math.max(margin,Math.min(1-margin,1-(e.clientY-r.top)/r.height))}};
     let motionTimer=0;

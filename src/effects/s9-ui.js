@@ -6,7 +6,9 @@
     const css=document.createElement('style');css.textContent=`
       #studio .st-s9-panel{position:absolute;z-index:65;right:12px;top:12px;width:min(350px,calc(100vw - 24px));max-height:calc(100dvh - 100px);overflow:auto;overflow-x:hidden;overscroll-behavior:contain;padding:16px;border-radius:24px;pointer-events:auto;scrollbar-width:thin;background:linear-gradient(155deg,#202633f5,#171a24f5);box-shadow:0 18px 60px #0005;border:1px solid #b6caff35;color:#edf3ff}
       #studio .st-s9-panel[hidden],#studio .st-water-active[hidden],#studio .st-water-pad[hidden],#studio .st-s9-panel [hidden]{display:none!important}
-      #studio .st-water-pad{position:absolute;inset:0;z-index:24;touch-action:none;cursor:crosshair;pointer-events:auto}
+      #studio .st-water-pad{position:absolute;inset:0;z-index:5;touch-action:none;cursor:crosshair;pointer-events:auto}
+      /* Keep canvas input beneath every Studio control, including a folded dock. */
+      #studio .st-dock,#studio .st-rail,#studio .st-back,#studio .st-zoom,#studio .studio-panel,#studio .st-context,#studio .st-fly,#studio .st-save{z-index:30}
       #studio .st-water-active{position:absolute;z-index:41;left:50%;bottom:90px;transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:8px 10px 8px 16px;max-width:calc(100vw - 28px);border-radius:30px;font:12px var(--f-sans);pointer-events:auto;white-space:nowrap}
       #studio .st-water-active button{border:0;border-radius:20px;background:#95dcff;color:#10212e;font:600 12px var(--f-sans);min-height:38px;padding:0 16px}
       #studio .st-water-head{position:sticky;top:-16px;z-index:2;background:#202633;padding:12px 0;display:flex;align-items:center;gap:12px;margin-bottom:12px}#studio .st-water-head>div{flex:1}#studio .st-water-head b{font:600 18px var(--f-cond);letter-spacing:.06em}#studio .st-water-head small{display:block;font:11px var(--f-sans);color:#9eb1cd;margin-top:4px}#studio .st-water-head button{width:40px;height:40px;border:1px solid #ffffff24;border-radius:50%;background:#ffffff0a;color:inherit;font-size:24px}
