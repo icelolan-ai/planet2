@@ -226,7 +226,8 @@ const material=new T.ShaderMaterial({uniforms,vertexShader:BASE_VS,fragmentShade
 class FluidSim {
  constructor(){
   const gl=renderer.getContext();if(!(gl instanceof WebGL2RenderingContext)||!gl.getExtension('EXT_color_buffer_float'))throw Error('Water Lab needs floating-point WebGL2 render targets.');
-  this.type=T.HalfFloatType;this.simRes=96;this.dyeRes=256;
+  const compact=Math.min(innerWidth,innerHeight)<900;
+  this.type=T.HalfFloatType;this.simRes=compact?96:128;this.dyeRes=compact?384:512;
   for(const [key,shader] of Object.entries({Splat:FS_SPLAT,Advect:FS_ADVECT,Div:FS_DIVERGENCE,Curl:FS_CURL,Vort:FS_VORTICITY,Pressure:FS_PRESSURE,Gradient:FS_GRADIENT,Clear:FS_CLEAR,Mask:FS_MASK,Tension:FS_TENSION,Display:DISPLAY,Pack:PACK,Unpack:UNPACK}))this['prog'+key]=program(shader);
  }
  createFBO(w,h,type=this.type){const rt=new T.WebGLRenderTarget(w,h,{type,minFilter:T.LinearFilter,magFilter:T.LinearFilter,depthBuffer:false,stencilBuffer:false});rt.texture.generateMipmaps=false;rt.texture.colorSpace=T.NoColorSpace;return{rt,tex:rt.texture,w,h,texel:[1/w,1/h]};}
@@ -960,7 +961,13 @@ function applyCanvasFrameContainment(dt){
 
 
 const pointerData={},jellyCanvas=document.createElement('canvas');let frameScale=1;let gradientHue=0;
-const activeBrushColor=()=>{if(!state.gradientBrush)return state.brushColor;gradientHue=(gradientHue+.002*state.gradientSpeed)%1;const color=new T.Color().setHSL(gradientHue,.85,.55);return[color.r*255,color.g*255,color.b*255]};
+const activeBrushColor=()=>{
+  if(!state.gradientBrush)return state.brushColor;
+  gradientHue=(gradientHue+(state.gradientSpeed||5)*.0025)%1;
+  const h=gradientHue*6,i=Math.floor(h),f=h-i,p=.15,q=1-f*.85,t=1-(1-f)*.85;
+  const rgb=[[1,t,p],[q,1,p],[p,1,t],[p,q,1],[t,p,1],[1,p,q]][i%6];
+  return rgb.map(v=>Math.round(v*255));
+};
 const pendingRipples=[];
 const ripple=(x,y)=>{const col=activeBrushColor().slice();for(let i=0;i<12;i++)pendingRipples.push({x,y,col,angle:i/12*Math.PI*2,delay:i*.014,size:state.brushSize});splatSym(x,y,0,0,col,.009*state.brushSize)};
 const tickRipples=dt=>{for(let i=pendingRipples.length-1;i>=0;i--){const p=pendingRipples[i];p.delay-=dt;if(p.delay<=0){splatSym(p.x,p.y,Math.cos(p.angle)*4.5,Math.sin(p.angle)*4.5,p.col,.003*p.size);pendingRipples.splice(i,1)}}};
@@ -968,7 +975,13 @@ const finishRipples=()=>{for(let i=0;pendingRipples.length&&i<16;i++){tickRipple
 return{solver:fluidSim,canvas:fluidCanvas,particles,pointers:pointerData,brushes:tentacleBrushes,particleCanvas:jellyCanvas,
 color:activeBrushColor,finishRipples,cancelRipples:()=>{pendingRipples.length=0},setState:v=>{state=v},seed:seedParticles,addParticles:addMoreParticles,splat:splatSym,ripple,
 startTentacle:startTentacleBrush,endTentacle:endTentacleBrush,pick:(x,y)=>{sampleDyeField();return dyeAt(x,y)},
-frame(dt,frozen){frameScale=Math.min(2,dt*60);freezeProgress+=(Number(frozen)-freezeProgress)*Math.min(1,dt/.9);if(!frozen){tickRipples(dt);applyAmbientFlow(dt);updateAllTentacleBrushes();fluidSim.step(dt*Math.max(.1,state.timeScale));applyCanvasFrameContainment(dt)}fluidSim.render();
+frame(dt,frozen){
+frameScale=Math.min(2,dt*60);freezeProgress+=(Number(frozen)-freezeProgress)*Math.min(1,dt/.9);
+if(Math.abs(freezeProgress-Number(frozen))<.004)freezeProgress=Number(frozen);
+const simDt=dt*Math.max(.1,state.timeScale);
+if(!frozen){tickRipples(dt);applyAmbientFlow(simDt);updateAllTentacleBrushes();fluidSim.step(simDt);applyCanvasFrameContainment(simDt)}
+else if(freezeProgress<.985){fluidSim.step(simDt)}
+fluidSim.render();
 const ctx=jellyCanvas.getContext('2d');if(!state.particleTrail||frozen){ctx.clearRect(0,0,jellyCanvas.width,jellyCanvas.height)}else{ctx.globalCompositeOperation='destination-out';ctx.fillStyle=`rgba(0,0,0,${Math.max(.015,1-state.particleTrail*.095)})`;ctx.fillRect(0,0,jellyCanvas.width,jellyCanvas.height);ctx.globalCompositeOperation='source-over'}
 if(state.particles){if(!frozen&&state.particleInteract!=='none')sampleDyeField();drawParticles(ctx,performance.now(),frozen)}drawTentacleBrushes(ctx);
 },clear(){pendingRipples.length=0;fluidSim.clearAll();particles.length=0;const c=jellyCanvas.getContext('2d');c.clearRect(0,0,jellyCanvas.width,jellyCanvas.height)},resize(w,h){fluidSim.resize(w,h);jellyCanvas.width=Math.min(1024,w);jellyCanvas.height=Math.round(jellyCanvas.width*h/w)}

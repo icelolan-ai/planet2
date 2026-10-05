@@ -2,13 +2,15 @@
    Art modes are intentionally limited to Particle Flow. Old Lab state is not revived. */
 (() => {
   const KEY='cerebra-water-lab-v3';
-  const DEF={on:false,particles:false,layer:'front',paused:false,tool:'paint',brushColor:[53,190,255],brushSize:1,
-    viscosity:.35,dissipation:.995,curl:20,timeScale:1,realWater:true,cohesion:5,splash:5,canvasFrame:true,
-    clarity:2,wispiness:5,glow:1,opacity:.8,flowEnabled:false,flowSpeed:5,flowDir:{x:1,y:0},
-    motion:'normal',symmetry:1,mirror:false,gradientBrush:false,gradientSpeed:5,tentacleLength:9,tentacleSway:5,
+  // Nava's fluid defaults, independent of composition/particles and tool choice.
+  const NAVA={brushColor:[0,240,255],brushSize:.3,viscosity:1,dissipation:.9999,curl:1,timeScale:1,
+    realWater:false,cohesion:1,splash:1,canvasFrame:false,clarity:1,wispiness:1,glow:1,opacity:1,
+    flowEnabled:false,flowSpeed:1,flowDir:{x:0,y:0},motion:'normal',symmetry:1,mirror:false,
+    gradientBrush:false,gradientSpeed:1,tentacleLength:5,tentacleSway:1};
+  const DEF={on:false,particles:false,layer:'front',paused:false,tool:'paint',...NAVA,
     particleCount:380,particleSpeed:5,particleSize:2.4,particleTrail:5,particleAlpha:70,particleInteract:'none',particleInteractAmt:5,
     particleColorCount:3,particleColors:[[53,190,255],[167,113,255],[255,169,206]],audioReactive:0};
-  const clone=v=>JSON.parse(JSON.stringify(v)),merge=v=>{const out=clone(DEF);if(v&&typeof v==='object')for(const k of Object.keys(DEF))if(k in v&&typeof v[k]===typeof DEF[k])out[k]=clone(v[k]);const ranges={brushSize:[.2,3],viscosity:[.01,.98],dissipation:[.97,1],curl:[0,50],timeScale:[.1,2],cohesion:[0,10],splash:[0,10],clarity:[1,5],wispiness:[1,10],glow:[0,5],opacity:[.1,1],flowSpeed:[1,10],symmetry:[1,12],gradientSpeed:[1,10],tentacleLength:[5,15],tentacleSway:[0,10],particleCount:[50,1200],particleSpeed:[1,10],particleSize:[.5,6],particleTrail:[0,10],particleAlpha:[10,100],particleInteractAmt:[1,10],particleColorCount:[1,5]};
+  const clone=v=>JSON.parse(JSON.stringify(v)),merge=v=>{const out=clone(DEF);if(v&&typeof v==='object')for(const k of Object.keys(DEF))if(k in v&&typeof v[k]===typeof DEF[k])out[k]=clone(v[k]);const ranges={brushSize:[.2,3],viscosity:[.01,1],dissipation:[.97,1],curl:[0,50],timeScale:[.1,2],cohesion:[0,10],splash:[0,10],clarity:[1,5],wispiness:[1,10],glow:[0,5],opacity:[.1,1],flowSpeed:[1,10],symmetry:[1,12],gradientSpeed:[1,10],tentacleLength:[5,15],tentacleSway:[0,10],particleCount:[50,1200],particleSpeed:[1,10],particleSize:[.5,6],particleTrail:[0,10],particleAlpha:[10,100],particleInteractAmt:[1,10],particleColorCount:[1,5]};
     for(const [k,[lo,hi]]of Object.entries(ranges))out[k]=Number.isFinite(out[k])?Math.max(lo,Math.min(hi,out[k])):DEF[k];
     for(const k of ['symmetry','tentacleLength','particleCount','particleColorCount'])out[k]=Math.round(out[k]);
     const color=v=>Array.isArray(v)&&v.length===3&&v.every(Number.isFinite)?v.map(n=>Math.max(0,Math.min(255,n))):DEF.brushColor.slice();out.brushColor=color(out.brushColor);out.particleColors=Array.isArray(out.particleColors)?out.particleColors.slice(0,5).map(color):clone(DEF.particleColors);
@@ -45,10 +47,11 @@
       else if(engine)engine.clear();save();api.onSync&&api.onSync();
     };
     api.change=(key,value,commit=false)=>{
-      state[key]=value;if(engine)engine.setState(state);
+      state[key]=value;if(key==='flowEnabled'&&value&&!state.flowDir.x&&!state.flowDir.y)state.flowDir={x:1,y:0};if(engine)engine.setState(state);
       if((state.on||state.particles)&&ensure()){if(key==='particles'&&value)engine.seed();if(key==='particleCount'&&state.particles)engine.seed();if(key==='particleColors'||key==='particleColorCount')engine.particles.forEach((p,i)=>p.color=(state.particleColors[i%state.particleColorCount]||state.brushColor).slice());dirty=true}
       save();api.onSync&&api.onSync();if(commit)s.commit();
     };
+    api.navaFlow=()=>{Object.assign(state,clone(NAVA));if(engine)engine.setState(state);save();api.onSync&&api.onSync();s.commit()};
     api.clear=()=>{if(engine){engine.clear();dirty=true}cached=null;s.commit();api.onSync&&api.onSync()};
     const pad=document.createElement('div');pad.className='st-water-pad';pad.hidden=true;pad.setAttribute('aria-label','Water drawing canvas');s.el.append(pad);
     const badge=document.createElement('div');badge.className='st-water-active st-glass';badge.hidden=true;badge.innerHTML='<span>Water brush</span><button type="button">Done</button>';s.el.append(badge);badge.querySelector('button').onclick=()=>api.activate(false);
@@ -64,7 +67,7 @@
     const point=e=>{const r=renderer.domElement.getBoundingClientRect(),margin=state.canvasFrame?.05:0;return{x:Math.max(margin,Math.min(1-margin,(e.clientX-r.left)/r.width)),y:Math.max(margin,Math.min(1-margin,1-(e.clientY-r.top)/r.height))}};
     let motionTimer=0;
     const dab=(p,pd,dx=0,dy=0,first=false)=>{
-      const color=engine.color(),radius=.0032*state.brushSize;
+      const color=engine.color(),radius=(first ? .004 : .0032)*state.brushSize;
       if(state.tool==='drop'&&!first)return;
       if(state.tool==='picker'){const c=engine.pick(p.x,p.y);if(c&&Math.max(...c)>1)state.brushColor=c.slice(0,3);api.onSync&&api.onSync();return}
       if(state.tool==='tentacle'){if(first)engine.startTentacle(pd.id,p.x,p.y);return}
