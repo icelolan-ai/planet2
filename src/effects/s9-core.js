@@ -39,13 +39,13 @@
         water.frustumCulled=particleMesh.frustumCulled=false;root.add(water,particleMesh);api.engine=engine;api.error=null;return true;
       }catch(e){engine=null;api.error=e.message;api.onSync&&api.onSync();return false}
     };
-    const checkpoint=()=>{if(engine){engine.finishRipples();cached={field:engine.solver.checkpoint(),particles:clone(engine.particles)};dirty=false}};
+    const checkpoint=()=>{if(engine){cached={field:engine.solver.checkpoint(),particles:clone(engine.particles),ripples:engine.rippleSnapshot()};dirty=false}};
     api.snapshot=()=>{if(dirty)checkpoint();return{version:3,settings:clone(state),...(cached||{}),stains:collision.snapshot()}};
     api.capture=()=>{if(engine)checkpoint();return api.snapshot()};
     api.set=v=>{
-      api.activate(false,state.tool,false);state=merge(v&&v.version===3?v.settings:v);cached=v&&v.version===3?{field:v.field||null,particles:Array.isArray(v.particles)?v.particles.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.a)&&Array.isArray(p.color)&&p.color.length===3&&p.color.every(Number.isFinite)).slice(0,1200):[]}:null;dirty=false;
+      api.activate(false,state.tool,false);state=merge(v&&v.version===3?v.settings:v);cached=v&&v.version===3?{field:v.field||null,ripples:Array.isArray(v.ripples)?v.ripples:[],particles:Array.isArray(v.particles)?v.particles.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.a)&&Array.isArray(p.color)&&p.color.length===3&&p.color.every(Number.isFinite)).slice(0,1200):[]}:null;dirty=false;
       collision.load(v&&v.version===3?v.stains:null);if(engine)engine.setState(state);
-      if(state.on||state.particles||cached&&cached.field){if(ensure()){engine.setState(state);engine.cancelRipples();engine.solver.load(cached&&cached.field);engine.particles.splice(0,engine.particles.length,...(cached&&cached.particles||[]));if(state.particles&&!engine.particles.length)engine.seed()}}
+      if(state.on||state.particles||cached&&cached.field){if(ensure()){engine.setState(state);engine.cancelRipples();engine.solver.load(cached&&cached.field);engine.restoreRipples(cached&&cached.ripples);engine.particles.splice(0,engine.particles.length,...(cached&&cached.particles||[]));if(state.particles&&!engine.particles.length)engine.seed()}}
       else if(engine)engine.clear();save();api.onSync&&api.onSync();
     };
     api.change=(key,value,commit=false)=>{

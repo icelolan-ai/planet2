@@ -1009,9 +1009,14 @@ const activeBrushColor=()=>{
 const pendingRipples=[];
 const ripple=(x,y)=>{const col=activeBrushColor().slice();for(let i=0;i<12;i++)pendingRipples.push({x,y,col,angle:i/12*Math.PI*2,delay:i*.014,size:state.brushSize});splatSym(x,y,0,0,col,.009*state.brushSize)};
 const tickRipples=dt=>{for(const p of pendingRipples)p.delay-=dt;pendingRipples.sort((a,b)=>a.delay-b.delay);while(pendingRipples.length&&pendingRipples[0].delay<=0){const p=pendingRipples.shift();splatSym(p.x,p.y,Math.cos(p.angle)*4.5,Math.sin(p.angle)*4.5,p.col,.003*p.size)}};
-const finishRipples=()=>{for(let i=0;pendingRipples.length&&i<16;i++){tickRipples(.014);fluidSim.step(.014)}};
+// Checkpoints preserve the remaining timed impulses; saving never fast-forwards water.
+const rippleSnapshot=()=>pendingRipples.map(p=>({...p,col:p.col.slice()}));
+const restoreRipples=v=>{pendingRipples.length=0;if(!Array.isArray(v))return;for(const p of v.slice(0,2048)){
+  if(!p||![p.x,p.y,p.angle,p.delay,p.size].every(Number.isFinite)||p.x<0||p.x>1||p.y<0||p.y>1||p.delay<-.2||p.delay>.2||p.size<.2||p.size>3||!Array.isArray(p.col)||p.col.length!==3||!p.col.every(c=>Number.isFinite(c)&&c>=0&&c<=255))continue;
+  pendingRipples.push({...p,col:p.col.slice()});
+}};
 return{solver:fluidSim,canvas:fluidCanvas,particles,pointers:pointerData,brushes:tentacleBrushes,particleCanvas:jellyCanvas,
-setObstacle:v=>{obstacle=v||{x:0,y:0,r:0}},setCollisionMap:v=>{collisionMap=v||null},color:activeBrushColor,finishRipples,cancelRipples:()=>{pendingRipples.length=0},setState:v=>{state=v},seed:seedParticles,addParticles:addMoreParticles,splat:splatSym,ripple,
+setObstacle:v=>{obstacle=v||{x:0,y:0,r:0}},setCollisionMap:v=>{collisionMap=v||null},color:activeBrushColor,rippleSnapshot,restoreRipples,cancelRipples:()=>{pendingRipples.length=0},setState:v=>{state=v},seed:seedParticles,addParticles:addMoreParticles,splat:splatSym,ripple,
 startTentacle:startTentacleBrush,endTentacle:endTentacleBrush,pick:(x,y)=>{sampleDyeField();return dyeAt(x,y)},
 frame(dt,frozen,elapsed=dt){
 if(frozen&&state.paused)freezeProgress=1;
