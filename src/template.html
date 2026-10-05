@@ -1491,6 +1491,10 @@ body .dial-body.many>.tune-row>input[type=range]{grid-column:1/-1;grid-row:2;wid
 #studio:not(.trays-locked) .st-tray-snap{display:inline-flex}
 #studio .st-tray-snap[aria-pressed=false]{color:#ff8f98}
 .st-layers-tray{overflow-y:auto}
+.st-height-resize{position:fixed;width:64px;height:28px;padding:0;border:0;border-radius:12px;background:#201c2ef2;box-shadow:0 1px 6px #0005;cursor:ns-resize;touch-action:none;pointer-events:auto;z-index:61}
+.st-height-resize::before{content:'';display:block;width:30px;height:4px;border-radius:4px;margin:auto;background:#c9a8ff}
+.st-height-resize:focus-visible{outline:2px solid #d6bcff;outline-offset:2px}
+.st-height-resize[hidden]{display:none}
 .st-layers-tray .st-panel-head h2{font-size:13.5px}
 #studio .st-tray-lock[aria-pressed=true]{color:#ff8f98;border-color:#ff4655}
 .st-tray-grip{display:none}
@@ -9105,7 +9109,7 @@ class CoreStudio {
     this.panel.querySelectorAll('h3').forEach((heading, index) => {
       const section = document.createElement('details');
       section.className = 'studio-section';
-      section.open = index < 2;
+      section.open = false;
       const summary = document.createElement('summary');
       summary.textContent = heading.textContent;
       section.append(summary);
@@ -9198,7 +9202,7 @@ class CoreStudio {
     syncSel();
     document.addEventListener('pointerdown', e => { if (!e.target.closest('.st-group,.st-dd')) closeGrp(); }, true);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeGrp(); });
-    this.initTrays(); this.initLayerResize(); RB.dock(this.el.querySelector('.st-dock'));
+    this.initTrays(); this.initLayerResize(); this.initTrayHeightResize(); RB.dock(this.el.querySelector('.st-dock'));
     this.el.querySelectorAll('[data-studio-tune],[data-save-go]').forEach(b => b.classList.add('rb-star'));
     MagicBento.apply('#studio .st-glass', { ripple: true }); MagicBento.apply('#studio .studio-preset', { tilt: 8, magnet: 4, ripple: true, particles: true });
     fold(this.el.querySelector('[data-dock-fold]'), this.el.querySelector('.st-dock'), 'toolbar');
@@ -10062,8 +10066,8 @@ class CoreStudio {
         const el = this.trays[n]; el.classList.add('is-v'); el.classList.remove('is-h');
         const w = widthOf(n), folded = el.classList.contains('is-folded'), last = i === list.length - 1;
         set(el, { [e]: used[e] + 'px', top: y + 'px', width: w + 'px', ...(n === 'panel' && !folded && last ? { bottom: gap + 'px' } : { maxHeight: `${Math.max(120, H - y - gap)}px` }) });
-        if (n === 'panel' && !folded && !last) el.style.height = Math.max(160, (H - y) * .5) + 'px';
-        if (n === 'layers' && !folded) el.style.maxHeight = (this.laySize ? Math.max(140, Math.min(this.laySize.h, H - y - gap)) : Math.max(140, Math.min(H * .34, 300))) + 'px';
+        if (n === 'panel' && !folded && (this.panelSize || !last)) { el.style.bottom = 'auto'; el.style.height = Math.min(Math.max(160, this.panelSize || (H - y) * .5), Math.max(160, H - y - gap)) + 'px'; }
+        if (n === 'layers' && !folded) { const reserve = list.slice(i + 1).some(k => k === 'panel' && !this.trays[k].classList.contains('is-folded')) ? 180 : 0; el.style.height = Math.min(this.laySize ? Math.max(140, this.laySize.h) : Math.max(180, Math.min(H * .38, 360)), Math.max(140, H - y - gap - reserve)) + 'px'; }
         y += el.offsetHeight + gap; colW = Math.max(colW, w);
       });
       used[e] += colW + gap;
@@ -10073,7 +10077,7 @@ class CoreStudio {
       const el = this.trays[n]; el.classList.add('is-h'); el.classList.remove('is-v');
       // On phones the side rails are short, so bottom trays run full width under them.
       const L = small && e === 'bottom' ? gap : Math.max(used.left, e === 'top' ? gap + (small ? 50 : 54) + gap + 48 : gap), R = small && e === 'bottom' ? gap : used.right;
-      const h = n === 'panel' || n === 'layers' ? (el.classList.contains('is-folded') ? null : n === 'layers' && this.laySize ? Math.min(this.laySize.h, H * .7) : Math.min(H * (n === 'layers' ? .28 : .42), n === 'layers' ? 240 : 380)) : n === 'dock' ? (matchMedia('(pointer: coarse)').matches ? 64 : 54) : (small ? 54 : 60);
+      const h = n === 'panel' || n === 'layers' ? (el.classList.contains('is-folded') ? null : Math.min(n === 'layers' ? this.laySize?.h || Math.min(H * .34, 300) : this.panelSize || Math.min(H * .48, 440), Math.max(140, Math.min(H * .65, H - used[e] - top0 - gap)))) : n === 'dock' ? (matchMedia('(pointer: coarse)').matches ? 64 : 54) : (small ? 54 : 60);
       const folded = el.classList.contains('is-folded'), span = (n === 'panel' || n === 'dock' || n === 'layers') && !folded;
       set(el, { [e]: used[e] + 'px', ...(span ? { left: L + 'px', right: R + 'px' } : { left: `max(${L}px, calc(50% - ${(W - L - R) / 2}px))`, right: 'auto' }), ...(h ? { height: h + 'px' } : {}) });
       if (!span) { el.style.left = L + (W - L - R - el.offsetWidth) / 2 + 'px'; }
@@ -10087,10 +10091,12 @@ class CoreStudio {
       const el = this.trays[n], horiz = n === 'dock';
       el.classList.toggle('is-h', horiz); el.classList.toggle('is-v', !horiz);
       const w = n === 'panel' || n === 'layers' ? Math.min(262, W - 2 * gap) : horiz ? null : (small ? 50 : 54);
-      set(el, { left: Math.round(pos.x * W) + 'px', top: Math.round(pos.y * H) + 'px', ...(w ? { width: w + 'px' } : { width: 'auto', maxWidth: (W - 2 * gap) + 'px' }), ...(n === 'panel' ? { maxHeight: Math.max(160, H - pos.y * H - gap) + 'px' } : {}), ...(horiz ? { height: (matchMedia('(pointer: coarse)').matches ? 64 : 54) + 'px' } : {}) });
+      set(el, { left: Math.round(pos.x * W) + 'px', top: Math.round(pos.y * H) + 'px', ...(w ? { width: w + 'px' } : { width: 'auto', maxWidth: (W - 2 * gap) + 'px' }), ...(['panel', 'layers'].includes(n) && !el.classList.contains('is-folded') ? { height: Math.min(n === 'panel' ? this.panelSize || H * .55 : this.laySize?.h || H * .38, Math.max(140, H - pos.y * H - gap)) + 'px', maxHeight: Math.max(140, H - pos.y * H - gap) + 'px' } : {}), ...(horiz ? { height: (matchMedia('(pointer: coarse)').matches ? 64 : 54) + 'px' } : {}) });
     });
     this.el.style.setProperty('--lay-l', used.left + 'px'); this.el.style.setProperty('--lay-r', used.right + 'px');
     this.el.style.setProperty('--lay-b', used.bottom + 'px');
+    if (this.updLayHandle) this.updLayHandle();
+    if (this.updateHeightHandles) this.updateHeightHandles();
   }
   compCentre() { const W = innerWidth, H = innerHeight; return W > 900 ? { x: (W - 148) / 2, y: (H - 76) / 2 } : { x: W / 2 + 36, y: H / 2 - 40 }; }
   // Shape sizes are in units of the screen's short side, which never changes with rotation or the on-screen keyboard.
@@ -11584,6 +11590,37 @@ class CoreStudio {
     if (act === 'group') { this.multi.clear(); this.selMode = false; }
     this.renderLayers();
   }
+  initTrayHeightResize() {
+    try { const saved = Number(localStorage.getItem('cerebra-design-height')); if (Number.isFinite(saved) && saved >= 160) this.panelSize = saved; } catch (e) {}
+    const handles = ['layers', 'panel'].map(name => {
+      const tray = this.trays[name], handle = document.createElement('button');
+      handle.type = 'button'; handle.className = 'st-height-resize'; handle.dataset.heightResize = name;
+      handle.setAttribute('aria-label', `Resize ${name === 'panel' ? 'Design' : 'Layers'} height`);
+      handle.title = 'Drag up or down to resize. Double-click to reset.'; this.el.append(handle);
+      let drag = null;
+      const resize = height => {
+        if (name === 'layers') this.laySize = { w: this.laySize?.w || tray.getBoundingClientRect().width, h: clamp(Math.round(height), 140, innerHeight - 100) };
+        else this.panelSize = clamp(Math.round(height), 160, innerHeight - 100);
+        this.layoutTrays();
+      };
+      const save = () => { try { localStorage.setItem(name === 'layers' ? 'cerebra-layers-size' : 'cerebra-design-height', name === 'layers' ? JSON.stringify(this.laySize) : String(this.panelSize)); } catch (e) {} };
+      handle.addEventListener('pointerdown', e => {
+        if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); handle.setPointerCapture(e.pointerId);
+        drag = { id: e.pointerId, y: e.clientY, height: tray.getBoundingClientRect().height, sign: (this.trayCfg.bottom || []).includes(name) ? -1 : 1 };
+      });
+      handle.addEventListener('pointermove', e => { if (drag && drag.id === e.pointerId) resize(drag.height + (e.clientY - drag.y) * drag.sign); });
+      const end = e => { if (!drag || drag.id !== e.pointerId) return; drag = null; save(); };
+      handle.addEventListener('pointerup', end); handle.addEventListener('pointercancel', end);
+      handle.addEventListener('keydown', e => { if (!['ArrowUp', 'ArrowDown'].includes(e.key)) return; e.preventDefault(); resize(tray.getBoundingClientRect().height + (e.key === 'ArrowDown' ? 20 : -20)); save(); });
+      handle.addEventListener('dblclick', () => { if (name === 'layers') this.laySize = null; else this.panelSize = null; try { localStorage.removeItem(name === 'layers' ? 'cerebra-layers-size' : 'cerebra-design-height'); } catch (e) {} this.layoutTrays(); });
+      return { tray, handle };
+    });
+    this.updateHeightHandles = () => handles.forEach(({ tray, handle }) => {
+      const r = tray.getBoundingClientRect(); handle.hidden = !this.active || tray.hidden || tray.classList.contains('is-folded') || r.height < 80;
+      handle.style.left = `${r.left + (r.width - 64) / 2}px`; handle.style.top = `${r.bottom - 28}px`;
+    });
+    this.layoutTrays();
+  }
   initLayerResize() {
     const tray = this.trays && this.trays.layers, h = this.el.querySelector('[data-lresize]'); if (!tray) return;
     try { this.laySize = JSON.parse(localStorage.getItem('cerebra-layers-size') || 'null'); } catch (e) {}
@@ -11822,6 +11859,7 @@ class CoreStudio {
     if (this.active || this.pending || !a.worldsReady) return;
     if (a.detail.busy) return;
     if (a.detail.open) { this.pending = true; a.closeWorld(); return; }
+    this.panel.querySelectorAll('details').forEach(section => { section.open = false; });
     this.active = true; this.home(); this.tools(innerWidth > 900); this.renderCpts(); this.syncFxLayers(); requestAnimationFrame(() => this.layoutTrays());
     this.coreLayers.fill(true); this.el.querySelectorAll('[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', 'true'));
     OrbitBuilder.open(false); WorldTune.open(false);
