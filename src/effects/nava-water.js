@@ -109,8 +109,10 @@ void main(){
   force *= curlAmount*C;
   force.y *= -1.0;
   vec2 vel = texture2D(uVelocity, vUv).xy;
+  // Bound confinement acceleration and speed so a high curl cannot feed back indefinitely.
+  force *= min(1.0, 30.0 / max(length(force), 0.0001));
   vel += force*dt;
-  vel = clamp(vel, -1000.0, 1000.0);
+  vel *= min(1.0, 40.0 / max(length(vel), 0.0001));
   gl_FragColor = vec4(vel,0.0,1.0);
 }`;
 
@@ -395,7 +397,7 @@ class FluidSim {
     // Canvas Frame wall — applied here, after the pressure solve produced
     // the final divergence-free field but BEFORE advection uses it, so the
     // velocity that actually transports the dye already respects the frame.
-    if(typeof state !== 'undefined' && state.canvasFrame) this.applyFrameMask(0.06);
+    if(typeof state !== 'undefined' && state.canvasFrame) this.applyFrameMask(Math.max(this.velocity.a.texel[0], this.velocity.a.texel[1]));
     this.applyObstacle();
     // advect velocity
     this.bindQuad(this.progAdvect, this.velocity.a.texel);
@@ -424,11 +426,11 @@ class FluidSim {
     if(typeof freezeProgress !== 'undefined' && freezeProgress > 0){
       effViscosity = effViscosity*(1-freezeProgress) + 0.999*freezeProgress;
     }
-    assign(this.progAdvect.uniforms.dissipation, 1.0 - (1.0-effViscosity)*0.02);
+    assign(this.progAdvect.uniforms.dissipation, Math.exp(-dt * (0.25 + effViscosity * 1.75)));
     this.draw(this.velocity.b); this.velocity.swap();
     // Velocity advection can reintroduce outward flow at the edges, so the
     // wall is enforced once more on the exact field the dye will be moved by.
-    if(typeof state !== 'undefined' && state.canvasFrame) this.applyFrameMask(0.06);
+    if(typeof state !== 'undefined' && state.canvasFrame) this.applyFrameMask(Math.max(this.velocity.a.texel[0], this.velocity.a.texel[1]));
     this.applyObstacle();
     // advect dye
     this.bindQuad(this.progAdvect, this.dye.a.texel);
@@ -981,7 +983,7 @@ function applyAmbientFlow(dt){
    and Ambient Flow before the step even begins. Paint is never erased. */
 function applyCanvasFrameContainment(dt){
   if(!fluidSim || !state.canvasFrame) return;
-  fluidSim.applyFrameMask(0.06);
+  fluidSim.applyFrameMask(Math.max(fluidSim.velocity.a.texel[0], fluidSim.velocity.a.texel[1]));
 }
 
 

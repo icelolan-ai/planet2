@@ -9191,14 +9191,19 @@ class CoreStudio {
       const open = dockEl.querySelector('.st-group.is-open>.st-btn');
       const tuneOn = document.body.classList.contains('tune-open') || document.body.classList.contains('wtune-open');
       const toolsBtn = dockEl.querySelector('[data-studio-tools]'), toolsOn = toolsBtn.getAttribute('aria-expanded') === 'true';
-      const sel = open || (tuneOn ? dockEl.querySelector('[data-studio-tune]') : null) || (toolsOn ? toolsBtn : null);
+      const labOn = !!this.el.querySelector('.st-s9-panel:not([hidden]),.st-water-pad:not([hidden])');
+      const exportButton = dockEl.querySelector('[data-studio-export][aria-expanded="true"]');
+      const expanded = exportButton?.closest('.st-group')?.querySelector('[data-grp-btn]') || exportButton;
+      const resetOn = this.el.querySelector('.st-resetmenu:not([hidden])') ? dockEl.querySelector('[data-studio-reset-all]') : null;
+      const sel = open || resetOn || (tuneOn ? dockEl.querySelector('[data-studio-tune]') : null) || expanded || (toolsOn ? toolsBtn : null) || (labOn ? dockEl.querySelector('[data-s9-entry]') : null);
       dockEl.querySelectorAll('.is-sel').forEach(b => { if (b !== sel) b.classList.remove('is-sel'); });
       if (sel && !sel.classList.contains('is-sel')) { sel.classList.add('is-sel'); dockEl.querySelectorAll('.st-btn,select').forEach(b => { if (b !== sel && !b.closest('.st-sub')) b.style.transform = ''; }); }
       if (dockEl.classList.contains('has-sel') !== !!sel) dockEl.classList.toggle('has-sel', !!sel);
     };
-    let selRaf = 0; const syncSelSoon = () => { cancelAnimationFrame(selRaf); selRaf = requestAnimationFrame(syncSel); };
+    let selQueued = false; const syncSelSoon = () => { if (selQueued) return; selQueued = true; queueMicrotask(() => { selQueued = false; syncSel(); }); };
     const mo = new MutationObserver(syncSelSoon);
     mo.observe(dockEl, { attributes: true, subtree: true, attributeFilter: ['class', 'aria-expanded'] }); mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    mo.observe(this.el, { attributes: true, subtree: true, attributeFilter: ['hidden'] });
     syncSel();
     document.addEventListener('pointerdown', e => { if (!e.target.closest('.st-group,.st-dd')) closeGrp(); }, true);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeGrp(); });
@@ -11708,7 +11713,7 @@ class CoreStudio {
 
   // Shapes keep their area sharp: the scene is blurred and a clipped, sharp copy sits on top. Works in Safari, unlike masked backdrop blur.
   updateFocus() {
-    const shapes = this.items.filter(i => i.kind !== 'text' && i.kind !== 'fx' && !i.decor && !this.isHid(i)), U = this.U(), on = this.active && shapes.length > 0 && (this.blur > 0 || this.dim > 0), W = innerWidth, H = innerHeight, gl = this.app.stage.renderer.domElement;
+    const shapes = this.items.filter(i => i.kind !== 'text' && i.kind !== 'fx' && !i.decor && !this.isHid(i)), U = this.U(), on = this.active && !window.__cerebraS9?.active && shapes.length > 0 && (this.blur > 0 || this.dim > 0), W = innerWidth, H = innerHeight, gl = this.app.stage.renderer.domElement;
     if (this.focusOn !== on && this.gridMode === 'focus') { this.focusOn = on; this.paint(this.bg.getContext('2d'), this.bg.width, this.bg.height); }
     this.focusOn = on;
     const inv = !!this.focusInv, bpx = this.focusScene === false ? 0 : this.blur;

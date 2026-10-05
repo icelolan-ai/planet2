@@ -48,6 +48,8 @@
       else if(engine)engine.clear();save();api.onSync&&api.onSync();
     };
     api.change=(key,value,commit=false)=>{
+      const settling = key === 'curl' && Number(value) < state.curl || key === 'mirror' && !value && state.mirror;
+      if(settling&&engine){engine.cancelRipples();engine.solver.stopVelocity();dirty=true}
       if(key==='flowEnabled'&&value)state.paused=false;
       state[key]=value;if(key==='paused'&&value&&engine){engine.cancelRipples();engine.solver.stopVelocity();dirty=true}if(key==='flowEnabled'&&!value&&engine){engine.solver.stopVelocity();dirty=true}if(key==='flowEnabled'&&value&&!state.flowDir.x&&!state.flowDir.y)state.flowDir={x:1,y:0};if(engine)engine.setState(state);
       if((state.on||state.particles)&&ensure()){if(key==='particles'&&value)engine.seed();if(key==='particleCount'&&state.particles)engine.seed();if(key==='particleColors'||key==='particleColorCount')engine.particles.forEach((p,i)=>p.color=(state.particleColors[i%state.particleColorCount]||state.brushColor).slice());dirty=true}
@@ -63,15 +65,15 @@
     api.activate=(on,tool=state.tool,commit=true)=>{
       if(on){state.tool=tool;state.on=true;if(!ensure())return;engine.setState(state);s.setDrawing(false);originalSetTool&&originalSetTool('move')}
       if(!on&&engine){for(const id of Object.keys(engine.pointers)){engine.endTentacle(id);delete engine.pointers[id]}if(dirty&&commit)s.commit()}
-      active=!!on;pad.hidden=badge.hidden=!active;badge.querySelector('span').textContent=`Water · ${state.tool==='paint'?'Pen':state.tool}`;api.active=active;api.onSync&&api.onSync();save();
+      active=!!on;pad.hidden=badge.hidden=!active;badge.querySelector('span').textContent=`Water · ${state.tool==='paint'?'Pen':state.tool}`;api.active=active;if(on)s.select(null);s.updateFocus();api.onSync&&api.onSync();save();
     };
     const originalSetTool=s.setTool&&s.setTool.bind(s);if(originalSetTool)s.setTool=(...args)=>{if(active)api.activate(false);return originalSetTool(...args)};
     const originalDrawing=s.setDrawing.bind(s);s.setDrawing=(on,...args)=>{if(on&&active)api.activate(false);return originalDrawing(on,...args)};
     // Dock actions must leave water input before their normal handlers run.
-    s.el.addEventListener('click',e=>{if(active&&e.target.closest('[data-studio-tune],[data-studio-tools],[data-grp-btn],[data-studio-export],[data-studio-lib],[data-studio-subject],[data-studio-keys],[data-flyout]'))api.activate(false)},true);
+    s.el.addEventListener('click',e=>{if(active&&e.target.closest('[data-studio-tune],[data-studio-tools],[data-studio-reset-all],[data-grp-btn],[data-studio-export],[data-studio-lib],[data-studio-subject],[data-studio-keys],[data-flyout]'))api.activate(false)},true);
 
     const originalClose=s.close.bind(s);s.close=(...args)=>{api.activate(false);return originalClose(...args)};
-    const point=e=>{const r=renderer.domElement.getBoundingClientRect(),margin=state.canvasFrame?.05:0;return{x:Math.max(margin,Math.min(1-margin,(e.clientX-r.left)/r.width)),y:Math.max(margin,Math.min(1-margin,1-(e.clientY-r.top)/r.height))}};
+    const point=e=>{const r=renderer.domElement.getBoundingClientRect(),margin=0;return{x:Math.max(margin,Math.min(1-margin,(e.clientX-r.left)/r.width)),y:Math.max(margin,Math.min(1-margin,1-(e.clientY-r.top)/r.height))}};
     let motionTimer=0;
     const dab=(p,pd,dx=0,dy=0,first=false)=>{
       const color=engine.color(),radius=(first ? .004 : .0032)*state.brushSize;

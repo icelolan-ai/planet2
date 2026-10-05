@@ -142,7 +142,7 @@
     root.addEventListener('click', e => {
       const closest = e.target.closest && e.target.closest.bind(e.target);
       if (!closest) return;
-      const t = closest('[data-flyout],[data-grp-btn],[data-studio-tools],.st-edit,.st-lmore,[data-studio-keys],[data-studio-lib],[data-studio-export],[data-studio-tune]');
+      const t = closest('[data-flyout],[data-grp-btn],[data-studio-tools],.st-edit,.st-lmore,[data-studio-keys],[data-studio-lib],[data-studio-export],[data-studio-tune],[data-studio-reset-all]');
       if (!t) return;
       if (t.matches('[data-flyout]')) closeExtras('fly');
       else if (t.matches('[data-grp-btn]')) closeExtras('dock');
@@ -153,6 +153,7 @@
       else if (t.matches('[data-studio-lib]')) closeExtras('lib');
       else if (t.matches('[data-studio-export]')) closeExtras('save');
       else if (t.matches('[data-studio-tune]')) closeExtras('tune');
+      else if (t.matches('[data-studio-reset-all]')) closeExtras('reset');
     }, true);
 
     if (drawBtn) drawBtn.addEventListener('click', e => {
