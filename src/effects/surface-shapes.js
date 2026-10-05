@@ -93,18 +93,19 @@
   const originalU = { uOriginalShape: {value:0}, uOriginalAmount:{value:0}, uOriginalAspect:{value:1.35}, uOriginalHole:{value:.45}, uOriginalPlanes:{value:Array.from({length:80},()=>new THREE.Vector4())}, uOriginalPlaneCount:{value:0}, uOriginalPolyScale:{value:1}, uOriginalToCore:{value:new THREE.Matrix4()}, uOriginalFromCore:{value:new THREE.Matrix4()} };
   SURFACE.resetOriginalShape = () => { originalU.uOriginalAmount.value = 0; };
   SURFACE.shapeOriginal = (studio, core, camera) => {
-    const t = studio.coreFxTarget()?.tune || {}, shape = t.s_shape || 'sphere';
-    const active = studio.subject < 0 && (t.s_style || 'none') === 'none' && shape !== 'sphere';
+    const target=studio.coreFxTarget(), t=target?.tune || {}, shape=t.s_shape || 'sphere';
+    const active = (!(t.s_enabled && (t.s_style || 'none') !== 'none')) && shape !== 'sphere';
     originalU.uOriginalAmount.value = active ? +(t.s_shapeAmt ?? 1) : 0;
     if (!active) return;
     originalU.uOriginalShape.value = shape === 'football' ? 1 : shape === 'torus' ? 2 : 3;
     originalU.uOriginalAspect.value = +(t.s_shapeAspect ?? 1.35); originalU.uOriginalHole.value = +(t.s_shapeHole ?? .45);
     const poly = POLY[shape]; originalU.uOriginalPlaneCount.value = poly ? poly.p.length : 0; originalU.uOriginalPolyScale.value = poly ? poly.k : 1;
     if (poly) poly.p.forEach((q,i)=>originalU.uOriginalPlanes.value[i].set(...q));
-    core.group.updateMatrixWorld(true);
-    originalU.uOriginalToCore.value.copy(core.group.matrixWorld).invert().multiply(camera.matrixWorld).multiply(camera.projectionMatrixInverse);
-    originalU.uOriginalFromCore.value.copy(camera.projectionMatrix).multiply(camera.matrixWorldInverse).multiply(core.group.matrixWorld);
-    core.group.traverse(o => {
+    const frame=studio.subject<0?core.group:target.spinG, objects=studio.subject<0?core.group:target.model;
+    frame.updateWorldMatrix(true,false);
+    originalU.uOriginalToCore.value.copy(frame.matrixWorld).invert().multiply(camera.matrixWorld).multiply(camera.projectionMatrixInverse);
+    originalU.uOriginalFromCore.value.copy(camera.projectionMatrix).multiply(camera.matrixWorldInverse).multiply(frame.matrixWorld);
+    objects.traverse(o => {
       if (o.isSprite) return;
       for (const m of (Array.isArray(o.material) ? o.material : o.material ? [o.material] : [])) {
         if (m.__originalShape) continue; m.__originalShape = true;

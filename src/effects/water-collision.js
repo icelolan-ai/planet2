@@ -11,14 +11,20 @@
     const record=id=>{if(records.has(id))return records.get(id);const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;
       const material=new T.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,side:T.FrontSide,toneMapped:false});
       const r={canvas,texture,material,hasInk:false,age:0};records.set(id,r);return r};
-    const dropPairs=()=>{for(const p of pairs){scene.remove(p.mask);coating.remove(p.coat)}pairs=[]};
+    const dropPairs=()=>{for(const p of pairs){scene.remove(p.mask);coating.remove(p.coat);if(p.owned)p.mask.geometry.dispose()}pairs=[]};
     const sync=()=>{
       const w=studio.coreFxTarget(),t=w?.tune||{},generated=!!t.s_enabled&&(t.s_style||'none')!=='none';
       const key=[studio.subject,generated,t.s_shape,t.s_shapeAmt,t.s_shapeAspect,t.s_shapeHole].join('|');
       const model=studio.subject>=0&&!generated?w?.model:null;
       if(source!==model||signature!==key){dropPairs();sphere?.dispose();sphere=null;source=model;signature=key;
-        const add=(geometry,original,id)=>{const r=record(id),mask=new T.Mesh(geometry,maskMat),coat=new T.Mesh(geometry,r.material);mask.matrixAutoUpdate=coat.matrixAutoUpdate=false;mask.frustumCulled=coat.frustumCulled=false;coat.renderOrder=900;scene.add(mask);coating.add(coat);pairs.push({mask,coat,original,r,id})};
-        if(model){let index=0;model.traverse(o=>{if(o.isMesh&&o.geometry?.attributes.position)add(o.geometry,o,`${studio.subject}:${index++}`)})}
+        const add=(geometry,original,id,owned=false)=>{const r=record(id),mask=new T.Mesh(geometry,maskMat),coat=new T.Mesh(geometry,r.material);mask.matrixAutoUpdate=coat.matrixAutoUpdate=false;mask.frustumCulled=coat.frustumCulled=false;coat.renderOrder=900;scene.add(mask);coating.add(coat);pairs.push({mask,coat,original,r,id,owned})};
+        if(model){let index=0;const shaped=t.s_shape&&t.s_shape!=='sphere',warp=shaped?SURFACE.baseShapeWarp(t,w.def.radius):null;
+          w.spinG.updateWorldMatrix(true,true);const fromRoot=new T.Matrix4().copy(w.spinG.matrixWorld).invert();
+          model.traverse(o=>{if(!o.isMesh||!o.geometry?.attributes.position)return;let geometry=o.geometry;
+            if(warp){geometry=geometry.clone();const toRoot=new T.Matrix4().multiplyMatrices(fromRoot,o.matrixWorld),back=toRoot.clone().invert(),a=geometry.attributes.position;
+              for(let i=0;i<a.count;i++){point.fromBufferAttribute(a,i).applyMatrix4(toRoot);point.copy(warp(point.x,point.y,point.z)).applyMatrix4(back);a.setXYZ(i,point.x,point.y,point.z)}geometry.computeBoundingSphere()}
+            add(geometry,o,`${studio.subject}:${index++}`,!!warp)})}
+
         else if(w){sphere=new T.SphereGeometry(studio.subject<0&&!generated?1.55:w.def.radius,48,32);
           const warp=typeof SURFACE!=='undefined'&&SURFACE.baseShapeWarp?SURFACE.baseShapeWarp(t,studio.subject<0&&!generated?1.55:w.def.radius):null;
           if(warp){const a=sphere.attributes.position;for(let i=0;i<a.count;i++){const v=warp(a.getX(i),a.getY(i),a.getZ(i));a.setXYZ(i,v.x,v.y,v.z)}sphere.computeVertexNormals();sphere.computeBoundingSphere()}
