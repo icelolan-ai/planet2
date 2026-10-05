@@ -219,9 +219,9 @@ void main(){
 // Preserve Nava's dye intensity and highlight rolloff. Studio owns the
 // background; alpha is coverage, not an extra 1.6x colour gain or edge light.
 // A screen-space solid boundary for Studio's projected Cerebra sphere.
-const FS_OBSTACLE = `precision highp float;varying vec2 vUv;uniform sampler2D uTexture;uniform vec3 obstacle;uniform float aspect;uniform vec2 texel;
+const FS_OBSTACLE = `precision highp float;varying vec2 vUv;uniform sampler2D uTexture;uniform vec3 obstacle;uniform float aspect;uniform vec2 texel;uniform float bounce;
 void main(){vec4 c=texture2D(uTexture,vUv);vec2 d=(vUv-obstacle.xy)*vec2(aspect,1.);float r=length(d);if(obstacle.z>0.){
-if(r<obstacle.z)c.xy=vec2(0.);else if(r<obstacle.z+texel.y*3.){vec2 n=d/max(r,.00001);float inward=dot(c.xy,n);if(inward<0.)c.xy-=1.5*inward*n;}}
+if(r<obstacle.z)c.xy=vec2(0.);else if(r<obstacle.z+texel.y*3.){vec2 n=d/max(r,.00001);float inward=dot(c.xy,n);if(inward<0.)c.xy-=(1.+bounce)*inward*n;}}
 gl_FragColor=c;}`;
 const DISPLAY = `precision highp float;varying vec2 vUv;uniform sampler2D uDye;uniform float clarity;uniform float glowAmount;uniform float opacity;
 void main(){vec3 dye=max(texture2D(uDye,vUv).rgb,vec3(0.));
@@ -442,7 +442,7 @@ class FluidSim {
     this.draw(this.dye.b); this.dye.swap();
   }
 
-  applyObstacle(){if(!obstacle.r)return;const u=this.progObstacle.uniforms;this.bindQuad(this.progObstacle,this.velocity.a.texel);assign(u.uTexture,this.velocity.a.tex);assign(u.obstacle,obstacle.x,obstacle.y,obstacle.r);assign(u.aspect,fluidCanvas.width/fluidCanvas.height);this.draw(this.velocity.b);this.velocity.swap()}
+  applyObstacle(){if(!obstacle.r)return;const u=this.progObstacle.uniforms;this.bindQuad(this.progObstacle,this.velocity.a.texel);assign(u.uTexture,this.velocity.a.tex);assign(u.obstacle,obstacle.x,obstacle.y,obstacle.r);assign(u.aspect,fluidCanvas.width/fluidCanvas.height);assign(u.bounce,Number.isFinite(state.collisionBounce)?state.collisionBounce:.5);this.draw(this.velocity.b);this.velocity.swap()}
  stopVelocity(){
   const previous=renderer.getRenderTarget(),color=renderer.getClearColor(new T.Color()),alpha=renderer.getClearAlpha();renderer.setClearColor(0,0);
   for(const key of ['velocity','pressure'])for(const f of [this[key].a,this[key].b]){renderer.setRenderTarget(f.rt);renderer.clear()}

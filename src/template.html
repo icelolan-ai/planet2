@@ -9477,10 +9477,7 @@ class CoreStudio {
     ['size', 'color', 'blur'].forEach(k => this.ctx.querySelector(`[data-ctx-${k}]`).addEventListener('change', () => this.commit()));
     this.ctx.querySelector('[data-ctx-font]').addEventListener('change', () => this.commit());
     this.ctx.querySelector('[data-ctx-content]').addEventListener('change', () => this.commit());
-    addEventListener('keydown', e => {
-      if (!this.active || !(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z' || e.target.closest('input,textarea,[contenteditable=true]')) return;
-      e.preventDefault(); e.shiftKey ? this.redo() : this.undo();
-    });
+    // Undo / Redo are owned by initShortcuts, alongside the other Studio keys.
   }
   tools(on) { if (on && this.closeFly) this.closeFly(); if (on && innerWidth <= 900 && this.closeGrp) this.closeGrp(); this.panel.hidden = !on; if (this.cptLayer) this.cptLayer.classList.toggle('is-off', !on); this.el.classList.toggle('panel-closed', !on); this.el.querySelector('[data-studio-tools]').setAttribute('aria-expanded', String(on)); this.layoutTrays(); }
   home() { this.x = this.y = this.vx = this.vy = 0; this.app.core.planet.resetView(); }
@@ -11198,8 +11195,9 @@ class CoreStudio {
     const arrow = { arrowleft: [-1, 0], arrowright: [1, 0], arrowup: [0, -1], arrowdown: [0, 1] };
     this.SHORTCUTS.forEach(s => { if (s.run === null) s.run = e => { const k = e.key.toLowerCase(), v = arrow[k]; return v ? A(v[0], v[1], e.shiftKey)() : false; }; });
     const map = new Map(); this.SHORTCUTS.forEach(s => s.keys.forEach(k => map.set(k, s)));
-    const canon = e => { const k = e.key === ' ' ? 'space' : e.key.toLowerCase(), parts = []; if (e.ctrlKey || e.metaKey) parts.push('mod'); if (e.altKey) parts.push('alt'); if (e.shiftKey && (k.length > 1 || /[a-z0-9]/.test(k))) parts.push('shift'); parts.push(k); return parts.join('+'); };
+    const canon = e => { let k = e.key === ' ' ? 'space' : e.key.toLowerCase(); if (k.length === 1 && !/[a-z0-9\x20-\x7e]/.test(k) && /^Key[A-Z]$/.test(e.code)) k = e.code.slice(3).toLowerCase(); const parts = []; if (e.ctrlKey || e.metaKey) parts.push('mod'); if (e.altKey) parts.push('alt'); if (e.shiftKey && (k.length > 1 || /[a-z0-9]/.test(k))) parts.push('shift'); parts.push(k); return parts.join('+'); };
     const typing = e => !!(e.target && e.target.closest && e.target.closest('input,textarea,select,[contenteditable=true],[contenteditable=""],[role=slider],.st-knob'));
+    const editingText = e => { const t = e.target; if (!t || !t.closest) return false; if (t.isContentEditable) return true; const input = t.closest('input,textarea'); return !!input && (input.tagName === 'TEXTAREA' || !['range','checkbox','radio','color','button','submit','reset'].includes(input.type)); };
     // human-readable keys (⌘ on Mac) for the sheet and tooltips
     const pretty = spec => spec.split('+').map(p => p === 'mod' ? (mac ? '⌘' : 'Ctrl') : p === 'shift' ? (mac ? '⇧' : 'Shift') : p === 'alt' ? (mac ? '⌥' : 'Alt') : p === 'delete' ? 'Del' : p === 'backspace' ? '⌫' : p === 'escape' ? 'Esc' : p === 'space' ? 'Space' : p === 'tab' ? 'Tab' : p.startsWith('arrow') ? ({ arrowleft: '←', arrowright: '→', arrowup: '↑', arrowdown: '↓' })[p] : p.length === 1 ? p.toUpperCase() : p).join(mac ? '' : '+');
     this.keyLabel = s => s.show || s.keys.map(pretty).join(' / ');
@@ -11218,12 +11216,15 @@ class CoreStudio {
     const peek = document.createElement('button'); peek.type = 'button'; peek.className = 'st-peek st-btn'; peek.textContent = 'Show tools'; peek.addEventListener('click', () => this.el.classList.remove('st-ui-off')); this.el.append(peek);
     // Space held = Hand tool until it is released
     let held = false, before = null;
-    const ok = e => this.active && !e.isComposing && !typing(e);
+    const ok = e => this.active && !e.isComposing && !editingText(e);
     addEventListener('keydown', e => {
       if (!ok(e) || this.picking) return;
+      const key = canon(e), history = ['mod+z','mod+shift+z','mod+y'].includes(key);
+      // Non-text controls retain arrows/Space, but must not swallow Studio history.
+      if (typing(e) && !history) return;
       if (e.key === ' ') { if (this.drawing || e.ctrlKey || e.metaKey || e.altKey) return; e.preventDefault(); if (!held && !e.repeat) { held = true; before = this.tool; this.setTool('hand'); } return; }
-      if (this.helpOpen() && canon(e) !== '?') return;
-      const s = map.get(canon(e)); if (!s || s.noRun || (s.free && e.target !== document.body)) return;
+      if (this.helpOpen() && key !== '?' && !history) return;
+      const s = map.get(key); if (!s || s.noRun || (s.free && e.target !== document.body)) return;
       if (s.run(e) !== false) { e.preventDefault(); e.stopPropagation(); }
     }, true);
     addEventListener('keyup', e => { if (e.key === ' ' && held) { held = false; e.preventDefault(); this.setTool(before || 'move'); before = null; } }, true);
