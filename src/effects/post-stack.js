@@ -238,6 +238,12 @@ class CerebraPostStack {
   }
   render(camera){
     const a=window.__cerebra,r=this.stage.renderer;
+    // Vignette darkens RGB while preserving alpha. A coloured water dab near
+    // the viewport edge consequently becomes an opaque black dab. Keep water
+    // compositing free of this screen-edge shading; restore it outside Studio
+    // and as soon as water is hidden. Other post effects retain their settings.
+    const water=a?.studio?.active&&window.__cerebraS9?.get?.().on;
+    if(this.vignette)this.vignette.blendMode.opacity.value=water?0:1;
     // Preserve the existing cutout alpha path; opaque captures keep the post stack.
     if(!this.composer||this.tier>=2||a?.cap?.o.transparent){r.autoClear=this.autoClear;r.render(this.stage.scene,camera);return;}
     try{this.resize();r.autoClear=false;this.composer.setMainCamera(camera);this.grain.blendMode.opacity.value=this.tier===0&&!this.mobile&&!a?.reduced? .004:0;{const L=typeof LENS_U!=='undefined'?LENS_U:null,k=L&&L.user?L.uLensAberr.value*L.uLensOn.value*.05:0;this.ca.offset.set(k,k);}this.composer.render(0);}
