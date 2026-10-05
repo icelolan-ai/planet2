@@ -5,7 +5,7 @@
  */
 (() => {
   window.CerebraNavaWater = function(T, renderer, settings) {
-    let state=settings, freezeProgress=0;
+    let state=settings, freezeProgress=0, obstacle={x:0,y:0,r:0};
     const textures=[];
     const fluidCanvas={width:1,height:1};
     const assign=(slot,...values)=>{if(values.length===1)slot.value=values[0];else slot.value=values.length===2?new T.Vector2(...values):values.length===3?new T.Vector3(...values):new T.Vector4(...values)};
@@ -52,10 +52,16 @@ uniform sampler2D uSource;
 uniform vec2 texel;
 uniform float dt;
 uniform float dissipation;
+uniform vec3 obstacle;uniform float aspect;uniform float dyePass;
 void main(){
   vec2 vel = texture2D(uVelocity, vUv).xy;
   vec2 coord = vUv - dt*vel*texel*20.0;
-  vec4 result = texture2D(uSource, coord);
+  if(dyePass>.5&&obstacle.z>0.){
+    vec2 here=(vUv-obstacle.xy)*vec2(aspect,1.);if(length(here)<obstacle.z){gl_FragColor=vec4(0.);return;}
+    vec2 from=(coord-obstacle.xy)*vec2(aspect,1.);float d=length(from);
+    if(d<obstacle.z)coord=obstacle.xy+normalize(from+vec2(.00001))*(obstacle.z+texel.y*2.)/vec2(aspect,1.);
+  }
+  vec4 result = texture2D(uSource, clamp(coord,vec2(0.),vec2(1.)));
   gl_FragColor = dissipation * result;
 }`;
 
@@ -210,13 +216,19 @@ void main(){
 }`;
 
 
-const DISPLAY = `precision highp float;varying vec2 vUv;uniform sampler2D uDye;uniform float clarity;uniform float glowAmount;uniform float opacity;uniform vec2 texel;
-void main(){vec3 dye=texture2D(uDye,vUv).rgb;float density=max(dye.r,max(dye.g,dye.b));if(density<.001)discard;
+// Preserve Nava's dye intensity and highlight rolloff. Studio owns the
+// background; alpha is coverage, not an extra 1.6x colour gain or edge light.
+// A screen-space solid boundary for Studio's projected Cerebra sphere.
+const FS_OBSTACLE = `precision highp float;varying vec2 vUv;uniform sampler2D uTexture;uniform vec3 obstacle;uniform float aspect;uniform vec2 texel;
+void main(){vec4 c=texture2D(uTexture,vUv);vec2 d=(vUv-obstacle.xy)*vec2(aspect,1.);float r=length(d);if(obstacle.z>0.){
+if(r<obstacle.z)c.xy=vec2(0.);else if(r<obstacle.z+texel.y*3.){vec2 n=d/max(r,.00001);float inward=dot(c.xy,n);if(inward<0.)c.xy-=1.5*inward*n;}}
+gl_FragColor=c;}`;
+const DISPLAY = `precision highp float;varying vec2 vUv;uniform sampler2D uDye;uniform float clarity;uniform float glowAmount;uniform float opacity;
+void main(){vec3 dye=max(texture2D(uDye,vUv).rgb,vec3(0.));
 float detail=clamp((clarity-1.)/4.,0.,1.);vec3 col=mix(dye,smoothstep(.16,.82,dye),detail*.75);
-float L=max(texture2D(uDye,vUv-vec2(texel.x,0.)).r,texture2D(uDye,vUv-vec2(texel.x,0.)).b);
-float R=max(texture2D(uDye,vUv+vec2(texel.x,0.)).r,texture2D(uDye,vUv+vec2(texel.x,0.)).b);
-float shine=clamp(abs(R-L)*glowAmount,.0,.3);col+=shine;float peak=max(col.r,max(col.g,col.b));col/=1.+max(peak-.8,0.)*2.6;
-float alpha=clamp(density*1.6,0.,1.)*opacity;gl_FragColor=vec4(col/max(density,.15),alpha);}`;
+float peak=max(col.r,max(col.g,col.b));if(peak<.001){gl_FragColor=vec4(0.);return;}
+col*=glowAmount;peak=max(col.r,max(col.g,col.b));col/=1.+max(peak-.8,0.)*2.6;
+float coverage=clamp(max(col.r,max(col.g,col.b)),0.,1.);if(coverage<.001){gl_FragColor=vec4(0.);return;}gl_FragColor=vec4(col/coverage,coverage*opacity);}`;
 const PACK = `precision highp float;varying vec2 vUv;uniform sampler2D uTexture;void main(){vec2 v=texture2D(uTexture,vUv).xy;gl_FragColor=vec4(clamp(v/80.+128./255.,0.,1.),0.,1.);}`;
 const UNPACK = `precision highp float;varying vec2 vUv;uniform sampler2D uTexture;void main(){vec2 v=texture2D(uTexture,vUv).xy;gl_FragColor=vec4((v-128./255.)*80.,0.,1.);}`;
 const scene=new T.Scene(),camera=new T.Camera(),quad=new T.Mesh(new T.PlaneGeometry(2,2),new T.MeshBasicMaterial());quad.frustumCulled=false;scene.add(quad);
@@ -228,7 +240,7 @@ class FluidSim {
   const gl=renderer.getContext();if(!(gl instanceof WebGL2RenderingContext)||!gl.getExtension('EXT_color_buffer_float'))throw Error('Water Lab needs floating-point WebGL2 render targets.');
   const compact=Math.min(innerWidth,innerHeight)<900;
   this.type=T.HalfFloatType;this.simRes=compact?96:128;this.dyeRes=compact?384:512;
-  for(const [key,shader] of Object.entries({Splat:FS_SPLAT,Advect:FS_ADVECT,Div:FS_DIVERGENCE,Curl:FS_CURL,Vort:FS_VORTICITY,Pressure:FS_PRESSURE,Gradient:FS_GRADIENT,Clear:FS_CLEAR,Mask:FS_MASK,Tension:FS_TENSION,Display:DISPLAY,Pack:PACK,Unpack:UNPACK}))this['prog'+key]=program(shader);
+  for(const [key,shader] of Object.entries({Splat:FS_SPLAT,Advect:FS_ADVECT,Div:FS_DIVERGENCE,Curl:FS_CURL,Vort:FS_VORTICITY,Pressure:FS_PRESSURE,Gradient:FS_GRADIENT,Clear:FS_CLEAR,Mask:FS_MASK,Tension:FS_TENSION,Display:DISPLAY,Obstacle:FS_OBSTACLE,Pack:PACK,Unpack:UNPACK}))this['prog'+key]=program(shader);
  }
  createFBO(w,h,type=this.type){const rt=new T.WebGLRenderTarget(w,h,{type,minFilter:T.LinearFilter,magFilter:T.LinearFilter,depthBuffer:false,stencilBuffer:false});rt.texture.generateMipmaps=false;rt.texture.colorSpace=T.NoColorSpace;return{rt,tex:rt.texture,w,h,texel:[1/w,1/h]};}
  createDoubleFBO(w,h){return{a:this.createFBO(w,h),b:this.createFBO(w,h),swap(){const t=this.a;this.a=this.b;this.b=t}};}
@@ -245,6 +257,9 @@ class FluidSim {
   if(oldV){this.copy(oldV.a,this.velocity.a);oldV.a.rt.dispose();oldV.b.rt.dispose()}
  }
   splat(x,y,dx,dy,color,radius){
+    if(obstacle.r>0){const aspect=fluidCanvas.width/fluidCanvas.height,px=(x-obstacle.x)*aspect,py=y-obstacle.y,d=Math.hypot(px,py);
+      if(d<obstacle.r){const nx=d>.00001?px/d:0,ny=d>.00001?py/d:1;x=obstacle.x+nx*(obstacle.r+.012)/aspect;y=obstacle.y+ny*(obstacle.r+.012);const force=Math.max(1,Math.hypot(dx,dy)*.5);dx=nx*force;dy=ny*force}}
+
     const aspect = fluidCanvas.width/fluidCanvas.height;
     // velocity — additive, needs signed values so it is never clamped
     this.bindQuad(this.progSplat, this.velocity.a.texel);
@@ -381,6 +396,7 @@ class FluidSim {
     // the final divergence-free field but BEFORE advection uses it, so the
     // velocity that actually transports the dye already respects the frame.
     if(typeof state !== 'undefined' && state.canvasFrame) this.applyFrameMask(0.06);
+    this.applyObstacle();
     // advect velocity
     this.bindQuad(this.progAdvect, this.velocity.a.texel);
     textures[0] = this.velocity.a.tex;
@@ -388,6 +404,7 @@ class FluidSim {
     textures[1] = this.velocity.a.tex;
     assign(this.progAdvect.uniforms.uSource, textures[1]);
     assign(this.progAdvect.uniforms.dt, dt);
+    assign(this.progAdvect.uniforms.obstacle,obstacle.x,obstacle.y,obstacle.r);assign(this.progAdvect.uniforms.aspect,fluidCanvas.width/fluidCanvas.height);assign(this.progAdvect.uniforms.dyePass,0);
     // recentShearRate decays back toward rest on its own whenever nothing
     // is actively painting, so the fluid re-thickens after a stroke ends
     // rather than staying "thinned out" forever.
@@ -412,6 +429,7 @@ class FluidSim {
     // Velocity advection can reintroduce outward flow at the edges, so the
     // wall is enforced once more on the exact field the dye will be moved by.
     if(typeof state !== 'undefined' && state.canvasFrame) this.applyFrameMask(0.06);
+    this.applyObstacle();
     // advect dye
     this.bindQuad(this.progAdvect, this.dye.a.texel);
     textures[0] = this.velocity.a.tex;
@@ -419,11 +437,18 @@ class FluidSim {
     textures[1] = this.dye.a.tex;
     assign(this.progAdvect.uniforms.uSource, textures[1]);
     assign(this.progAdvect.uniforms.dt, dt);
+    assign(this.progAdvect.uniforms.dyePass,1);
     assign(this.progAdvect.uniforms.dissipation, state.dissipation);
     this.draw(this.dye.b); this.dye.swap();
   }
 
-  clearDye(){
+  applyObstacle(){if(!obstacle.r)return;const u=this.progObstacle.uniforms;this.bindQuad(this.progObstacle,this.velocity.a.texel);assign(u.uTexture,this.velocity.a.tex);assign(u.obstacle,obstacle.x,obstacle.y,obstacle.r);assign(u.aspect,fluidCanvas.width/fluidCanvas.height);this.draw(this.velocity.b);this.velocity.swap()}
+ stopVelocity(){
+  const previous=renderer.getRenderTarget(),color=renderer.getClearColor(new T.Color()),alpha=renderer.getClearAlpha();renderer.setClearColor(0,0);
+  for(const key of ['velocity','pressure'])for(const f of [this[key].a,this[key].b]){renderer.setRenderTarget(f.rt);renderer.clear()}
+  renderer.setRenderTarget(previous);renderer.setClearColor(color,alpha);recentShearRate=0;
+ }
+ clearDye(){
     this.bindQuad(this.progClear, this.dye.a.texel);
     textures[0] = this.dye.a.tex;
     assign(this.progClear.uniforms.uTexture, textures[0]);
@@ -970,16 +995,17 @@ const activeBrushColor=()=>{
 };
 const pendingRipples=[];
 const ripple=(x,y)=>{const col=activeBrushColor().slice();for(let i=0;i<12;i++)pendingRipples.push({x,y,col,angle:i/12*Math.PI*2,delay:i*.014,size:state.brushSize});splatSym(x,y,0,0,col,.009*state.brushSize)};
-const tickRipples=dt=>{for(let i=pendingRipples.length-1;i>=0;i--){const p=pendingRipples[i];p.delay-=dt;if(p.delay<=0){splatSym(p.x,p.y,Math.cos(p.angle)*4.5,Math.sin(p.angle)*4.5,p.col,.003*p.size);pendingRipples.splice(i,1)}}};
+const tickRipples=dt=>{for(const p of pendingRipples)p.delay-=dt;pendingRipples.sort((a,b)=>a.delay-b.delay);while(pendingRipples.length&&pendingRipples[0].delay<=0){const p=pendingRipples.shift();splatSym(p.x,p.y,Math.cos(p.angle)*4.5,Math.sin(p.angle)*4.5,p.col,.003*p.size)}};
 const finishRipples=()=>{for(let i=0;pendingRipples.length&&i<16;i++){tickRipples(.014);fluidSim.step(.014)}};
 return{solver:fluidSim,canvas:fluidCanvas,particles,pointers:pointerData,brushes:tentacleBrushes,particleCanvas:jellyCanvas,
-color:activeBrushColor,finishRipples,cancelRipples:()=>{pendingRipples.length=0},setState:v=>{state=v},seed:seedParticles,addParticles:addMoreParticles,splat:splatSym,ripple,
+setObstacle:v=>{obstacle=v||{x:0,y:0,r:0}},color:activeBrushColor,finishRipples,cancelRipples:()=>{pendingRipples.length=0},setState:v=>{state=v},seed:seedParticles,addParticles:addMoreParticles,splat:splatSym,ripple,
 startTentacle:startTentacleBrush,endTentacle:endTentacleBrush,pick:(x,y)=>{sampleDyeField();return dyeAt(x,y)},
-frame(dt,frozen){
+frame(dt,frozen,elapsed=dt){
+if(frozen&&state.paused)freezeProgress=1;
 frameScale=Math.min(2,dt*60);freezeProgress+=(Number(frozen)-freezeProgress)*Math.min(1,dt/.9);
 if(Math.abs(freezeProgress-Number(frozen))<.004)freezeProgress=Number(frozen);
 const simDt=dt*Math.max(.1,state.timeScale);
-if(!frozen){tickRipples(dt);applyAmbientFlow(simDt);updateAllTentacleBrushes();fluidSim.step(simDt);applyCanvasFrameContainment(simDt)}
+if(!frozen){tickRipples(elapsed);applyAmbientFlow(simDt);updateAllTentacleBrushes();fluidSim.step(simDt);applyCanvasFrameContainment(simDt)}
 else if(freezeProgress<.985){fluidSim.step(simDt)}
 fluidSim.render();
 const ctx=jellyCanvas.getContext('2d');if(!state.particleTrail||frozen){ctx.clearRect(0,0,jellyCanvas.width,jellyCanvas.height)}else{ctx.globalCompositeOperation='destination-out';ctx.fillStyle=`rgba(0,0,0,${Math.max(.015,1-state.particleTrail*.095)})`;ctx.fillRect(0,0,jellyCanvas.width,jellyCanvas.height);ctx.globalCompositeOperation='source-over'}
