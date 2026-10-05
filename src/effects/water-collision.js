@@ -33,14 +33,15 @@
       let available=studio.showSubject&&pairs.length>0;
       for(const p of pairs){p.original.updateWorldMatrix(true,false);p.mask.matrix.copy(p.original.matrixWorld);p.coat.matrix.copy(p.original.matrixWorld);let visible=true;for(let o=p.original;o;o=o.parent)if(!o.visible)visible=false;
         // Original Core uses a solid proxy even when individual layers are off.
-        p.mask.visible=available&&(sphere?true:visible);p.coat.visible=p.mask.visible&&!!p.coat.geometry.attributes.uv;p.mask.updateMatrixWorld(true);p.coat.updateMatrixWorld(true)}
+        p.mask.visible=available&&(sphere?true:visible);p.coat.visible=p.mask.visible&&p.r.hasInk&&!!p.coat.geometry.attributes.uv;p.mask.updateMatrixWorld(true);p.coat.updateMatrixWorld(true)}
       return available;
     };
     const update=(state,engine,dt)=>{
       const active=studio.active&&state.on;coating.visible=active;
       if(!active){engine.setCollisionMap(null);return}
+      if(!state.collision&&![...records.values()].some(r=>r.hasInk)){engine.setCollisionMap(null);coating.visible=false;return}
       const available=sync();
-      coating.visible=available&&state.collisionStain>0;
+      coating.visible=available&&state.collisionStain>0&&pairs.some(p=>p.r.hasInk);
       for(const r of records.values())r.material.opacity=state.collisionStain??.5;
       if(!state.collision||!available){engine.setCollisionMap(null);return}
       const dims=engine.solver.velocity.a; if(!target||target.width!==dims.w||target.height!==dims.h){target?.dispose();target=new T.WebGLRenderTarget(dims.w,dims.h,{minFilter:T.NearestFilter,magFilter:T.NearestFilter,depthBuffer:true});target.texture.colorSpace=T.NoColorSpace}
