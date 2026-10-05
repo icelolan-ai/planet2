@@ -7168,7 +7168,7 @@ class Explorer {
       const d = dracoPaths();
       this.draco = new THREE.DRACOLoader();
       this.draco.setDecoderPath({ js: d.js, wasm: d.wasm });
-      this.gltf = new THREE.GLTFLoader(); this.gltf.setDRACOLoader(this.draco);
+      this.gltf = configureModelLoader(new THREE.GLTFLoader()); this.gltf.setDRACOLoader(this.draco);
     }
     const gltf = await new Promise((ok, bad) => this.gltf.parse(buf.buffer, '', ok, bad));
     this.loadP = 0.98;
@@ -7476,13 +7476,27 @@ async function fetchBytes(url, onBytes) {
 }
 
 /** Loads the world GLBs (hashed files when split, embedded base64 otherwise) and decodes them with Draco. */
+// Keep GLB image decoding local to these loaders. Modern iOS selects
+// ImageBitmap by default, whose decoded surfaces can be lost/rejected under
+// memory pressure. HTML images also remain usable for context restoration.
+const appleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function configureModelLoader(loader) {
+  if (appleMobile) loader.register(parser => {
+    parser.textureLoader = new THREE.TextureLoader(parser.options.manager)
+      .setCrossOrigin(parser.options.crossOrigin).setRequestHeader(parser.options.requestHeader);
+    return { name: 'CEREBRA_APPLE_TEXTURES' };
+  });
+  return loader;
+}
 class WorldLibrary {
   constructor() {
     const d = dracoPaths();
     this.urls = d.urls;
     this.draco = new THREE.DRACOLoader();
     this.draco.setDecoderPath({ js: d.js, wasm: d.wasm });
-    this.loader = new THREE.GLTFLoader();
+    if (appleMobile) this.draco.setWorkerLimit(1);
+    this.decodeTail = Promise.resolve();
+    this.loader = configureModelLoader(new THREE.GLTFLoader());
     this.loader.setDRACOLoader(this.draco);
   }
   bytes(id) {
@@ -7499,7 +7513,13 @@ class WorldLibrary {
       buf = b64ToBuffer(el.textContent.trim()); el.textContent = '';
       onBytes && onBytes(buf.byteLength);
     }
-    return new Promise((res, rej) => this.loader.parse(buf, '', res, rej));
+    const decode = () => new Promise((res, rej) => this.loader.parse(buf, '', res, rej));
+    if (!appleMobile) return decode();
+    // Fetches can overlap; one Apple decode at a time bounds transient image
+    // and Draco allocation while the seven permanent scenes are assembled.
+    const result = this.decodeTail.then(decode);
+    this.decodeTail = result.catch(() => {});
+    return result;
   }
   dispose() { this.draco.dispose(); this.urls.forEach(u => URL.revokeObjectURL(u)); }
 }

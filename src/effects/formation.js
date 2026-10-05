@@ -11,7 +11,7 @@ const FORMATION = Effects.register({
     { key: 'duration',  label: 'Duration',    min: 0.4,   max: 5,   step: 0.05 },
   ],
   defaults: { enabled: 1, edge: 0.053, scale: 1.56, speed: 0.05, amount: 0.19, intensity: 1.2, duration: 1.8 },
-  reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
+  get reduced() { return matchMedia('(prefers-reduced-motion: reduce)').matches; },
   attach(w) {
     w.U.uKyForm = { value: new THREE.Vector4(1, 0.053, 1.56, 0.19) };
     w.U.uKyFormI = { value: new THREE.Vector2(1.2, 0) };
@@ -29,6 +29,9 @@ const FORMATION = Effects.register({
   },
   update(w, dt) {
     const T = w.tune, F = w.form;
+    // The preference may change after load. Atelier intentionally advances
+    // worlds with dt=0 in reduced motion, so finish rather than freeze a cutout.
+    if (this.reduced || !T.f_enabled) F.t = 1;
     if (F.t < 1) F.t = Math.min(1, F.t + dt / Math.max(0.1, T.f_duration));
     F.flow += dt * T.f_speed;
     const e = F.t < 1 ? 1 - Math.pow(1 - F.t, 2.2) : 1;
