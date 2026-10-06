@@ -8003,12 +8003,13 @@ class WorldAtelier {
         if (e.target !== card || !['Enter', ' '].includes(e.key)) return;
         e.preventDefault(); this.selectRoute(card.dataset.route);
       });
-      button.addEventListener('focus', () => { if (this.choice.dataset.sel !== 'none') this.selectRoute(card.dataset.route); });
+      button.addEventListener('focus', () => { if (this.choice.dataset.sel !== 'none' && button.matches(':focus-visible')) this.selectRoute(card.dataset.route); });
     });
     // Vertical gestures resize the two choices inside one fixed viewport.
     let swipe = null, suppressClickUntil = 0, wheelAmount = 0, wheelAt = 0, wheelLock = 0;
     this.choice.addEventListener('pointerdown', e => {
       if (this.entering || !e.isPrimary || e.button !== 0 || !matchMedia('(max-width:760px)').matches) return;
+      if (e.target.closest('button,input,select,textarea,a')) return;
       suppressClickUntil = 0;
       swipe = { id: e.pointerId, x: e.clientX, y: e.clientY, route: this.selectedRoute, split: parseFloat(getComputedStyle(this.choice).getPropertyValue('--s')) || 50, dragging: false };
     });
@@ -8042,7 +8043,19 @@ class WorldAtelier {
       this.selectRoute(wheelAmount > 0 ? 'orbit' : 'atelier'); wheelAmount = 0; wheelLock = now + 700;
     }, { passive: false });
     this.choice.addEventListener('keydown', e => { if (e.key === 'Escape' && !this.entering) this.selectRoute('none'); });
-    this.choice.querySelectorAll('[data-enter]').forEach(b => b.addEventListener('click', () => this.launch(b.dataset.enter)));
+    this.choice.querySelectorAll('[data-enter]').forEach(b => {
+      // Touch activation must not depend on Safari's delayed hover/click sequence.
+      let press = null;
+      b.addEventListener('pointerdown', e => { if (e.isPrimary && e.button === 0 && e.pointerType !== 'mouse') press = { id: e.pointerId, x: e.clientX, y: e.clientY }; });
+      b.addEventListener('pointercancel', () => { press = null; });
+      b.addEventListener('pointerup', e => {
+        const p = press; press = null; if (!p || p.id !== e.pointerId) return;
+        const r = b.getBoundingClientRect();
+        if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > 20 || e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
+        e.preventDefault(); this.launch(b.dataset.enter);
+      });
+      b.addEventListener('click', () => this.launch(b.dataset.enter));
+    });
     this.backButton.addEventListener('click', () => this.backFromOrbit());
     this.el.querySelector('[data-at-back]').addEventListener('click', () => this.back());
     this.el.querySelector('[data-at-orbit]').addEventListener('click', () => this.orbit());
@@ -8122,7 +8135,7 @@ class WorldAtelier {
     this.choice.scrollTop = 0;
   }
   selectRoute(route) {
-    if (this.entering) return;
+    if (this.entering || this.selectedRoute === route) return;
     this.selectedRoute = route; this.choice.dataset.sel = route;
     this.choice.querySelectorAll('[data-route]').forEach(card => {
       const selected = card.dataset.route === route;
