@@ -927,26 +927,19 @@ function updateAllTentacleBrushes(){
     }
   });
 }
-/* A bright overlay outline on top of the freshly-painted stroke, purely
-   while the finger is still down — helps the tapered tentacle shape read
-   clearly while it's being drawn, on top of the fluid colour underneath. */
+/* Coloured brush preview while drawing. It is not part of the saved dye;
+   no white outline is composited over the water. */
 function drawTentacleBrushes(ctx){
   const ids = Object.keys(tentacleBrushes);
   if(!ids.length) return;
   const W = jellyCanvas.width, H = jellyCanvas.height;
   ids.forEach(id=>{
     const tb = tentacleBrushes[id];
+    if (!pointerData[id]?.down) return;
     const nodes = tb.nodes, n = nodes.length;
     if(n < 3) return;
     const pts = nodes.map(nd => ({x: nd.x, y: 1-nd.y}));
     const [r,g,b] = activeBrushColor();
-    const path = new Path2D();
-    path.moveTo(pts[0].x*W, pts[0].y*H);
-    for(let i=1;i<n-1;i++){
-      const mx=(pts[i].x+pts[i+1].x)/2*W, my=(pts[i].y+pts[i+1].y)/2*H;
-      path.quadraticCurveTo(pts[i].x*W, pts[i].y*H, mx, my);
-    }
-    path.lineTo(pts[n-1].x*W, pts[n-1].y*H);
     for(let i=0;i<n-1;i++){
       const a=pts[i], b2=pts[i+1];
       const tNorm = i/(n-1);
@@ -964,10 +957,7 @@ function drawTentacleBrushes(ctx){
       ctx.moveTo(a.x*W, a.y*H); ctx.lineTo(b2.x*W, b2.y*H);
       ctx.stroke();
     }
-    ctx.beginPath();
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-    ctx.lineWidth = Math.max(0.6, 2*1*(state.brushSize||1));
-    ctx.stroke(path);
+
   });
 }
 
@@ -1026,8 +1016,8 @@ const simDt=dt*Math.max(.1,state.timeScale);
 if(!frozen){tickRipples(elapsed);applyAmbientFlow(simDt);updateAllTentacleBrushes();fluidSim.step(simDt);applyCanvasFrameContainment(simDt)}
 else if(freezeProgress<.985){fluidSim.step(simDt)}
 fluidSim.render();
-const ctx=jellyCanvas.getContext('2d');if(!state.particleTrail||frozen){ctx.clearRect(0,0,jellyCanvas.width,jellyCanvas.height)}else{ctx.globalCompositeOperation='destination-out';ctx.fillStyle=`rgba(0,0,0,${Math.max(.015,1-state.particleTrail*.095)})`;ctx.fillRect(0,0,jellyCanvas.width,jellyCanvas.height);ctx.globalCompositeOperation='source-over'}
-if(state.particles){if(!frozen&&state.particleInteract!=='none')sampleDyeField();drawParticles(ctx,performance.now(),frozen)}drawTentacleBrushes(ctx);
+const ctx=jellyCanvas.getContext('2d');if(!state.particles||!state.particleTrail||frozen){ctx.clearRect(0,0,jellyCanvas.width,jellyCanvas.height)}else{ctx.globalCompositeOperation='destination-out';ctx.fillStyle=`rgba(0,0,0,${Math.max(.015,1-state.particleTrail*.095)})`;ctx.fillRect(0,0,jellyCanvas.width,jellyCanvas.height);ctx.globalCompositeOperation='source-over'}
+if(state.particles){if(!frozen&&state.particleInteract!=='none')sampleDyeField();drawParticles(ctx,performance.now(),frozen)}if(!frozen)drawTentacleBrushes(ctx);
 },clear(){pendingRipples.length=0;fluidSim.clearAll();particles.length=0;const c=jellyCanvas.getContext('2d');c.clearRect(0,0,jellyCanvas.width,jellyCanvas.height)},resize(w,h){fluidSim.resize(w,h);jellyCanvas.width=Math.min(1024,w);jellyCanvas.height=Math.round(jellyCanvas.width*h/w)}
 };
   };

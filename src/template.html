@@ -1091,8 +1091,10 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 .st-lib-head span{flex:1;color:#97a1b3;font:11px var(--f-mono)}
 .st-lib-track{display:flex;gap:28px;overflow-x:auto;scroll-snap-type:x mandatory;padding:20px clamp(16px,3vw,48px);scrollbar-width:none;touch-action:pan-y;cursor:grab}
 .st-lib-track.is-dragging{cursor:grabbing;scroll-snap-type:none;user-select:none}.st-lib-track::-webkit-scrollbar{display:none}
-.st-lib-card{flex:0 0 min(68vw,380px);scroll-snap-align:center;border-radius:26px;overflow:hidden;background:#141821;border:1px solid #ffffff1c;box-shadow:0 30px 70px #000a;transition:transform .2s,opacity .2s}
-.st-lib-img{height:min(62vh,480px);background-size:cover;background-repeat:no-repeat;background-color:#0b0d13}
+.st-lib-card{flex:0 0 min(68vw,380px);scroll-snap-align:center;border-radius:26px;overflow:hidden;background:#141821;border:1px solid #ffffff1c;box-shadow:0 30px 70px #000a;transition:transform .24s cubic-bezier(.2,.8,.2,1),opacity .24s,box-shadow .24s;transform-origin:center center}
+.st-lib-card.is-selected{position:relative;z-index:2;border-color:#a78bfa88;box-shadow:0 20px 60px #000a,0 0 24px #8b5cf633}
+@media(prefers-reduced-motion:reduce){.st-lib .st-lib-card{transition:none;animation:none!important}}
+.st-lib-img{height:min(56vh,440px);background-size:cover;background-repeat:no-repeat;background-color:#0b0d13}
 .st-lib-info{padding:16px 18px;display:grid;gap:4px}
 .st-lib-info b{font:600 14.5px var(--f-sans)}.st-lib-info small{color:#97a1b3}
 .st-lib-info div{display:flex;gap:8px;margin-top:8px}
@@ -8992,7 +8994,7 @@ class CoreStudio {
           <button type="button" class="st-btn is-primary" data-vid-go>Record</button>
           <small data-vid-msg role="status">Records the planet, spinning Kits and moving lines as they move now.</small></div>
         <div class="st-save-planet"><span class="st-ctx-kind">Save planet</span><input type="text" data-planet-name maxlength="24" placeholder="Name your planet" aria-label="Planet name"><button type="button" class="st-btn" data-planet-save>Save planet</button><small data-planet-msg role="status">Keeps your Cerebra core look and shows it first in World Atelier.</small></div></div>
-      <div class="st-lib" data-studio-library hidden><div class="st-lib-head"><b>Library</b><span data-lib-count></span><button type="button" class="st-btn" data-lib-step="-1" aria-label="Previous saved work">←</button><button type="button" class="st-btn" data-lib-step="1" aria-label="Next saved work">→</button><button type="button" class="st-btn" data-lib-mode aria-pressed="false">Circular</button><button type="button" class="st-btn" data-lib-close aria-label="Close library">✕</button></div>
+      <div class="st-lib" data-studio-library hidden><div class="st-lib-head"><b>Library</b><span data-lib-count></span><button type="button" class="st-btn" data-lib-step="-1" aria-label="Previous saved work">←</button><button type="button" class="st-btn" data-lib-step="1" aria-label="Next saved work">→</button><button type="button" class="st-btn" data-lib-mode aria-pressed="false">Circular</button><button type="button" class="st-btn" data-lib-export aria-label="Export saved works as a library JSON file">Export library</button><button type="button" class="st-btn" data-lib-close aria-label="Close library">✕</button></div>
         <div class="st-lib-track" data-lib-track></div><p class="st-lib-empty" data-lib-empty>Nothing kept yet. Press Keep in the toolbar to save this composition.</p></div>
       <div class="st-dock st-glass" data-tray="dock" role="toolbar" aria-label="Studio"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button>
         <button type="button" class="st-btn st-dock-fold" data-dock-fold aria-expanded="true" aria-label="Fold toolbar"><span class="st-chev" aria-hidden="true"></span></button>
@@ -9372,20 +9374,29 @@ class CoreStudio {
     this.el.querySelector('[data-studio-lib-save]').onclick = () => this.libSave();
     this.el.querySelector('[data-studio-lib]').onclick = () => this.libOpen(true);
     this.el.querySelector('[data-lib-close]').onclick = () => this.libOpen(false);
+    this.el.querySelector('[data-lib-export]').onclick = () => this.libExport();
     this.el.querySelector('[data-lib-mode]').onclick = e => { const on = this.lib.classList.toggle('is-circular'); e.currentTarget.setAttribute('aria-pressed', String(on)); this.libParallax(); };
     const libTrack = this.el.querySelector('[data-lib-track]');
     libTrack.tabIndex = 0; libTrack.setAttribute('aria-label', 'Saved works carousel');
-    libTrack.addEventListener('scroll', () => this.libParallax(), { passive: true });
-    const stepLibrary = dir => { const card = libTrack.querySelector('.st-lib-card'); if (card) libTrack.scrollBy({left:dir*(card.offsetWidth+28),behavior:'smooth'}); };
+    this.libSelectedId = null;
+    libTrack.addEventListener('scroll', () => this.libParallax(true), { passive: true });
+    const stepLibrary = dir => {
+      const cards = [...libTrack.querySelectorAll('.st-lib-card')];
+      const i = cards.findIndex(c => c.dataset.id === this.libSelectedId);
+      const card = cards[clamp((i < 0 ? 0 : i) + dir, 0, cards.length - 1)];
+      if (card) this.libSelect(card, true);
+    };
     this.el.querySelectorAll('[data-lib-step]').forEach(b=>b.onclick=()=>stepLibrary(+b.dataset.libStep));
     libTrack.addEventListener('keydown', e => { if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();stepLibrary(e.key==='ArrowLeft'?-1:1);} });
     let libDrag = null, libSuppressClick = 0;
-    libTrack.addEventListener('pointerdown', e => { if(e.button!==0||e.target.closest('button,input'))return;libDrag={id:e.pointerId,x:e.clientX,left:libTrack.scrollLeft,moved:false}; });
+    libTrack.addEventListener('pointerover', e => { if(e.pointerType==='mouse'&&!libDrag){const card=e.target.closest('.st-lib-card');if(card)this.libSelect(card);} });
+    libTrack.addEventListener('focusin', e => { const card=e.target.closest('.st-lib-card');if(card)this.libSelect(card); });
+    libTrack.addEventListener('pointerdown', e => { if(e.button!==0||e.target.closest('button,input'))return;this.libScrollTarget=null;const card=e.target.closest('.st-lib-card');if(card)this.libSelect(card);libDrag={id:e.pointerId,x:e.clientX,left:libTrack.scrollLeft,moved:false}; });
     libTrack.addEventListener('pointermove', e => { const d=libDrag;if(!d||d.id!==e.pointerId)return;const dx=e.clientX-d.x;if(!d.moved&&Math.abs(dx)<6)return;d.moved=true;libTrack.setPointerCapture(e.pointerId);libTrack.classList.add('is-dragging');e.preventDefault();libTrack.scrollLeft=d.left-dx; });
     const endLibraryDrag = e => { const d=libDrag;if(!d||d.id!==e.pointerId)return;libDrag=null;libTrack.classList.remove('is-dragging');if(libTrack.hasPointerCapture(e.pointerId))libTrack.releasePointerCapture(e.pointerId);if(d.moved)libSuppressClick=performance.now()+250; };
     libTrack.addEventListener('pointerup',endLibraryDrag);libTrack.addEventListener('pointercancel',endLibraryDrag);
-    libTrack.addEventListener('click', e => { if(performance.now()<libSuppressClick){e.preventDefault();e.stopPropagation();return;}if(e.target.closest('button'))return;const card=e.target.closest('.st-lib-card');if(card)libTrack.scrollTo({left:card.offsetLeft-(libTrack.clientWidth-card.offsetWidth)/2,behavior:'smooth'}); },true);
-    libTrack.addEventListener('wheel', e => { if(Math.abs(e.deltaY)>Math.abs(e.deltaX)&&libTrack.scrollWidth>libTrack.clientWidth){e.preventDefault();libTrack.scrollLeft+=e.deltaY;} },{passive:false});
+    libTrack.addEventListener('click', e => { if(performance.now()<libSuppressClick){e.preventDefault();e.stopPropagation();return;}if(e.target.closest('button'))return;const card=e.target.closest('.st-lib-card');if(card)this.libSelect(card,true); },true);
+    libTrack.addEventListener('wheel', e => { if(Math.abs(e.deltaY)>Math.abs(e.deltaX)&&libTrack.scrollWidth>libTrack.clientWidth){e.preventDefault();this.libScrollTarget=null;libTrack.scrollLeft+=e.deltaY;} },{passive:false});
     this.el.querySelector('[data-studio-lens]').onchange = e => { this.lensOn = e.target.checked; LENS_U.uLensOn.value = +this.lensOn; LENS_U.user = true; document.querySelectorAll('[data-t-lens] button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === +this.lensOn))); this.commit(); };
     this.el.querySelector('[data-studio-freeze]').onclick = e => { this.frozen = !this.frozen; const b = e.currentTarget; b.setAttribute('aria-pressed', String(this.frozen)); b.setAttribute('aria-label', this.frozen ? 'Resume motion' : 'Freeze motion'); b.querySelector('[data-freeze-label]').textContent = this.frozen ? 'Play' : 'Stop'; };
     this.showSubject = true;
@@ -10499,7 +10510,15 @@ class CoreStudio {
     g.restore();
   }
   // Library: keep compositions (all settings + a thumbnail) in this browser and reopen them in a parallax carousel.
-  libRead() { try { return JSON.parse(localStorage.getItem('cerebra-studio-library') || '[]'); } catch (e) { return []; } }
+  libRead() { try { const a = JSON.parse(localStorage.getItem('cerebra-studio-library') || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  libExport() {
+    const works = this.libRead(); if (!works.length) return;
+    // Preserve complete editable states and thumbnails, not just the preview images.
+    const blob = new Blob([JSON.stringify({ format: 'cerebra-studio-library', version: 1, works })], { type: 'application/json' });
+    const url = URL.createObjectURL(blob), link = document.createElement('a');
+    link.href = url; link.download = 'Cerebra-Library.json'; document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  }
   libWrite(a) { try { localStorage.setItem('cerebra-studio-library', JSON.stringify(a)); return true; } catch (e) { return false; } }
   async libSave() {
     const b = this.el.querySelector('[data-studio-lib-save] .st-label'); if (this.app.cap) return; b.textContent = 'Saving…'; this.select(null);
@@ -10518,10 +10537,11 @@ class CoreStudio {
     b.textContent = 'Kept ✓'; setTimeout(() => { b.textContent = 'Keep'; }, 1600);
   }
   libOpen(on) {
-    this.lib.hidden = !on; this.el.querySelector('[data-studio-lib]').classList.toggle('is-open', on); if (!on) return;
+    this.libScrollTarget = null; this.lib.hidden = !on; this.el.querySelector('[data-studio-lib]').classList.toggle('is-open', on); if (!on) return;
     const a = this.libRead(), tr = this.el.querySelector('[data-lib-track]'), esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    this.el.querySelector('[data-lib-export]').disabled = !a.length;
     this.el.querySelector('[data-lib-empty]').hidden = a.length > 0; this.el.querySelector('[data-lib-count]').textContent = a.length ? `${a.length} kept` : '';
-    tr.innerHTML = a.map(w => `<article class="st-lib-card" data-id="${w.id}"><div class="st-lib-img" style="background-image:url('${w.thumb}')"></div><div class="st-lib-info"><b>${esc(w.name)}</b><small>${esc(w.date)}</small><div><button type="button" class="st-btn is-primary" data-lib-load>Open</button><button type="button" class="st-btn" data-lib-del aria-label="Delete">${this.icons.trash}</button></div></div></article>`).join('');
+    tr.innerHTML = a.map(w => `<article class="st-lib-card" tabindex="0" aria-label="${esc(w.name)}" data-id="${esc(w.id)}"><div class="st-lib-img" style="background-image:url('${w.thumb}')"></div><div class="st-lib-info"><b>${esc(w.name)}</b><small>${esc(w.date)}</small><div><button type="button" class="st-btn is-primary" data-lib-load>Open</button><button type="button" class="st-btn" data-lib-del aria-label="Delete">${this.icons.trash}</button></div></div></article>`).join('');
     tr.querySelectorAll('.st-lib-card').forEach((card, i) => { card.style.animationDelay = `${i * 70}ms`;
       const w = a.find(x => String(x.id) === card.dataset.id);
       card.querySelector('[data-lib-load]').onclick = () => { this.setSubject(w.subject ?? -1); this.restore(w.state); if (w.pl) this.showPlanet(w.pl); this.layoutTrays && this.layoutTrays(); this.commit(); this.libOpen(false); };
@@ -10529,13 +10549,31 @@ class CoreStudio {
     });
     requestAnimationFrame(() => this.libParallax());
   }
-  libParallax() {
-    const tr = this.el.querySelector('[data-lib-track]'), mid = tr.getBoundingClientRect().left + tr.clientWidth / 2;
-    tr.querySelectorAll('.st-lib-card').forEach(c => {
-      const r = c.getBoundingClientRect(), d = clamp((r.left + r.width / 2 - mid) / tr.clientWidth, -1, 1);
+  libSelect(card, center = false) {
+    this.libScrollTarget = null; this.libSelectedId = card.dataset.id; this.libParallax();
+    if (center) {
+      const tr = this.el.querySelector('[data-lib-track]');
+      const left = card.offsetLeft - tr.offsetLeft - (tr.clientWidth - card.offsetWidth) / 2;
+      // Wheel/drag selects the nearest card; arrow/click centering keeps its explicit selection.
+      this.libScrollTarget = clamp(left, 0, Math.max(0, tr.scrollWidth - tr.clientWidth));
+      tr.scrollTo({left: this.libScrollTarget, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
+    }
+  }
+  libParallax(scrolling = false) {
+    const tr = this.el.querySelector('[data-lib-track]'), cards = [...tr.querySelectorAll('.st-lib-card')];
+    const mid = tr.scrollLeft + tr.clientWidth / 2;
+    const center = c => c.offsetLeft - tr.offsetLeft + c.offsetWidth / 2;
+    const nearest = cards.reduce((best, c) => !best || Math.abs(center(c) - mid) < Math.abs(center(best) - mid) ? c : best, null);
+    const targeting = this.libScrollTarget != null;
+    if (targeting && Math.abs(tr.scrollLeft - this.libScrollTarget) < 2) this.libScrollTarget = null;
+    if (nearest && ((scrolling && !targeting) || !cards.some(c => c.dataset.id === this.libSelectedId))) this.libSelectedId = nearest.dataset.id;
+    cards.forEach(c => {
+      const d = clamp((center(c) - mid) / tr.clientWidth, -1, 1), selected = c.dataset.id === this.libSelectedId;
+      c.classList.toggle('is-selected', selected);
       c.querySelector('.st-lib-img').style.backgroundPosition = `${50 + d * 40}% 50%`;
       const circ = this.lib.classList.contains('is-circular');
-      c.style.transform = circ ? `perspective(1100px) rotateY(${-d * 55}deg) translateZ(${-Math.abs(d) * 160}px) translateY(${Math.abs(d) * 50}px)` : `scale(${1 - Math.abs(d) * .12})`; c.style.opacity = 1 - Math.abs(d) * (circ ? .3 : .45);
+      c.style.transform = circ ? `perspective(1100px) rotateY(${selected ? 0 : -d * 55}deg) translateZ(${selected ? 0 : -Math.abs(d) * 160}px) scale(${selected ? 1.04 : .84})` : `translateY(${selected ? -6 : 0}px) scale(${selected ? 1.04 : .84})`;
+      c.style.opacity = selected ? 1 : .72;
     });
   }
   // Pencil: freehand strokes become 'stroke' items. Holding still turns a stroke into a line or circle (QuickShape);
