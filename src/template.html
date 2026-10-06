@@ -9645,6 +9645,14 @@ class CoreStudio {
     const body = typeof PlanetBody !== 'undefined' && PlanetBody.active; if (!body) return null;
     const all = Effects.defaults(), tune = {}; Object.keys(all).forEach(k => { if (k.startsWith('s_') || k.startsWith('b_')) tune[k] = all[k]; });
     try { Object.assign(tune, JSON.parse(localStorage.getItem('cerebra.corefx.v1') || '{}')); } catch (e) {}
+    // Start existing browsers on the original Core once; subsequent explicit style choices remain saved.
+    try {
+      if (localStorage.getItem('cerebra.corefx.origins-default.v1') !== '1') {
+        Object.assign(tune, { s_enabled: 1, s_style: 'none', s_shape: 'sphere' });
+        localStorage.setItem('cerebra.corefx.v1', JSON.stringify(tune));
+        localStorage.setItem('cerebra.corefx.origins-default.v1', '1');
+      }
+    } catch (e) { Object.assign(tune, { s_enabled: 1, s_style: 'none', s_shape: 'sphere' }); }
     const cw = { isCore: true, tune, def: { radius: 1.3 }, spinG: body.group, axis: body.group, model: { visible: true }, reveal: 1 };
     SURFACE.attach(cw); BURST.attach(cw);
     const u0 = body.update; body.update = function (dt, f) { const r = u0.call(this, dt, f); try { SURFACE.update(cw, dt); BURST.update(cw, dt); } catch (e) {} return r; };
