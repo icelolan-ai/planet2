@@ -11,6 +11,7 @@
     s.hist = s.hist.map(text => { const d = JSON.parse(text); d.innerParticles = capture(); return JSON.stringify(d); });
     const restore = s.restore.bind(s);
     s.restore = text => { const d = JSON.parse(text), r = restore(text); if (d.innerParticles) tune.applySwarm(d.innerParticles); textRange = null; return r; };
+    const resetCore = tune.reset.bind(tune); tune.reset = () => { if (s.active) s.flushCommit(); const r = resetCore(); if (s.active) s.commit(); return r; };
     const selector = '[data-t-swarm],[data-t-swsize],[data-t-swcolor],[data-t-swblink],[data-t-swrate]';
     const panel = document.getElementById('tune'); let pending = null;
     panel.addEventListener('pointerdown', e => { if (s.active && (e.target.matches(selector) || e.target.closest('[data-t-swsw]') || e.target.matches('[data-t-reset]'))) s.flushCommit(); }, true);

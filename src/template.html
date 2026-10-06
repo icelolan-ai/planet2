@@ -3200,10 +3200,11 @@ const WorldTune = (() => {
       const L = LENS_DEFAULTS(); Object.keys(L).forEach(k => { LENS_U[k].value = L[k]; });
       setRange(aberr, L.uLensAberr, f3); setRange(blur, L.uLensBlur, f2); setRange(bloom, L.uLensBloom, f2); lens.set(1);
     };
-    q('[data-t-reset]').addEventListener('click', () => {
+    const resetCore = () => {
       try { localStorage.removeItem(KEY); } catch (e) {}
       mic.set(0); call('stopAudio'); call('resetAll'); resetUI(); try { const st = window.__cerebra && window.__cerebra.studio; st && st.resetFx && st.resetFx('core'); } catch (e) {} showSel(null); syncRings();
-    });
+    };
+    q('[data-t-reset]').addEventListener('click', resetCore);
 
     /* ---- selected part ---- */
     const selBox = q('[data-sel]');
@@ -3345,7 +3346,7 @@ const WorldTune = (() => {
       }
     };
     restore();
-    window.CerebraTune = { snapshot, apply, applySwarm(s) {
+    window.CerebraTune = { snapshot, apply, reset: resetCore, applySwarm(s) {
       const b = body(); if (!b || !s) return;
       b.setSwarm(s.swarm, s.swsize, s.swcolor); b.setSwarmBlink(s.swblink ?? 1, s.swrate ?? 1);
       setRange(swarm, s.swarm, pct); setRange(swsize, s.swsize, times); swarmC.set(s.swcolor);
@@ -9365,7 +9366,7 @@ class CoreStudio {
       ['[data-t-clarity]', '[data-t-rim]'].forEach(sel => { const e = document.querySelector(sel); if (e) { e.value = 0; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); } }); // Glass is always 0 after a reset
     };
     const resetFull = () => {
-      resetCanvas(); document.querySelector('[data-t-reset]').click(); this.resetTrays(); this.resetFx('all');
+      resetCanvas(); window.CerebraTune.reset(); this.resetTrays(); this.resetFx('all');
       try { ['cerebra-ui-prefs', 'cerebra-layers-size', 'cerebra-studio-pencil', 'cerebra-rot-snap'].forEach(k => localStorage.removeItem(k)); } catch (e) {}
       this.laySize = null; this.rotSnap = 0; this.gridStyle = { auto: true, c: '#ffffff', a: .25, t: 1, n: 24 }; if (this.syncGridUI) this.syncGridUI(); this.setGridMode('always');
       const root = document.documentElement; ['--cyg', '--glrgb1', '--glrgb2', '--glk', '--glb'].forEach(v => root.style.removeProperty(v)); this.uiSet && Object.assign(this.uiSet, { glk: 1, glb: 26, theme: 'violet' });
