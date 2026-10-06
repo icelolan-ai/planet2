@@ -13,10 +13,10 @@
     s.restore = text => { const d = JSON.parse(text), r = restore(text); if (d.innerParticles) tune.applySwarm(d.innerParticles); textRange = null; return r; };
     const selector = '[data-t-swarm],[data-t-swsize],[data-t-swcolor],[data-t-swblink],[data-t-swrate]';
     const panel = document.getElementById('tune'); let pending = null;
-    panel.addEventListener('pointerdown', e => { if (s.active && (e.target.matches(selector) || e.target.closest('[data-t-swsw]'))) s.flushCommit(); }, true);
+    panel.addEventListener('pointerdown', e => { if (s.active && (e.target.matches(selector) || e.target.closest('[data-t-swsw]') || e.target.matches('[data-t-reset]'))) s.flushCommit(); }, true);
     panel.addEventListener('input', e => { if (!s.active || !e.target.matches(selector)) return; if (pending && pending !== e.target) s.flushCommit(); pending = e.target; s.commitSoon(); });
     panel.addEventListener('change', e => { if (s.active && e.target.matches(selector)) { s.flushCommit(); pending = null; } });
-    panel.addEventListener('click', e => { if (s.active && e.target.closest('[data-t-swsw] button[data-c]')) s.commit(); });
+    panel.addEventListener('click', e => { if (s.active && (e.target.closest('[data-t-swsw] button[data-c]') || e.target.matches('[data-t-reset]'))) s.commit(); });
 
     const input = s.ctx.querySelector('[data-ctx-content]'), picker = s.ctx.querySelector('[data-ctx-color]');
     let textRange = null;
