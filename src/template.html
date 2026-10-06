@@ -1977,6 +1977,19 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 .st-motion-group>summary{list-style:none}.st-motion-group>summary::-webkit-details-marker{display:none}
 .st-motion-group .dial-grp{border:0;background:none;margin:0}.st-motion-group .dial-grp>summary{display:none}
 .st-motion-group[open]>summary{margin-bottom:12px}
+
+/* Studio application menus and composition assists. */
+
+#studio .st-layout-controls,#studio .st-timeline-body{display:grid;gap:12px;padding:8px 0 16px;font:12px var(--f-sans);color:var(--ink-2)}
+#studio .st-layout-controls label{display:flex;align-items:center;gap:8px}#studio .st-layout-controls p,#studio .st-timeline-body p{margin:0;font-size:11px;line-height:1.6;color:var(--ink-3)}
+#studio .st-layout-align,#studio .st-tl-actions{display:flex;flex-wrap:wrap;gap:6px}#studio .st-layout-align .st-btn,#studio .st-tl-actions .st-btn,#studio .st-tl-transport .st-btn{min-height:40px;padding:0 10px;border:1px solid var(--line-2);border-radius:8px}
+#studio .st-tl-transport{display:flex;flex-wrap:wrap;align-items:center;gap:8px}#studio .st-tl-transport label{display:flex;align-items:center;gap:6px}#studio .st-tl-transport input{width:64px}
+#studio .st-tl-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#studio .st-tl-fields label{display:grid;gap:5px;min-width:0}#studio .st-tl-fields label[hidden]{display:none}
+#studio .st-tl-fields input,#studio .st-tl-transport input,#studio .st-tl-actions select,#studio .st-layout-controls select{min-width:0;max-width:100%;min-height:36px;box-sizing:border-box;background:#ffffff08;border:1px solid var(--line-2);border-radius:6px;padding:4px 6px;color:var(--ink);font:12px var(--f-num)}
+#studio .st-tl-fields input{width:100%}#studio .st-timeline input[type=range]{width:100%;min-height:32px;accent-color:var(--val)}#studio .st-timeline button:disabled,#studio .st-timeline input:disabled{opacity:.4}
+#studio .st-tl-track{position:relative;height:38px;margin:0 18px;border-bottom:1px solid var(--line-2)}#studio .st-tl-key{position:absolute;top:0;transform:translateX(-50%);width:36px;height:36px;color:var(--val);font-size:16px}
+#studio .st-smart-guides{position:fixed;inset:0;z-index:54;pointer-events:none}#studio .st-smart-guides i{position:absolute;background:#ff6fae;box-shadow:0 0 4px #ff6fae80}#studio .st-smart-x{top:0;bottom:0;width:1px}#studio .st-smart-y{left:0;right:0;height:1px}
+
 </style>
 </head>
 <body class="is-loading">
@@ -9351,7 +9364,7 @@ class CoreStudio {
       this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioTool === this.tool && !this.drawing))); if (this.tool === 'hand' || this.tool === 'select') this.select(null); };
     this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.onclick = () => this.setTool(b.dataset.studioTool));
     this.el.querySelector('[data-studio-draw]').addEventListener('click', () => { if (this.drawing) { this.tool = 'move'; this.el.classList.remove('tool-hand'); } this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(!this.drawing && b.dataset.studioTool === this.tool))); });
-    this.initShortcuts(); this.initMarquee(); this.initXform(); this.initMood(); this.initPicker(); this.initZoom(); this.initSafety(); this.initPickThrough();
+    this.initShortcuts(); this.initMarquee(); this.initXform(); this.initMood(); this.initPicker(); this.initZoom(); this.initSafety(); this.initPickThrough(); this.initLayoutMotion();
     this.el.querySelector('[data-flyout="style"]').addEventListener('pointerdown', e => e.stopPropagation());
     this.el.querySelector('[data-studio-effect]').onchange = e => { this.effect = e.target.value; this.syncFxLayers(); this.el.querySelector('[data-studio-fx]').setAttribute('aria-pressed', String(this.fxOn)); this.commit(); };
     this.el.querySelector('[data-studio-grid]').onchange = e => { this.grid = e.target.checked; this.gridMode = this.grid ? 'always' : 'off'; this.setGridMode(this.gridMode); this.paintBackground(); };
@@ -10019,7 +10032,7 @@ class CoreStudio {
     const k = Math.min(2, size / Math.max(cw, H)), rw = 2 * Math.round(cw * k / 2), rh = 2 * Math.round(H * k / 2), FW = Math.round(W * k), FH = Math.round(H * k);
     await Promise.all(this.items.filter(i => i.kind === 'kit').map(kitFontWait));
     const sx = FW / this.app.stage.width, sy = FH / this.app.stage.height, shapes = this.focusShapes();
-    const dyn = i => (i.kind === 'kit' && (i.mOn || (i.spinOn && i.spin))) || (i.kind === 'stroke' && this._movers && this._movers.has(i));
+    const dyn = i => i.keyframes?.length || (i.kind === 'kit' && (i.mOn || (i.spinOn && i.spin))) || (i.kind === 'stroke' && this._movers && this._movers.has(i));
     const seq = []; let cur = null, hasPlanet = false;
     this.items.forEach(i => {
       if (i.kind === 'fx') { if (i.fxType === 'planet') { cur = null; hasPlanet = true; seq.push({ t: 'planet', it: i }); } return; }
@@ -10034,9 +10047,10 @@ class CoreStudio {
     try { recorder = new MediaRecorder(rc.captureStream(30), { mimeType: mime, videoBitsPerSecond: Math.round(rw * rh * 30 * .1) }); } catch (e) { console.error('Recorder failed', e); return; }
     recorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
     const bar = document.createElement('div'); bar.className = 'st-rec'; bar.innerHTML = '<i></i><span data-rec-t>0.0 / ' + secs + ' s</span><button type="button" class="st-btn" data-rec-x>Cancel</button>'; this.el.append(bar);
-    const R = this.rec = { rc, rg, seq, k, x0, cw, W, H, FW, FH, sx, sy, shapes, secs, recorder, mime, chunks, bar, last: 0, t0: 0, cancel: false, name: `cerebra-${this.preset}-${rw}x${rh}` };
+    const R = this.rec = { rc, rg, seq, k, x0, cw, W, H, FW, FH, sx, sy, shapes, secs, recorder, mime, chunks, bar, last: 0, t0: 0, cancel: false, timeline: { preview: this.timelinePreview, time: this.timelineTime }, name: `cerebra-${this.preset}-${rw}x${rh}` };
+    this.timelinePlaying = false;
     bar.querySelector('[data-rec-x]').onclick = () => this.stopRecord(true);
-    recorder.onstop = () => { bar.remove(); this.rec = null; if (R.cancel) return; const blob = new Blob(chunks, { type: mime.split(';')[0] }); if (blob.size) this.showVideo(blob, mime.includes('mp4') ? 'mp4' : 'webm', R.name); };
+    recorder.onstop = () => { bar.remove(); this.rec = null; this.timelinePreview = R.timeline.preview; this.timelineTime = R.timeline.time; this.items.filter(i => i.kind !== 'fx').forEach(i => this.place(i)); this.syncTimelineUI(); if (R.cancel) return; const blob = new Blob(chunks, { type: mime.split(';')[0] }); if (blob.size) this.showVideo(blob, mime.includes('mp4') ? 'mp4' : 'webm', R.name); };
     recorder.start(250); R.t0 = performance.now(); this.recFrame(R.t0, true);
   }
   recFrame(now, force) {
@@ -10044,6 +10058,7 @@ class CoreStudio {
     if (!force && now - R.last < 1000 / 30 - 3) return; R.last = now;
     const el = (now - R.t0) / 1000; R.bar.querySelector('[data-rec-t]').textContent = `${Math.min(el, R.secs).toFixed(1)} / ${R.secs} s`;
     if (el >= R.secs) { this.stopRecord(false); return; }
+    this.timelinePreview = true; this.timelineTime = Math.min(el, this.timelineDuration); this.items.filter(i => i.kind !== 'fx' && i.keyframes?.length).forEach(i => this.place(i)); this.syncTimelineUI();
     const frame = R.frame || (R.frame = document.createElement('canvas'));
     if (frame.width !== R.FW || frame.height !== R.FH) { frame.width = R.FW; frame.height = R.FH; }
     const g = frame.getContext('2d'), draw = src => g.drawImage(src, 0, 0, frame.width, frame.height);
@@ -10241,7 +10256,7 @@ class CoreStudio {
       const lineHit = kind === 'stroke' && this.tool === 'move' ? this.pluckAt(it, e) : -1;
       const wasSel = this.sel === it; this.select(it); if (lineHit >= 0 && !it.rot) this.selectLine(it, lineHit); else if (this.lineSel) this.clearLineSel();
       if (it.locked && kind !== 'text') return;
-      el.setPointerCapture(e.pointerId);
+      this.prepareTimelineEdit(it); el.setPointerCapture(e.pointerId);
       this.itemDrag = { it, id: e.pointerId, x: e.clientX, y: e.clientY, ox: it.x, oy: it.y, ow: it.w, oh: it.h, resize: !!e.target.closest('.st-handle'), moved: false, wasSel };
     });
     el.addEventListener('pointermove', e => {
@@ -10251,11 +10266,11 @@ class CoreStudio {
       d.moved = true; if (it.locked) return;
       if (d.resize) { const U = this.U(), W = innerWidth, H = innerHeight; it.w = Math.max(.04, d.ow + (e.clientX - d.x) / U); it.h = Math.max(.04, d.oh + (e.clientY - d.y) / U); it.x = d.ox + (it.w - d.ow) * U / 2 / W; it.y = d.oy + (it.h - d.oh) * U / 2 / H; }
       else { it.x = clamp(d.ox + dx, 0, 1); it.y = clamp(d.oy + dy, 0, 1); }
-      this.place(it); if (kind !== 'text') this.updateFocus(); else if (this.focusText) this.updateItemBlur();
+      this.place(it); if (!d.resize) this.snapSelection([it], e.altKey); if (kind !== 'text') this.updateFocus(); else if (this.focusText) this.updateItemBlur();
     });
     const end = e => {
       const d = this.itemDrag; if (!d || d.id !== e.pointerId || d.it !== it) return;
-      this.itemDrag = null;
+      this.itemDrag = null; this.hideSmartGuides();
       if (kind === 'text' && !d.moved && d.wasSel && e.type === 'pointerup') this.editText(it);
       if (d.moved) this.commit();
     };
@@ -10276,6 +10291,9 @@ class CoreStudio {
     const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r);
   }
   place(it) {
+    return this.withTimelineState(it, () => this.placeBase(it));
+  }
+  placeBase(it) {
     if (it.kind === 'fx') { this.applyFx(); return; }
     const el = it.el, W = innerWidth, H = innerHeight;
     el.classList.toggle('is-locked', it.locked);
@@ -10360,7 +10378,7 @@ class CoreStudio {
   isHid(it) { return !!it.hide || (it.group != null && this.groups.some(g => g.id === it.group && g.hide)); }
   select(it) {
     if (this.sel && this.sel !== it && this.sel.el.isContentEditable) this.sel.el.blur();
-    const prev = this.sel; this.sel = it; this.syncZoom && this.syncZoom(); if (this.lineSel && this.lineSel.it !== it) this.lineSel = null; this.items.forEach(i => i.el.classList.toggle('is-selected', i === it)); this.renderLayers();
+    const prev = this.sel; this.sel = it; this.syncTimelineUI?.(); this.syncZoom && this.syncZoom(); if (this.lineSel && this.lineSel.it !== it) this.lineSel = null; this.items.forEach(i => i.el.classList.toggle('is-selected', i === it)); this.renderLayers();
     const c = this.ctx, usable = !!it && it.kind !== 'fx'; if (!(usable && prev === it && this.ctxOpen)) this.ctxOpen = false;
     c.hidden = !(usable && this.ctxOpen); if (this.closeFly) this.closeFly(); if (!usable) { this.updateRotHandle(); return; }
     const text = it.kind === 'text';
@@ -11461,7 +11479,7 @@ class CoreStudio {
     box.addEventListener('pointerdown', e => {
       const h = e.target.closest('[data-xc],[data-xe]'); if (!h) return;
       e.preventDefault(); e.stopPropagation();
-      const x = this.xfSet(), b = x && this.xfBox(x); if (!b) return;
+      const x = this.xfSet(); x?.items.forEach(i => this.prepareTimelineEdit(i)); const b = x && this.xfBox(x); if (!b) return;
       const edge = h.dataset.xe, corner = h.dataset.xc, id = e.pointerId; h.setPointerCapture(id);
       let move;
       if (corner) {
@@ -11489,6 +11507,121 @@ class CoreStudio {
     };
   }
   // ---- S3: marquee / lasso selection that can include the planet, group move, and the multi-selection bar.
+  layoutTargets() { return this.items.filter(i => (this.multi.has(i.id) || i === this.sel) && i.kind !== 'fx' && !i.locked && !i.ref && !this.isHid(i)); }
+  compositionBounds() {
+    const W = innerWidth, H = innerHeight, cx = this.compCentre().x + (this.shift?.x || 0), half = W > 900 ? Math.min(cx, W - cx) : W / 2;
+    return { left: W > 900 ? cx - half : 0, right: W > 900 ? cx + half : W, top: 0, bottom: H };
+  }
+  selectionBounds(list) {
+    const rs = list.map(i => i.el.getBoundingClientRect()); if (!rs.length) return null;
+    return { left: Math.min(...rs.map(r => r.left)), right: Math.max(...rs.map(r => r.right)), top: Math.min(...rs.map(r => r.top)), bottom: Math.max(...rs.map(r => r.bottom)) };
+  }
+  hideSmartGuides() { this.smartOverlay?.replaceChildren(); }
+  snapSelection(list, bypass = false) {
+    this.hideSmartGuides(); if (!this.layoutSnap || bypass || !list.length) return;
+    const box = this.selectionBounds(list), frame = this.compositionBounds(), refs = [frame];
+    this.items.filter(i => !list.includes(i) && i.kind !== 'fx' && !i.ref && !this.isHid(i)).slice(-120).forEach(i => refs.push(i.el.getBoundingClientRect()));
+    const find = (a, b) => {
+      const anchors = [box[a], (box[a] + box[b]) / 2, box[b]]; let best = null;
+      refs.forEach(r => [r[a], (r[a] + r[b]) / 2, r[b]].forEach(v => anchors.forEach(p => { const d = v - p; if (Math.abs(d) <= 7 && (!best || Math.abs(d) < Math.abs(best.d))) best = { d, v }; })));
+      return best;
+    };
+    const x = find('left', 'right'), y = find('top', 'bottom');
+    if (!x && !y) return;
+    // One shared correction preserves every distance inside a group.
+    list.forEach(i => { i.x += (x?.d || 0) / innerWidth; i.y += (y?.d || 0) / innerHeight; this.place(i); });
+    if (this.layoutGuides) [x && ['x', x.v], y && ['y', y.v]].filter(Boolean).forEach(([axis, v]) => { const line = document.createElement('i'); line.className = 'st-smart-' + axis; line.style[axis === 'x' ? 'left' : 'top'] = v + 'px'; this.smartOverlay.append(line); });
+  }
+  alignSelection(list, direction, target = 'selection') {
+    if (!list.length || (target === 'selection' && list.length < 2)) return;
+    list.forEach(i => this.prepareTimelineEdit(i));
+    const box = target === 'canvas' ? this.compositionBounds() : this.selectionBounds(list);
+    list.forEach(i => {
+      const r = i.el.getBoundingClientRect(), dx = direction === 'l' ? box.left - r.left : direction === 'r' ? box.right - r.right : direction === 'c' ? (box.left + box.right - r.left - r.right) / 2 : 0;
+      const dy = direction === 't' ? box.top - r.top : direction === 'b' ? box.bottom - r.bottom : direction === 'm' ? (box.top + box.bottom - r.top - r.bottom) / 2 : 0;
+      i.x += dx / innerWidth; i.y += dy / innerHeight; this.place(i);
+    });
+    this.updateFocus(); this.renderLayers(); this.updateMultiUI(); this.commit();
+  }
+  timelineEligible(i) { return !!i && (i.kind === 'text' || i.kind === 'stroke' || i.decor) && i.kind !== 'fx'; }
+  timelineValues(i) { return { x: i.x, y: i.y, w: i.w, h: i.h, size: i.size, rot: i.rot || 0, alpha: i.alpha ?? 1 }; }
+  timelineSample(i, time = this.timelineTime || 0) {
+    const keys = i.keyframes; if (!keys?.length) return null;
+    if (time <= keys[0].t) return keys[0].v;
+    if (time >= keys.at(-1).t) return keys.at(-1).v;
+    const n = keys.findIndex(k => k.t >= time), a = keys[n - 1], b = keys[n]; let u = (time - a.t) / (b.t - a.t);
+    if (a.ease === 'hold') u = 0; else if (a.ease !== 'linear') u = u * u * (3 - 2 * u);
+    return Object.fromEntries(Object.keys(a.v).map(k => [k, a.v[k] + (b.v[k] - a.v[k]) * u]));
+  }
+  withTimelineState(i, draw) {
+    if (!this.timelinePreview || this.timelineRendering || !i.keyframes?.length) return draw();
+    const before = this.timelineValues(i), hadRot = Object.hasOwn(i, 'rot'), hadAlpha = Object.hasOwn(i, 'alpha');
+    this.timelineRendering = true; Object.assign(i, this.timelineSample(i));
+    try { return draw(); } finally { Object.assign(i, before); if (!hadRot) delete i.rot; if (!hadAlpha) delete i.alpha; this.timelineRendering = false; }
+  }
+  prepareTimelineEdit(i) {
+    if (!this.timelinePreview) return;
+    // Materialise the visible pose for editing; keyframes only change when the user saves a key.
+    this.items.forEach(it => { const v = this.timelineSample(it); if (v) Object.assign(it, v); });
+    this.timelinePlaying = this.timelinePreview = false; this.items.filter(it => it.kind !== 'fx').forEach(it => this.place(it)); this.syncTimelineUI?.();
+  }
+  saveTimelineKey() {
+    const i = this.sel; if (!this.timelineEligible(i) || i.locked) return;
+    const t = Math.round((this.timelineTime || 0) * 100) / 100, v = this.timelinePreview ? this.timelineSample(i) || this.timelineValues(i) : this.timelineValues(i);
+    i.keyframes = (i.keyframes || []).filter(k => Math.abs(k.t - t) > .005);
+    i.keyframes.push({ t, v: { ...v }, ease: this.timelineEase.value }); i.keyframes.sort((a, b) => a.t - b.t);
+    this.commit(); this.syncTimelineUI();
+  }
+  seekTimeline(t) {
+    this.timelinePlaying = false; this.timelinePreview = true; this.timelineTime = clamp(t, 0, this.timelineDuration);
+    this.items.filter(i => i.kind !== 'fx').forEach(i => this.place(i)); this.updateFocus(); this.syncTimelineUI();
+  }
+  updateTimeline(dt) {
+    if (!this.timelinePreview) return;
+    if (this.timelinePlaying && !this.itemDrag && !this.groupDrag) {
+      this.timelineTime = Math.min(this.timelineDuration, this.timelineTime + dt);
+      if (this.timelineTime >= this.timelineDuration) this.timelinePlaying = false;
+      // Shape redraws are limited to 30 fps on tablets.
+      this.timelineAccum = (this.timelineAccum || 0) + dt;
+      if (this.timelineAccum < 1 / 30 && this.timelinePlaying) return; this.timelineAccum = 0;
+      this.items.filter(i => i.kind !== 'fx' && i.keyframes?.length).forEach(i => this.place(i)); this.updateFocus(); this.syncTimelineUI();
+    }
+  }
+  initLayoutMotion() {
+    this.layoutSnap = this.layoutGuides = true; this.timelineDuration = 5; this.timelineTime = 0;
+    const ov = this.smartOverlay = document.createElement('div'); ov.className = 'st-smart-guides'; ov.setAttribute('aria-hidden', 'true'); this.el.append(ov);
+    const layout = document.createElement('details'); layout.className = 'studio-section';
+    layout.innerHTML = '<summary>Layout &amp; guides</summary><div class="st-layout-controls"><label><input type="checkbox" data-layout-snap checked> Snap to objects and canvas</label><label><input type="checkbox" data-layout-guides checked> Show smart guides</label><label>Align to <select data-layout-target><option value="selection">Selection</option><option value="canvas">Canvas</option></select></label><div class="st-layout-align" role="group" aria-label="Align selected objects">' + [['l','Left'],['c','Centre'],['r','Right'],['t','Top'],['m','Middle'],['b','Bottom']].map(([k,n]) => `<button type="button" class="st-btn" data-layout-align="${k}">${n}</button>`).join('') + '</div><p>Choose an object or group. Hold Alt to move freely.</p></div>';
+    this.panel.append(layout);
+    layout.querySelector('[data-layout-snap]').onchange = e => { this.layoutSnap = e.target.checked; this.hideSmartGuides(); };
+    layout.querySelector('[data-layout-guides]').onchange = e => { this.layoutGuides = e.target.checked; this.hideSmartGuides(); };
+    layout.querySelectorAll('[data-layout-align]').forEach(b => b.onclick = () => this.alignSelection(this.layoutTargets(), b.dataset.layoutAlign, layout.querySelector('[data-layout-target]').value));
+    const section = this.timelineSection = document.createElement('details'); section.className = 'studio-section st-timeline';
+    section.innerHTML = '<summary>Motion timeline</summary><div class="st-timeline-body"><div class="st-tl-transport"><button type="button" class="st-btn" data-tl-play>Play</button><button type="button" class="st-btn" data-tl-reset>Reset</button><output data-tl-time>0.00 / 5.00 s</output><label>Duration <input type="number" min="0.1" max="60" step="0.1" value="5" data-tl-duration> s</label></div><input type="range" min="0" max="5" step="0.01" value="0" data-tl-seek aria-label="Timeline playhead"><div class="st-tl-track" data-tl-track role="group" aria-label="Keyframes"></div><p data-tl-status>Select text, a decorative shape, drawing or kit.</p><div class="st-tl-fields">' + [['x','X %',0,100,1],['y','Y %',0,100,1],['rot','Rotate °',-3600,3600,1],['alpha','Opacity %',0,100,1],['w','Width %',4,300,1],['h','Height %',4,300,1],['size','Text px',1,1000,1]].map(([k,n,min,max,step]) => `<label>${n}<input type="number" data-tl-value="${k}" min="${min}" max="${max}" step="${step}"></label>`).join('') + '</div><div class="st-tl-actions"><select data-tl-ease aria-label="Keyframe interpolation"><option value="smooth">Smooth</option><option value="linear">Linear</option><option value="hold">Hold</option></select><button type="button" class="st-btn" data-tl-key>Save keyframe</button><button type="button" class="st-btn" data-tl-delete>Delete key</button></div><p>Set the time, adjust a pose, then save a keyframe. Reset restores the editable pose. Video includes these keys.</p></div>';
+    this.panel.append(section); this.timelineEase = section.querySelector('[data-tl-ease]');
+    const seek = section.querySelector('[data-tl-seek]'); seek.oninput = () => this.seekTimeline(+seek.value);
+    section.querySelector('[data-tl-play]').onclick = () => { if (this.timelinePlaying) { this.timelinePlaying = false; this.syncTimelineUI(); return; } this.seekTimeline(this.timelineTime >= this.timelineDuration ? 0 : this.timelineTime); this.timelinePlaying = true; this.frozen = false; const freeze = this.el.querySelector('[data-studio-freeze]'); freeze.setAttribute('aria-pressed', 'false'); freeze.setAttribute('aria-label', 'Freeze motion'); freeze.querySelector('[data-freeze-label]').textContent = 'Stop'; this.syncTimelineUI(); };
+    section.querySelector('[data-tl-reset]').onclick = () => { this.timelinePlaying = this.timelinePreview = false; this.timelineTime = 0; this.items.filter(i => i.kind !== 'fx').forEach(i => this.place(i)); this.updateFocus(); this.syncTimelineUI(); };
+    section.querySelector('[data-tl-duration]').onchange = e => { const n = +e.target.value; if (!Number.isFinite(n) || n <= 0) { this.syncTimelineUI(); return; } const last = Math.max(0, ...this.items.flatMap(i => (i.keyframes || []).map(k => k.t))); this.timelineDuration = clamp(Math.max(n, last), .1, 60); this.seekTimeline(Math.min(this.timelineTime, this.timelineDuration)); this.commit(); };
+    section.querySelector('[data-tl-key]').onclick = () => this.saveTimelineKey();
+    section.querySelector('[data-tl-delete]').onclick = () => { const i = this.sel; if (!i || i.locked) return; i.keyframes = (i.keyframes || []).filter(k => Math.abs(k.t - this.timelineTime) > .005); this.place(i); this.commit(); this.syncTimelineUI(); };
+    this.timelineEase.onchange = () => { const i = this.sel, k = i?.keyframes?.find(k => Math.abs(k.t - this.timelineTime) <= .005); if (k && !i.locked) { k.ease = this.timelineEase.value; this.commit(); } };
+    section.querySelectorAll('[data-tl-value]').forEach(input => input.onchange = () => { const i = this.sel; if (!this.timelineEligible(i) || i.locked) return; const n = +input.value; if (!Number.isFinite(n)) return; this.prepareTimelineEdit(i); const k = input.dataset.tlValue; i[k] = clamp(n, +input.min, +input.max) / (['x','y','w','h','alpha'].includes(k) ? 100 : 1); this.place(i); this.updateFocus(); this.saveTimelineKey(); });
+    this.syncTimelineUI = () => {
+      const i = this.sel, ok = this.timelineEligible(i) && !i.locked, t = this.timelineTime || 0;
+      seek.max = this.timelineDuration; seek.value = t; section.querySelector('[data-tl-duration]').value = this.timelineDuration;
+      section.querySelector('[data-tl-time]').textContent = `${t.toFixed(2)} / ${this.timelineDuration.toFixed(2)} s`;
+      section.querySelector('[data-tl-play]').textContent = this.timelinePlaying ? 'Pause' : 'Play';
+      const status = section.querySelector('[data-tl-status]'); status.textContent = ok ? `${i.name || this.label(i)} · ${(i.keyframes || []).length} keyframes` : 'Select unlocked text, a decorative shape, drawing or kit.';
+      const v = ok ? (this.timelinePreview ? this.timelineSample(i) || this.timelineValues(i) : this.timelineValues(i)) : {};
+      section.querySelectorAll('[data-tl-value]').forEach(input => { const k = input.dataset.tlValue; input.disabled = !ok; input.parentElement.hidden = (k === 'size' && i?.kind !== 'text') || (['w','h'].includes(k) && i?.kind === 'text'); if (document.activeElement !== input) input.value = ok ? +(v[k] * (['x','y','w','h','alpha'].includes(k) ? 100 : 1)).toFixed(2) : ''; });
+      const at = ok && i.keyframes?.find(k => Math.abs(k.t - t) <= .005); if (at) this.timelineEase.value = at.ease || 'smooth';
+      section.querySelector('[data-tl-key]').disabled = !ok; section.querySelector('[data-tl-delete]').disabled = !at; this.timelineEase.disabled = !ok;
+      const track = section.querySelector('[data-tl-track]'), signature = `${i?.id}:${this.timelineDuration}:${JSON.stringify(i?.keyframes || [])}`;
+      if (track.dataset.signature !== signature) { track.dataset.signature = signature; track.replaceChildren(); (i?.keyframes || []).forEach(k => { const b = document.createElement('button'); b.type = 'button'; b.className = 'st-tl-key'; b.style.left = `${k.t / this.timelineDuration * 100}%`; b.textContent = '◆'; b.title = `${k.t.toFixed(2)} s`; b.setAttribute('aria-label', 'Keyframe at ' + b.title); b.onclick = () => this.seekTimeline(k.t); track.append(b); }); }
+    };
+    this.syncTimelineUI();
+  }
   initMarquee() {
     const app = this.app, canvas = this.catcher, mk = (tag, cls, html) => { const n = document.createElement(tag); n.className = cls; if (html) n.innerHTML = html; n.hidden = true; this.el.append(n); return n; };
     this.multiPlanet = false; this.selShape = 'box'; this.selHit = 'touch';
@@ -11578,15 +11711,17 @@ class CoreStudio {
     // ---- moving everything that is selected together (the planet follows the same distance, without its glide)
     const startGroup = e => {
       const list = members().filter(i => !i.locked);
+      list.forEach(i => this.prepareTimelineEdit(i));
       const g = this.groupDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, list: list.map(i => ({ i, ox: i.x, oy: i.y })), px: this.x, py: this.y, planet: this.multiPlanet, moved: false };
       this.vx = this.vy = 0;
       const mv = ev => {
         if (ev.pointerId !== g.id) return; const dx = ev.clientX - g.x, dy = ev.clientY - g.y; if (!g.moved && Math.hypot(dx, dy) < 4) return; g.moved = true;
         g.list.forEach(({ i, ox, oy }) => { i.x = clamp(ox + dx / innerWidth, 0, 1); i.y = clamp(oy + dy / innerHeight, 0, 1); this.place(i); });
+        if (!g.planet) this.snapSelection(list, ev.altKey);
         if (g.planet) { this.x = g.px + dx * 2 * app.rig.halfWidth / app.stage.width; this.y = g.py - dy * 2 * app.rig.halfHeight / app.stage.height; this.vx = this.vy = 0; }
         this.updateFocus(); this.updateMultiUI();
       };
-      const up = ev => { if (ev.pointerId !== g.id) return; removeEventListener('pointermove', mv); removeEventListener('pointerup', up); removeEventListener('pointercancel', up); this.groupDrag = null; if (g.moved) { this.vx = this.vy = 0; this.commit(); } };
+      const up = ev => { if (ev.pointerId !== g.id) return; removeEventListener('pointermove', mv); removeEventListener('pointerup', up); removeEventListener('pointercancel', up); this.groupDrag = null; this.hideSmartGuides(); if (g.moved) { this.vx = this.vy = 0; this.commit(); } };
       addEventListener('pointermove', mv); addEventListener('pointerup', up); addEventListener('pointercancel', up);
     };
     this.beginItemPress = (it, e) => {
@@ -11839,7 +11974,7 @@ class CoreStudio {
     if (!quiet) this.commit();
   }  // Undo/redo: whole-composition snapshots (items, shape blur and the look settings).
   snapshot(extra) {
-    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'grain', 'grainAmt', 'lensOn', 'cpts', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides', 'groups', 'gridStyle', 'focusTarget', 'focusInv', 'focusScene', 'focusText', 'focusObj', 'x', 'y'];
+    const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'grain', 'grainAmt', 'lensOn', 'cpts', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides', 'groups', 'gridStyle', 'focusTarget', 'focusInv', 'focusScene', 'focusText', 'focusObj', 'x', 'y', 'timelineDuration'];
     const P = typeof PlanetBody !== 'undefined' && PlanetBody.active;
     return JSON.stringify({ lens: { on: this.lensOn, aberr: LENS_U.uLensAberr.value, blur: LENS_U.uLensBlur.value, bloom: LENS_U.uLensBloom.value }, pz: P ? +P.zoomT.toFixed(3) : undefined, s: Object.fromEntries(keys.map(k => [k, this[k]])), layers: this.layers, core: this.coreLayers,
       items: this.items.map(({ el, id, _coloredContent, ...rest }) => rest), ...extra });
@@ -11866,6 +12001,7 @@ class CoreStudio {
     this.syncCoreFx(); this.updateAvail();
   }
   restore(json) {
+    this.timelinePlaying = this.timelinePreview = false; this.timelineTime = 0; this.timelineDuration = 5; this.hideSmartGuides();
     const d = JSON.parse(json); this.restoring = true;
     this.select(null); this.lineSel = null; this.multi.clear(); this.multiPlanet = false; this.selMode = false; this.items.slice().forEach(it => this.removeItem(it, true));
     if (d.pz != null && PlanetBody.active) PlanetBody.active.setView(d.pz);
@@ -11880,7 +12016,7 @@ class CoreStudio {
     this.el.querySelectorAll('[data-studio-layer]').forEach(b => b.setAttribute('aria-pressed', String(this.layers[b.dataset.studioLayer])));
     this.el.querySelectorAll('[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(this.coreLayers[+b.dataset.studioCore])));
     this.el.classList.toggle('hide-guides', this.guides === false); if (this.syncGrain) this.syncGrain(); this.cpts = JSON.parse(JSON.stringify(this.cpts || [])); this.renderCpts(); this.fxSyncing = true; NET.set('on', !!this.fxItem('network')); this.fxSyncing = false; this.applyFx(); this.updateFocus(); this.paintBackground(); this.paintVfx();
-    this.restoring = false; if (!this.fxItem('planet')) this.addItem('fx', { fxType: 'planet' }); this.stackDom(); this.applyFx(); this.syncHist();
+    this.restoring = false; if (!this.fxItem('planet')) this.addItem('fx', { fxType: 'planet' }); this.stackDom(); this.applyFx(); this.syncHist(); this.syncTimelineUI?.();
   }
 
   // Shapes keep their area sharp: the scene is blurred and a clipped, sharp copy sits on top. Works in Safari, unlike masked backdrop blur.
@@ -11952,6 +12088,9 @@ class CoreStudio {
         gx.restore();
       }
   paintItemCanvas(i,g,width,height,sx,sy,shapes){
+        return this.withTimelineState(i, () => this.paintItemCanvasBase(i,g,width,height,sx,sy,shapes));
+      }
+  paintItemCanvasBase(i,g,width,height,sx,sy,shapes){
         if(i.kind==='fx'||i.ref)return;
         const bp=this.itemBlurPx(i,shapes)*Math.max(sx,sy);
         let tg=g,tc=null;if(bp>0){tc=document.createElement('canvas');tc.width=width;tc.height=height;tg=tc.getContext('2d');}
@@ -12062,6 +12201,7 @@ class CoreStudio {
   }
   close() {
     if (!this.active) { this.pending = false; return; }
+    this.timelinePlaying = false; this.hideSmartGuides();
     if (typeof SURFACE !== 'undefined' && SURFACE.resetOriginalShape) SURFACE.resetOriginalShape();
     if (this.draftNow) this.draftNow();
     if (this._dpr0 !== undefined) { this.app.stage.maxDPR = this._dpr0; this.app.resize(); }
@@ -12129,6 +12269,7 @@ class CoreStudio {
     if (this.pending && !a.detail.busy && a.fly.t < .001) { this.pending = false; this.open(); }
     if (!this.active) return false;
     if (this.frozen) dt = 0;
+    this.updateTimeline(dt);
     if (a.ambient) a.ambient.points.visible = false;
     a.G = 0; a.updateLens(dt); a.pointer.update(dt); a.simTime += dt * (a.reduced ? .25 : 1); a.intro = 1;
     const cam = a.rig.camera, tune = this.subject < 0 ? document.getElementById('tune') : document.getElementById('wtune'), tuning = tune.dataset.open === 'true';
