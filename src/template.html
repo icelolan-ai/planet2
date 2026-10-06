@@ -1979,7 +1979,17 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 .st-motion-group[open]>summary{margin-bottom:12px}
 
 /* Studio application menus and composition assists. */
+#studio .st-menu-list{display:flex;align-items:center;gap:2px;min-width:0;overflow-x:auto;scrollbar-width:none;touch-action:pan-x;overscroll-behavior-x:contain}#studio .st-menu-list::-webkit-scrollbar{display:none}#studio .st-menu-list button{flex:0 0 auto}#studio .st-menu-exit{flex:0 0 36px}
+@media(max-width:1100px){#studio .st-menu-info,#studio .st-menu-brand span{display:none}#studio .st-menu-brand{margin-right:6px!important}#studio .st-menu-list{flex:1 1 auto}}
 
+#studio .st-menubar{position:fixed;inset:0 0 auto;z-index:150;display:flex;align-items:center;gap:3px;padding:env(safe-area-inset-top,0px) 14px 0;min-height:44px;box-sizing:content-box;background:rgba(12,15,22,.97);border-bottom:1px solid rgba(255,255,255,.12);color:#e6eaf2;pointer-events:auto;backdrop-filter:blur(18px);font:500 13px var(--f-sans)}
+#studio .st-menubar button{min-height:44px;padding:0 13px;border-radius:5px;white-space:nowrap}
+#studio .st-menubar button:hover,#studio .st-menubar button[aria-expanded=true]{background:rgba(255,255,255,.1);color:var(--val)}
+#studio .st-menu-brand{font:600 11px var(--f-num);letter-spacing:.12em;margin-right:14px;white-space:nowrap}#studio .st-menu-brand span{color:#7e879a}
+#studio .st-menu-info{margin-left:auto;color:#959fb1;font:11px var(--f-num);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#studio .st-menu-popup{position:fixed;z-index:151;width:min(292px,calc(100vw - 16px));max-height:calc(100dvh - 64px - env(safe-area-inset-top,0px));overflow:auto;padding:6px;background:#151923;border:1px solid #ffffff24;border-radius:0 0 10px 10px;box-shadow:0 14px 42px #0008;color:#e6eaf2;pointer-events:auto;font:13px var(--f-sans)}
+#studio .st-menu-popup[hidden]{display:none}#studio .st-menu-popup button{display:grid;grid-template-columns:18px 1fr auto;align-items:center;gap:7px;width:100%;min-height:42px;padding:5px 8px;border-radius:6px;text-align:left}
+#studio .st-menu-popup button:hover,#studio .st-menu-popup button:focus-visible{background:#ffffff12;outline:1px solid var(--val)}#studio .st-menu-popup button:disabled{opacity:.35}#studio .st-menu-popup small{color:#8d97aa;font:10px var(--f-num)}#studio .st-menu-check{color:var(--val)}
 #studio .st-layout-controls,#studio .st-timeline-body{display:grid;gap:12px;padding:8px 0 16px;font:12px var(--f-sans);color:var(--ink-2)}
 #studio .st-layout-controls label{display:flex;align-items:center;gap:8px}#studio .st-layout-controls p,#studio .st-timeline-body p{margin:0;font-size:11px;line-height:1.6;color:var(--ink-3)}
 #studio .st-layout-align,#studio .st-tl-actions{display:flex;flex-wrap:wrap;gap:6px}#studio .st-layout-align .st-btn,#studio .st-tl-actions .st-btn,#studio .st-tl-transport .st-btn{min-height:40px;padding:0 10px;border:1px solid var(--line-2);border-radius:8px}
@@ -1989,6 +1999,8 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .st-tl-fields input{width:100%}#studio .st-timeline input[type=range]{width:100%;min-height:32px;accent-color:var(--val)}#studio .st-timeline button:disabled,#studio .st-timeline input:disabled{opacity:.4}
 #studio .st-tl-track{position:relative;height:38px;margin:0 18px;border-bottom:1px solid var(--line-2)}#studio .st-tl-key{position:absolute;top:0;transform:translateX(-50%);width:36px;height:36px;color:var(--val);font-size:16px}
 #studio .st-smart-guides{position:fixed;inset:0;z-index:54;pointer-events:none}#studio .st-smart-guides i{position:absolute;background:#ff6fae;box-shadow:0 0 4px #ff6fae80}#studio .st-smart-x{top:0;bottom:0;width:1px}#studio .st-smart-y{left:0;right:0;height:1px}
+@media(max-width:900px){#studio .st-menubar{padding-left:8px;padding-right:8px;gap:0}#studio .st-menu-brand{margin-right:6px;font-size:9px;letter-spacing:.04em}#studio .st-menu-brand span{display:none}#studio .st-menubar button{padding:0 9px;font-size:12px}#studio .st-menu-info{font-size:9px}}
+@media(max-width:480px){#studio .st-menu-info{display:none}#studio .st-menu-exit{margin-left:auto}#studio .st-menubar button{padding:0 8px}#studio .st-menu-brand{font-size:8px}}
 
 </style>
 </head>
@@ -10166,15 +10178,15 @@ class CoreStudio {
   }
   layoutTrays(cfg = this.trayCfg) {
     if (!this.trays || !cfg) return; if (this.updLayHandle) this.updLayHandle();
-    const W = innerWidth, H = innerHeight, small = W <= 900, gap = small ? 8 : 10, sT = Math.max(gap, parseFloat(getComputedStyle(this.el).getPropertyValue('--sat')) || gap), top0 = gap + 44 + 8;
+    const W = innerWidth, H = innerHeight, small = W <= 900, gap = small ? 8 : 10, sT = Math.max(gap, parseFloat(getComputedStyle(this.el).getPropertyValue('--sat')) || gap), menuH = this.menuBar?.offsetHeight || 0, top0 = Math.max(gap + 44 + 8, menuH + gap);
     const vis = n => !this.trays[n].hidden, vert = ['left', 'right'];
     const set = (el, o) => { Object.assign(el.style, { left: 'auto', right: 'auto', top: 'auto', bottom: 'auto', width: '', height: '', maxHeight: '', ...o }); };
     // 1) side trays (vertical) take full height; measure their widths.
-    const used = { left: gap, right: gap, top: gap, bottom: gap };
+    const used = { left: gap, right: gap, top: menuH + gap, bottom: gap };
     // Side trays stack top-to-bottom in one column; the settings panel takes whatever height is left.
     for (const e of vert) {
       const list = cfg[e].filter(vis); if (!list.length) continue;
-      let y = e === 'left' ? top0 : gap, colW = 0;
+      let y = top0, colW = 0;
       const widthOf = n => n === 'layers' && this.laySize ? Math.min(this.laySize.w, W - 2 * gap - 80) : n === 'panel' || n === 'layers' ? Math.min(262, W - 2 * gap - 140) : n === 'dock' ? (small ? 50 : 54) : (small ? 50 : 54);
       list.forEach((n, i) => {
         const el = this.trays[n]; el.classList.add('is-v'); el.classList.remove('is-h');
@@ -10202,7 +10214,7 @@ class CoreStudio {
     });
     Object.entries(cfg.free || {}).filter(([n]) => this.trays[n] && vis(n)).forEach(([n, pos]) => {
       const el0 = this.trays[n], bw = el0.offsetWidth || 80, bh = el0.offsetHeight || 80; pos = { x: clamp(pos.x, gap / W, Math.max(gap / W, (W - bw - gap) / W)), y: clamp(pos.y, gap / H, Math.max(gap / H, (H - 140 - gap) / H)) };
-      const el = this.trays[n], horiz = n === 'dock';
+      pos.y = Math.max(pos.y, (menuH + gap) / H); const el = this.trays[n], horiz = n === 'dock';
       el.classList.toggle('is-h', horiz); el.classList.toggle('is-v', !horiz);
       const w = n === 'panel' || n === 'layers' ? Math.min(262, W - 2 * gap) : horiz ? null : (small ? 50 : 54);
       set(el, { left: Math.round(pos.x * W) + 'px', top: Math.round(pos.y * H) + 'px', ...(w ? { width: w + 'px' } : { width: 'auto', maxWidth: (W - 2 * gap) + 'px' }), ...(['panel', 'layers'].includes(n) && !el.classList.contains('is-folded') ? { height: Math.min(n === 'panel' ? this.panelSize || H * .55 : this.laySize?.h || H * .38, Math.max(140, H - pos.y * H - gap)) + 'px', maxHeight: Math.max(140, H - pos.y * H - gap) + 'px' } : {}), ...(horiz ? { height: (matchMedia('(pointer: coarse)').matches ? 64 : 54) + 'px' } : {}) });
@@ -10378,7 +10390,7 @@ class CoreStudio {
   isHid(it) { return !!it.hide || (it.group != null && this.groups.some(g => g.id === it.group && g.hide)); }
   select(it) {
     if (this.sel && this.sel !== it && this.sel.el.isContentEditable) this.sel.el.blur();
-    const prev = this.sel; this.sel = it; this.syncTimelineUI?.(); this.syncZoom && this.syncZoom(); if (this.lineSel && this.lineSel.it !== it) this.lineSel = null; this.items.forEach(i => i.el.classList.toggle('is-selected', i === it)); this.renderLayers();
+    const prev = this.sel; this.sel = it; this.syncMenuBar?.(); this.syncTimelineUI?.(); this.syncZoom && this.syncZoom(); if (this.lineSel && this.lineSel.it !== it) this.lineSel = null; this.items.forEach(i => i.el.classList.toggle('is-selected', i === it)); this.renderLayers();
     const c = this.ctx, usable = !!it && it.kind !== 'fx'; if (!(usable && prev === it && this.ctxOpen)) this.ctxOpen = false;
     c.hidden = !(usable && this.ctxOpen); if (this.closeFly) this.closeFly(); if (!usable) { this.updateRotHandle(); return; }
     const text = it.kind === 'text';
@@ -11392,7 +11404,7 @@ class CoreStudio {
       { group: 'View', label: 'Reset the view', keys: ['mod+0'], run: () => { const b = typeof PlanetBody !== 'undefined' && PlanetBody.active; if (b && b.resetView) b.resetView(); } },
       { group: 'View', label: 'Hide / show the tools', keys: ['tab'], free: true, run: () => { this.el.classList.toggle('st-ui-off'); } },
       { group: 'Other', label: 'Close menu / deselect', keys: ['escape'], noRun: true },
-      { group: 'Other', label: 'Save menu', keys: ['mod+s'], tip: '[data-grp="save"] [data-grp-btn]', run: press('[data-grp="save"] [data-grp-btn]') },
+      { group: 'Other', label: 'Save project', keys: ['mod+s'], run: () => this.exportProject() },
       { group: 'Other', label: 'This list', keys: ['?'], run: () => this.toggleHelp() },
     ];
     // arrows share one runner each
@@ -11620,7 +11632,80 @@ class CoreStudio {
       const track = section.querySelector('[data-tl-track]'), signature = `${i?.id}:${this.timelineDuration}:${JSON.stringify(i?.keyframes || [])}`;
       if (track.dataset.signature !== signature) { track.dataset.signature = signature; track.replaceChildren(); (i?.keyframes || []).forEach(k => { const b = document.createElement('button'); b.type = 'button'; b.className = 'st-tl-key'; b.style.left = `${k.t / this.timelineDuration * 100}%`; b.textContent = '◆'; b.title = `${k.t.toFixed(2)} s`; b.setAttribute('aria-label', 'Keyframe at ' + b.title); b.onclick = () => this.seekTimeline(k.t); track.append(b); }); }
     };
-    this.syncTimelineUI();
+    this.syncTimelineUI(); this.initMenuBar();
+  }
+  initMenuBar() {
+    const nav = this.menuBar = document.createElement('nav'); nav.className = 'st-menubar'; nav.setAttribute('role', 'menubar'); nav.setAttribute('aria-label', 'Studio menu bar');
+    nav.innerHTML = '<span class="st-menu-brand">CEREBRA<span> / STUDIO</span></span><div class="st-menu-list">' + ['File','Edit','Image','Layer','Type','Select','Filter','View','Window','Help'].map((n,i) => `<button type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" data-menu-top="${n}" tabindex="${i ? -1 : 0}">${n}</button>`).join('') + '</div><span class="st-menu-info" data-menu-info>Studio</span><button type="button" class="st-menu-exit" aria-label="Exit studio">↗</button>';
+    this.el.prepend(nav); this.el.querySelector('[data-studio-exit]').hidden = true;
+    const pop = this.menuPopup = document.createElement('div'); pop.className = 'st-menu-popup'; pop.setAttribute('role', 'menu'); pop.hidden = true; this.el.append(pop);
+    const tops = [...nav.querySelectorAll('[data-menu-top]')], click = s => this.el.querySelector(s)?.click();
+    const visible = n => this.trays[n] && !this.trays[n].hidden && !this.el.classList.contains('st-ui-off');
+    const toggleTray = n => { this.el.classList.remove('st-ui-off'); if (n === 'panel') this.tools(this.panel.hidden); else { this.trays[n].hidden = !this.trays[n].hidden; this.layoutTrays(); } };
+    const section = (s, on) => { this.el.classList.remove('st-ui-off'); this.tools(true); this.panel.classList.remove('is-folded'); s.open = on; this.layoutTrays(); if (on) s.scrollIntoView({ block: 'nearest' }); };
+    const isTimeline = () => visible('panel') && this.timelineSection.open;
+    const layout = this.panel.querySelector('[data-layout-snap]').closest('details');
+    const selected = () => this.sc.targets().filter(i => i.kind !== 'fx' && !i.ref);
+    const openSection = selector => { const s = this.panel.querySelector(selector)?.closest('.studio-section'); if (s) section(s, true); };
+    const openFly = name => { this.el.classList.remove('st-ui-off'); this.trays.add.hidden = false; this.trays.decor.hidden = false; this.layoutTrays(); click(`[data-flyout="${name}"]`); };
+    const chooseAll = () => { this.select(null); this.multi = new Set(this.items.filter(i => i.kind !== 'fx' && !i.locked && !i.ref && !this.isHid(i)).map(i => i.id)); this.multiPlanet = false; this.selMode = !!this.multi.size; this.renderLayers(); this.updateMultiUI(); };
+    const entries = {
+      File: () => [
+        ['Save project…', () => this.exportProject(), null, '⌘/Ctrl S'], ['Open project…', () => file.click()],
+        ['Save to Library', () => this.libSave()], ['Export image / video…', () => { this.el.classList.remove('st-ui-off'); click('[data-studio-export]'); }],
+        ['Exit Studio', () => this.close()]
+      ],
+      Edit: () => [['Undo', () => this.undo(), null, '⌘/Ctrl Z', this.hi <= 0], ['Redo', () => this.redo(), null, '⌘/Ctrl ⇧ Z', this.hi >= this.hist.length - 1],
+        ['Duplicate selection', () => { const set = this.layoutTargets(); if (set.length) this.sc.spawn(set.map(this.sc.snap), .03); }, null, '⌘/Ctrl D', !this.layoutTargets().length],
+        ['Group selection', () => { const set = this.layoutTargets(); if (set.length) { this.moveLayers(set, { kind: 'new' }); this.clearGroup(); } }, null, '', this.layoutTargets().length < 2]],
+      Image: () => [['Background & colours…', () => openSection('[data-studio-background]')], ['Lighting & shadow…', () => openSection('[data-studio-light]')],
+        ['Scene presets…', () => openSection('[data-studio-preset]')], ['Export image / video…', () => click('[data-studio-export]')]],
+      Layer: () => [['New group', () => this.addGroup()], ['Group selected layers', () => this.sc.act(this.layoutTargets(), 'group'), null, '⌘/Ctrl G', this.layoutTargets().length < 2],
+        ['Ungroup selected layers', () => { const ids = new Set(selected().map(i => i.group).filter(g => g != null)); this.items.forEach(i => { if (ids.has(i.group)) i.group = null; }); this.groups = this.groups.filter(g => !ids.has(g.id)); this.renderLayers(); this.commit(); }, null, '⌘/Ctrl ⇧ G', !selected().some(i => i.group != null)],
+        ['Lock / unlock selection', () => this.sc.act(selected(), 'lock'), selected().length ? selected().every(i => i.locked) : null, '', !selected().length],
+        ['Hide / show selection', () => this.sc.act(selected(), 'hide'), selected().length ? selected().every(i => i.hide) : null, '', !selected().length],
+        ['Bring to front', () => this.sc.act(selected(), 'top'), null, '', !selected().length], ['Send to back', () => this.sc.act(selected(), 'bottom'), null, '', !selected().length],
+        ['Delete selected layers', () => this.sc.act(this.layoutTargets(), 'delete'), null, 'Delete', !this.layoutTargets().length]],
+      Type: () => [['Add text', () => this.addItem('text'), null, 'T'], ['Edit selected text…', () => { this.openCtxBar(); this.editText(this.sel); }, null, '', this.sel?.kind !== 'text' || this.sel.locked],
+        ['Typography & style…', () => { this.openCtxBar(); openFly('textdesign'); }, null, '', this.sel?.kind !== 'text' || this.sel.locked]],
+      Select: () => [['Select all objects', chooseAll, null, '⌘/Ctrl A'], ['Deselect', () => { this.clearGroup(); this.select(null); }],
+        ['Box selection', () => { this.setTool('select'); this.selShape = 'box'; this.selBar.querySelectorAll('[data-ssh]').forEach(b => b.classList.toggle('is-on', b.dataset.ssh === 'box')); }, this.tool === 'select' && this.selShape === 'box'],
+        ['Lasso selection', () => { this.setTool('select'); this.selShape = 'lasso'; this.selBar.querySelectorAll('[data-ssh]').forEach(b => b.classList.toggle('is-on', b.dataset.ssh === 'lasso')); }, this.tool === 'select' && this.selShape === 'lasso']],
+      Filter: () => [['Colour effects…', () => openSection('[data-studio-effect]')], ['Focus & blur…', () => openFly('focus')],
+        ['Film grain & lens…', () => openSection('[data-studio-grain]')], ['Object motion / keyframes…', () => section(this.timelineSection, true)]],
+      View: () => [['Show interface', () => this.el.classList.toggle('st-ui-off'), !this.el.classList.contains('st-ui-off'), 'Tab'],
+        ['Canvas grid', () => { this.setGridMode(this.gridMode === 'off' ? 'always' : 'off'); this.paintBackground(); this.commit(); }, this.gridMode !== 'off'],
+        ['Smart guides', () => { this.layoutGuides = !this.layoutGuides; layout.querySelector('[data-layout-guides]').checked = this.layoutGuides; this.hideSmartGuides(); }, this.layoutGuides],
+        ['Snap to objects', () => { this.layoutSnap = !this.layoutSnap; layout.querySelector('[data-layout-snap]').checked = this.layoutSnap; this.hideSmartGuides(); }, this.layoutSnap],
+        ['Reset menu positions', () => click('[data-tray-reset]')]],
+      Window: () => [['Tools', () => toggleTray('add'), visible('add')], ['Decor tools', () => toggleTray('decor'), visible('decor')], ['Layers', () => toggleTray('layers'), visible('layers')],
+        ['Design', () => toggleTray('panel'), visible('panel')], ['Bottom toolbar', () => toggleTray('dock'), visible('dock')],
+        ['Motion timeline', () => section(this.timelineSection, !isTimeline()), isTimeline()], ['Layout & guides', () => section(layout, !(visible('panel') && layout.open)), visible('panel') && layout.open],
+        ['Library', () => { this.el.classList.remove('st-ui-off'); this.libOpen(this.lib.hidden); }, !this.lib.hidden],
+        ['Tune the core', () => { const tune = this.subject < 0 ? document.getElementById('tune') : document.getElementById('wtune'); if (tune.dataset.open === 'true') { if (this.subject < 0) document.querySelector('[data-tune-close]').click(); else WorldTune.open(false); } else click('[data-studio-tune]'); }, (this.subject < 0 ? document.getElementById('tune') : document.getElementById('wtune')).dataset.open === 'true']],
+      Help: () => [['Keyboard shortcuts…', () => this.toggleHelp(true), null, '?'], ['Timeline guide', () => section(this.timelineSection, true)], ['Layout & snapping guide', () => section(layout, true)]]
+    };
+    const file = document.createElement('input'); file.type = 'file'; file.accept = '.cerebra,application/json'; file.hidden = true; this.el.append(file); file.onchange = () => { if (file.files[0]) this.importProject(file.files[0]); file.value = ''; };
+    const close = this.closeMenuBar = (focus = false) => { const top = tops.find(b => b.getAttribute('aria-expanded') === 'true'); pop.hidden = true; tops.forEach(b => b.setAttribute('aria-expanded', 'false')); if (focus) top?.focus(); };
+    const build = top => {
+      pop.replaceChildren(); pop.setAttribute('aria-label', top.dataset.menuTop);
+      entries[top.dataset.menuTop]().forEach(([label, run, checked, keys, disabled]) => {
+        const b = document.createElement('button'); b.type = 'button'; b.disabled = !!disabled; b.setAttribute('role', checked == null ? 'menuitem' : 'menuitemcheckbox'); if (checked != null) b.setAttribute('aria-checked', String(checked));
+        const mark = document.createElement('span'); mark.className = 'st-menu-check'; mark.textContent = checked ? '✓' : ''; const text = document.createElement('span'); text.textContent = label; const key = document.createElement('small'); key.textContent = keys || ''; b.append(mark, text, key);
+        b.onclick = () => { close(); run(); this.syncMenuBar(); }; pop.append(b);
+      });
+      const r = top.getBoundingClientRect(); pop.style.top = r.bottom + 'px'; pop.style.left = Math.max(8, Math.min(innerWidth - Math.min(292, innerWidth - 16) - 8, r.left)) + 'px';
+    };
+    const open = (top, focus = false) => { close(); this.closeFly?.(); this.closeGrp?.(); tops.forEach(b => b.tabIndex = b === top ? 0 : -1); top.setAttribute('aria-expanded', 'true'); pop.hidden = false; build(top); if (focus) pop.querySelector('button:not(:disabled)')?.focus(); };
+    tops.forEach((b,index) => { b.onclick = () => b.getAttribute('aria-expanded') === 'true' ? close() : open(b); b.onpointerenter = e => { if (e.pointerType === 'mouse' && !pop.hidden) open(b); }; b.onkeydown = e => { if (['ArrowLeft','ArrowRight'].includes(e.key)) { e.preventDefault(); const next = tops[(index + (e.key === 'ArrowRight' ? 1 : tops.length - 1)) % tops.length]; next.focus(); if (!pop.hidden) open(next); else { tops.forEach(x => x.tabIndex = x === next ? 0 : -1); } } else if (['ArrowDown','Enter',' '].includes(e.key)) { e.preventDefault(); open(b, true); } }; });
+    pop.onkeydown = e => { const bs = [...pop.querySelectorAll('button:not(:disabled)')], at = bs.indexOf(document.activeElement); if (['ArrowDown','ArrowUp','Home','End'].includes(e.key)) { e.preventDefault(); bs[e.key === 'Home' ? 0 : e.key === 'End' ? bs.length - 1 : (at + (e.key === 'ArrowDown' ? 1 : bs.length - 1)) % bs.length]?.focus(); } else if (['ArrowLeft','ArrowRight'].includes(e.key)) { e.preventDefault(); const at = tops.findIndex(b => b.getAttribute('aria-expanded') === 'true'); open(tops[(at + (e.key === 'ArrowRight' ? 1 : tops.length - 1)) % tops.length], true); } else if (e.key === 'Tab') close(); };
+    nav.querySelector('.st-menu-exit').onclick = () => this.close();
+    document.addEventListener('pointerdown', e => { if (!e.target.closest('.st-menubar,.st-menu-popup')) close(); }, true);
+    document.addEventListener('keydown', e => { if (this.active && !pop.hidden && e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); close(true); } }, true);
+    addEventListener('resize', () => close());
+    this.syncMenuBar = () => { const out = nav.querySelector('[data-menu-info]'); const label = this.sel ? this.sel.name || this.label(this.sel) : this.multi.size ? this.multi.size + ' selected' : 'Studio'; const value = `${label} · ${innerWidth} × ${innerHeight}`; if (out.textContent !== value) out.textContent = value; };
+    const observer = new MutationObserver(() => this.syncMenuBar()); observer.observe(this.el, { attributes: true, subtree: true, attributeFilter: ['hidden','aria-pressed'] });
+    this.syncMenuBar(); this.layoutTrays();
   }
   initMarquee() {
     const app = this.app, canvas = this.catcher, mk = (tag, cls, html) => { const n = document.createElement(tag); n.className = cls; if (html) n.innerHTML = html; n.hidden = true; this.el.append(n); return n; };
@@ -12195,13 +12280,13 @@ class CoreStudio {
     a.stage.scene.traverse(o => this.saved.visibility.set(o, o.visible));
     { const gl = document.getElementById('gl'); this._glHome = { parent: gl.parentNode, next: gl.nextSibling }; this.planetBox.append(gl, this.fx, this.vfx); this.stackDom(); this.syncFxLayers(); }
     document.documentElement.classList.add('studio-lock'); document.body.classList.add('studio-on');
-    this.paintBackground(); this.updateFocus(); this.el.querySelector('[data-studio-exit]').focus();
+    this.paintBackground(); this.updateFocus(); this.menuBar.querySelector('[data-menu-top]').focus();
     if (this.guardOn) { this.guardOn(); this.offerDraft(); }
     this.applyLiteDpr();
   }
   close() {
     if (!this.active) { this.pending = false; return; }
-    this.timelinePlaying = false; this.hideSmartGuides();
+    this.timelinePlaying = false; this.hideSmartGuides(); this.closeMenuBar();
     if (typeof SURFACE !== 'undefined' && SURFACE.resetOriginalShape) SURFACE.resetOriginalShape();
     if (this.draftNow) this.draftNow();
     if (this._dpr0 !== undefined) { this.app.stage.maxDPR = this._dpr0; this.app.resize(); }
