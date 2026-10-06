@@ -1083,11 +1083,11 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 .st-lib{position:absolute;inset:calc(45px + env(safe-area-inset-top,0px)) 0 0;z-index:90;display:flex;flex-direction:column;justify-content:center;gap:18px;background:#07080dcc;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);pointer-events:auto}
 .st-lib[hidden]{display:none}
 
-.st-welcome{width:min(540px,calc(100vw - 32px));max-height:calc(100dvh - 48px);overflow:auto;border:0;padding:26px 32px;background:transparent;color:#eef0ff;pointer-events:auto;isolation:isolate}
-.st-welcome::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(145deg,#292139,#101523);clip-path:polygon(8% 0,92% 0,100% 100%,0 100%)}
+.st-welcome{width:min(540px,calc(100vw - 32px));max-height:calc(100dvh - 48px);overflow:auto;border:0;padding:0 28px 24px;background:transparent;color:#eef0ff;pointer-events:auto;isolation:isolate;box-sizing:border-box;clip-path:polygon(6% 0,94% 0,100% 100%,0 100%)}
+.st-welcome::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(145deg,#292139,#101523);}
 .st-welcome::backdrop{background:#070910a8;backdrop-filter:blur(8px)}
-.st-welcome header{display:flex;align-items:center;justify-content:space-between;gap:12px;font:11px var(--f-mono);letter-spacing:.12em}
-.st-welcome button{min-height:44px;min-width:44px}.st-welcome img{display:block;width:100%;height:min(23dvh,180px);object-fit:contain;border-radius:10px;margin:14px 0;background:#111522}
+.st-welcome header{position:absolute;z-index:1;top:12px;left:40px;right:40px;display:flex;align-items:center;justify-content:space-between;gap:12px;font:11px var(--f-mono);letter-spacing:.12em;text-shadow:0 1px 8px #000}
+.st-welcome button{min-height:44px;min-width:44px}.st-welcome img{display:block;width:calc(100% + 56px);height:min(30dvh,240px);object-fit:cover;border-radius:0;margin:0 -28px 16px;background:#111522}
 .st-welcome h2{font:400 28px var(--f-display);margin:12px 0 6px}.st-welcome p{font:14px/1.6 var(--f-sans);color:#b9bed0;margin:0 0 16px}
 .st-welcome-guide{border-top:1px solid #ffffff20;margin-top:16px;padding-top:14px}.st-welcome-guide b{font:12px var(--f-mono);color:#c6b5ff}.st-welcome-guide p{margin:8px 0}.st-welcome-guide footer{display:flex;gap:8px;justify-content:flex-end}
 .st-welcome nav{display:flex;align-items:center;gap:8px}.st-welcome nav span{margin-right:auto;font:11px var(--f-mono);color:#b9bed0}.st-welcome label{display:flex;gap:8px;align-items:center;margin-top:16px;font:12px var(--f-sans)}
@@ -10035,7 +10035,7 @@ class CoreStudio {
   initSafety() {
     const DB = 'cerebra-studio', ST = 'draft', idb = fn => new Promise(res => { try { const q = indexedDB.open(DB, 1); q.onupgradeneeded = () => q.result.createObjectStore(ST); q.onerror = () => res(null); q.onsuccess = () => { try { const t = q.result.transaction(ST, 'readwrite'), r = fn(t.objectStore(ST)); t.oncomplete = () => res(r && r.result !== undefined ? r.result : true); t.onerror = () => res(null); } catch (e) { res(null); } }; } catch (e) { res(null); } });
     this.draftHold = true; this.guardN = 0;   // no saving until the user has answered the restore offer (or there is none)
-    const save = () => { if (!this.active || this.draftHold || this.restoring || !this.hist || this.hist.length < 2) return; const d = { t: Date.now(), json: this.snapshot(), pl: this.planetLook() }; idb(s => s.put(d, 'last')); };
+    const save = () => { if (!this.active || this.draftHold || this.restoring || this.welcomeRendering || !this.hist || this.hist.length < 2) return; const d = { t: Date.now(), json: this.snapshot(), pl: this.planetLook() }; idb(s => s.put(d, 'last')); };
     let tm = 0; this.draftSoon = () => { clearTimeout(tm); tm = setTimeout(save, 1500); };
     this.draftNow = () => { clearTimeout(tm); save(); };
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.draftNow(); });
@@ -10691,9 +10691,10 @@ class CoreStudio {
     const d = this.welcome = this.el.querySelector('[data-library-welcome]');
     this.welcomeGuideStep = 0;
     this.el.querySelector('[data-guide-back]').onclick = () => { this.welcomeGuideStep = Math.max(0, this.welcomeGuideStep - 1); this.renderWelcomeGuide(); };
-    this.el.querySelector('[data-guide-next]').onclick = () => { if (this.welcomeGuideStep === 4) d.close(); else { this.welcomeGuideStep++; this.renderWelcomeGuide(); } };
+    this.el.querySelector('[data-guide-next]').onclick = () => { if (this.welcomeGuideStep === 4) this.closeLibraryWelcome(); else { this.welcomeGuideStep++; this.renderWelcomeGuide(); } };
     this.renderWelcomeGuide();
-    this.el.querySelector('[data-welcome-close]').onclick = () => d.close();
+    this.el.querySelector('[data-welcome-close]').onclick = () => this.closeLibraryWelcome();
+    d.addEventListener('cancel', e => { if (this.welcomeRendering) { e.preventDefault(); this.welcomeClosePending = true; } });
     this.el.querySelector('[data-welcome-hide]').onchange = e => { try { localStorage.setItem('cerebra-hide-welcome', String(e.target.checked)); } catch (_) {} };
     d.addEventListener('close', () => { if (this.active) this.menuBar.querySelector('[data-menu-top]').focus(); });
     this.el.querySelector('[data-welcome-prev]').onclick = () => this.renderLibraryWelcome(-1);
@@ -10720,16 +10721,44 @@ class CoreStudio {
     if (this.welcomeShown) return; this.welcomeShown = true;
     try { if (localStorage.getItem('cerebra-hide-welcome') === 'true') return; } catch (_) {}
     this.welcomeWorks = this.libEntries(); if (!this.welcomeWorks.length) return;
-    this.welcomeIndex = 0; this.renderLibraryWelcome(); this.welcome.showModal();
+    this.welcomeIndex = 0; this.welcome.showModal(); requestAnimationFrame(() => this.renderLibraryWelcome());
   }
   renderLibraryWelcome(step = 0) {
+    if (this.welcomeRendering) return;
     const works = this.welcomeWorks; this.welcomeIndex = (this.welcomeIndex + step + works.length) % works.length;
     const w = works[this.welcomeIndex], image = this.el.querySelector('[data-welcome-image]');
-    image.src = w.thumb || ''; image.alt = w.name || 'Saved composition'; image.hidden = !w.thumb;
+    image.removeAttribute('src'); image.alt = 'Rendering ' + (w.name || 'saved composition'); image.hidden = false;
+    this.captureLibraryWelcome(w);
     this.el.querySelector('[data-welcome-title]').textContent = w.name || 'Untitled';
     this.el.querySelector('[data-welcome-description]').textContent = w.description || (w.builtin ? 'A Cerebra starter composition. Open it to explore the colours, atmosphere and editable layers.' : 'Your saved composition, with its colours, objects and editable layers ready to continue.');
     this.el.querySelector('[data-welcome-count]').textContent = `${this.welcomeIndex + 1} / ${works.length}`;
-    ['prev', 'next'].forEach(k => { this.el.querySelector(`[data-welcome-${k}]`).disabled = works.length < 2; });
+    ['prev', 'next'].forEach(k => { this.el.querySelector(`[data-welcome-${k}]`).disabled = this.welcomeRendering || works.length < 2; });
+  }
+  closeLibraryWelcome() {
+    if (this.welcomeRendering) { this.welcomeClosePending = true; return; }
+    this.welcome.close();
+  }
+  async captureLibraryWelcome(w) {
+    if (this.welcomeRendering) return;
+    const image = this.el.querySelector('[data-welcome-image]'), cache = this.welcomePreviewCache ||= new Map();
+    if (cache.has(w.id)) { image.src = cache.get(w.id); image.alt = w.name || 'Saved composition'; return; }
+    const before = { state: this.snapshot(), subject: this.subject, core: { snap: window.CerebraTune?.snapshot(), fx: PLANETS.fx(this) }, time: this.timelineTime, preview: this.timelinePreview, playing: this.timelinePlaying };
+    this.welcomeRendering = true; this.welcome.setAttribute('aria-busy', 'true');
+    const controls = [...this.welcome.querySelectorAll('[data-welcome-prev],[data-welcome-next],[data-welcome-open]')];
+    controls.forEach(b => b.disabled = true);
+    try {
+      this.setSubject(w.subject ?? -1); this.restore(w.state); if (w.pl) this.showPlanet(w.pl);
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const canvas = await this.composePoster(Math.min(1, 1000 / Math.max(innerWidth, innerHeight)));
+      const preview = canvas.toDataURL('image/jpeg', .9); cache.set(w.id, preview); image.src = preview; image.alt = w.name || 'Saved composition';
+    } catch (e) { console.error('Library Spotlight render failed', e); image.alt = 'Preview could not be rendered. Open work to view this composition.'; }
+    finally {
+      this.setSubject(before.subject); this.restore(before.state); this.showPlanet(before.core);
+      this.timelineTime = before.time; this.timelinePreview = before.preview; this.timelinePlaying = before.playing;
+      this.welcomeRendering = false; this.welcome.removeAttribute('aria-busy');
+      controls.forEach(b => b.disabled = b.matches('[data-welcome-open]') ? false : this.welcomeWorks.length < 2);
+      if (this.welcomeClosePending) { this.welcomeClosePending = false; this.welcome.close(); }
+    }
   }
   libRead() { try { const a = JSON.parse(localStorage.getItem('cerebra-studio-library') || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
   libEntries() {
@@ -12171,7 +12200,7 @@ class CoreStudio {
       items: this.items.map(({ el, id, _coloredContent, ...rest }) => rest), ...extra });
   }
   commit(extra) {
-    if (this.restoring || !this.hist) return;
+    if (this.restoring || this.welcomeRendering || !this.hist) return;
     const s = this.snapshot(extra); if (this.hist[this.hi] === s) return;
     this.hist = this.hist.slice(0, this.hi + 1); this.hist.push(s); if (this.hist.length > 80) this.hist.shift();
     for (let n = this.hist.reduce((a, x) => a + x.length, 0); n > 16e6 && this.hist.length > 2; n -= this.hist.shift().length);   // keep the undo list under ~16 MB so a big composition cannot exhaust memory
