@@ -1560,6 +1560,7 @@ html.route-lock,html.route-lock body{overflow:hidden!important;overscroll-behavi
 #gateway[hidden],#atelier[hidden]{display:none!important}
 @property --s{syntax:'<percentage>';inherits:true;initial-value:47%}
 #gateway{--s:47%;position:fixed;inset:0;z-index:55;overflow:hidden;background:#05070a;color:#edf0f7;font-family:var(--f-sans);transition:--s .9s cubic-bezier(.65,0,.2,1)}
+.gateway-scroll-scene{position:absolute;inset:0}
 #gateway[data-sel=atelier]{--s:86%}#gateway[data-sel=orbit]{--s:13%}
 .gateway-choice{position:absolute;inset:0;min-width:0;background:radial-gradient(circle at 30% 38%,#1c2438 0,#090d17 38%,#05070a 80%);text-align:left;cursor:pointer;outline:0;clip-path:polygon(0 0, calc(var(--s) + 6%) 0%, calc(var(--s) + 3%) 11%, calc(var(--s) + 4%) 21%, calc(var(--s) + 0%) 33%, calc(var(--s) + 1%) 42%, calc(var(--s) + 2%) 47%, calc(var(--s) - 1%) 52%, calc(var(--s) - 5%) 67%, calc(var(--s) - 4%) 72%, calc(var(--s) - 2%) 76%, calc(var(--s) - 3%) 80%, calc(var(--s) - 8%) 100%, 0 100%)}
 .gateway-choice:nth-child(2){background:radial-gradient(circle at 62% 50%,#26182a 0,#0d0c15 42%,#07080d 85%);clip-path:polygon(calc(var(--s) + 6%) 0%, calc(var(--s) + 3%) 11%, calc(var(--s) + 4%) 21%, calc(var(--s) + 0%) 33%, calc(var(--s) + 1%) 42%, calc(var(--s) + 2%) 47%, calc(var(--s) - 1%) 52%, calc(var(--s) - 5%) 67%, calc(var(--s) - 4%) 72%, calc(var(--s) - 2%) 76%, calc(var(--s) - 3%) 80%, calc(var(--s) - 8%) 100%, 100% 100%, 100% 0)}
@@ -1701,7 +1702,10 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 @media(max-width:760px){
   .gateway-back{top:calc(env(safe-area-inset-top,0px) + 42px);left:22px}
   .gateway-choice:nth-child(2) .gateway-back{left:22px;top:calc(var(--s) + 50px)}
-  #gateway{--s:50%}#gateway[data-sel=atelier]{--s:84%}#gateway[data-sel=orbit]{--s:15%}
+  #gateway{--s:50%;overflow-x:hidden;overflow-y:auto;touch-action:pan-y;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
+  .gateway-scroll-scene{position:relative;inset:auto;width:100%;height:max(1200px,150svh)}
+  .gateway-choice{touch-action:pan-y}
+  #gateway[data-sel=atelier]{--s:84%}#gateway[data-sel=orbit]{--s:15%}
   .gateway-choice{clip-path:polygon(0 0, 0 calc(var(--s) + 3%), 0% calc(var(--s) + 3.0%), 11% calc(var(--s) + 1.5%), 21% calc(var(--s) + 2.0%), 33% calc(var(--s) + 0.0%), 42% calc(var(--s) + 0.5%), 47% calc(var(--s) + 1.0%), 52% calc(var(--s) - 0.5%), 67% calc(var(--s) - 2.5%), 72% calc(var(--s) - 2.0%), 76% calc(var(--s) - 1.0%), 80% calc(var(--s) - 1.5%), 100% calc(var(--s) - 4.0%), 100% 0)}
   .gateway-choice:nth-child(2){clip-path:polygon(0% calc(var(--s) + 3.0%), 11% calc(var(--s) + 1.5%), 21% calc(var(--s) + 2.0%), 33% calc(var(--s) + 0.0%), 42% calc(var(--s) + 0.5%), 47% calc(var(--s) + 1.0%), 52% calc(var(--s) - 0.5%), 67% calc(var(--s) - 2.5%), 72% calc(var(--s) - 2.0%), 76% calc(var(--s) - 1.0%), 80% calc(var(--s) - 1.5%), 100% calc(var(--s) - 4.0%), 100% 100%, 0 100%, 0 calc(var(--s) + 3%))}
   .gateway-edge{display:none}.gateway-edge.m{display:block;left:0;top:calc(var(--s) - 50vh);width:100%;height:100vh;bottom:auto}
@@ -1985,10 +1989,12 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="rb-glass"><feTurbulence type="fractalNoise" baseFrequency=".012" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="18" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
 <section id="gateway" aria-label="Choose your experience" data-sel="none" hidden>
+  <div class="gateway-scroll-scene">
   <article class="gateway-choice gw-a" data-route="atelier" tabindex="0" aria-label="Select world atelier"><canvas class="gateway-net" aria-hidden="true"></canvas><div class="gw-deco" aria-hidden="true"><b class="gw-letter">S</b><p class="gw-words"><span>S H A P E</span><span>A</span><span class="dim">W O R L D</span><span>T U N E</span><span class="dim">I T</span></p><span class="gw-bar gw-bar-p"></span><span class="gw-bar gw-bar-c"></span><span class="gw-side gw-side-l">Cerebra · world atelier</span><span class="gw-num">001</span></div><span class="gateway-mark">01 / Create</span><button type="button" class="gateway-back" data-gateway-back>← Back</button><span class="gateway-orb" aria-hidden="true"></span><div class="gateway-copy"><strong data-split>Shape a world</strong><small>Choose Cerebra or a planet, bring it closer, and tune its colour, atmosphere and motion.</small><button type="button" class="gateway-enter" data-enter="atelier">Enter world atelier →</button></div></article>
   <article class="gateway-choice" data-route="orbit" tabindex="0" aria-label="Select solar system"><canvas class="gateway-net" aria-hidden="true"></canvas><span class="gateway-mark">02 / Explore</span><button type="button" class="gateway-back" data-gateway-back>← Back</button><span class="gateway-orb" aria-hidden="true"></span><div class="gateway-copy"><strong data-split>Explore the system</strong><small>Travel through Cerebra and its seven worlds in the original journey.</small><button type="button" class="gateway-enter" data-enter="orbit">Enter the solar system →</button></div></article>
   <svg class="gateway-edge" viewBox="-50 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="6,0 3,11 4,21 0,33 1,42 2,47 -1,52 -5,67 -4,72 -2,76 -3,80 -8,100"/></svg><svg class="gateway-edge m" viewBox="0 -50 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,3.0 11,1.5 21,2.0 33,0.0 42,0.5 47,1.0 52,-0.5 67,-2.5 72,-2.0 76,-1.0 80,-1.5 100,-4.0"/></svg>
   <span class="gateway-status" role="status" data-route-status hidden></span>
+  </div>
 </section>
 <section id="atelier" aria-label="World atelier" hidden>
   <div class="atelier-track" data-at-track></div>
@@ -8042,6 +8048,7 @@ class WorldAtelier {
     document.querySelector('main').inert = true;
     this.app.scroll.jumpTo(0);
     this.selectRoute('none'); this.choice.querySelector('[data-enter="atelier"]').focus({ preventScroll: true });
+    this.choice.scrollTop = 0;
   }
   selectRoute(route) {
     if (this.entering) return;
@@ -8052,6 +8059,10 @@ class WorldAtelier {
       card.classList.remove('is-animating');
       if (selected) { void card.offsetWidth; card.classList.add('is-animating'); }
     });
+    if (matchMedia('(max-width:760px)').matches && route !== 'none') {
+      const copy = this.choice.querySelector(`[data-route="${route}"] .gateway-copy`);
+      setTimeout(() => { if (!this.choice.hidden && this.selectedRoute === route) copy.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 900);
+    }
   }
   launch(route) {
     if (this.entering || this.choice.hidden) return;
