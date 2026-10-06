@@ -9573,6 +9573,7 @@ class CoreStudio {
     addEventListener('blur', () => { this.drag = null; this.vx = this.vy = 0; }, { signal });
     addEventListener('keydown', e => {
       if (!this.active || e.key !== 'Escape' || document.body.classList.contains('tune-open')) return;
+      if (this.menuPopup && !this.menuPopup.hidden) { this.closeMenuBar(true); e.preventDefault(); e.stopImmediatePropagation(); return; }
       if (document.activeElement && document.activeElement.isContentEditable) return;
       if (this.rec) { this.stopRecord(true); e.preventDefault(); e.stopImmediatePropagation(); return; }
       if (this.pickCancel) { this.pickCancel(); e.preventDefault(); e.stopImmediatePropagation(); return; }
