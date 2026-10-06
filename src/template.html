@@ -1965,6 +1965,14 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .studio-sub[open]>summary::after{transform:rotate(-135deg)}
 #studio .studio-sub>:not(summary){margin-left:12px;margin-right:12px}
 #studio .studio-sub>.studio-preset-grid{margin-bottom:12px}
+
+.st-motion-group{margin:12px 0;padding:10px 12px;border:1px solid #ffffff20;border-radius:16px;background:#0002}
+.st-motion-group>summary{cursor:pointer;min-height:32px;display:flex;align-items:center;justify-content:space-between;font:600 12px var(--f-cond);letter-spacing:.12em;text-transform:uppercase;color:var(--ink)}
+.st-motion-group>summary::after{content:'⌄';font:20px var(--f-sans);color:#d4baff}
+.st-motion-group[open]>summary::after{transform:rotate(180deg)}
+.st-motion-group>summary{list-style:none}.st-motion-group>summary::-webkit-details-marker{display:none}
+.st-motion-group .dial-grp{border:0;background:none;margin:0}.st-motion-group .dial-grp>summary{display:none}
+.st-motion-group[open]>summary{margin-bottom:12px}
 </style>
 </head>
 <body class="is-loading">
@@ -2068,11 +2076,12 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
   </div></div>
   <label class="tune-row"><span>Atmosphere</span><input type="range" min="0" max="3" step="0.05" data-wt="atmo"><b data-out></b></label>
   <label class="tune-row"><span>Atmosphere shape</span><select data-wt="atmoShape" aria-label="Atmosphere shape"><option value="sphere">Sphere</option><option value="ball">Football (pentagons)</option><option value="dodeca">Pentagon solid</option><option value="ico">Geodesic ball</option><option value="cube">Cube</option><option value="pyramid">Pyramid</option><option value="octa">Diamond</option><option value="torus">Ring</option></select></label>
-  <p class="tune-sub">Motion</p>
+  <details class="st-motion-group"><summary>Motion</summary>
   <label class="tune-row"><span>Spin</span><input type="range" min="0" max="6" step="0.05" data-wt="spin"><b data-out></b></label>
   <div class="tune-row"><span>Direction</span><div class="tune-seg" data-wt-seg="dir"><button type="button" data-v="1">&#8635; Forward</button><button type="button" data-v="-1">&#8634; Reverse</button></div></div>
   <label class="tune-row"><span>Axis tilt</span><input type="range" min="-1.57" max="1.57" step="0.01" data-wt="tilt"><b data-out></b></label>
   <label class="tune-row"><span>Orbit speed</span><input type="range" min="0" max="5" step="0.05" data-wt="orbitSpeed"><b data-out></b></label>
+  </details>
   <p class="tune-sub">Body</p>
   <label class="tune-row"><span>Size</span><input type="range" min="0.5" max="1.6" step="0.01" data-wt="size"><b data-out></b></label>
   <label class="tune-row"><span>Orbit radius</span><input type="range" min="0.85" max="1.2" step="0.01" data-wt="orbit"><b data-out></b></label>
@@ -2482,7 +2491,7 @@ const OrbitBuilder = (() => {
       <label class="tune-row"><span>Tilt</span><input type="range" min="0" max="90" step="1" value="${P.tilt}" data-k="tilt"><b data-out>${P.tilt.toFixed(0)}</b></label>
       <label class="tune-row"><span>Fan</span><input type="range" min="0" max="360" step="5" value="${P.fan}" data-k="fan"><b data-out>${P.fan.toFixed(0)}</b></label>
       <label class="tune-row"><span>Glow</span><input type="range" min="0" max="1" step="0.05" value="${P.glow}" data-k="glow"><b data-out>${P.glow.toFixed(2)}</b></label>
-      <label class="tune-row"><span>Spin</span><input type="range" min="-0.6" max="0.6" step="0.02" value="${P.spin}" data-k="spin"><b data-out>${P.spin.toFixed(2)}</b></label>`;
+      <details class="st-motion-group"><summary>Motion</summary><label class="tune-row"><span>Spin</span><input type="range" min="-0.6" max="0.6" step="0.02" value="${P.spin}" data-k="spin"><b data-out>${P.spin.toFixed(2)}</b></label></details>`;
     else body = `
       <div class="tune-row"><span>Colour</span><div class="ob-cols"><input type="color" value="${P.color}" data-k="color"></div></div>
       <label class="tune-row"><span>Amount</span><input type="range" min="0.2" max="3" step="0.05" value="${P.amount}" data-k="amount"><b data-out>${P.amount.toFixed(2)}</b></label>
@@ -2953,12 +2962,14 @@ const WorldTune = (() => {
     // One section per registered effect: on/off, its sliders and a replay button.
     Pn.querySelector('[data-wt-effects]').innerHTML = Effects.list.map(fx => {
       fx.controls.forEach(c => { if (!c.type) fmt[fx.prefix + c.key] = v => (+v).toFixed(c.step < 0.01 ? 3 : 2); });
-      return `<section data-effect="${fx.id}"><p class="tune-sub">${fx.title}</p>` +
-        `<div class="tune-row"><span>${fx.title}</span><div class="tune-seg" data-wt-seg="${fx.prefix}enabled"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>` +
-        fx.controls.map(c => c.type === 'toggle' ? `<div class="tune-row"${c.styles ? ` data-wt-for="${c.styles.join(' ')}"` : ''}><span>${c.label}</span><div class="tune-seg" data-wt-seg="${fx.prefix}${c.key}"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>`
+      const isMotion = c => /spin|speed|breath|pulse|drift|flow|motion|scan speed/i.test(c.key + ' ' + c.label);
+      const render = controls => controls.map(c => c.type === 'toggle' ? `<div class="tune-row"${c.styles ? ` data-wt-for="${c.styles.join(' ')}"` : ''}><span>${c.label}</span><div class="tune-seg" data-wt-seg="${fx.prefix}${c.key}"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>`
           : c.type === 'select' ? `<label class="tune-row"${c.styles ? ` data-wt-for="${c.styles.join(' ')}"` : ''}><span>${c.label}</span><select data-wt="${fx.prefix}${c.key}">${c.options.map(([v, n]) => `<option value="${v}">${n}</option>`).join('')}</select></label>`
           : c.type === 'color' ? `<label class="tune-row"${c.styles ? ` data-wt-for="${c.styles.join(' ')}"` : ''}><span>${c.label}</span><input type="color" data-wt="${fx.prefix}${c.key}"></label>`
-          : `<label class="tune-row"${c.styles ? ` data-wt-for="${c.styles.join(' ')}"` : ''}><span>${c.label}</span><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" data-wt="${fx.prefix}${c.key}"><b data-out></b></label>`).join('') +
+          : `<label class="tune-row"${c.styles ? ` data-wt-for="${c.styles.join(' ')}"` : ''}><span>${c.label}</span><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" data-wt="${fx.prefix}${c.key}"><b data-out></b></label>`).join('');
+      return `<section data-effect="${fx.id}"><p class="tune-sub">${fx.title}</p>` +
+        `<div class="tune-row"><span>${fx.title}</span><div class="tune-seg" data-wt-seg="${fx.prefix}enabled"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>` +
+        render(fx.controls.filter(c => !isMotion(c))) + (fx.controls.some(isMotion) ? `<details class="st-motion-group"><summary>Motion</summary>${render(fx.controls.filter(isMotion))}</details>` : '') +
         (fx.play ? `<button type="button" class="tune-btn" data-fx-replay="${fx.id}">&#8635; Replay ${fx.title.toLowerCase()}</button>` : '') + '</section>';
     }).join('');
     ['camera','atmosphere'].forEach(id=>Pn.querySelector(`[data-wt-pane="${id}"]`).append(Pn.querySelector(`[data-effect="${id}"]`)));
@@ -3155,7 +3166,7 @@ const WorldTune = (() => {
       <label class="tune-row"><span>Colour</span><input type="color" value="${LAYER_DEFAULT}" data-l="${i}" aria-label="${name} colour"></label>
       <label class="tune-row"><span>Radius</span><input type="range" min="0.7" max="1.3" step="0.01" value="1" data-l-range="radius" data-l="${i}" aria-label="${name} radius"><b data-out>1.00x</b></label>
       <label class="tune-row"><span>Density</span><input type="range" min="0" max="1" step="0.01" value="0.6" data-l-range="density" data-l="${i}" aria-label="${name} density"><b data-out>60%</b></label>
-      <label class="tune-row"><span>Motion</span><input type="range" min="0" max="3" step="0.05" value="1" data-l-range="motion" data-l="${i}" aria-label="${name} motion"><b data-out>1.0x</b></label>
+      <details class="st-motion-group"><summary>Motion</summary><label class="tune-row"><span>Speed</span><input type="range" min="0" max="3" step="0.05" value="1" data-l-range="motion" data-l="${i}" aria-label="${name} motion"><b data-out>1.0x</b></label></details>
     </details><button type="button" class="layer-eye" data-layer-eye="${i}" aria-pressed="true" aria-label="Hide ${name}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg></button></div>`).join('');
     const layerIn = qa('[data-t-layers] input[type=color]');
     const layerRanges = qa('[data-l-range]');
@@ -9666,12 +9677,13 @@ class CoreStudio {
     const styleOpts = ctl(SURFACE, 'style').options;
     box.innerHTML = `<div class="cfx-chips" role="group" aria-label="Surface style">${styleOpts.map(([v, n]) => `<button type="button" class="cfx-chip" data-cfx-style="${v}" aria-pressed="false"><i aria-hidden="true">${ICON[v] || '•'}</i>${n}</button>`).join('')}</div>`
       + cols(SURFACE, [['colorA', 'Colour A'], ['colorB', 'Colour B'], ['colorC', 'Colour C']])
-      + ['density', 'disp', 'size', 'spin'].map(k => slider(SURFACE, k)).join('') + sw(SURFACE, 'shell')
-      + `<p class="cfx-sub" data-cfx-head="move">Transform &amp; motion</p>` + SURFACE.controls.filter(c => c.group === 'move').map(c => any(SURFACE, c)).join('')
-      + `<p class="cfx-sub" data-cfx-head="opts">Style options</p>` + SURFACE.controls.filter(c => c.styles).map(c => any(SURFACE, c)).join('')
-      + `<p class="cfx-sub">Particle burst</p>` + sw(BURST, 'burst') + ['lines', 'len', 'twist', 'curl', 'flow'].map(k => slider(BURST, k)).join('')
-      + `<p class="cfx-sub">Particle ring</p>` + sw(BURST, 'ring') + ['count', 'rin', 'rwid', 'soft', 'tilt', 'rspin'].map(k => slider(BURST, k)).join('')
+      + ['density', 'disp', 'size'].map(k => slider(SURFACE, k)).join('') + sw(SURFACE, 'shell')
+      + `<p class="cfx-sub" data-cfx-head="move">Transform</p>` + SURFACE.controls.filter(c => c.group === 'move' && !['breath', 'bspeed', 'pulse'].includes(c.key)).map(c => any(SURFACE, c)).join('')
+      + `<p class="cfx-sub" data-cfx-head="opts">Style options</p>` + SURFACE.controls.filter(c => c.styles && c.key !== 'tdrift').map(c => any(SURFACE, c)).join('')
+      + `<p class="cfx-sub">Particle burst</p>` + sw(BURST, 'burst') + ['lines', 'len', 'twist', 'curl'].map(k => slider(BURST, k)).join('')
+      + `<p class="cfx-sub">Particle ring</p>` + sw(BURST, 'ring') + ['count', 'rin', 'rwid', 'soft', 'tilt'].map(k => slider(BURST, k)).join('')
       + `<p class="cfx-sub">Burst &amp; ring look</p>` + slider(BURST, 'size') + cols(BURST, [['colorA', 'Colour A'], ['colorB', 'Colour B']])
+      + `<details class="st-motion-group"><summary>Motion</summary><p class="cfx-sub">Surface animation</p>` + ['spin', 'breath', 'bspeed', 'pulse', 'tdrift'].map(k => slider(SURFACE, k)).join('') + `<p class="cfx-sub">Burst &amp; ring animation</p>` + slider(BURST, 'flow') + slider(BURST, 'rspin') + `</details>`
       + `<button type="button" class="st-btn cfx-reset" data-cfx-reset>Reset surface &amp; burst</button>`;
     box.dataset.ready = '1';
     box.querySelectorAll('[data-cfx]').forEach(el => {
@@ -10684,9 +10696,10 @@ class CoreStudio {
       try { localStorage.setItem('cerebra-studio-pencil', JSON.stringify(this.drawSet)); } catch (e) {}
     }));
     // line options (generated from LINE_UI so the Pencil menu and the edit bar of a selected line stay identical)
-    this.lineRowsHtml = (attr, vis) => LINE_UI.map(u => u.type === 'select'
+    const lineRows = (attr, controls) => controls.map(u => u.type === 'select'
       ? `<label class="st-fly-row"${u.for ? ` data-lfor="${u.for.join(' ')}"` : ''}><span>${u.label}</span><select ${attr}="${u.k}">${u.opts.map(([v, n]) => `<option value="${v}">${n}</option>`).join('')}</select></label>`
       : `<label class="st-fly-row"${u.for ? ` data-lfor="${u.for.join(' ')}"` : ''}><span>${u.label}</span><output data-lo="${u.k}"></output><input type="range" min="${u.min}" max="${u.max}" step="${u.step}" ${attr}="${u.k}"></label>`).join('');
+    this.lineRowsHtml = attr => lineRows(attr, LINE_UI.filter(u => u.k !== 'motion' && !u.for)) + '<details class="st-motion-group"><summary>Motion</summary>' + lineRows(attr, LINE_UI.filter(u => u.k === 'motion' || u.for)) + '</details>';
     this.lineVal = (u, v) => u.unit ? `${+(+v).toFixed(2)}${u.unit}` : String(+(+v).toFixed(2));
     const lopt = document.createElement('div'); lopt.className = 'st-line-opts'; lopt.hidden = true; lopt.innerHTML = '<b class="st-fly-sub">Line</b>' + this.lineRowsHtml('data-lset');
     fly.querySelector('[data-draw-done]').before(lopt);
@@ -10902,6 +10915,7 @@ class CoreStudio {
   // Neumorphic rotary dial that drives an existing range input (drag up/down or sideways, wheel, arrow keys).
   dialDeck(root, rowSel, fold) {
     if (!root || root._deck) return; root._deck = 1;
+    const smLabel = key => key?.textContent || '';
     const isSub = e => e.classList.contains('tune-sub') || e.classList.contains('cfx-sub');
     const ok = r => r && r.matches && r.matches(rowSel) && !r.closest('.dial-body') && r.querySelectorAll('input').length === 1 && r.querySelector('input[type=range]');
     const build = () => {
@@ -10920,7 +10934,7 @@ class CoreStudio {
             host.append(sm, body);
           }
           r.before(host); g = holder._dg = { host, body, cnt, n: 0 };
-          if (fold) host.open = !host.parentElement.querySelector(':scope>.dial-grp[open]');
+          if (fold) host.open = !!host.closest('.st-motion-group') || (!/motion|animation|comets/i.test(smLabel(key)) && !host.parentElement.querySelector(':scope>.dial-grp[open]'));
         }
         g.body.append(r); g.n++; if (g.cnt) g.cnt.textContent = g.n; touched.add(g);
       });
@@ -11211,7 +11225,7 @@ class CoreStudio {
     const it = this.sel, f = this.el.querySelector('[data-kit-panel]'); if (!it || it.kind !== 'kit') return;
     const def = KIT[it.kit], fmt = (u, v) => u.pct ? `${Math.round(v * 100)}%` : u.unit ? `${+v.toFixed(1)}${u.unit}` : String(v);
     const spin = it.spin || 0;
-    const shown = def.ui.filter(u => u.k !== 'mstyle' && (!u.when || [].concat(u.when[1]).includes(it.p[u.when[0]]))), ms = def.ui.find(u => u.k === 'mstyle');
+    const motionParam = u => /motion|drift|spin|speed/i.test(u.label), shown = def.ui.filter(u => u.k !== 'mstyle' && (!u.when || [].concat(u.when[1]).includes(it.p[u.when[0]]))), ms = def.ui.find(u => u.k === 'mstyle');
     f.innerHTML = `<b class="st-fly-title">${def.label}</b>`
       + shown.map(u => {
       const v = it.p[u.k];
@@ -11223,17 +11237,17 @@ class CoreStudio {
       if (u.t === 'check') return `<label class="st-fly-row st-fly-check"><span>${u.label}</span><input type="checkbox" data-kp="${u.k}"${v ? ' checked' : ''}></label>`;
       return `<label class="st-fly-row"><span>${u.label}</span><input type="color" value="${v}" data-kp="${u.k}"></label>`;
     }).join('')
-      + `<div class="st-ksec-h">Look &amp; spin</div>` + `<label class="st-fly-row"><span>Opacity</span><output>${Math.round((it.opacity ?? 1) * 100)}%</output><input type="range" min="0.05" max="1" step="0.05" value="${it.opacity ?? 1}" data-kop></label>`
-      + `<label class="st-fly-row st-fly-check"><span>Spin</span><input type="checkbox" data-kspin-on${it.spinOn ? ' checked' : ''}></label>`
+      + `<div class="st-ksec-h">Appearance</div>` + `<label class="st-fly-row"><span>Opacity</span><output>${Math.round((it.opacity ?? 1) * 100)}%</output><input type="range" min="0.05" max="1" step="0.05" value="${it.opacity ?? 1}" data-kop></label>`
+      + `<details class="st-ksec" data-ksec="mo"${(this._kitMotionOpen?.get(it) ?? !!(it.mOn || it.spinOn)) ? ' open' : ''}><summary>Motion</summary><div class="st-ksec-h">Rotation</div><label class="st-fly-row st-fly-check"><span>Spin</span><input type="checkbox" data-kspin-on${it.spinOn ? ' checked' : ''}></label>`
       + `<label class="st-fly-row"><span>Spin speed</span><output>${spin ? `${spin}°/s` : 'still'}</output><input type="range" min="-120" max="120" step="1" value="${spin}" data-kspin></label>`
-      + (def.anim ? `<details class="st-ksec" data-ksec="mo"${(this._ko?.mo ?? it.mOn) ? ' open' : ''}><summary>Motion</summary>` + `<label class="st-fly-row st-fly-check"><span>Motion (parts move)</span><input type="checkbox" data-kmo-on${it.mOn ? ' checked' : ''}></label>`
+      + (def.anim ? `<div class="st-ksec-h">Animation</div>` + `<label class="st-fly-row st-fly-check"><span>Motion (parts move)</span><input type="checkbox" data-kmo-on${it.mOn ? ' checked' : ''}></label>`
         + (ms ? `<label class="st-fly-row"><span>Motion style</span><select data-kp="mstyle">${ms.opts.map(([o, n]) => `<option value="${o}"${o === it.p.mstyle ? ' selected' : ''}>${n}</option>`).join('')}</select></label>` : '')
         + `<label class="st-fly-row"><span>Motion amount</span><output>${Math.round((it.mAmt ?? .6) * 100)}%</output><input type="range" min="0.05" max="1" step="0.05" value="${it.mAmt ?? .6}" data-kmo-amt></label>`
         + `<label class="st-fly-row"><span>Motion speed</span><output>${(it.mSpd ?? 1).toFixed(1)}×</output><input type="range" min="0.2" max="3" step="0.1" value="${it.mSpd ?? 1}" data-kmo-spd></label>`
         + `<label class="st-fly-row"><span>Extra motion</span><select data-kmo-fx>${KIT_FX_OPTS.map(([v, n]) => `<option value="${v}"${(it.mFx || 'none') === v ? ' selected' : ''}>${n}</option>`).join('')}</select></label>`
-        + KIT_MOTION_UI.filter(u => !u.when || String(it[u.when[0]] ?? KIT_MOTION_UI.find(x => x.k === u.when[0]).def) === u.when[1]).map(u => { const v = it[u.k] ?? u.def;
+        + `<div class="st-ksec-h">Timing &amp; rhythm</div>` + KIT_MOTION_UI.filter(u => !u.when || String(it[u.when[0]] ?? KIT_MOTION_UI.find(x => x.k === u.when[0]).def) === u.when[1]).map(u => { const v = it[u.k] ?? u.def;
           return u.t === 'range' ? `<label class="st-fly-row"><span>${u.label}</span><output>${fmt(u, v)}</output><input type="range" min="${u.min}" max="${u.max}" step="${u.step}" value="${v}" data-kmx="${u.k}"></label>`
-            : `<label class="st-fly-row"><span>${u.label}</span><select data-kmx="${u.k}">${u.opts.map(([o, n]) => `<option value="${o}"${String(o) === String(v) ? ' selected' : ''}>${n}</option>`).join('')}</select></label>`; }).join('') + '</details>' : '')
+            : `<label class="st-fly-row"><span>${u.label}</span><select data-kmx="${u.k}">${u.opts.map(([o, n]) => `<option value="${o}"${String(o) === String(v) ? ' selected' : ''}>${n}</option>`).join('')}</select></label>`; }).join('') : '') + '</details>'
       + (def.noShuffle ? '' : '<button type="button" class="st-btn st-kit-shuffle" data-kit-shuffle>Shuffle pattern</button>');
     const op = f.querySelector('[data-kop]'), sOn = f.querySelector('[data-kspin-on]'), sp = f.querySelector('[data-kspin]');
     op.addEventListener('input', () => { it.opacity = +op.value; op.parentNode.querySelector('output').textContent = `${Math.round(it.opacity * 100)}%`; const co = this.ctx.querySelector('[data-ctx-opacity]'); co.value = it.opacity; co.nextElementSibling.textContent = `${Math.round(it.opacity * 100)}%`; this.kitRedraw(it); });
@@ -11259,7 +11273,7 @@ class CoreStudio {
       btn.parentNode.querySelectorAll('[data-kchip]').forEach(x => x.setAttribute('aria-pressed', String(x === btn)));
       this.kitRedraw(it); this.place(it); this.commit();
     }));
-    f.querySelectorAll('details[data-ksec]').forEach(d => d.addEventListener('toggle', () => { (this._ko || (this._ko = {}))[d.dataset.ksec] = d.open; this.layoutKitFly(); }));
+    f.querySelectorAll('details[data-ksec]').forEach(d => d.addEventListener('toggle', () => { (this._kitMotionOpen || (this._kitMotionOpen = new WeakMap())).set(it, d.open); this.layoutKitFly(); }));
     f.querySelectorAll('[data-kp]').forEach(el => {
       const u = def.ui.find(x => x.k === el.dataset.kp), drives = def.ui.some(x => x.when && x.when[0] === u.k);
       if (drives) el.addEventListener('change', () => this.syncKit());
@@ -11270,6 +11284,10 @@ class CoreStudio {
     });
     f.querySelectorAll('[data-kop],[data-kspin],[data-kmo-amt],[data-kmo-spd]').forEach(rangeFill);
     const sh = f.querySelector('[data-kit-shuffle]'); if (sh) sh.onclick = () => { it.seed = Math.random() * 1e9 | 0; this.place(it); this.commit(); };
+    const motion = f.querySelector('[data-ksec=mo]');
+    shown.filter(motionParam).forEach(u => { const input = f.querySelector(`[data-kp="${u.k}"]`); if (input) motion.append(input.closest('.st-fly-row')); });
+    const foldIdle = () => { if (!it.mOn && !it.spinOn) { motion.open = false; this._kitMotionOpen?.set(it, false); } };
+    [sOn, mOn].filter(Boolean).forEach(el => el.addEventListener('change', foldIdle));
     this.layoutKitFly();
   }
   // ---- Keyboard shortcuts: ONE table (SHORTCUTS) drives the key handler, the "?" sheet and the button tooltips.
