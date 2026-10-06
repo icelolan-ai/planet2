@@ -103,6 +103,8 @@ fx_order = [
     'surface-shapes.js',
     'surface-tune-core.js',
     'studio-tune-core-ux.js',
+    'studio-detail-controls.js',
+    'studio-dock-order.js',
     'camera.js',
     'fog.js',
     'formation.js',
