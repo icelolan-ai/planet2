@@ -937,7 +937,11 @@ body.studio-on #studio{display:block}
 #studio .st-layers :is(.st-layer,.st-ghead) .st-eye{width:28px!important;min-width:28px!important}
 #studio .st-layers .st-ghead{gap:4px;padding:6px 6px}
 #studio .st-layers .st-lname{min-width:20px}
-#studio .st-layers .st-layer.in-group{margin-left:8px}
+#studio .st-layers .st-layer.in-group{margin-left:24px}
+#studio .st-layers .st-layer.in-group::before,#studio .st-layers .st-layer.in-group::after{content:"";position:absolute;pointer-events:none;background:#b39ad9;opacity:.75}
+#studio .st-layers .st-layer.in-group::before{left:-18px;top:-7px;bottom:-7px;width:1px}
+#studio .st-layers .st-layer.in-group::after{left:-18px;top:50%;width:16px;height:1px}
+#studio .st-layers .st-layer.in-group.is-group-last::before{bottom:50%}
 #studio .st-layers .st-ghead .st-lname{min-width:28px}
 #studio .st-layers .st-ghead .st-gcount{flex:none;margin:0 2px}
 #studio .st-layers>li:not(.is-drag){transition:transform .2s cubic-bezier(.3,.7,.2,1)}
@@ -10940,6 +10944,8 @@ class CoreStudio {
     });
     this.groups.forEach(g => { if (!seen.has(g.id)) out.push(head(g)); });
     ul.innerHTML = out.join('');
+    // A continuous tree rail belongs only to this expanded group's children.
+    ul.querySelectorAll('.in-group').forEach(li => li.classList.toggle('is-group-last', !li.nextElementSibling?.classList.contains('in-group')));
     const bar = this.el.querySelector('[data-lsel]'), sm = this.el.querySelector('[data-sel-mode]'); this.multi.forEach(id => { if (!this.items.some(i => i.id === id)) this.multi.delete(id); });
     sm.setAttribute('aria-pressed', String(this.selMode || this.multi.size > 0)); sm.textContent = this.selMode || this.multi.size ? 'Done' : 'Select';
     bar.hidden = true;   // the on-canvas selection bar already has these actions; no second menu inside Layers
