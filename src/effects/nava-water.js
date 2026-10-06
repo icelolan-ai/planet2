@@ -523,6 +523,11 @@ function noise2(x,y,t){ return Math.sin(x*3.1+t*0.6)+Math.cos(y*2.7-t*0.5)+Math.
    can react to the water. Done once per frame and cached — reading per
    particle would stall the pipeline badly. */
 let dyeSample = null, dyeSampleW = 0, dyeSampleH = 0;
+function resetParticleInteraction(){
+  dyeSample=null;
+  particles.forEach((p,i)=>{p.color=(state.particleColors?.[i%state.particleColorCount]||state.brushColor).slice();delete p.charge;});
+  const ctx=jellyCanvas.getContext('2d');ctx.clearRect(0,0,jellyCanvas.width,jellyCanvas.height);
+}
 function sampleDyeField(){dyeSample=fluidSim.sampleDye();dyeSampleW=dyeSampleH=128;return true;}
 function dyeAt(x, y){
   if(!dyeSample) return null;
@@ -1006,7 +1011,7 @@ const restoreRipples=v=>{pendingRipples.length=0;if(!Array.isArray(v))return;for
   pendingRipples.push({...p,col:p.col.slice()});
 }};
 return{solver:fluidSim,canvas:fluidCanvas,particles,pointers:pointerData,brushes:tentacleBrushes,particleCanvas:jellyCanvas,
-setObstacle:v=>{obstacle=v||{x:0,y:0,r:0}},setCollisionMap:v=>{collisionMap=v||null},color:activeBrushColor,rippleSnapshot,restoreRipples,cancelRipples:()=>{pendingRipples.length=0},setState:v=>{state=v},seed:seedParticles,addParticles:addMoreParticles,splat:splatSym,ripple,
+setObstacle:v=>{obstacle=v||{x:0,y:0,r:0}},setCollisionMap:v=>{collisionMap=v||null},color:activeBrushColor,rippleSnapshot,restoreRipples,cancelRipples:()=>{pendingRipples.length=0},setState:v=>{state=v},seed:seedParticles,resetParticleInteraction,addParticles:addMoreParticles,splat:splatSym,ripple,
 startTentacle:startTentacleBrush,endTentacle:endTentacleBrush,pick:(x,y)=>{sampleDyeField();return dyeAt(x,y)},
 frame(dt,frozen,elapsed=dt){
 if(frozen&&state.paused)freezeProgress=1;
