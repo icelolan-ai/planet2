@@ -1497,6 +1497,9 @@ body .dial-body.many>.tune-row>input[type=range]{grid-column:1/-1;grid-row:2;wid
 .st-height-resize::before{content:'';display:block;width:30px;height:4px;border-radius:4px;margin:auto;background:#c9a8ff}
 .st-height-resize:focus-visible{outline:2px solid #d6bcff;outline-offset:2px}
 .st-height-resize[hidden]{display:none}
+.st-height-resize[data-height-resize="layers"]{opacity:0;transition:opacity .15s ease}
+.st-height-resize[data-height-resize="layers"]:focus-visible,.st-height-resize[data-height-resize="layers"].is-resizing{opacity:1}
+@media (hover:hover){.st-height-resize[data-height-resize="layers"]:hover{opacity:1}}
 .st-layers-tray .st-panel-head h2{font-size:13.5px}
 #studio .st-tray-lock[aria-pressed=true]{color:#ff8f98;border-color:#ff4655}
 .st-tray-grip{display:none}
@@ -2190,6 +2193,8 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
     <p class="tune-sub">Inner particles</p>
     <label class="tune-row"><span>Amount</span><input type="range" min="0" max="4" step="0.05" value="0.35" data-t-swarm><b data-out>35%</b></label>
     <label class="tune-row"><span>Size</span><input type="range" min="0.3" max="3" step="0.05" value="1" data-t-swsize><b data-out>1.0x</b></label>
+    <label class="tune-row"><span>Blink strength</span><input type="range" min="0" max="1" step="0.05" value="1" data-t-swblink><b data-out>100%</b></label>
+    <label class="tune-row"><span>Blink frequency</span><input type="range" min="0" max="8" step="0.05" value="1" data-t-swrate><b data-out>1.0x</b></label>
     <div class="tune-row"><span>Colour</span>
       <div class="tune-sw" role="group" aria-label="Inner particle colour" data-t-swsw>
         <button type="button" style="--c:#cfe3ff" data-c="#cfe3ff" aria-label="Ice" aria-pressed="true"></button>
@@ -3071,6 +3076,8 @@ const WorldTune = (() => {
     const bands = range('[data-t-bands]', v => call('setBandCount', v), v => String(Math.round(v)));
     const swarm = range('[data-t-swarm]', v => call('setSwarm', v, null, null), pct);
     const swsize = range('[data-t-swsize]', v => call('setSwarm', null, v, null), times);
+    const swblink = range('[data-t-swblink]', v => call('setSwarmBlink', v, null), pct);
+    const swrate = range('[data-t-swrate]', v => call('setSwarmBlink', null, v), times);
     const intf = v => String(Math.round(v));
     const cmN = range('[data-t-cm-n]', v => call('setComets', { n: v }), intf);
     const cmTail = range('[data-t-cm-tail]', v => call('setComets', { tail: v }), times);
@@ -3186,17 +3193,18 @@ const WorldTune = (() => {
     q('[data-t-view]').addEventListener('click', () => { call('resetView'); setRange(zoom, 1, v => v.toFixed(2) + 'x'); });
     const resetUI = () => {
       [[dens, CORE_DEFAULTS.density, pct], [structure, CORE_DEFAULTS.structure, pct], [spd, 1, times], [thick, 1, times], [clar, 0, times], [rim, 0, v => v.toFixed(2)], [haze, CORE_DEFAULTS.haze, pct],
-       [frate, 1, times], [famt, 1, times], [bands, 1, v => String(Math.round(v))], [swarm, CORE_DEFAULTS.swarm, pct], [swsize, 1, times], [cmN, CORE_DEFAULTS.comets, intf], [cmTail, 1, times], [cmSpeed, 1, times], [cmSize, 1, times], [cmDive, 1, times], [ptrs, 1, times], [gain, 1, times], [zoom, 1, v => v.toFixed(2) + 'x']].forEach(([el, v, f]) => setRange(el, v, f));
+       [frate, 1, times], [famt, 1, times], [bands, 1, v => String(Math.round(v))], [swarm, CORE_DEFAULTS.swarm, pct], [swsize, 1, times], [swblink, 1, pct], [swrate, 1, times], [cmN, CORE_DEFAULTS.comets, intf], [cmTail, 1, times], [cmSpeed, 1, times], [cmSize, 1, times], [cmDive, 1, times], [ptrs, 1, times], [gain, 1, times], [zoom, 1, v => v.toFixed(2) + 'x']].forEach(([el, v, f]) => setRange(el, v, f));
       LAYER_U.uStructure.value = CORE_DEFAULTS.structure;
       Object.assign(pcfg, { mode: 'original', a: '#ff4655', b: '#8b5cf6', ink: 'auto' }); showPaint(); ['outer', 'inner'].forEach(k => { shellSel(k).value = 'sphere'; }); shellSel('nucleus').value = 'off'; ['outer', 'inner', 'nucleus'].forEach(k => { shellCol(k).value = '#dfe4ea'; });
       dir.set(1); band.set(1); inner.set(1); ptr.set(0); shape.set(0); setTheme('nebula'); neon.set('#b44cff'); flareC.set('#ffffff'); swarmC.set('#cfe3ff'); cometC.set('#9fd4ff'); setLayers([0, 1, 2, 3, 4].map(() => LAYER_DEFAULT)); setLayerValues(null); setLayerEyes(null);
       const L = LENS_DEFAULTS(); Object.keys(L).forEach(k => { LENS_U[k].value = L[k]; });
       setRange(aberr, L.uLensAberr, f3); setRange(blur, L.uLensBlur, f2); setRange(bloom, L.uLensBloom, f2); lens.set(1);
     };
-    q('[data-t-reset]').addEventListener('click', () => {
+    const resetCore = () => {
       try { localStorage.removeItem(KEY); } catch (e) {}
       mic.set(0); call('stopAudio'); call('resetAll'); resetUI(); try { const st = window.__cerebra && window.__cerebra.studio; st && st.resetFx && st.resetFx('core'); } catch (e) {} showSel(null); syncRings();
-    });
+    };
+    q('[data-t-reset]').addEventListener('click', resetCore);
 
     /* ---- selected part ---- */
     const selBox = q('[data-sel]');
@@ -3297,7 +3305,7 @@ const WorldTune = (() => {
     function snapshot() {
       const b = body(); if (!b) return null;
       return { density: b.density, structure: LAYER_U.uStructure.value, speed: b.speed, dir: b.dir, shape: b.shape, neon: hex(b.uNeon.value), theme: b.theme || 'nebula',
-        rings: b.ringCount, layers: LAYER_U.uLayerCol.value.map(c => '#' + c.getHexString()), layerVisible: [...LAYER_U.uLayerVisible.value], layerValues: Object.fromEntries(Object.entries(layerKey).map(([k, u]) => [k, [...LAYER_U[u].value]])), comets: b.cometState(), bands: b.bandCount, swarm: b.swarmAmt, swsize: b.swarmMat.uniforms.uSize.value, swcolor: hex(b.swarmMat.uniforms.uColor.value), band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
+        rings: b.ringCount, layers: LAYER_U.uLayerCol.value.map(c => '#' + c.getHexString()), layerVisible: [...LAYER_U.uLayerVisible.value], layerValues: Object.fromEntries(Object.entries(layerKey).map(([k, u]) => [k, [...LAYER_U[u].value]])), comets: b.cometState(), bands: b.bandCount, swarm: b.swarmAmt, swblink: b.swarmMat.uniforms.uBlinkAmount.value, swrate: b.swarmMat.uniforms.uBlinkRate.value, swsize: b.swarmMat.uniforms.uSize.value, swcolor: hex(b.swarmMat.uniforms.uColor.value), band: b.bandItem.show, thick: b.bandItem.thick, metal: hex(b.blockMat.uniforms.uColor.value),
         gv: 2, clarity: +clar.value, rim: +rim.value, inner: b.inner.show, haze: b.hazeDensity, frate: b.uFlareRate.value, famt: b.uFlareAmt.value, fcolor: '#' + b.uFlareColor.value.getHexString(),
         ptr: b.ptrMode, ptrs: b.ptrStrength, shells: { ...b.shellKind }, shellColors: { ...b.shellColors }, paint: { ...pcfg },
         lens: LENS_U.uLensOn.value, aberr: LENS_U.uLensAberr.value, blur: LENS_U.uLensBlur.value, bloom: LENS_U.uLensBloom.value };
@@ -3320,7 +3328,7 @@ const WorldTune = (() => {
       setLayerValues(s.layerValues);
       if (s.comets) { const c = s.comets; b.setComets(c); setRange(cmN, c.n, intf); setRange(cmTail, c.tail, times); setRange(cmSpeed, c.speed, times); setRange(cmSize, c.size, times); setRange(cmDive, c.dive, times); cometC.set(c.color); }
       if (s.bands) { b.setBandCount(s.bands); setRange(bands, s.bands, v => String(Math.round(v))); }
-      if (s.swarm != null) { b.setSwarm(s.swarm, s.swsize, s.swcolor); setRange(swarm, s.swarm, pct); setRange(swsize, s.swsize, times); swarmC.set(s.swcolor); }
+      if (s.swarm != null) { b.setSwarm(s.swarm, s.swsize, s.swcolor); setRange(swarm, s.swarm, pct); setRange(swsize, s.swsize, times); swarmC.set(s.swcolor); b.setSwarmBlink(s.swblink ?? 1, s.swrate ?? 1); setRange(swblink, s.swblink ?? 1, pct); setRange(swrate, s.swrate ?? 1, times); }
       const gOk = s.gv === 2, gC = gOk ? s.clarity : 0, gR = gOk ? s.rim : 0; // saved states from before the zero default keep their glass off
       b.setGlass(gC, gR); setRange(clar, gC, times); setRange(rim, gR, v => v.toFixed(2));
       b.setInner(s.inner); inner.set(s.inner ? 1 : 0);
@@ -3338,7 +3346,12 @@ const WorldTune = (() => {
       }
     };
     restore();
-    window.CerebraTune = { snapshot, apply };   // Studio 'Save planet' and the World Atelier reuse the core's own save / restore
+    window.CerebraTune = { snapshot, apply, reset: resetCore, applySwarm(s) {
+      const b = body(); if (!b || !s) return;
+      b.setSwarm(s.swarm, s.swsize, s.swcolor); b.setSwarmBlink(s.swblink ?? 1, s.swrate ?? 1);
+      setRange(swarm, s.swarm, pct); setRange(swsize, s.swsize, times); swarmC.set(s.swcolor);
+      setRange(swblink, s.swblink ?? 1, pct); setRange(swrate, s.swrate ?? 1, times); save();
+    } };   // Studio 'Save planet' and the World Atelier reuse the core's own save / restore
 
     /* ---- named presets ---- */
     const PKEY = 'cerebra.presets.v1';
@@ -4880,12 +4893,12 @@ class PlanetBody {
     this.swarmGeom.setAttribute('position', new THREE.BufferAttribute(sp, 3));
     this.swarmGeom.setAttribute('aSeed', new THREE.BufferAttribute(sd, 1));
     this.swarmMat = new THREE.ShaderMaterial({
-      uniforms: { uTime: shared.uTime, uColor: { value: new THREE.Color('#cfe3ff') }, uOpacity: { value: 0 }, uSize: { value: 1 }, uPixelRatio: { value: 1 } },
-      vertexShader: `uniform float uTime, uSize, uPixelRatio; attribute float aSeed; varying float vA;
+      uniforms: { uTime: shared.uTime, uColor: { value: new THREE.Color('#cfe3ff') }, uBlinkAmount: { value: 1 }, uBlinkRate: { value: 1 }, uOpacity: { value: 0 }, uSize: { value: 1 }, uPixelRatio: { value: 1 } },
+      vertexShader: `uniform float uTime, uSize, uPixelRatio, uBlinkAmount, uBlinkRate; attribute float aSeed; varying float vA;
         void main(){ vec3 p = position; float a = uTime * (0.15 + aSeed * 0.35); float c = cos(a), s = sin(a);
           p.xz = mat2(c, -s, s, c) * p.xz; p.y += sin(uTime * 0.7 + aSeed * 30.0) * 0.02;
           vec4 mv = modelViewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv;
-          vA = 0.45 + 0.55 * sin(uTime * (1.0 + aSeed * 2.0) + aSeed * 40.0);
+          vA = mix(1.0, max(0.0, 0.45 + 0.55 * sin(uTime * uBlinkRate * (1.0 + aSeed * 2.0) + aSeed * 40.0)), uBlinkAmount);
           gl_PointSize = clamp(uSize * (1.2 + aSeed * 1.8) * uPixelRatio * (7.5 / -mv.z), 1.0, 20.0 * uPixelRatio); }`,
       fragmentShader: `uniform vec3 uColor; uniform float uOpacity; varying float vA;
         void main(){ float d = length(gl_PointCoord - 0.5); if (d > 0.5) discard; float g = pow(1.0 - d * 2.0, 1.8);
@@ -5188,6 +5201,10 @@ class PlanetBody {
     if (o.color) u.uColor.value.set(o.color);
   }
   cometState() { const u = this.cometMat.uniforms; return { n: u.uCount.value, tail: u.uTail.value, speed: this.cometSpeed, size: u.uSize.value, dive: u.uDive.value, color: '#' + u.uColor.value.getHexString() }; }
+  setSwarmBlink(amount, rate) {
+    if (amount != null) this.swarmMat.uniforms.uBlinkAmount.value = clamp(amount, 0, 1);
+    if (rate != null) this.swarmMat.uniforms.uBlinkRate.value = clamp(rate, 0, 8);
+  }
   setSwarm(amt, size, hex) {
     if (amt != null) { this.swarmAmt = clamp(amt, 0, 4); this.swarmGeom.setDrawRange(0, Math.round(6000 * this.swarmAmt / 4)); }
     if (size != null) this.swarmMat.uniforms.uSize.value = size;
@@ -5237,7 +5254,7 @@ class PlanetBody {
     this.setRingCount(CORE_DEFAULTS.rings);
     this.setTheme('nebula');
     this.setDensity(CORE_DEFAULTS.density); this.setHaze(CORE_DEFAULTS.haze); this.setSpeed(1); this.setDirection(1); this.setShape(0);
-    this.setFlare(1, 1); this.setFlareColor("#ffffff"); this.setPointer(0, 1); this.setBand(true, 1); this.setBandCount(1); this.setSwarm(CORE_DEFAULTS.swarm, 1, '#cfe3ff'); this.setComets({ n: CORE_DEFAULTS.comets, tail: 1, speed: 1, size: 1, dive: 1, color: '#9fd4ff' }); this.setInner(true); this.setGlass(0, 0);
+    this.setFlare(1, 1); this.setFlareColor("#ffffff"); this.setPointer(0, 1); this.setBand(true, 1); this.setBandCount(1); this.setSwarm(CORE_DEFAULTS.swarm, 1, '#cfe3ff'); this.setSwarmBlink(1, 1); this.setComets({ n: CORE_DEFAULTS.comets, tail: 1, speed: 1, size: 1, dive: 1, color: '#9fd4ff' }); this.setInner(true); this.setGlass(0, 0);
     this.outer.show = true; this.resetView(); this.selected = null;
     this.paint = { mode: 'original', a: '#ff4655', b: '#8b5cf6', ink: 'auto' }; this._painted = false; this._paintKey = ''; this.shellColors = {};
     this.setShell('outer', 'sphere'); this.setShell('inner', 'sphere'); this.setShell('nucleus', 'off'); this.setInner(true);
@@ -8999,7 +9016,7 @@ class CoreStudio {
       <div class="st-dock st-glass" data-tray="dock" role="toolbar" aria-label="Studio"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button>
         <button type="button" class="st-btn st-dock-fold" data-dock-fold aria-expanded="true" aria-label="Fold toolbar"><span class="st-chev" aria-hidden="true"></span></button>
         <select data-studio-subject aria-label="Object in studio"><option value="-1">Cerebra</option>${WORLDS.map((d,i) => `<option value="${i}">${d.name}</option>`).join('')}</select>
-        <button type="button" class="st-btn is-primary" data-studio-tune>${I('<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>')}<span class="st-label" data-tune-label>Tune core</span></button>
+        <button type="button" class="st-btn is-primary" data-studio-tune>${I('<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>')}<span class="st-label" data-tune-label>Tune the core</span></button>
         <div class="st-group" data-grp="fx"><button type="button" class="st-btn" data-grp-btn aria-expanded="false" aria-label="Effects menu"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg><span class="st-label">Effects</span><i class="st-caret" aria-hidden="true"></i></button><div class="st-sub st-sub-wide" hidden>
           <div class="st-fxbox" data-fxbox><p class="st-sub-t">Colour effect</p><div class="st-chips"><button type="button" class="st-chip" data-fxv="off">Off</button><button type="button" class="st-chip" data-fxv="chromatic">Chromatic</button><button type="button" class="st-chip" data-fxv="rgb">RGB split</button><button type="button" class="st-chip" data-fxv="color">Color split</button><button type="button" class="st-chip" data-fxv="vhs">VHS</button><button type="button" class="st-chip" data-fxv="glitch">Glitch</button></div>
           <label class="st-fxamt"><span>Strength</span><b data-fxamt-o></b><input type="range" min="0" max="20" step="1" data-fxamt></label>
@@ -9349,7 +9366,7 @@ class CoreStudio {
       ['[data-t-clarity]', '[data-t-rim]'].forEach(sel => { const e = document.querySelector(sel); if (e) { e.value = 0; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); } }); // Glass is always 0 after a reset
     };
     const resetFull = () => {
-      resetCanvas(); document.querySelector('[data-t-reset]').click(); this.resetTrays(); this.resetFx('all');
+      resetCanvas(); window.CerebraTune.reset(); this.resetTrays(); this.resetFx('all');
       try { ['cerebra-ui-prefs', 'cerebra-layers-size', 'cerebra-studio-pencil', 'cerebra-rot-snap'].forEach(k => localStorage.removeItem(k)); } catch (e) {}
       this.laySize = null; this.rotSnap = 0; this.gridStyle = { auto: true, c: '#ffffff', a: .25, t: 1, n: 24 }; if (this.syncGridUI) this.syncGridUI(); this.setGridMode('always');
       const root = document.documentElement; ['--cyg', '--glrgb1', '--glrgb2', '--glk', '--glb'].forEach(v => root.style.removeProperty(v)); this.uiSet && Object.assign(this.uiSet, { glk: 1, glb: 26, theme: 'violet' });
@@ -9482,7 +9499,7 @@ class CoreStudio {
     this.app.detail.index = Math.max(0,this.subject);
     const name = this.subject < 0 ? 'Cerebra' : this.app.orrery.worlds[this.subject].def.name;
     this.el.querySelector('[data-studio-subject]').value = String(this.subject);
-    this.el.querySelector('[data-tune-label]').textContent = this.subject < 0 ? 'Tune core' : 'Tune world';
+    this.el.querySelector('[data-tune-label]').textContent = this.subject < 0 ? 'Tune the core' : 'Tune world';
     if (this.subject >= 0) reuploadTextures(this.app.orrery.worlds[this.subject].group);
     this.updateAvail(); this.lastVfx = 0; this.paintVfx();
     const roles = { title: name, index: String(this.subject + 2).padStart(3, '0'), kicker: `${name} / studio study` };
@@ -11642,11 +11659,12 @@ class CoreStudio {
       const save = () => { try { localStorage.setItem(name === 'layers' ? 'cerebra-layers-size' : 'cerebra-design-height', name === 'layers' ? JSON.stringify(this.laySize) : String(this.panelSize)); } catch (e) {} };
       handle.addEventListener('pointerdown', e => {
         if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); handle.setPointerCapture(e.pointerId);
+        handle.classList.add('is-resizing');
         drag = { id: e.pointerId, y: e.clientY, height: tray.getBoundingClientRect().height, sign: (this.trayCfg.bottom || []).includes(name) ? -1 : 1 };
       });
       handle.addEventListener('pointermove', e => { if (drag && drag.id === e.pointerId) resize(drag.height + (e.clientY - drag.y) * drag.sign); });
-      const end = e => { if (!drag || drag.id !== e.pointerId) return; drag = null; save(); };
-      handle.addEventListener('pointerup', end); handle.addEventListener('pointercancel', end);
+      const end = e => { if (!drag || drag.id !== e.pointerId) return; drag = null; handle.classList.remove('is-resizing'); save(); };
+      handle.addEventListener('pointerup', end); handle.addEventListener('pointercancel', end); handle.addEventListener('lostpointercapture', end);
       handle.addEventListener('keydown', e => { if (!['ArrowUp', 'ArrowDown'].includes(e.key)) return; e.preventDefault(); resize(tray.getBoundingClientRect().height + (e.key === 'ArrowDown' ? 20 : -20)); save(); });
       handle.addEventListener('dblclick', () => { if (name === 'layers') this.laySize = null; else this.panelSize = null; try { localStorage.removeItem(name === 'layers' ? 'cerebra-layers-size' : 'cerebra-design-height'); } catch (e) {} this.layoutTrays(); });
       return { tray, handle };
@@ -11703,7 +11721,7 @@ class CoreStudio {
     const keys = ['preset', 'background', 'bgA', 'bgB', 'angle', 'grid', 'gridMode', 'grain', 'grainAmt', 'lensOn', 'cpts', 'light', 'lightX', 'shadow', 'shadowSoft', 'effect', 'effectAmount', 'blur', 'dim', 'guides', 'groups', 'gridStyle', 'focusInv', 'focusScene', 'focusText', 'focusObj', 'x', 'y'];
     const P = typeof PlanetBody !== 'undefined' && PlanetBody.active;
     return JSON.stringify({ lens: { on: this.lensOn, aberr: LENS_U.uLensAberr.value, blur: LENS_U.uLensBlur.value, bloom: LENS_U.uLensBloom.value }, pz: P ? +P.zoomT.toFixed(3) : undefined, s: Object.fromEntries(keys.map(k => [k, this[k]])), layers: this.layers, core: this.coreLayers,
-      items: this.items.map(({ el, id, ...rest }) => rest), ...extra });
+      items: this.items.map(({ el, id, _coloredContent, ...rest }) => rest), ...extra });
   }
   commit(extra) {
     if (this.restoring || !this.hist) return;
@@ -11803,9 +11821,9 @@ class CoreStudio {
         gx.save();if(rot){const cx=r.left+r.width/2,cy=r.top+r.height/2,cw=el.offsetWidth,ch=el.offsetHeight;r={left:cx-cw/2,top:cy-ch/2,width:cw,height:ch,right:cx+cw/2};gx.translate(cx*sx,cy*sy);gx.rotate(rot*Math.PI/180);gx.translate(-cx*sx,-cy*sy);}const bg=style.backgroundColor;if(bg&&!/rgba\(0, 0, 0, 0\)|transparent/.test(bg)&&el.contentEditable!=='true'){gx.globalAlpha=+style.opacity||1;gx.fillStyle=bg;const rr=(parseFloat(style.borderTopLeftRadius)||0)*Math.min(sx,sy);gx.beginPath();if(gx.roundRect)gx.roundRect(r.left*sx,r.top*sy,r.width*sx,r.height*sy,rr);else gx.rect(r.left*sx,r.top*sy,r.width*sx,r.height*sy);gx.fill();}
         gx.fillStyle=style.color;gx.globalAlpha=+style.opacity||1;gx.font=`${style.fontStyle==='italic'?'italic ':''}${style.fontWeight} ${parseFloat(style.fontSize)*sy}px ${style.fontFamily}`;if('wordSpacing' in gx)gx.wordSpacing=`${(parseFloat(style.wordSpacing)||0)*sx}px`;const stroked=parseFloat(style.webkitTextStrokeWidth)>0&&/transparent|rgba\(0, 0, 0, 0\)/.test(style.webkitTextFillColor||'');
         if('letterSpacing' in gx)gx.letterSpacing=`${(parseFloat(style.letterSpacing)||0)*sx}px`;
-        gx.textBaseline='top';const upper=style.textTransform==='uppercase',pad=parseFloat(style.paddingLeft)||0,lines=el.innerText.split(/\n/);let yy=(r.top+(parseFloat(style.paddingTop)||0))*sy;
+        gx.textBaseline='top';const upper=style.textTransform==='uppercase',pad=parseFloat(style.paddingLeft)||0,lines=el.innerText.split(/\n/);let textOffset=0,yy=(r.top+(parseFloat(style.paddingTop)||0))*sy;
         for(const raw of lines){const line=upper?raw.toUpperCase():raw;gx.textAlign=style.textAlign==='right'?'right':style.textAlign==='center'?'center':'left';
-          const xx=gx.textAlign==='right'?(r.right-pad)*sx:gx.textAlign==='center'?(r.left+r.width/2)*sx:(r.left+pad)*sx;if(stroked){gx.strokeStyle=style.color;gx.lineWidth=parseFloat(style.webkitTextStrokeWidth)*sx;gx.lineJoin='round';gx.strokeText(line,xx,yy);}else gx.fillText(line,xx,yy);if(/underline/.test(style.textDecorationLine||style.textDecoration)){const wl=gx.measureText(line).width,x0=gx.textAlign==='right'?xx-wl:gx.textAlign==='center'?xx-wl/2:xx,fs=parseFloat(style.fontSize)*sy;gx.fillRect(x0,yy+fs*.98,wl,Math.max(1,fs*.06));}yy+=(parseFloat(style.lineHeight)||parseFloat(style.fontSize)*1.05)*sy;}
+          const xx=gx.textAlign==='right'?(r.right-pad)*sx:gx.textAlign==='center'?(r.left+r.width/2)*sx:(r.left+pad)*sx;const colored=this.drawColoredTextLine&&this.drawColoredTextLine(gx,el,raw,xx,yy,textOffset,sx,style,stroked);textOffset+=raw.length+1;if(!colored){if(stroked){gx.strokeStyle=style.color;gx.lineWidth=parseFloat(style.webkitTextStrokeWidth)*sx;gx.lineJoin='round';gx.strokeText(line,xx,yy);}else gx.fillText(line,xx,yy);if(/underline/.test(style.textDecorationLine||style.textDecoration)){const wl=gx.measureText(line).width,x0=gx.textAlign==='right'?xx-wl:gx.textAlign==='center'?xx-wl/2:xx,fs=parseFloat(style.fontSize)*sy;gx.fillRect(x0,yy+fs*.98,wl,Math.max(1,fs*.06));}}yy+=(parseFloat(style.lineHeight)||parseFloat(style.fontSize)*1.05)*sy;}
         gx.restore();
       }
   paintItemCanvas(i,g,width,height,sx,sy,shapes){
