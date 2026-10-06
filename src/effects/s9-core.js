@@ -52,12 +52,13 @@
       const settling = key === 'curl' && Number(value) < state.curl || key === 'mirror' && !value && state.mirror;
       if(settling&&engine){engine.cancelRipples();engine.solver.stopVelocity();dirty=true}
       if(key==='flowEnabled'&&value)state.paused=false;
-      state[key]=value;if(key==='paused'&&value&&engine){engine.cancelRipples();engine.solver.stopVelocity();dirty=true}if(key==='flowEnabled'&&!value&&engine){engine.solver.stopVelocity();dirty=true}if(key==='flowEnabled'&&value&&!state.flowDir.x&&!state.flowDir.y)state.flowDir={x:1,y:0};if(engine)engine.setState(state);
+      state[key]=value;if(key==='paused'&&value&&engine){endWaterGesture();engine.cancelRipples();engine.solver.stopVelocity();dirty=true}if(key==='flowEnabled'&&!value&&engine){engine.solver.stopVelocity();dirty=true}if(key==='flowEnabled'&&value&&!state.flowDir.x&&!state.flowDir.y)state.flowDir={x:1,y:0};if(engine)engine.setState(state);
       if((state.on||state.particles)&&ensure()){if(key==='particles'&&value)engine.seed();if(key==='particleCount'&&state.particles)engine.seed();if(key==='particleColors'||key==='particleColorCount')engine.particles.forEach((p,i)=>p.color=(state.particleColors[i%state.particleColorCount]||state.brushColor).slice());dirty=true}
       save();api.onSync&&api.onSync();if(commit)s.commit();
     };
     api.navaFlow=()=>{Object.assign(state,clone(NAVA),{paused:false});if(engine){engine.cancelRipples();engine.solver.stopVelocity();dirty=true}api.activate(true,state.tool);s.commit()};
-    api.stopFlow=(freeze=true)=>{state.paused=freeze;state.flowEnabled=false;state.flowDir={x:0,y:0};if(engine){engine.cancelRipples();engine.solver.stopVelocity();dirty=true}save();api.onSync&&api.onSync();s.commit()};
+    const endWaterGesture=()=>{if(!engine)return;for(const id of Object.keys(engine.pointers)){engine.endTentacle(id);delete engine.pointers[id]}const ctx=engine.particleCanvas.getContext('2d');ctx.clearRect(0,0,engine.particleCanvas.width,engine.particleCanvas.height)};
+    api.stopFlow=(freeze=true)=>{if(freeze)endWaterGesture();state.paused=freeze;state.flowEnabled=false;state.flowDir={x:0,y:0};if(engine){engine.cancelRipples();engine.solver.stopVelocity();dirty=true}save();api.onSync&&api.onSync();s.commit()};
     api.resetMotion=()=>{motionTimer=0;Object.assign(state,{motion:NAVA.motion,symmetry:NAVA.symmetry,mirror:NAVA.mirror,flowSpeed:NAVA.flowSpeed,timeScale:NAVA.timeScale,tentacleLength:NAVA.tentacleLength,tentacleSway:NAVA.tentacleSway});api.stopFlow(false)};
     api.clear=()=>{collision.clear();if(engine){engine.clear();dirty=true}cached=null;s.commit();api.onSync&&api.onSync()};
     const pad=document.createElement('div');pad.className='st-water-pad';pad.hidden=true;pad.setAttribute('aria-label','Water drawing canvas');s.el.append(pad);
