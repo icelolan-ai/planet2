@@ -9639,8 +9639,9 @@ class CoreStudio {
     const set = (el, on) => { if (!el) return; el.classList.toggle('st-off', !on); el.setAttribute('aria-disabled', String(!on)); el.toggleAttribute('inert', !on); if (el.matches('button,input,select')) el.disabled = !on; if (!on && el.tagName === 'DETAILS') el.open = false; };
     set(this.fxSection, core && visible); set(this.coreSection, core && visible && !hid); set(this.partsSection, core && visible && !hid); set(this.worldSection, !core && visible);
     set(this.el.querySelector('[data-studio-fx]'), core && visible); set(this.fxBox, core && visible);
-    this.el.querySelectorAll('[data-studio-corefx],[data-studio-tune],[data-studio-moods],[data-studio-random],[data-studio-freeze],[data-studio-home],[data-studio-gravity],[data-studio-tool="hand"],.st-save-planet').forEach(el => set(el, visible));
+    this.el.querySelectorAll('[data-studio-tune],[data-studio-random],[data-studio-freeze],[data-studio-home],[data-studio-gravity],[data-studio-tool="hand"],.st-save-planet').forEach(el => set(el, visible));
     this.el.querySelectorAll('[data-studio-light],[data-studio-light-x],[data-studio-shadow],[data-studio-shadow-soft]').forEach(el => set(el.closest('.studio-control'), visible));
+    this.el.querySelectorAll('[data-studio-corefx],[data-studio-moods]').forEach(el => set(el.closest('details') || el, visible));
     const layerSize = !!this.zoomTargets()?.length;
     this.el.querySelectorAll('[data-st-zoom],.st-zoompill').forEach(el => set(el, visible || layerSize));
     if (!visible) { WorldTune.open(false); document.querySelector('[data-tune-close]')?.click(); if (this.tool === 'hand') this.setTool('move'); }
