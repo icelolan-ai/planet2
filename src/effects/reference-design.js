@@ -10,7 +10,7 @@
   function dot(g, x, y, r, ring = false) { g.beginPath(); g.arc(x, y, Math.max(.1, r), 0, Math.PI * 2); ring ? g.stroke() : g.fill(); }
   function arrow(g, x, y, a, r) { g.beginPath(); g.moveTo(x, y); g.lineTo(x - Math.cos(a - .4) * r, y - Math.sin(a - .4) * r); g.moveTo(x, y); g.lineTo(x - Math.cos(a + .4) * r, y - Math.sin(a + .4) * r); g.stroke(); }
   function poly(g, n, outer, inner = outer, phase = -Math.PI / 2) { g.beginPath(); for (let i = 0; i < n * 2; i++) { const a = phase + i * Math.PI / n, r = i % 2 ? inner : outer; i ? g.lineTo(Math.cos(a) * r, Math.sin(a) * r) : g.moveTo(Math.cos(a) * r, Math.sin(a) * r); } g.closePath(); }
-  function wrap(draw) {
+  function wrap(draw, presentation) {
     return (g, it, x, y, w, h, k) => {
       const p = it.p, M = kitM(it), t = M.a ? M.t : 0;
       g.save(); g.translate(x + w / 2, y + h / 2);
@@ -24,10 +24,21 @@
       g.strokeStyle = g.fillStyle = it.fill; g.lineWidth = Math.max(.2, p.lw * k); g.lineCap = 'butt';
       g.setLineDash(p.dash === 'dashed' ? [5 * k, 4 * k] : p.dash === 'dotted' ? [k, 3 * k] : []);
       const fx = M.a && KIT_FX[it.mFx]; if (fx) fx(g, M, 0, 0, w, h);
+      // Static studies still need a real response to Motion. Keep the seeded
+      // composition intact and animate its presentation, on screen and export.
+      if (M.a && (presentation || it.kit === 'refSystem' && p.layout === 'scale')) {
+        const style = p.mstyle || 'float', phase = (it.seed || 7) % 31;
+        if (style === 'float' || style === 'both') g.translate(Math.sin(t * .7 + phase) * w * .035 * M.a, Math.cos(t * .55 + phase) * h * .035 * M.a);
+        if (style === 'breathe' || style === 'both') { const z = 1 + Math.sin(t * 1.2) * .08 * M.a; g.scale(z, z); }
+        if (style === 'sway') g.rotate(Math.sin(t * .6) * .08 * M.a);
+      }
       draw(g, it, w, h, k, t, M); g.restore();
     };
   }
-  const def = (label, size, defaults, ui, draw, extra = {}) => ({ label, size, defaults: { ...base, ...defaults }, ui: [...ui, ...common], anim: true, draw: wrap(draw), ...extra });
+  const def = (label, size, defaults, ui, draw, extra = {}) => {
+    const presentation = extra.anim !== false && (draw.length < 6 || label === 'Survey map');
+    return { label, size, defaults: { ...base, ...(presentation ? { mstyle: 'float' } : {}), ...defaults }, ui: [...ui, ...(presentation ? [select('mstyle', 'Motion style', [['float', 'Float'], ['breathe', 'Breathe'], ['sway', 'Sway'], ['both', 'Float & breathe']])] : []), ...common], anim: true, draw: wrap(draw, presentation), ...extra };
+  };
   const tools = {
     refOrbit: def('Orbit builder', [.54, .54], { count: 3, squash: .48, tilt: -30, spread: 35, start: 0, sweep: 360, satellites: 3, dotSize: 3, axes: false, wire: true, wireLines: 8 }, [range('count', 'Orbits', 1, 16), range('squash', 'Ellipse ratio', .15, 1, .01), range('tilt', 'Tilt', -180, 180), range('spread', 'Tilt spacing', 0, 90), range('start', 'Arc start', -180, 180), range('sweep', 'Arc length', 10, 360), range('satellites', 'Satellites per orbit', 0, 12), range('dotSize', 'Satellite size', 1, 12, .5), check('axes', 'Cross axes'), check('wire', 'Wireframe core'), range('wireLines', 'Wireframe density', 3, 16)], (g, it, w, h, k, t) => {
       const p = it.p, r = Math.min(w, h) * .41, start = p.start * Math.PI / 180, sweep = p.sweep * Math.PI / 180;
