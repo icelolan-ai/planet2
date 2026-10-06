@@ -160,11 +160,11 @@
     const bs = s.syncCoreFx.bind(s); s.syncCoreFx = (...a) => { const r = bs(...a); queueMicrotask(sync); return r; };
     const observer = new MutationObserver(sync); observer.observe(design, { subtree: true, attributes: true, attributeFilter: ['aria-pressed'] }); sync(); setTimeout(sync, 400); setTimeout(sync, 1000);
 
-    // Serialize the existing tune object into Studio's existing history/project
-    // snapshots. There is still only one live Surface state and one undo stack.
+    // Surface and Burst share the subject's tune object and Studio's undo stack.
+    const tracked = k => k.startsWith('s_') || k.startsWith('b_');
     const capture = () => {
       const t = s.coreFxTarget();
-      return t && { subject: s.subject, values: Object.fromEntries(Object.entries(t.tune).filter(([k]) => k.startsWith('s_'))) };
+      return t && { subject: s.subject, values: Object.fromEntries(Object.entries(t.tune).filter(([k]) => tracked(k))) };
     };
     const snapshot = s.snapshot.bind(s);
     s.snapshot = extra => {
@@ -181,20 +181,34 @@
       try {
         const result = restore(text);
         if (surface && surface.subject === s.subject && surface.values) {
-          const values = Object.fromEntries(Object.entries(surface.values).filter(([k]) => k.startsWith('s_')));
+          const values = Object.fromEntries(Object.entries(surface.values).filter(([k]) => tracked(k)));
           Object.entries(values).forEach(([k, v]) => s.coreFxSet(k, v));
         }
         return result;
       } finally { restoringSurface = false; }
     };
     const setFx = s.coreFxSet.bind(s);
+    let pendingKey = null;
     s.coreFxSet = (k, v) => {
-      const discrete = k === 's_style' || k === 's_shape';
-      if (!restoringSurface && discrete) s.flushCommit();
+      const fx = Effects.byKey(k), control = fx && fx.controls.find(c => fx.prefix + c.key === k);
+      const discrete = k === 's_shape' || control && ['toggle', 'select'].includes(control.type);
+      if (!restoringSurface && tracked(k) && (discrete || pendingKey && pendingKey !== k)) s.flushCommit();
       const result = setFx(k, v);
-      if (!restoringSurface && k.startsWith('s_') && s.active) {
+      if (!restoringSurface && tracked(k) && s.active) {
+        pendingKey = discrete ? null : k;
         if (discrete) s.commit(); else s.commitSoon();
       }
+      return result;
+    };
+    const finish = e => {
+      if (e.target.matches('[data-cfx],[data-dst],[data-ss],[data-ss-t]')) { s.flushCommit(); pendingKey = null; }
+    };
+    s.el.addEventListener('change', finish); document.getElementById('tune')?.addEventListener('change', finish);
+    const resetFx = s.resetFx.bind(s);
+    s.resetFx = (...args) => {
+      if (!restoringSurface) s.flushCommit();
+      const result = resetFx(...args);
+      if (!restoringSurface && s.active) { pendingKey = null; s.commit(); }
       return result;
     };
   }
