@@ -17,10 +17,10 @@
     orrery:['Orrery system',['s_colorC','s_orings','s_oband','s_oarcs','s_ospokes','s_obubble','s_dsize']],
     neural:['Cells & fibres',['s_colorC','s_nn','s_nweb','s_nlinks','s_nstr','s_nscatter','s_dsize']],
     dataflow:['Flow curves',['s_colorC','s_dn','s_dbundle','s_dbow','s_dbeads','s_dtilt','s_dsize']],
-    strands:['Drifting fibres',['s_colorC','s_tn','s_tlen','s_tdrift','s_tpole','s_tbig','s_dsize']]
+    strands:['Drifting fibres',['s_colorC','s_tn','s_tlen','s_tpole','s_tbig','s_dsize']]
   };
-  const COMMON=['s_colorA','s_colorB','s_bright','s_density','s_disp','s_size'];
-  const MOTION=['s_spin','s_scale','s_tilt','s_roll','s_breath','s_bspeed','s_pulse','s_seed'];
+  const COMMON=['s_colorA','s_colorB','s_bright','s_density','s_disp','s_size','s_scale','s_tilt','s_roll','s_seed'];
+  const MOTION=['s_spin','s_breath','s_bspeed','s_pulse','s_tdrift'];
   const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
   function boot(){
@@ -44,7 +44,7 @@
     const tab=document.createElement('button');tab.type='button';tab.dataset.tab='surface-deep';tab.setAttribute('role','tab');tab.setAttribute('aria-selected','false');tab.textContent='Surface';nav.append(tab);
     const pane=document.createElement('div');pane.className='tune-pane dst-pane';pane.dataset.pane='surface-deep';pane.hidden=true;panes[0].parentNode.append(pane);
     const styleBtns=[...src.querySelectorAll('[data-cfx-style]')].map(b=>[b.dataset.cfxStyle,b.textContent.trim()]);
-    pane.innerHTML=`<div class="dst-note"><b data-dst-title>Surface</b><span data-dst-note></span></div><div class="dst-grid">${styleBtns.map(([k,n])=>`<button type="button" data-dst-style="${k}" aria-pressed="false">${esc(n)}</button>`).join('')}</div><section class="dst-group" data-dst-commonwrap><h4>Surface look</h4><div data-dst-common></div></section><section class="dst-group" data-dst-motionwrap><h4>Transform & motion</h4><div data-dst-motion></div></section><section class="dst-group" data-dst-specwrap><h4 data-dst-spech>Style detail</h4><div data-dst-spec></div></section><button type="button" class="tune-reset dst-reset" data-dst-reset>Reset this surface</button>`;
+    pane.innerHTML=`<div class="dst-note"><b data-dst-title>Surface</b><span data-dst-note></span></div><div class="dst-grid">${styleBtns.map(([k,n])=>`<button type="button" data-dst-style="${k}" aria-pressed="false">${esc(n)}</button>`).join('')}</div><section class="dst-group" data-dst-commonwrap><h4>Surface look</h4><div data-dst-common></div></section><details class="dst-group st-motion-group" data-dst-motionwrap><summary>Motion</summary><div data-dst-motion></div></details><section class="dst-group" data-dst-specwrap><h4 data-dst-spech>Style detail</h4><div data-dst-spec></div></section><button type="button" class="tune-reset dst-reset" data-dst-reset>Reset this surface</button>`;
 
     const source=k=>src.querySelector(`[data-cfx="${k}"]`)||src.querySelector(`[data-cfx-sw="${k}"]`);
     const label=k=>{const x=source(k),r=x&&(x.closest('[data-cfx-rel]')||x.closest('label,.cfx-row')),z=r&&r.querySelector(':scope > span');return z?z.textContent.trim():k.replace(/^s_/,'')};
