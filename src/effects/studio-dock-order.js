@@ -42,7 +42,7 @@
       if (dock.hasPointerCapture(e.pointerId)) dock.releasePointerCapture(e.pointerId);
     };
     window.addEventListener('pointermove', move, { capture: true, passive: false }); window.addEventListener('pointerup', end, true); window.addEventListener('pointercancel', end, true);
-    dock.addEventListener('lostpointercapture', e => { if (drag) end({ pointerId: e.pointerId, type: 'pointercancel', preventDefault() {} }); });
+    dock.addEventListener('lostpointercapture', e => { if (e.target === dock && drag) end({ pointerId: e.pointerId, type: 'pointercancel', preventDefault() {} }); });
     dock.addEventListener('click', e => { if (performance.now() < suppressUntil) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
     dock.addEventListener('keydown', e => {
       if (!e.altKey || !['ArrowLeft', 'ArrowRight'].includes(e.key) || !dock.classList.contains('is-h') || e.target.closest('.st-sub')) return;
