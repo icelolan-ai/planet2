@@ -1080,17 +1080,30 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 .st-save-planet{flex:1 1 100%;display:grid;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.14)}
 .st-save-planet input{font:inherit;font-size:13px;padding:8px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:inherit;min-width:0}
 .st-save-planet small{font-size:11px;opacity:.7;line-height:1.35}
-.st-lib{position:absolute;inset:0;z-index:90;display:flex;flex-direction:column;justify-content:center;gap:18px;background:#07080dcc;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);pointer-events:auto}
+.st-lib{position:absolute;inset:calc(45px + env(safe-area-inset-top,0px)) 0 0;z-index:90;display:flex;flex-direction:column;justify-content:center;gap:18px;background:#07080dcc;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);pointer-events:auto}
 .st-lib[hidden]{display:none}
+
+.st-welcome{width:min(540px,calc(100vw - 32px));max-height:calc(100dvh - 48px);overflow:auto;border:0;padding:26px 32px;background:transparent;color:#eef0ff;pointer-events:auto;isolation:isolate}
+.st-welcome::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(145deg,#292139,#101523);clip-path:polygon(8% 0,92% 0,100% 100%,0 100%)}
+.st-welcome::backdrop{background:#070910a8;backdrop-filter:blur(8px)}
+.st-welcome header{display:flex;align-items:center;justify-content:space-between;gap:12px;font:11px var(--f-mono);letter-spacing:.12em}
+.st-welcome button{min-height:44px;min-width:44px}.st-welcome img{display:block;width:100%;height:min(23dvh,180px);object-fit:contain;border-radius:10px;margin:14px 0;background:#111522}
+.st-welcome h2{font:400 28px var(--f-display);margin:12px 0 6px}.st-welcome p{font:14px/1.6 var(--f-sans);color:#b9bed0;margin:0 0 16px}
+.st-welcome-guide{border-top:1px solid #ffffff20;margin-top:16px;padding-top:14px}.st-welcome-guide b{font:12px var(--f-mono);color:#c6b5ff}.st-welcome-guide p{margin:8px 0}.st-welcome-guide footer{display:flex;gap:8px;justify-content:flex-end}
+.st-welcome nav{display:flex;align-items:center;gap:8px}.st-welcome nav span{margin-right:auto;font:11px var(--f-mono);color:#b9bed0}.st-welcome label{display:flex;gap:8px;align-items:center;margin-top:16px;font:12px var(--f-sans)}
+
 .st-lib-head{display:flex;align-items:center;gap:14px;padding:0 max(24px,6vw)}
 .st-lib-head b{font:400 clamp(28px,4vw,52px) var(--f-display);letter-spacing:.04em;text-transform:uppercase}
 .st-lib-head span{flex:1;color:#97a1b3;font:11px var(--f-mono)}
 .st-lib-track{display:flex;gap:28px;overflow-x:auto;scroll-snap-type:x mandatory;padding:20px clamp(16px,3vw,48px);scrollbar-width:none;touch-action:pan-y;cursor:grab}
+.st-lib-track.is-scrubbing{scroll-snap-type:none}
+.st-lib-slider{display:block;margin:0;padding:0 max(24px,6vw) max(16px,env(safe-area-inset-bottom));flex-shrink:0}
+#studio .st-lib-slider input[type=range]{display:block;width:100%;min-width:0;min-height:44px;margin:0;accent-color:#a78bfa;touch-action:pan-y}
 .st-lib-track.is-dragging{cursor:grabbing;scroll-snap-type:none;user-select:none}.st-lib-track::-webkit-scrollbar{display:none}
 .st-lib-card{flex:0 0 min(68vw,380px);scroll-snap-align:center;border-radius:26px;overflow:hidden;background:#141821;border:1px solid #ffffff1c;box-shadow:0 30px 70px #000a;transition:transform .24s cubic-bezier(.2,.8,.2,1),opacity .24s,box-shadow .24s;transform-origin:center center}
 .st-lib-card.is-selected{position:relative;z-index:2;border-color:#a78bfa88;box-shadow:0 20px 60px #000a,0 0 24px #8b5cf633}
 @media(prefers-reduced-motion:reduce){.st-lib .st-lib-card{transition:none;animation:none!important}}
-.st-lib-img{height:min(56vh,440px);background-size:cover;background-repeat:no-repeat;background-color:#0b0d13}
+.st-lib-img{height:min(48dvh,440px);background-size:cover;background-repeat:no-repeat;background-color:#0b0d13}
 .st-lib-info{padding:16px 18px;display:grid;gap:4px}
 .st-lib-info b{font:600 14.5px var(--f-sans)}.st-lib-info small{color:#97a1b3}
 .st-lib-info div{display:flex;gap:8px;margin-top:8px}
@@ -9110,8 +9123,9 @@ class CoreStudio {
           <button type="button" class="st-btn is-primary" data-vid-go>Record</button>
           <small data-vid-msg role="status">Records the planet, spinning Kits and moving lines as they move now.</small></div>
         <div class="st-save-planet"><span class="st-ctx-kind">Save planet</span><input type="text" data-planet-name maxlength="24" placeholder="Name your planet" aria-label="Planet name"><button type="button" class="st-btn" data-planet-save>Save planet</button><small data-planet-msg role="status">Keeps your Cerebra core look and shows it first in World Atelier.</small></div></div>
+      <dialog class="st-welcome" data-library-welcome aria-labelledby="st-welcome-title"><header><span>CEREBRA · LIBRARY SPOTLIGHT</span><button type="button" class="st-btn" data-welcome-close aria-label="Close welcome">×</button></header><img data-welcome-image alt=""><h2 id="st-welcome-title" data-welcome-title></h2><p data-welcome-description></p><nav><span data-welcome-count></span><button type="button" class="st-btn" data-welcome-prev aria-label="Previous featured work">←</button><button type="button" class="st-btn" data-welcome-next aria-label="Next featured work">→</button><button type="button" class="st-btn is-primary" data-welcome-open>Open work</button></nav><section class="st-welcome-guide" aria-live="polite"><b data-guide-title></b><p data-guide-text></p><footer><button type="button" class="st-btn" data-guide-back>Back</button><button type="button" class="st-btn is-primary" data-guide-next>Next →</button></footer></section><label><input type="checkbox" data-welcome-hide>Don't show again</label></dialog>
       <div class="st-lib" data-studio-library hidden><div class="st-lib-head"><b>Library</b><span data-lib-count></span><button type="button" class="st-btn" data-lib-step="-1" aria-label="Previous saved work">←</button><button type="button" class="st-btn" data-lib-step="1" aria-label="Next saved work">→</button><button type="button" class="st-btn" data-lib-mode aria-pressed="false">Circular</button><button type="button" class="st-btn" data-lib-export aria-label="Export saved works as a library JSON file">Export library</button><button type="button" class="st-btn" data-lib-close aria-label="Close library">✕</button></div>
-        <div class="st-lib-track" data-lib-track></div><p class="st-lib-empty" data-lib-empty>Nothing kept yet. Press Keep in the toolbar to save this composition.</p></div>
+        <div class="st-lib-track" data-lib-track></div><label class="st-lib-slider"><span class="sr-only">Scroll saved works</span><input type="range" min="0" max="1000" step="1" value="0" data-lib-scroll aria-label="Scroll saved works" disabled></label><p class="st-lib-empty" data-lib-empty>Nothing kept yet. Press Keep in the toolbar to save this composition.</p></div>
       <div class="st-dock st-glass" data-tray="dock" role="toolbar" aria-label="Studio"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button>
         <button type="button" class="st-btn st-dock-fold" data-dock-fold aria-expanded="true" aria-label="Fold toolbar"><span class="st-chev" aria-hidden="true"></span></button>
         <select data-studio-subject aria-label="Object in studio"><option value="-1">Cerebra</option>${WORLDS.map((d,i) => `<option value="${i}">${d.name}</option>`).join('')}</select>
@@ -9496,6 +9510,7 @@ class CoreStudio {
     this.lib = this.el.querySelector('[data-studio-library]');
     this.el.querySelector('[data-studio-lib-save]').onclick = () => this.libSave();
     this.el.querySelector('[data-studio-lib]').onclick = () => this.libOpen(true);
+    this.initLibraryWelcome();
     this.el.querySelector('[data-lib-close]').onclick = () => this.libOpen(false);
     this.el.querySelector('[data-lib-export]').onclick = () => this.libExport();
     this.el.querySelector('[data-lib-mode]').onclick = e => { const on = this.lib.classList.toggle('is-circular'); e.currentTarget.setAttribute('aria-pressed', String(on)); this.libParallax(); };
@@ -9503,6 +9518,13 @@ class CoreStudio {
     libTrack.tabIndex = 0; libTrack.setAttribute('aria-label', 'Saved works carousel');
     this.libSelectedId = null;
     libTrack.addEventListener('scroll', () => this.libParallax(true), { passive: true });
+    const libSlider = this.el.querySelector('[data-lib-scroll]');
+    libSlider.addEventListener('input', () => {
+      this.libScrollTarget = null; libTrack.classList.add('is-scrubbing');
+      libTrack.scrollLeft = +libSlider.value / 1000 * Math.max(0, libTrack.scrollWidth - libTrack.clientWidth);
+      this.libParallax(true);
+    });
+    libSlider.addEventListener('change', () => { libTrack.classList.remove('is-scrubbing'); this.libParallax(true); });
     const stepLibrary = dir => {
       const cards = [...libTrack.querySelectorAll('.st-lib-card')];
       const i = cards.findIndex(c => c.dataset.id === this.libSelectedId);
@@ -9510,6 +9532,8 @@ class CoreStudio {
       if (card) this.libSelect(card, true);
     };
     this.el.querySelectorAll('[data-lib-step]').forEach(b=>b.onclick=()=>stepLibrary(+b.dataset.libStep));
+    libSlider.addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); stepLibrary(e.key === 'ArrowLeft' ? -1 : 1); } });
+    new ResizeObserver(() => { if (!this.lib.hidden) this.libParallax(); }).observe(libTrack);
     libTrack.addEventListener('keydown', e => { if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();stepLibrary(e.key==='ArrowLeft'?-1:1);} });
     let libDrag = null, libSuppressClick = 0;
     libTrack.addEventListener('pointerover', e => { if(e.pointerType==='mouse'&&!libDrag){const card=e.target.closest('.st-lib-card');if(card)this.libSelect(card);} });
@@ -9574,6 +9598,7 @@ class CoreStudio {
     addEventListener('blur', () => { this.drag = null; this.vx = this.vy = 0; }, { signal });
     addEventListener('keydown', e => {
       if (!this.active || e.key !== 'Escape' || document.body.classList.contains('tune-open')) return;
+      if (this.welcome && this.welcome.open) return;
       if (this.menuPopup && !this.menuPopup.hidden) { this.closeMenuBar(true); e.preventDefault(); e.stopImmediatePropagation(); return; }
       if (document.activeElement && document.activeElement.isContentEditable) return;
       if (this.rec) { this.stopRecord(true); e.preventDefault(); e.stopImmediatePropagation(); return; }
@@ -10651,6 +10676,50 @@ class CoreStudio {
     g.restore();
   }
   // Library: keep compositions (all settings + a thumbnail) in this browser and reopen them in a parallax carousel.
+  initLibraryWelcome() {
+    const d = this.welcome = this.el.querySelector('[data-library-welcome]');
+    this.welcomeGuideStep = 0;
+    this.el.querySelector('[data-guide-back]').onclick = () => { this.welcomeGuideStep = Math.max(0, this.welcomeGuideStep - 1); this.renderWelcomeGuide(); };
+    this.el.querySelector('[data-guide-next]').onclick = () => { if (this.welcomeGuideStep === 4) d.close(); else { this.welcomeGuideStep++; this.renderWelcomeGuide(); } };
+    this.renderWelcomeGuide();
+    this.el.querySelector('[data-welcome-close]').onclick = () => d.close();
+    this.el.querySelector('[data-welcome-hide]').onchange = e => { try { localStorage.setItem('cerebra-hide-welcome', String(e.target.checked)); } catch (_) {} };
+    d.addEventListener('close', () => { if (this.active) this.menuBar.querySelector('[data-menu-top]').focus(); });
+    this.el.querySelector('[data-welcome-prev]').onclick = () => this.renderLibraryWelcome(-1);
+    this.el.querySelector('[data-welcome-next]').onclick = () => this.renderLibraryWelcome(1);
+    this.el.querySelector('[data-welcome-open]').onclick = () => {
+      const w = this.welcomeWorks[this.welcomeIndex]; if (!w) return;
+      d.close(); this.setSubject(w.subject ?? -1); this.restore(w.state); if (w.pl) this.showPlanet(w.pl); this.layoutTrays(); this.commit();
+    };
+  }
+  renderWelcomeGuide() {
+    const steps = [
+      ['Welcome to your Studio', 'Browse the featured works above with ← and →. Open work loads an editable composition; × closes this welcome screen.'],
+      ['Choose your world', 'Use the object selector in the bottom toolbar to choose Cerebra or a planet. Tune adjusts its colour, atmosphere and motion.'],
+      ['Build your composition', 'Use Type for text and the tools on the left for objects. Select an item, then open Edit → Design to adjust its appearance.'],
+      ['Keep and browse', 'Press Keep to save your composition in this browser. Open Window → Library and use the long slider underneath to browse your works.'],
+      ['Export your work', 'Use File → Export to export your image. Export library in Library saves your editable works as a JSON file. You are ready to create!']
+    ], i = this.welcomeGuideStep;
+    this.el.querySelector('[data-guide-title]').textContent = `${i + 1} / ${steps.length} · ${steps[i][0]}`;
+    this.el.querySelector('[data-guide-text]').textContent = steps[i][1];
+    this.el.querySelector('[data-guide-back]').disabled = i === 0;
+    this.el.querySelector('[data-guide-next]').textContent = i === steps.length - 1 ? 'Start creating →' : 'Next →';
+  }
+  showLibraryWelcome() {
+    if (this.welcomeShown) return; this.welcomeShown = true;
+    try { if (localStorage.getItem('cerebra-hide-welcome') === 'true') return; } catch (_) {}
+    this.welcomeWorks = this.libEntries(); if (!this.welcomeWorks.length) return;
+    this.welcomeIndex = 0; this.renderLibraryWelcome(); this.welcome.showModal();
+  }
+  renderLibraryWelcome(step = 0) {
+    const works = this.welcomeWorks; this.welcomeIndex = (this.welcomeIndex + step + works.length) % works.length;
+    const w = works[this.welcomeIndex], image = this.el.querySelector('[data-welcome-image]');
+    image.src = w.thumb || ''; image.alt = w.name || 'Saved composition'; image.hidden = !w.thumb;
+    this.el.querySelector('[data-welcome-title]').textContent = w.name || 'Untitled';
+    this.el.querySelector('[data-welcome-description]').textContent = w.description || (w.builtin ? 'A Cerebra starter composition. Open it to explore the colours, atmosphere and editable layers.' : 'Your saved composition, with its colours, objects and editable layers ready to continue.');
+    this.el.querySelector('[data-welcome-count]').textContent = `${this.welcomeIndex + 1} / ${works.length}`;
+    ['prev', 'next'].forEach(k => { this.el.querySelector(`[data-welcome-${k}]`).disabled = works.length < 2; });
+  }
   libRead() { try { const a = JSON.parse(localStorage.getItem('cerebra-studio-library') || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
   libEntries() {
     const defaults = window.__cerebraLibraryDefaults || [], local = this.libRead();
@@ -10683,6 +10752,7 @@ class CoreStudio {
     b.textContent = 'Kept ✓'; setTimeout(() => { b.textContent = 'Keep'; }, 1600);
   }
   libOpen(on) {
+    this.el.querySelector('[data-lib-track]').classList.remove('is-scrubbing');
     this.libScrollTarget = null; this.lib.hidden = !on; this.el.querySelector('[data-studio-lib]').classList.toggle('is-open', on); if (!on) return;
     const a = this.libEntries(), tr = this.el.querySelector('[data-lib-track]'), esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     this.el.querySelector('[data-lib-export]').disabled = !this.libRead().length;
@@ -10710,6 +10780,10 @@ class CoreStudio {
     const mid = tr.scrollLeft + tr.clientWidth / 2;
     const center = c => c.offsetLeft - tr.offsetLeft + c.offsetWidth / 2;
     const nearest = cards.reduce((best, c) => !best || Math.abs(center(c) - mid) < Math.abs(center(best) - mid) ? c : best, null);
+    const slider = this.el.querySelector('[data-lib-scroll]'), maxScroll = Math.max(0, tr.scrollWidth - tr.clientWidth);
+    slider.disabled = maxScroll < 1; slider.value = maxScroll ? Math.round(tr.scrollLeft / maxScroll * 1000) : 0;
+    slider.style.setProperty('--p', (Number(slider.value) / 10) + '%');
+    slider.setAttribute('aria-valuetext', nearest ? `Work ${cards.indexOf(nearest) + 1} of ${cards.length}` : 'No saved works');
     const targeting = this.libScrollTarget != null;
     if (targeting && Math.abs(tr.scrollLeft - this.libScrollTarget) < 2) this.libScrollTarget = null;
     if (nearest && ((scrolling && !targeting) || !cards.some(c => c.dataset.id === this.libSelectedId))) this.libSelectedId = nearest.dataset.id;
@@ -12300,9 +12374,11 @@ class CoreStudio {
     this.paintBackground(); this.updateFocus(); this.menuBar.querySelector('[data-menu-top]').focus();
     if (this.guardOn) { this.guardOn(); this.offerDraft(); }
     this.applyLiteDpr();
+    this.showLibraryWelcome();
   }
   close() {
     if (!this.active) { this.pending = false; return; }
+    if (this.welcome.open) this.welcome.close();
     this.timelinePlaying = false; this.hideSmartGuides(); this.closeMenuBar();
     if (typeof SURFACE !== 'undefined' && SURFACE.resetOriginalShape) SURFACE.resetOriginalShape();
     if (this.draftNow) this.draftNow();
