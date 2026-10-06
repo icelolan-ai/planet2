@@ -4,10 +4,12 @@
     const s = window.__cerebra?.studio, dock = s?.el.querySelector('.st-dock');
     if (!dock || !dock.querySelector('[data-s9-entry]')) { setTimeout(boot, 180); return; }
     if (s.__dockOrderReady) return; s.__dockOrderReady = true;
-    const key = 'cerebra-studio-dock-order-v1', defaults = ['tune', 'effect', 'design', 'lab', 'view', 'save', 'setting', 'reset'];
-    const selectors = ['[data-studio-tune]', '[data-grp="fx"]', '[data-studio-tools]', '[data-s9-entry]', '[data-grp="view"]', '[data-grp="save"]', '[data-grp="settings"]', '[data-studio-reset-all]'];
+    const key = 'cerebra-studio-dock-order-v1', defaults = ['tune', 'effect', 'design', 'lab', 'view', 'save', 'setting', 'reset', 'zoom'];
+    const selectors = ['[data-studio-tune]', '[data-grp="fx"]', '[data-studio-tools]', '[data-s9-entry]', '[data-grp="view"]', '[data-grp="save"]', '[data-grp="settings"]', '[data-studio-reset-all]', '[data-grp="zoom"]'];
     const nodes = Object.fromEntries(defaults.map((k, i) => [k, dock.querySelector(selectors[i])]));
     let order = defaults.slice(); try { const a = JSON.parse(localStorage.getItem(key)); if (Array.isArray(a)) order = [...new Set(a.filter(k => defaults.includes(k))), ...defaults.filter(k => !a.includes(k))]; } catch (e) {}
+    // Migrate saved orders so Zoom starts immediately after Reset.
+    order = order.filter(k => k !== 'zoom'); order.splice(order.indexOf('reset') + 1, 0, 'zoom');
     const visible = () => [...dock.children].filter(el => el.dataset.dockKey && !el.hidden && el.getClientRects().length);
     const apply = () => {
       const more = dock.querySelector(':scope > [data-grp="more"]');
