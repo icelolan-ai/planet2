@@ -962,14 +962,6 @@ body.studio-on #studio{display:block}
 html.st-lite{--gl1:rgba(var(--glrgb1),calc(.8 * var(--glk)));--gl2:rgba(var(--glrgb2),calc(.74 * var(--glk)))}
 html.st-lite #studio :not(.st-glassbox),html.st-lite #tune,html.st-lite #wtune,html.st-lite .tune{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 html.st-lite #studio .st-glassbox{backdrop-filter:blur(6px)!important;-webkit-backdrop-filter:blur(6px)!important}
-#studio .st-zoompill{position:absolute;z-index:6;left:calc(max(12px,env(safe-area-inset-left)) + 52px);top:max(12px,env(safe-area-inset-top));display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;pointer-events:auto}
-#studio .st-zoompill[hidden]{display:none}
-#studio .st-zoompill .st-btn{min-width:40px;min-height:40px;padding:0;font-size:20px;line-height:1;border-radius:999px}
-#studio .st-zoomgrip{display:grid;place-items:center;width:22px;min-height:40px;color:#ffffff66;font:700 12px var(--f-mono);letter-spacing:-2px;cursor:grab;touch-action:none;user-select:none}
-#studio .st-zoompill.is-dragging{opacity:.85;box-shadow:0 14px 40px #000a}
-#studio .st-zoompct{flex:1 1 auto;text-align:center;display:grid;place-items:center;min-width:64px;min-height:40px;border:0;background:none;color:#ff9199;font:600 12px var(--f-mono);cursor:pointer}
-
-#studio.st-ui-off .st-zoompill{display:none}
 #studio .st-zoom{display:grid;gap:6px;padding:8px 10px;border-radius:14px;background:#ffffff0f;min-width:190px}
 #studio .st-zoom-t{font:600 10px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:#d9ccff}
 #studio .st-zoom-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
@@ -1396,6 +1388,7 @@ html,body{touch-action:pan-x pan-y}
   #studio .st-more .st-group>.st-btn{display:none}
   #studio .st-more .st-group>.st-sub{position:static;transform:none;display:flex!important;width:auto;max-width:none;max-height:none;overflow:visible;padding:6px 0;border:0;box-shadow:none;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;margin:0 0 6px}
   #studio .st-more .st-group[data-grp=view]>.st-sub::before{content:"View";flex:1 1 100%;font:600 10px var(--f-cond);letter-spacing:.16em;text-transform:uppercase;color:#d9ccff}
+  #studio .st-more .st-group[data-grp=zoom]>.st-sub::before{content:"Zoom";flex:1 1 100%;font:600 10px var(--f-cond);letter-spacing:.16em;text-transform:uppercase;color:#d9ccff}
   #studio .st-more>.st-sub>.st-btn[data-studio-reset-all]{width:100%;height:46px;flex-direction:row;gap:8px;margin-top:4px}
   body #studio .st-dock:not(.is-v) .st-label{display:inline!important;font-size:8.5px!important;letter-spacing:.04em!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
   body #studio .st-dock>.st-btn:not(.st-dock-fold),body #studio .st-group>.st-btn,body #studio .st-dock>[data-studio-tune]:not(.is-sel){flex:1 1 0!important;min-width:0!important;max-width:none!important;width:auto!important;padding:0 2px!important;height:54px!important}
@@ -9120,12 +9113,14 @@ class CoreStudio {
         <div class="st-group" data-grp="view"><button type="button" class="st-btn" data-grp-btn aria-expanded="false" aria-label="View menu"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="st-label">View</span><i class="st-caret" aria-hidden="true"></i></button><div class="st-sub" hidden>
         <button type="button" class="st-btn" data-studio-show aria-pressed="true" aria-label="Hide subject">${I('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/>')}<span class="st-label" data-show-label>Subject</span></button>
         <button type="button" class="st-btn" data-studio-freeze aria-pressed="false" aria-label="Freeze motion">${I('<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>')}<span class="st-label" data-freeze-label>Stop</span></button>
-        <div class="st-zoom" data-st-zoom><span class="st-zoom-t">Cerebra size</span><div class="st-zoom-row"><button type="button" class="st-btn" data-zoom="-" aria-label="Make Cerebra smaller">−</button><input type="range" min="45" max="240" step="5" value="100" data-zoom-r aria-label="Cerebra size"><button type="button" class="st-btn" data-zoom="+" aria-label="Make Cerebra bigger">+</button></div><div class="st-zoom-row"><b data-zoom-v>100%</b><button type="button" class="st-chip" data-zoom="0">Reset size</button></div></div>
         <button type="button" class="st-btn" data-studio-home aria-label="Recenter">${I('<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>')}<span class="st-label">Recenter</span></button>
         <button type="button" class="st-btn" data-studio-gravity aria-pressed="false" aria-label="Gravity">${I('<path d="M12 4v13M6 12l6 6 6-6"/>')}<span class="st-label">Gravity</span></button>
         </div></div>
         <button type="button" class="st-btn" data-studio-tools aria-expanded="false" aria-controls="studio-tools" aria-label="Design panel">${I('<path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2.2-.4-1.2.2-2.3 1.5-2.3H17a4 4 0 0 0 4-4c0-5-4-9.5-9-9.5Z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/>')}<span class="st-label">Design</span></button>
         <button type="button" class="st-btn" data-studio-reset-all aria-label="Reset everything">${I('<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/>')}<span class="st-label">Reset</span></button>
+        <div class="st-group" data-grp="zoom"><button type="button" class="st-btn" data-grp-btn aria-expanded="false" aria-label="Zoom menu">${I('<circle cx="10" cy="10" r="6"/><path d="m15 15 6 6M7 10h6M10 7v6"/>')}<span class="st-label">Zoom</span><i class="st-caret" aria-hidden="true"></i></button><div class="st-sub" hidden>
+          <div class="st-zoom" data-st-zoom><span class="st-zoom-t">Cerebra size</span><div class="st-zoom-row"><button type="button" class="st-btn" data-zoom="-" aria-label="Make Cerebra smaller">−</button><input type="range" min="45" max="240" step="5" value="100" data-zoom-r aria-label="Cerebra size"><button type="button" class="st-btn" data-zoom="+" aria-label="Make Cerebra bigger">+</button></div><div class="st-zoom-row"><b data-zoom-v>100%</b><button type="button" class="st-chip" data-zoom="0">Reset size</button></div></div>
+        </div></div>
         <div class="st-group" data-grp="save"><button type="button" class="st-btn" data-grp-btn aria-expanded="false" aria-label="Save menu"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span class="st-label">Save</span><i class="st-caret" aria-hidden="true"></i></button><div class="st-sub" hidden>
         <button type="button" class="st-btn" data-studio-export aria-label="Save image" aria-expanded="false">${I('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>')}<span class="st-label" data-export-label>Save</span></button>
         <button type="button" class="st-btn" data-studio-lib-save aria-label="Save to library">${I('<path d="M6 3h12v18l-6-4-6 4z"/>')}<span class="st-label">Keep</span></button>
@@ -9218,10 +9213,10 @@ class CoreStudio {
     }
     this.dockGroups = [...this.el.querySelectorAll('.st-group')];
     const closeGrp = () => this.dockGroups.forEach(g => { if (g.parentElement && g.parentElement.closest('.st-more')) return; g.querySelector('.st-sub').hidden = true; g.querySelector('[data-grp-btn]').setAttribute('aria-expanded', 'false'); g.classList.remove('is-open'); });
-    // Phones: View, Settings and Reset fold into one "More" menu so the bar keeps five easy targets.
+    // Phones: View, Settings, Reset and Zoom share the More menu.
     {
       const more = this.el.querySelector('[data-grp=more]'), moreSub = more.querySelector('.st-sub'), dockEl2 = this.el.querySelector('.st-dock');
-      const parts = ['view', 'settings'].map(n => this.el.querySelector(`[data-grp=${n}]`)).concat([this.el.querySelector('[data-studio-reset-all]')]);
+      const parts = ['view', 'settings'].map(n => this.el.querySelector(`[data-grp=${n}]`)).concat([this.el.querySelector('[data-studio-reset-all]'), this.el.querySelector('[data-grp=zoom]')]);
       const marks = parts.map(el => { const m = document.createComment('slot'); el.before(m); return m; });
       const mq = matchMedia('(max-width: 600px)');
       const lay = () => {
@@ -9336,7 +9331,8 @@ class CoreStudio {
       addEventListener('pointermove', e => {
         if (!d || e.pointerId !== d.id) return; let dx = e.clientX - d.x, dy = e.clientY - d.y;
         if (!d.moved) { if (Math.hypot(dx, dy) < 5) return; d.moved = true; d.m.classList.add('is-dragging'); try { d.m.setPointerCapture(e.pointerId); } catch (_) {} }
-        dx = clamp(dx, 48 - d.r.right, innerWidth - 48 - d.r.left); dy = clamp(dy, -d.r.top, innerHeight - 48 - d.r.top);
+        const bounds = d.m.matches('.st-fly') ? this.flyBounds() : { left: 48 - d.r.width, right: innerWidth + d.r.width - 48, top: 0, bottom: innerHeight + d.r.height - 48 };
+        dx = clamp(dx, bounds.left - d.r.left, bounds.right - d.r.right); dy = clamp(dy, bounds.top - d.r.top, bounds.bottom - d.r.bottom);
         d.m.style.setProperty('--fdx', `${d.ox + dx}px`); d.m.style.setProperty('--fdy', `${d.oy + dy}px`);
       });
       const end = e => {
@@ -9350,15 +9346,7 @@ class CoreStudio {
     this.el.querySelectorAll('[data-flyout]').forEach(b => b.onclick = e => {
       e.stopPropagation(); const f = this.el.querySelector(`[data-fly="${b.dataset.flyout}"]`), open = f.hidden; this.closeFly(); if (!open) return; if (this.closeGrp) this.closeGrp(); f.style.removeProperty('--fdx'); f.style.removeProperty('--fdy');
       if (b.dataset.flyout === 'style') this.syncStyle(); else if (b.dataset.flyout === 'textdesign') this.syncText(); else if (b.dataset.flyout === 'kitdesign') this.syncKit(); else if (b.dataset.flyout !== 'focus' || !this.sel || this.sel.decor || !['rect', 'circle', 'tri'].includes(this.sel.kind)) this.select(null); this.syncFly(); f.hidden = false; b.setAttribute('aria-expanded', 'true');
-      const r = b.getBoundingClientRect(), W = innerWidth, H = innerHeight;
-      if (b.dataset.flyout === 'kitdesign') { f.scrollTop = 0; this.layoutKitFly(b); return; }
-      // Keep long lists clear of the bottom toolbar, including portrait tablets.
-      const dock = this.el.querySelector('.st-dock'), dr = dock?.getBoundingClientRect();
-      const bottom = dr && dr.height && dr.top > H * .5 ? Math.min(H - 8, dr.top - 12) : H - 8;
-      f.style.maxHeight = `${Math.max(100, bottom - 8)}px`; f.scrollTop = 0;
-      const fw = f.offsetWidth, fh = f.offsetHeight;
-      let x = r.right + 12, y = r.top; if (x + fw > W - 8) x = r.left - fw - 12; if (x < 8) { x = clamp(r.left + r.width / 2 - fw / 2, 8, W - fw - 8); y = r.top - fh - 12; if (y < 8) y = r.bottom + 12; }
-      f.style.left = `${x}px`; f.style.top = `${clamp(y, 8, bottom - fh)}px`;
+      f.scrollTop = 0; this.layoutFly(f, b, b.dataset.flyout === 'kitdesign');
     });
     flys.forEach(f => f.querySelectorAll('[data-studio-add],[data-studio-decor]').forEach(b => b.addEventListener('click', () => this.closeFly())));
     this.el.querySelectorAll('[data-fset]').forEach(el => {
@@ -9581,7 +9569,7 @@ class CoreStudio {
       if (this.el.classList.contains('st-ui-off')) { this.el.classList.remove('st-ui-off'); e.preventDefault(); e.stopImmediatePropagation(); return; }
       e.preventDefault(); e.stopImmediatePropagation(); if (this.drawing) this.setDrawing(false); else if (this.sel) this.select(null); else if (this.clearGroup && this.groupActive()) this.clearGroup(); else if (this.tool === 'select') this.setTool('move'); else if (!this.panel.hidden) this.tools(false); else this.close();
     }, { signal, capture: true });
-    addEventListener('resize', () => { if (this.active) requestAnimationFrame(() => requestAnimationFrame(() => { this.layoutTrays(); this.layoutKitFly(); this.paintGuides(); this.paintBackground(); this.items.forEach(it => this.place(it)); this.updateFocus(); })); }, { signal });
+    addEventListener('resize', () => { if (this.active) requestAnimationFrame(() => requestAnimationFrame(() => { this.layoutTrays(); this.layoutOpenFlyouts(); this.paintGuides(); this.paintBackground(); this.items.forEach(it => this.place(it)); this.updateFocus(); })); }, { signal });
     this.hist = []; this.hi = -1; this.restoring = false;
     this.applyPreset('ember');
     this.undoBtn = this.el.querySelector('[data-studio-undo]'); this.redoBtn = this.el.querySelector('[data-studio-redo]');
@@ -9696,7 +9684,7 @@ class CoreStudio {
     this.el.querySelectorAll('[data-studio-light],[data-studio-light-x],[data-studio-shadow],[data-studio-shadow-soft]').forEach(el => set(el.closest('.studio-control'), visible));
     this.el.querySelectorAll('[data-studio-corefx],[data-studio-moods]').forEach(el => set(el.closest('details') || el, visible));
     const layerSize = !!this.zoomTargets()?.length;
-    this.el.querySelectorAll('[data-st-zoom],.st-zoompill').forEach(el => set(el, visible || layerSize));
+    this.el.querySelectorAll('[data-st-zoom],[data-grp=zoom]').forEach(el => set(el, visible || layerSize));
     if (!visible) { WorldTune.open(false); document.querySelector('[data-tune-close]')?.click(); if (this.tool === 'hand') this.setTool('move'); }
   }
   // scope: 'subject' = what is on stage now, 'core' = Cerebra only, 'all' = Cerebra and the world on stage.
@@ -9986,20 +9974,10 @@ class CoreStudio {
   }
   initZoom() {
     const box = this.el.querySelector('[data-st-zoom]'); if (!box) return;
-    const pill = this.zoomPill = document.createElement('div'); pill.className = 'st-zoompill st-glass'; pill.setAttribute('role', 'group'); pill.setAttribute('aria-label', 'Cerebra size');
-    pill.innerHTML = '<span class="st-zoomgrip" data-zoom-grip aria-label="Drag to move" role="presentation">⋮⋮</span><button type="button" class="st-btn" data-zoom="-" aria-label="Make Cerebra smaller">−</button><button type="button" class="st-zoompct" data-zoom="0" data-zoom-v aria-label="Reset Cerebra size" title="Reset size">100%</button><button type="button" class="st-btn" data-zoom="+" aria-label="Make Cerebra bigger">+</button>';
-    this.el.append(pill);
-    // The pill can be dragged by its grip anywhere (remembered); Reset menu positions puts it back at the top.
-    const KEY = 'cerebra-zoompill', place = pos => { if (pos) { pill.style.left = clamp(pos.x * innerWidth, 4, Math.max(4, innerWidth - pill.offsetWidth - 4)) + 'px'; pill.style.top = clamp(pos.y * innerHeight, 4, Math.max(4, innerHeight - pill.offsetHeight - 4)) + 'px'; } else { pill.style.left = ''; pill.style.top = ''; } };
-    try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v) requestAnimationFrame(() => place(v)); } catch (e) {}
-    this.resetZoomPill = () => { try { localStorage.removeItem(KEY); } catch (e) {} place(null); };
-    addEventListener('resize', () => { try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v) place(v); } catch (e) {} });
-    let zd = null; const gr = pill.querySelector('[data-zoom-grip]');
-    gr.addEventListener('pointerdown', e => { e.preventDefault(); gr.setPointerCapture(e.pointerId); const r = pill.getBoundingClientRect(); zd = { id: e.pointerId, dx: e.clientX - r.left, dy: e.clientY - r.top }; pill.classList.add('is-dragging'); });
-    gr.addEventListener('pointermove', e => { if (!zd || zd.id !== e.pointerId) return; zd.pos = { x: (e.clientX - zd.dx) / innerWidth, y: (e.clientY - zd.dy) / innerHeight }; place(zd.pos); });
-    const zend = e => { if (!zd || zd.id !== e.pointerId) return; pill.classList.remove('is-dragging'); if (zd.pos) { try { localStorage.setItem(KEY, JSON.stringify(zd.pos)); } catch (x) {} } zd = null; };
-    gr.addEventListener('pointerup', zend); gr.addEventListener('pointercancel', zend);
-    pill.addEventListener('click', e => { const b = e.target.closest('[data-zoom]'); if (!b) return; const z = b.dataset.zoom; if (z === '0') this.zoomTo(100, true); else this.zoomStep(z === '+' ? 1.1 : 1 / 1.1); });
+    this.zoomPill = this.el.querySelector('[data-grp=zoom]');
+    // Zoom stays with the bottom toolbar; old floating positions are no longer used.
+    this.resetZoomPill = () => { try { localStorage.removeItem('cerebra-zoompill'); } catch (e) {} };
+    this.resetZoomPill();
     box.addEventListener('click', e => { const b = e.target.closest('[data-zoom]'); if (!b) return; const z = b.dataset.zoom; if (z === '0') this.zoomTo(100, true); else this.zoomStep(z === '+' ? 1.1 : 1 / 1.1); });
     const zr = box.querySelector('[data-zoom-r]'); zr.addEventListener('input', e => this.zoomTo(+e.target.value, false)); zr.addEventListener('change', e => this.zoomTo(+e.target.value, true));
     setInterval(() => { if (this.active) this.syncZoom(); }, 400);   // pinch / wheel / Reset view also move it
@@ -11262,15 +11240,40 @@ class CoreStudio {
       if (def.defaults.font) kitFontWait({ p: def.defaults }).then(ok => { if (ok) { const g = b.firstChild.getContext('2d'); g.clearRect(0, 0, 88, 88); def.draw(g, { fill: '#e8ecf5', p: def.defaults, seed: 7 }, 0, 0, 88, 88, def.thumbK || 1); } });
     });
   }
+  flyBounds() {
+    const v = window.visualViewport, x = v?.offsetLeft || 0, y = v?.offsetTop || 0, W = v?.width || innerWidth, H = v?.height || innerHeight, gap = 12;
+    const bounds = { left: x + gap, right: x + W - gap, top: y + gap, bottom: y + H - gap };
+    const bar = this.menuBar?.getBoundingClientRect(); if (bar?.height) bounds.top = Math.max(bounds.top, bar.bottom + gap);
+    this.el.querySelectorAll('.st-rail').forEach(rail => {
+      if (rail.hidden || !rail.getClientRects().length || this.el.classList.contains('st-ui-off')) return;
+      const r = rail.getBoundingClientRect(); if (r.height <= r.width) return;
+      if (r.right <= x + W / 2) bounds.left = Math.max(bounds.left, r.right + gap);
+      else if (r.left >= x + W / 2) bounds.right = Math.min(bounds.right, r.left - gap);
+    });
+    const dock = this.el.querySelector('.st-dock'), r = dock?.getBoundingClientRect();
+    if (r?.height && !dock.hidden && r.top > y + H / 2) bounds.bottom = Math.min(bounds.bottom, r.top - gap);
+    return bounds;
+  }
+  layoutFly(f, anchor, centered = false) {
+    if (!f || f.hidden || !anchor) return;
+    const b = this.flyBounds(), margin = 12, r = anchor.getBoundingClientRect();
+    f.style.maxWidth = Math.max(80, b.right - b.left) + 'px';
+    f.style.maxHeight = Math.max(80, Math.min(centered ? 620 : Infinity, b.bottom - b.top)) + 'px';
+    const w = f.offsetWidth, h = f.offsetHeight;
+    let x = centered ? r.left + r.width / 2 - w / 2 : r.right + margin, y = r.top;
+    if (centered) y = r.top - h - margin >= b.top ? r.top - h - margin : r.bottom + margin + h <= b.bottom ? r.bottom + margin : b.top + (b.bottom - b.top - h) / 2;
+    else if (x + w > b.right) { x = r.left - w - margin; if (x < b.left) { x = r.left + r.width / 2 - w / 2; y = r.top - h - margin; if (y < b.top) y = r.bottom + margin; } }
+    f.style.left = clamp(x, b.left, Math.max(b.left, b.right - w)) + 'px';
+    f.style.top = clamp(y, b.top, Math.max(b.top, b.bottom - h)) + 'px';
+  }
   layoutKitFly(anchor = this.el.querySelector('[data-flyout="kitdesign"]')) {
-    const f = this.el.querySelector('[data-kit-panel]'); if (!f || f.hidden || !anchor) return;
-    const v = window.visualViewport, left = v?.offsetLeft || 0, top = v?.offsetTop || 0, W = v?.width || innerWidth, H = v?.height || innerHeight;
-    const r = anchor.getBoundingClientRect(), margin = 12;
-    f.style.maxHeight = `${Math.max(80, Math.min(620, H * .78, H - margin * 2))}px`;
-    const w = f.offsetWidth, h = f.offsetHeight, above = r.top - h - margin, below = r.bottom + margin;
-    const y = above >= top + margin ? above : below + h <= top + H - margin ? below : top + (H - h) / 2;
-    f.style.left = `${clamp(r.left + r.width / 2 - w / 2, left + margin, Math.max(left + margin, left + W - w - margin))}px`;
-    f.style.top = `${clamp(y, top + margin, Math.max(top + margin, top + H - h - margin))}px`;
+    this.layoutFly(this.el.querySelector('[data-kit-panel]'), anchor, true);
+  }
+  layoutOpenFlyouts() {
+    this.el.querySelectorAll('.st-fly:not([hidden])').forEach(f => {
+      f.style.removeProperty('--fdx'); f.style.removeProperty('--fdy');
+      this.layoutFly(f, this.el.querySelector(`[data-flyout="${f.dataset.fly}"]`), f.hasAttribute('data-kit-panel'));
+    });
   }
   syncKit() {
     const it = this.sel, f = this.el.querySelector('[data-kit-panel]'); if (!it || it.kind !== 'kit') return;
