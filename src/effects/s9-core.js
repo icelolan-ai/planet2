@@ -49,10 +49,11 @@
       else if(engine)engine.clear();save();api.onSync&&api.onSync();
     };
     api.change=(key,value,commit=false)=>{
+      const returnToFreeFlow=key==='particleInteract'&&value==='none'&&state.particleInteract!=='none';
       const settling = key === 'curl' && Number(value) < state.curl || key === 'mirror' && !value && state.mirror;
       if(settling&&engine){engine.cancelRipples();engine.solver.stopVelocity();dirty=true}
       if(key==='flowEnabled'&&value)state.paused=false;
-      state[key]=value;if(key==='paused'&&value&&engine){endWaterGesture();engine.cancelRipples();engine.solver.stopVelocity();dirty=true}if(key==='flowEnabled'&&!value&&engine){engine.solver.stopVelocity();dirty=true}if(key==='flowEnabled'&&value&&!state.flowDir.x&&!state.flowDir.y)state.flowDir={x:1,y:0};if(engine)engine.setState(state);
+      state[key]=value;if(key==='paused'&&value&&engine){endWaterGesture();engine.cancelRipples();engine.solver.stopVelocity();dirty=true}if(key==='flowEnabled'&&!value&&engine){engine.solver.stopVelocity();dirty=true}if(key==='flowEnabled'&&value&&!state.flowDir.x&&!state.flowDir.y)state.flowDir={x:1,y:0};if(engine){engine.setState(state);if(returnToFreeFlow){engine.resetParticleInteraction();dirty=true}}
       if((state.on||state.particles)&&ensure()){if(key==='particles'&&value)engine.seed();if(key==='particleCount'&&state.particles)engine.seed();if(key==='particleColors'||key==='particleColorCount')engine.particles.forEach((p,i)=>p.color=(state.particleColors[i%state.particleColorCount]||state.brushColor).slice());dirty=true}
       save();api.onSync&&api.onSync();if(commit)s.commit();
     };
