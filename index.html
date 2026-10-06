@@ -1862,7 +1862,6 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .st-context [data-ctx-close]{border-radius:50%}
 #studio .st-context .st-btn svg.st-i{width:18px;height:18px}
 /* Select mode: the tick circle stays small and the layer rows keep their height (no wrapping of the buttons) */
-#studio .st-layers :is(.st-layer,.st-ghead) .st-lcheck{width:22px!important;min-width:22px!important;height:22px!important;min-height:22px!important;padding:0!important;font-size:12px;line-height:1;flex:none;display:inline-grid;place-items:center;border-width:2px!important}
 #studio .st-layers .st-layer:not(.is-sel){flex-wrap:nowrap}
 #studio .st-layers .st-ghead .st-lcheck{margin-right:0}
 /* Compact Layers list: smaller rows, icons and buttons so more layers fit */
@@ -1870,7 +1869,11 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .st-layers .st-layer{min-height:30px;padding:0 3px 0 2px;border-radius:9px}
 #studio .st-layers :is(.st-layer,.st-ghead) .st-eye{width:22px!important;min-width:22px!important;height:24px!important;min-height:0!important;border-radius:7px}
 #studio .st-layers :is(.st-layer,.st-ghead) .st-eye svg,#studio .st-layers :is(.st-layer,.st-ghead) .st-eye .st-i{width:14px;height:14px}
-#studio .st-layers .st-lcheck{width:18px!important;min-width:18px!important;height:18px!important;font-size:11px}
+/* Keep the selection mark smaller than its hit area, with identical geometry in group headers and child rows. */
+#studio .st-layers :is(.st-layer,.st-ghead) .st-eye.st-lcheck{box-sizing:border-box;width:24px!important;min-width:24px!important;max-width:24px!important;height:24px!important;min-height:24px!important;max-height:24px!important;flex:0 0 24px!important;padding:0!important;position:relative;display:inline-grid;place-items:center;border:0!important;background:none!important;box-shadow:none!important;font-size:0!important;line-height:1}
+#studio .st-layers .st-lcheck::before{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);box-sizing:border-box;width:16px;height:16px;border:1.5px solid #d1c5e099;border-radius:50%;pointer-events:none}
+#studio .st-layers .st-lcheck.is-on::before{background:var(--cyg);border-color:transparent}
+#studio .st-layers .st-lcheck.is-on::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;font:700 11px/1 var(--f-sans);color:#fff;pointer-events:none}
 #studio .st-layers .st-sw{width:20px;height:20px;font-size:12px;border-radius:6px}
 #studio .st-layers .st-sw svg{width:13px;height:13px}
 #studio .st-layers .st-grip{font-size:9px;width:12px;height:28px;letter-spacing:-2px}
