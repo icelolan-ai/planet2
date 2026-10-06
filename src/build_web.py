@@ -116,6 +116,7 @@ fx_order = [
     'water-collision.js',
     's9-core.js',
     's9-ui.js',
+    'library-defaults.js',
     'runtime-compat.js',
 ]
 fx_found = {f for f in os.listdir(fx_dir) if f.endswith('.js')}

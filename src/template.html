@@ -10511,6 +10511,11 @@ class CoreStudio {
   }
   // Library: keep compositions (all settings + a thumbnail) in this browser and reopen them in a parallax carousel.
   libRead() { try { const a = JSON.parse(localStorage.getItem('cerebra-studio-library') || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  libEntries() {
+    const defaults = window.__cerebraLibraryDefaults || [], local = this.libRead();
+    // Keep private storage intact; hide only identical copies of the shared originals.
+    return [...defaults, ...local.filter(w => !defaults.some(d => String(w.id) === d.sourceId && w.state === d.state))];
+  }
   libExport() {
     const works = this.libRead(); if (!works.length) return;
     // Preserve complete editable states and thumbnails, not just the preview images.
@@ -10538,14 +10543,14 @@ class CoreStudio {
   }
   libOpen(on) {
     this.libScrollTarget = null; this.lib.hidden = !on; this.el.querySelector('[data-studio-lib]').classList.toggle('is-open', on); if (!on) return;
-    const a = this.libRead(), tr = this.el.querySelector('[data-lib-track]'), esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-    this.el.querySelector('[data-lib-export]').disabled = !a.length;
-    this.el.querySelector('[data-lib-empty]').hidden = a.length > 0; this.el.querySelector('[data-lib-count]').textContent = a.length ? `${a.length} kept` : '';
-    tr.innerHTML = a.map(w => `<article class="st-lib-card" tabindex="0" aria-label="${esc(w.name)}" data-id="${esc(w.id)}"><div class="st-lib-img" style="background-image:url('${w.thumb}')"></div><div class="st-lib-info"><b>${esc(w.name)}</b><small>${esc(w.date)}</small><div><button type="button" class="st-btn is-primary" data-lib-load>Open</button><button type="button" class="st-btn" data-lib-del aria-label="Delete">${this.icons.trash}</button></div></div></article>`).join('');
+    const a = this.libEntries(), tr = this.el.querySelector('[data-lib-track]'), esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    this.el.querySelector('[data-lib-export]').disabled = !this.libRead().length;
+    this.el.querySelector('[data-lib-empty]').hidden = a.length > 0; this.el.querySelector('[data-lib-count]').textContent = a.length ? `${a.length} works` : '';
+    tr.innerHTML = a.map(w => `<article class="st-lib-card" tabindex="0" aria-label="${esc(w.name)}" data-id="${esc(w.id)}"><div class="st-lib-img" style="background-image:url('${w.thumb}')"></div><div class="st-lib-info"><b>${esc(w.name)}</b><small>${w.builtin ? 'Starter · available to everyone' : esc(w.date)}</small><div><button type="button" class="st-btn is-primary" data-lib-load>Open</button>${w.builtin ? '' : `<button type="button" class="st-btn" data-lib-del aria-label="Delete">${this.icons.trash}</button>`}</div></div></article>`).join('');
     tr.querySelectorAll('.st-lib-card').forEach((card, i) => { card.style.animationDelay = `${i * 70}ms`;
       const w = a.find(x => String(x.id) === card.dataset.id);
       card.querySelector('[data-lib-load]').onclick = () => { this.setSubject(w.subject ?? -1); this.restore(w.state); if (w.pl) this.showPlanet(w.pl); this.layoutTrays && this.layoutTrays(); this.commit(); this.libOpen(false); };
-      card.querySelector('[data-lib-del]').onclick = () => { this.libWrite(this.libRead().filter(x => x.id !== w.id)); this.libOpen(true); };
+      if (!w.builtin) card.querySelector('[data-lib-del]').onclick = () => { this.libWrite(this.libRead().filter(x => x.id !== w.id)); this.libOpen(true); };
     });
     requestAnimationFrame(() => this.libParallax());
   }
