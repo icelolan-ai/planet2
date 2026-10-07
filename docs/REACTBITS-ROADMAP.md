@@ -29,7 +29,7 @@ reduced motion. Preserve EN/Thai labels and all existing Studio artwork.
 
 Use the existing `KIT` pipeline for selection, groups, hide/lock, Undo/Redo,
 project files, image export and video composition. Prototype checkpoint:
-local branch `wip/reactbits-toolkit-20261007`; none of the tools below is
+repository branch `wip/reactbits-toolkit-20261007`; none of the tools below is
 included in Part 1. Validate every exposed control for a visible effect.
 
 | Reference | Customize studied in upstream demo | Cerebra adaptation to validate |

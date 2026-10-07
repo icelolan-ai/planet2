@@ -17,6 +17,11 @@
       @media(prefers-reduced-motion:reduce){.cl-hub-open .cl-paths[data-wheel-ready] .cl-path{transition:none}}
     `;document.head.append(style);
     const buttons=[...nav.querySelectorAll('[data-cl-path]')];
+    // Bound the rotated far edge: a fixed angle on wide cards can cover Enter.
+    function angle(){nav.style.setProperty('--cl-wheel-angle',Math.min(4,Math.atan((innerHeight<=620?8:18)/Math.max(1,nav.clientWidth))*180/Math.PI)+'deg');}
+    style.textContent=style.textContent.replaceAll('var(--cl-wheel-d)*5deg','var(--cl-wheel-d)*var(--cl-wheel-angle,1deg)').replaceAll('var(--cl-wheel-d)*4deg','var(--cl-wheel-d)*var(--cl-wheel-angle,1deg)');
+    style.textContent+='@media(max-width:360px){.cl-hub-open .cl-paths[data-wheel-ready] .cl-path.is-selected strong{font-size:24px}}.cl-hub-open .cl-slide-footer{position:relative;z-index:3}';
+    new ResizeObserver(angle).observe(nav);window.addEventListener('resize',angle,{passive:true});angle();
     function sync(){const selected=Math.max(0,buttons.findIndex(b=>b.classList.contains('is-selected')));buttons.forEach((b,i)=>{let d=i-selected;if(d>1)d-=buttons.length;if(d< -1)d+=buttons.length;b.style.setProperty('--cl-wheel-d',d);});}
     const observer=new MutationObserver(sync);buttons.forEach(b=>observer.observe(b,{attributes:true,attributeFilter:['class']}));sync();
     nav.addEventListener('keydown',event=>{if(event.key==='Home'||event.key==='End'){event.preventDefault();buttons[event.key==='Home'?0:buttons.length-1].click();}else if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();const i=buttons.findIndex(b=>b.classList.contains('is-selected'));buttons[(i+(event.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length].click();}});
