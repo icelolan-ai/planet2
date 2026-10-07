@@ -55,10 +55,10 @@
     const t=amount&&moving?Math.floor(time*amount*30)/30:0;
     const preview=typeof KIT_PREVIEW!=='undefined'&&KIT_PREVIEW;
     const scale=Math.min((preview?1024:2048)/Math.max(w,h),1),W=Math.max(8,Math.round(w*scale)),H=Math.max(8,Math.round(h*scale));
-    const key=JSON.stringify([p,W,H,moving?t:0,amount]);let c=cache.get(it);
+    const key=JSON.stringify([p,W,H,t,amount]);let frames=cache.get(it);if(!frames)cache.set(it,frames=new WeakMap());let c=frames.get(g);
     if((!c||c.key!==key)&&!(preview&&c?.pending)){
       const a=gpu||init();if(!a)return;
-      if(!c){const cv=document.createElement('canvas');c={cv,ctx:cv.getContext('2d')};cache.set(it,c);}if(!c.ctx)return;
+      if(!c){const cv=document.createElement('canvas');c={cv,ctx:cv.getContext('2d')};frames.set(g,c);}if(!c.ctx)return;
       const {renderer:r,uniforms:u,target}=a;target.setSize(W,H);if(a.bytes.length!==W*H*4)a.bytes=new Uint8Array(W*H*4);
       u.iResolution.value.set(W,H,1);u.iTime.value=t;u.uFlowTime.value=t;u.uFogTime.value=t;u.iMouse.value.set(0,0,0,0);
       // Pointer tilt/fade-in are demo behavior, not persistent/exportable Studio state.

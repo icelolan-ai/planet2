@@ -26,9 +26,9 @@
     if(!s||!s.el||!app.stage||!T||!window.CerebraNavaWater){setTimeout(boot,180);return}if(api.ready)return;
     api.ready=true;api.app=app;api.studio=s;
     const stage=app.stage,renderer=stage.renderer,collision=window.CerebraWaterCollision(T,app,s,stage.renderer),root=new T.Group();root.name='Nava Water Lab';stage.scene.add(root);
-    const quadMat=texture=>new T.ShaderMaterial({uniforms:{map:{value:texture}},transparent:true,depthTest:false,depthWrite:false,toneMapped:false,
+    const quadMat=texture=>new T.ShaderMaterial({uniforms:{map:{value:texture},layerAlpha:{value:1}},transparent:true,depthTest:false,depthWrite:false,toneMapped:false,
       vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,.999,1.);}',
-      fragmentShader:'varying vec2 vUv;uniform sampler2D map;void main(){gl_FragColor=texture2D(map,vUv);}' });
+      fragmentShader:'varying vec2 vUv;uniform sampler2D map;uniform float layerAlpha;void main(){gl_FragColor=texture2D(map,vUv);gl_FragColor.a*=layerAlpha;}' });
     api.collision=collision;
     let water,particleMesh,particleTexture,last=performance.now(),size='';
     const dimensions=()=>{const r=renderer.domElement.getBoundingClientRect();return[Math.max(1,Math.round(r.width)),Math.max(1,Math.round(r.height))]};
@@ -46,16 +46,19 @@
       api.activate(false,state.tool,false);state=merge(v&&v.version===3?v.settings:v);cached=v&&v.version===3?{field:v.field||null,ripples:Array.isArray(v.ripples)?v.ripples:[],particles:Array.isArray(v.particles)?v.particles.filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.a)&&Array.isArray(p.color)&&p.color.length===3&&p.color.every(Number.isFinite)).slice(0,1200):[]}:null;dirty=false;
       collision.load(v&&v.version===3?v.stains:null);if(engine)engine.setState(state);
       if(state.on||state.particles||cached&&cached.field){if(ensure()){engine.setState(state);engine.cancelRipples();engine.solver.load(cached&&cached.field);engine.restoreRipples(cached&&cached.ripples);engine.particles.splice(0,engine.particles.length,...(cached&&cached.particles||[]));if(state.particles&&!engine.particles.length)engine.seed()}}
-      else if(engine)engine.clear();save();api.onSync&&api.onSync();
+      else if(engine)engine.clear();save();s.syncFxLayers();api.onSync&&api.onSync();
     };
     api.change=(key,value,commit=false)=>{
+      if(key==='on'&&!value)api.activate(false,state.tool,false);
       const returnToFreeFlow=key==='particleInteract'&&value==='none'&&state.particleInteract!=='none';
       const settling = key === 'curl' && Number(value) < state.curl || key === 'mirror' && !value && state.mirror;
       if(settling&&engine){engine.cancelRipples();engine.solver.stopVelocity();dirty=true}
       if(key==='flowEnabled'&&value)state.paused=false;
       state[key]=value;if(key==='paused'&&value&&engine){endWaterGesture();engine.cancelRipples();engine.solver.stopVelocity();dirty=true}if(key==='flowEnabled'&&!value&&engine){engine.solver.stopVelocity();dirty=true}if(key==='flowEnabled'&&value&&!state.flowDir.x&&!state.flowDir.y)state.flowDir={x:1,y:0};if(engine){engine.setState(state);if(returnToFreeFlow){engine.resetParticleInteraction();dirty=true}}
       if((state.on||state.particles)&&ensure()){if(key==='particles'&&value)engine.seed();if(key==='particleCount'&&state.particles)engine.seed();if(key==='particleColors'||key==='particleColorCount')engine.particles.forEach((p,i)=>p.color=(state.particleColors[i%state.particleColorCount]||state.brushColor).slice());dirty=true}
-      save();api.onSync&&api.onSync();if(commit)s.commit();
+      save();if(['on','particles'].includes(key)&&!s.fxSyncing)s.syncFxLayers();
+      if(key==='layer'){const layers=s.items.filter(i=>i.kind==='fx'&&['water','waterParticles'].includes(i.fxType));s.items=s.items.filter(i=>!layers.includes(i));const at=s.items.indexOf(s.fxItem('planet'));s.items.splice(state.layer==='back'?Math.max(0,at):at+1,0,...layers);s.stackDom();s.renderLayers();}
+      api.onSync&&api.onSync();if(commit)s.commit();
     };
     api.navaFlow=()=>{Object.assign(state,clone(NAVA),{paused:false});if(engine){engine.cancelRipples();engine.solver.stopVelocity();dirty=true}api.activate(true,state.tool);s.commit()};
     const endWaterGesture=()=>{if(!engine)return;for(const id of Object.keys(engine.pointers)){engine.endTentacle(id);delete engine.pointers[id]}const ctx=engine.particleCanvas.getContext('2d');ctx.clearRect(0,0,engine.particleCanvas.width,engine.particleCanvas.height)};
@@ -68,7 +71,7 @@
     api.activate=(on,tool=state.tool,commit=true)=>{
       if(on){state.tool=tool;state.on=true;if(!ensure())return;engine.setState(state);s.setDrawing(false);originalSetTool&&originalSetTool('move')}
       if(!on&&engine){for(const id of Object.keys(engine.pointers)){engine.endTentacle(id);delete engine.pointers[id]}if(dirty&&commit)s.commit()}
-      active=!!on;pad.hidden=badge.hidden=!active;badge.querySelector('span').textContent=`Water · ${state.tool==='paint'?'Pen':state.tool}`;api.active=active;if(on)s.select(null);s.updateFocus();api.onSync&&api.onSync();save();
+      active=!!on;pad.hidden=badge.hidden=!active;badge.querySelector('span').textContent=`Water · ${state.tool==='paint'?'Pen':state.tool}`;api.active=active;if(on){s.select(null);s.syncFxLayers();if(commit)s.commit();}s.updateFocus();api.onSync&&api.onSync();save();
     };
     const originalSetTool=s.setTool&&s.setTool.bind(s);if(originalSetTool)s.setTool=(...args)=>{if(active)api.activate(false);return originalSetTool(...args)};
     const originalDrawing=s.setDrawing.bind(s);s.setDrawing=(on,...args)=>{if(on&&active)api.activate(false);return originalDrawing(on,...args)};
@@ -99,21 +102,23 @@
     const finish=e=>{if(!engine||!engine.pointers[e.pointerId])return;engine.endTentacle(e.pointerId);delete engine.pointers[e.pointerId];if(!Object.keys(engine.pointers).length){s.commit();save()}};
     pad.addEventListener('pointerup',finish);pad.addEventListener('pointercancel',finish);pad.addEventListener('lostpointercapture',finish);
     const originalRender=stage.render.bind(stage);stage.render=(...args)=>{
-      root.visible=!!s.active&&!!engine&&(state.on||state.particles);
+      const waterLayer=s.fxItem('water'),particlesLayer=s.fxItem('waterParticles'),waterShown=state.on&&waterLayer&&!s.isHid(waterLayer),particlesShown=state.particles&&particlesLayer&&!s.isHid(particlesLayer);
+      root.visible=!!s.active&&!!engine&&(waterShown||particlesShown);
       const now=performance.now(),elapsed=Math.max(.001,(now-last)/1000),dt=Math.min(.033,elapsed);last=now;
       if(!root.visible)collision.hide();
       if(root.visible){const dims=dimensions(),key=dims.join('x');if(key!==size){engine.resize(...dims);size=key;water.material.uniforms.map.value=engine.solver.output.tex}
         engine.setObstacle(null);collision.update(state,engine,dt);
         if(active&&state.tool==='pour'&&!state.paused&&!s.frozen)for(const pd of Object.values(engine.pointers))engine.splat(pd.lx,pd.ly,0,-1.8,engine.color(),.006*state.brushSize);
-        engine.frame(dt,state.paused||s.frozen,elapsed);if(collision.revision!==api.stainRevision){api.stainRevision=collision.revision;dirty=true}water.visible=state.on;particleMesh.visible=state.particles||Object.keys(engine.brushes).length>0;particleTexture.needsUpdate=true;
-        const order=state.layer==='back'?-1000:1000;water.renderOrder=order;particleMesh.renderOrder=order+1;water.material.depthTest=particleMesh.material.depthTest=state.layer==='back';
+        engine.frame(dt,state.paused||s.frozen,elapsed);if(collision.revision!==api.stainRevision){api.stainRevision=collision.revision;dirty=true}water.visible=!!waterShown;particleMesh.visible=!!particlesShown||!!waterShown&&Object.keys(engine.brushes).length>0;particleTexture.needsUpdate=true;water.material.uniforms.layerAlpha.value=waterLayer?.alpha??1;particleMesh.material.uniforms.layerAlpha.value=particlesLayer?.alpha??waterLayer?.alpha??1;
+        const waterBack=waterLayer&&s.belowPlanet(waterLayer),particlesBack=particlesLayer&&s.belowPlanet(particlesLayer);water.renderOrder=waterBack?-1000:1000;particleMesh.renderOrder=particlesBack?-999:1001;water.material.depthTest=!!waterBack;particleMesh.material.depthTest=!!particlesBack;
       }
       return originalRender(...args);
     };
     api.visible=()=>!!engine&&(state.on||state.particles);
     const originalSnapshot=s.snapshot.bind(s);s.snapshot=extra=>{const v=JSON.parse(originalSnapshot(extra));v.s9=api.snapshot();return JSON.stringify(v)};
-    const originalRestore=s.restore.bind(s);s.restore=text=>{const v=JSON.parse(text);const out=originalRestore(text);api.set(v.s9&&v.s9.version===3?v.s9:DEF);return out};
+    const originalRestore=s.restore.bind(s);s.restore=text=>{const v=JSON.parse(text);api.set(v.s9&&v.s9.version===3?v.s9:DEF);return originalRestore(text)};
     s.s9State=api.snapshot;s.s9Apply=api.set;
+    const resetSettings=s.el.querySelector('[data-studio-reset]');if(resetSettings){const fn=resetSettings.onclick;resetSettings.onclick=e=>{s.commit();api.set(DEF);return fn.call(resetSettings,e)}}
     const resetCanvas=s.el.querySelector('[data-rs=canvas]');if(resetCanvas){const fn=resetCanvas.onclick;resetCanvas.onclick=e=>{api.set(DEF);return fn.call(resetCanvas,e)}}
     const resetFull=s.el.querySelector('[data-rs=full]');if(resetFull){const fn=resetFull.onclick;resetFull.onclick=e=>{const hist=s.hist;const result=fn.call(resetFull,e);if(hist!==s.hist){api.set(DEF);s.hist=[s.snapshot()];s.hi=0;s.syncHist()}return result}}
     if(s.hist)s.hist=s.hist.map(text=>{try{const v=JSON.parse(text);v.s9={version:3,settings:clone(state)};return JSON.stringify(v)}catch(_){return text}});

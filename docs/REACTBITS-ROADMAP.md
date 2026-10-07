@@ -1,5 +1,7 @@
 # React Bits integration — staged delivery
 
+8 October UI correction: all Kit Design panels share a wider responsive two-column layout, with a viewport-safe anchor for oversized objects, an edge-pinned selection toolbar and complete Design/Motion reset. Native Lab Water/Particle Flow layers now expose visibility, opacity and delete/Undo. These are Studio usability fixes; the remaining React Bits component fidelity work below is still staged.
+
 Requested by Ice, 7 October 2026 (Asia/Bangkok). Deliver in reviewable parts;
 do not describe a source prototype as a deployed or verified tool.
 
