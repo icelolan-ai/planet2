@@ -1083,14 +1083,18 @@ body.studio-on:is(.tune-open,.wtune-open) :is(.studio-panel,.st-rail,.st-dock,.s
 .st-lib{position:absolute;inset:calc(45px + env(safe-area-inset-top,0px)) 0 0;z-index:90;display:flex;flex-direction:column;justify-content:center;gap:18px;background:#07080dcc;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);pointer-events:auto}
 .st-lib[hidden]{display:none}
 
-.st-welcome{width:min(540px,calc(100vw - 32px));max-height:calc(100dvh - 48px);overflow:auto;border:0;padding:0 28px 24px;background:transparent;color:#eef0ff;pointer-events:auto;isolation:isolate;box-sizing:border-box;clip-path:polygon(6% 0,94% 0,100% 100%,0 100%)}
-.st-welcome::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(145deg,#292139,#101523);}
+.st-welcome{width:min(560px,calc(100vw - 32px));max-height:calc(100dvh - 48px);overflow:auto;border:1px solid #ffffff24;border-radius:20px;padding:0 24px 24px;background:#171c29;color:#eef0ff;pointer-events:auto;isolation:isolate;box-sizing:border-box;clip-path:none;box-shadow:0 24px 80px #0009;scrollbar-width:thin;scrollbar-color:#525b70 transparent}
 .st-welcome::backdrop{background:#070910a8;backdrop-filter:blur(8px)}
-.st-welcome header{position:absolute;z-index:1;top:12px;left:40px;right:40px;display:flex;align-items:center;justify-content:space-between;gap:12px;font:11px var(--f-mono);letter-spacing:.12em;text-shadow:0 1px 8px #000}
-.st-welcome button{min-height:44px;min-width:44px}.st-welcome img{display:block;width:calc(100% + 56px);height:min(30dvh,240px);object-fit:cover;border-radius:0;margin:0 -28px 16px;background:#111522}
+.st-welcome header{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px;font:10px var(--f-mono);letter-spacing:.1em;color:#c6cde0}
+.st-welcome header span{min-width:0;line-height:1.5}
+#studio .st-welcome [data-welcome-close]{width:44px;height:44px;min-width:44px;min-height:44px;flex:0 0 44px;padding:0;box-sizing:border-box;border-radius:12px;font:22px/1 var(--f-sans);box-shadow:none;background:#293142}
+.st-welcome button{min-height:44px;min-width:44px}.st-welcome img{display:block;width:calc(100% + 48px);height:min(28dvh,240px);object-fit:contain;border-radius:0;margin:0 -24px 20px;background:#0b101a}
 .st-welcome h2{font:400 28px var(--f-display);margin:12px 0 6px}.st-welcome p{font:14px/1.6 var(--f-sans);color:#b9bed0;margin:0 0 16px}
 .st-welcome-guide{border-top:1px solid #ffffff20;margin-top:16px;padding-top:14px}.st-welcome-guide b{font:12px var(--f-mono);color:#c6b5ff}.st-welcome-guide p{margin:8px 0}.st-welcome-guide footer{display:flex;gap:8px;justify-content:flex-end}
 .st-welcome nav{display:flex;align-items:center;gap:8px}.st-welcome nav span{margin-right:auto;font:11px var(--f-mono);color:#b9bed0}.st-welcome label{display:flex;gap:8px;align-items:center;margin-top:16px;font:12px var(--f-sans)}
+#studio .st-welcome :is(nav,footer) .st-btn{min-height:44px;box-shadow:none}
+.st-welcome :is(button,input):focus-visible{outline:2px solid #bca7ff;outline-offset:3px}
+@media(max-width:480px){.st-welcome{width:calc(100vw - 24px);max-height:calc(100dvh - 24px);padding:0 18px 18px;border-radius:16px}.st-welcome header{min-height:60px;font-size:9px;letter-spacing:.06em}.st-welcome img{width:calc(100% + 36px);margin:0 -18px 16px;height:min(25dvh,200px)}.st-welcome h2{font-size:24px}.st-welcome p{font-size:13px;line-height:1.55}.st-welcome-guide{margin-top:16px;padding-top:12px}.st-welcome-guide b{font-size:11px}.st-welcome nav{gap:6px}#studio .st-welcome [data-welcome-open]{padding:0 12px;font-size:13px}}
 
 .st-lib-head{display:flex;align-items:center;gap:14px;padding:0 max(24px,6vw)}
 .st-lib-head b{font:400 clamp(28px,4vw,52px) var(--f-display);letter-spacing:.04em;text-transform:uppercase}
