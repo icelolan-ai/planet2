@@ -52,7 +52,8 @@
     if(!frame)frame=requestAnimationFrame(render);
   },{passive:true});
   document.addEventListener('pointerdown',event=>{if(event.pointerType!=='mouse')hide();},{passive:true});
-  document.addEventListener('keydown',hide);document.addEventListener('visibilitychange',hide);
+  // Menu Escape handlers stop propagation; observe keys before those handlers.
+  window.addEventListener('keydown',hide,true);document.addEventListener('visibilitychange',hide);
   window.addEventListener('blur',hide);document.addEventListener('pointerout',event=>{if(!event.relatedTarget)hide();});
   fine.addEventListener('change',hide);reduced.addEventListener('change',hide);
 })();

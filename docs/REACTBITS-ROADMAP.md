@@ -25,6 +25,15 @@ Ball, Ether and Pillar use bounded Canvas2D drawing; they are not direct React
 ports or identical GPU simulations. Hidden pages pause; animation respects
 reduced motion. Preserve EN/Thai labels and all existing Studio artwork.
 
+Customize mapping for this part: Option Wheel exposes font size, spacing,
+curve, tilt, blur/fade, smoothing, inset, looping/dragging and optional sound
+in its upstream demo. Cerebra uses three real route buttons, looping selection,
+zero blur, bounded responsive tilt and larger selected text. It keeps the
+existing touch/wheel/keyboard controller and leaves sound off. Rotating Text
+uses 20 ms grapheme staggering, a 560 ms entrance and a 2800 ms guide interval;
+route headings change only with selection. Page Crystalized Ball uses a fixed,
+bounded dust/rim preset; editable object settings belong to Part 2.
+
 ## Part 2 — editable Studio tools (pending)
 
 Use the existing `KIT` pipeline for selection, groups, hide/lock, Undo/Redo,
