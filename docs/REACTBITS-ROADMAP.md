@@ -38,8 +38,7 @@ bounded dust/rim preset; editable object settings belong to Part 2.
 
 Both tools use the existing Kit palette and Design panel. Newly added objects
 start with Motion on; existing projects retain their saved Motion setting.
-Laser Flow exposes colour, horizontal/vertical origin, beam length/height/width,
-glow, haze, wisp count/brightness/speed and flow speed. Native Motion supplies
+Laser Flow exposes the source shader controls described below. Native Motion supplies
 amount, timing, direction, loop, rhythm, spin and extra motion. Flow and Pulse
 are its two styles. Meta Balls exposes count, size, separation, edge softness,
 accent colour and speed, with Orbit and Merge & separate styles. The common
@@ -48,8 +47,25 @@ English and Thai.
 
 Correction after user visual review: the original Canvas2D approximations
 were not accepted as faithful React Bits implementations. Further approximate
-Part 2B tools are parked. Laser Flow and the page backgrounds still need
-replacement and visual reference QA; do not mark their fidelity complete.
+Part 2B tools are parked. The page backgrounds still need replacement and
+visual reference QA; do not mark their fidelity complete.
+
+Laser Flow now embeds the upstream fragment shader (source blob
+`977e160f9b2669beb96e179856dd1f5bb5a78c47`), not the former stroked bezier.
+Kit Design exposes colour, beam offsets, horizontal/vertical sizing, wisp
+density/speed/intensity, flow speed/strength, fog intensity/scale/fall speed,
+decay and falloff start. Defaults match the upstream Box demo. Useful density
+range is 0.1–2 because the source shader treats 0 as 1 and clamps at 2; intensity
+0 turns wisps off. Speeds additionally allow 0 for native editing.
+Existing saved parameters migrate once on native add/restore through an
+optional `normalizeP` definition hook, keeping native history/project ownership.
+Shared WebGL render target, 512px bound and deterministic native Kit time feed
+the same screen and export compositor. Optical alpha and native Screen blending
+preserve the upstream opaque-black/screen light contribution without a black
+rectangle (including fog). Intentional adaptations: transparent Studio layer
+instead of the demo's theme-aware CSS, no pointer-dependent
+tilt or initial fade-in, native Motion amount and optional Pulse style. No new
+renderer, RAF, storage controller or WebGPU. Website placement remains pending.
 
 Meta Balls now uses the upstream fragment shader, deterministic hash and
 orbital equations through the existing Three renderer. Maximum 50 balls,
@@ -72,7 +88,7 @@ remain prototypes. Validate every exposed control for a visible effect.
 
 | Reference | Customize studied in upstream demo | Cerebra adaptation to validate |
 | --- | --- | --- |
-| Laser Flow — Part 2A | colour, speed, beam offsets/sizing, wisps, fog, strength, decay, falloff, interaction | Editable laser layer; colour, width/length, position, glow/haze, wisps and native Motion |
+| Laser Flow — Part 2A | colour, speed, beam offsets/sizing, wisps, fog, strength, decay, falloff, interaction | Actual upstream shader layer; source prop controls plus native Motion; pointer tilt deliberately excluded from capture |
 | Meta Balls — Part 2A | colour, cursor colour/size, count, speed, clump, animation size, transparency | Liquid scalar-field Kit; count, size, separation, softness, accent and Motion |
 | Aero Shards | placement, material/detail, flow, scale/spread/depth, speed/spin, density, size/stretch, turbulence, glow/bloom, grain, effects, interaction | Bounded shard Kit with real geometry/palette controls; omit unsupported GPU-only controls |
 | Lightfall | palette, speed/count, width/length, glow/density/twinkle, zoom, background glow, cursor light | Falling light Kit; palette, count, width/length, density, twinkle, zoom and Motion |
