@@ -123,6 +123,10 @@ fx_order = [
     'runtime-compat.js',
     'studio-guide-language.js',
     'studio-launch.js',
+    'page-backdrops.js',
+    'studio-reactbits-pages.js',
+    'studio-target-cursor.js',
+    'studio-option-wheel.js',
 ]
 fx_found = {f for f in os.listdir(fx_dir) if f.endswith('.js')}
 fx_files = [f for f in fx_order if f in fx_found]
