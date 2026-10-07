@@ -111,6 +111,8 @@ fx_order = [
     'formation.js',
     'hologram.js',
     'burst.js',
+    'laser-flow.js',
+    'meta-balls.js',
     'post-stack.js',
     'diagnostics.js',
     'studio-menu-fix.js',

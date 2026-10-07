@@ -2,6 +2,8 @@
    Translate application labels, never artwork, layer names, input values or saved state. */
 (() => {
   const labels = {
+    'Laser colour':'สีเลเซอร์','Beam horizontal position':'ตำแหน่งลำแสงแนวนอน','Beam vertical position':'ตำแหน่งลำแสงแนวตั้ง','Beam length':'ความยาวลำแสง','Beam height':'ความสูงลำแสง','Beam width':'ความหนาลำแสง','Laser glow':'แสงฟุ้งของเลเซอร์','Laser haze':'หมอกแสงเลเซอร์','Laser wisps':'จำนวนเส้นแสงไหล','Wisp brightness':'ความสว่างเส้นแสง','Wisp speed':'ความเร็วเส้นแสง','Flow speed':'ความเร็วการไหล',
+    'Ball count':'จำนวนก้อน','Ball size':'ขนาดก้อน','Ball separation':'ระยะห่างของก้อน','Liquid edge softness':'ความนุ่มของขอบ','Liquid accent colour':'สีรองของของเหลว','Liquid speed':'ความเร็วของของเหลว',
     'Studio':'สตูดิโอ','How to use':'วิธีใช้งาน','Explore planets':'สำรวจดาว',
     'Create your composition':'เริ่มสร้างผลงาน','Tools, controls & export':'เครื่องมือ การปรับแต่ง และส่งออก','Find a world before creating':'ชมดาวก่อนเริ่มสร้างงาน',
     'Choose your path':'เลือกเส้นทางของคุณ','Your guide to the Studio':'คู่มือการใช้งานสตูดิโอ','Find a tool or setting':'ค้นหาเครื่องมือหรือการตั้งค่า','Guide chapters':'หมวดคู่มือ',
