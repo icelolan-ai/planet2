@@ -272,8 +272,9 @@ body:has(.picker[data-open="true"]) :is(main,.worldword,.backword,.labels){opaci
 @media (max-width:640px){.picker{left:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 48px)}}
 
 /* ------------------------------------------------------------------ Cursor */
-html.has-cursor:not(.studio-lock),html.has-cursor:not(.studio-lock) *{cursor:none!important}
-.cursor{position:fixed;inset:0;z-index:50;pointer-events:none;opacity:0;transition:opacity .4s}
+/* Keep the native pointer visible in modal pages and drawing surfaces.
+   Target corners are an additional decoration, never a cursor replacement. */
+.cursor{display:none;position:fixed;inset:0;z-index:50;pointer-events:none;opacity:0;transition:opacity .4s}
 .cursor.is-visible{opacity:1}
 .cursor-ring,.cursor-dot,.cursor-label{position:absolute;left:0;top:0;will-change:transform}
 .cursor-ring{width:40px;height:40px;border:1px solid rgba(223,228,234,.32);border-radius:50%;transition:border-color .35s,background-color .35s}
@@ -1484,7 +1485,7 @@ html,body{touch-action:pan-x pan-y}
 #studio .st-assist.is-erase .st-esize{display:grid}
 #studio .st-assist-new{min-height:38px;padding:0 14px;border:0;border-radius:11px;background:#ffffff1c;color:#fff;font:600 10px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:1px solid #ffffff2e}
 #studio .st-assist-seg button[data-atool].is-on{background:var(--cyg);color:#fff;box-shadow:0 0 14px #8b5cf666}
-#studio .st-draw-pad.is-erase{cursor:none}
+#studio .st-draw-pad.is-erase{cursor:crosshair}
 #studio .st-erase-cur{position:absolute;left:0;top:0;border:2px solid #fff;border-radius:50%;pointer-events:none;box-shadow:0 0 0 1px #0008,inset 0 0 0 1px #0008;z-index:3}
 #studio .st-erase-cur[hidden]{display:none}
 /* Settings popover */
@@ -8584,7 +8585,7 @@ const L2 = {
 // Smooth 2D value noise (seeded) and a hex colour blend, shared by the flow kits.
 const kitNoise = seed => { const r = mulberry32(seed), P = Array.from({ length: 256 }, () => r()), h = (i, j) => P[(i * 73 + j * 151 & 255 ^ (i * 31 + j * 17 >> 3 & 255)) & 255], sm = t => t * t * (3 - 2 * t);
   return (x, y) => { const i = Math.floor(x), j = Math.floor(y), fx = sm(x - i), fy = sm(y - j), a = h(i, j), b = h(i + 1, j), c = h(i, j + 1), d = h(i + 1, j + 1); return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy; }; };
-let KIT_LOW = false;
+let KIT_LOW = false, KIT_PREVIEW = false;
 const kitRgb = c => { const m = /^#?([0-9a-f]{6})$/i.exec(String(c).trim()); const n = m ? parseInt(m[1], 16) : 0xffffff; return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
 const kitMix = (a, b, t) => { const x = kitRgb(a), y = kitRgb(b); return `rgb(${Math.round(x[0] + (y[0] - x[0]) * t)},${Math.round(x[1] + (y[1] - x[1]) * t)},${Math.round(x[2] + (y[2] - x[2]) * t)})`; };
 const KIT_SHAPES = [['circle', 'Circle'], ['ring', 'Ring'], ['triangle', 'Triangle'], ['square', 'Square'], ['diamond', 'Diamond'], ['hexagon', 'Hexagon'], ['star', 'Star'], ['cross', 'Cross']];
@@ -11510,7 +11511,7 @@ class CoreStudio {
   // Pixel budget: every Kit is a canvas. With many (or very large) ones the sharpness is lowered a little so the page cannot run out of memory (tablets reload the tab when it does).
   kitScale() {
     const now = performance.now(), k = this._ks; if (k && now - k.t < 400) return k.d;
-    const U = this.U(); let area = 0; for (const it of this.items) if (it.kind === 'kit') area += it.w * U * it.h * U;   // from the model, not the DOM: no forced layout
+    const U = this.U(); let area = 0; for (const it of this.items) if (it.kind === 'kit' && !this.isHid(it)) area += it.w * U * it.h * U;   // hidden layers do not reduce the visible layers' resolution
     const d = clamp(Math.sqrt((this.lite ? 12e6 : 24e6) / Math.max(1, area)), .6, Math.min(this.lite ? 1.5 : 2, window.devicePixelRatio || 1));
     this._ks = { t: now, d };
     if (k && Math.abs(k.d - d) > .05 && !this._ksQ) { this._ksQ = true; requestAnimationFrame(() => { this._ksQ = false; this.items.forEach(i => { if (i.kind === 'kit' && i.el) this.drawKit(i, i.el.offsetWidth, i.el.offsetHeight); }); }); }
@@ -11518,10 +11519,10 @@ class CoreStudio {
   }
   drawKit(it, w, h) {
     const c = it.el.querySelector('canvas.st-kitc'); if (!c) return;
-    const d0 = this.kitScale(), d = it.mOn ? Math.max(.6, Math.min(d0, this.lite ? 1 : 1.5, Math.sqrt((this.lite ? .5e6 : .9e6) / Math.max(1, w * h)))) : d0, W = Math.max(1, Math.round(w * d)), H = Math.max(1, Math.round(h * d));
+    const d0 = this.kitScale(), d = it.mOn ? Math.max(.6, Math.min(d0, this.lite ? 1 : 1.5, Math.sqrt((this.lite ? .5e6 : 1.5e6) / Math.max(1, w * h)))) : d0, W = Math.max(1, Math.round(w * d)), H = Math.max(1, Math.round(h * d));
     if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
-    const g = c.getContext('2d'); g.clearRect(0, 0, W, H); g.globalAlpha = 1; KIT_LOW = !!it.mOn; try { KIT[it.kit].draw(g, it, 0, 0, W, H, d); } finally { KIT_LOW = false; } c.style.opacity = it.opacity ?? 1;
-    if (it.p && it.p.font && this._fontOk && this._fontOk.has(it.p.font)) return;
+    const g = c.getContext('2d'); g.clearRect(0, 0, W, H); g.globalAlpha = 1; KIT_LOW = this.lite || (!!this._kitBusy && it !== this.sel); KIT_PREVIEW = !!it.mOn && !this.app.reduced; try { KIT[it.kit].draw(g, it, 0, 0, W, H, d); } finally { KIT_LOW = false; KIT_PREVIEW = false; } c.style.opacity = it.opacity ?? 1;
+    if (!it.p?.font || (this._fontOk && this._fontOk.has(it.p.font))) return;
     kitFontWait(it).then(ok => { if (ok && this.items.includes(it)) this.drawKit(it, w, h); else if (!ok && it.p.font) (this._fontOk || (this._fontOk = new Set())).add(it.p.font); });
   }
   // Spin: a compositor-side CSS/WAAPI rotation of the kit canvas. `ang` is the resting angle, `spin` deg/s (negative = anticlockwise), `spinOn` plays it.
@@ -11540,19 +11541,24 @@ class CoreStudio {
     const tick = now => {
       requestAnimationFrame(tick);
       acc += Math.min(.1, (now - last) / 1000); last = now;
-      if (!this.active || document.hidden || this.app.reduced || acc < Math.max(this._liveN > 2 || this.lite ? 1 / 20 : 1 / 30, cost * 2.2)) return;
+      if (!this.active || document.hidden || this.app.reduced || acc < (this.lite ? 1 / 20 : 1 / 30)) return;
       acc = 0; const t0 = performance.now(), W = innerWidth, H = innerHeight, U = this.U(), tn = t0 / 1000;
       // Only the Kits that are moving and on screen, and at most a few per frame (round-robin) so many of them cannot starve the page.
       const live = this.items.filter(it => it.kind === 'kit' && it.mOn && it.el && !this.isHid(it) && it.x * W + it.w * U / 2 > 0 && it.x * W - it.w * U / 2 < W && it.y * H + it.h * U / 2 > 0 && it.y * H - it.h * U / 2 < H);
       this._liveN = live.length;
       const cap = this.lite ? 4 : 10, n = Math.min(cap, live.length), s0 = (this._kr0 = (this._kr0 || 0) % Math.max(1, live.length));
+      let drawn = 0;
       for (let k = 0; k < n; k++) {
         const it = live[(s0 + k) % live.length];
         let c = KIT_T.get(it); if (!c) KIT_T.set(it, c = { t: 0 }); c.t += (c.at == null ? 1 / 30 : Math.min(.5, tn - c.at)) * (it.mSpd ?? 1); c.at = tn;
         this.drawKit(it, it.w * U, it.h * U);
+        drawn++;
+        // Yield after the current layer; a costly tool must not delay every other tool's next tick.
+        if (performance.now() - t0 >= (this.lite ? 6 : 10)) break;
       }
-      this._kr0 = s0 + n;
+      this._kr0 = s0 + drawn;
       cost = (performance.now() - t0) / 1000;
+      this._kitBusy = cost > .016;
     };
     requestAnimationFrame(tick);
   }

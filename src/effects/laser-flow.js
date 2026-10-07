@@ -51,10 +51,11 @@
   ];
   function draw(g,it,x,y,w,h,k,time=0,amount=0){
     const p=params(it),t=amount?Math.floor(time*amount*30)/30:0;
-    const scale=Math.min(512/Math.max(w,h),1),W=Math.max(8,Math.round(w*scale)),H=Math.max(8,Math.round(h*scale));
+    const preview=typeof KIT_PREVIEW!=='undefined'&&KIT_PREVIEW;
+    const scale=Math.min((preview?1024:2048)/Math.max(w,h),1),W=Math.max(8,Math.round(w*scale)),H=Math.max(8,Math.round(h*scale));
     const moving=p.flowSpeed>0||p.wispSpeed>0||p.fogFallSpeed>0||p.mstyle==='pulse';
     const key=JSON.stringify([p,W,H,moving?t:0,amount]);let c=cache.get(it);
-    if(!c||c.key!==key){
+    if((!c||c.key!==key)&&!(preview&&c?.pending)){
       const a=gpu||init();if(!a)return;
       if(!c){const cv=document.createElement('canvas');c={cv,ctx:cv.getContext('2d')};cache.set(it,c);}if(!c.ctx)return;
       const {renderer:r,uniforms:u,target}=a;target.setSize(W,H);if(a.bytes.length!==W*H*4)a.bytes=new Uint8Array(W*H*4);
@@ -64,15 +65,23 @@
       for(const [key,,min,max,,uniform] of controls)u[uniform].value=clamp(p[key],min,max);
       const hex=/^#[0-9a-f]{6}$/i.test(p.c2)?p.c2:defaults.c2;u.uColor.value.set(...[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255));
       const oldTarget=r.getRenderTarget(),viewport=r.getViewport(new THREE.Vector4()),scissor=r.getScissor(new THREE.Vector4()),scissorTest=r.getScissorTest(),auto=r.autoClear;
-      try{r.autoClear=true;r.setRenderTarget(target);r.setViewport(0,0,W,H);r.setScissorTest(false);r.render(a.scene,a.camera);r.readRenderTargetPixels(target,0,0,W,H,a.bytes);}
-      finally{r.setRenderTarget(oldTarget);r.setViewport(viewport);r.setScissor(scissor);r.setScissorTest(scissorTest);r.autoClear=auto;}
-      c.cv.width=W;c.cv.height=H;const image=c.ctx.createImageData(W,H);
-      for(let row=0;row<H;row++)image.data.set(a.bytes.subarray((H-1-row)*W*4,(H-row)*W*4),row*W*4);
+      const ticket=c.ticket=(c.ticket||0)+1;
+      const present=bytes=>{
+      if(c.ticket!==ticket||gpu!==a)return;
+      if(c.cv.width!==W||c.cv.height!==H){c.cv.width=W;c.cv.height=H;c.image=null;}const image=c.image||(c.image=c.ctx.createImageData(W,H));
+      for(let row=0;row<H;row++)image.data.set(bytes.subarray((H-1-row)*W*4,(H-row)*W*4),row*W*4);
       // Upstream uses an opaque black canvas + CSS screen. Optical alpha keeps
       // exactly that light contribution with native screen blend, without an opaque
       // rectangular layer. The shader's alpha excludes fog and must not dim it.
       for(let i=0;i<image.data.length;i+=4){const alpha=Math.max(image.data[i],image.data[i+1],image.data[i+2]);for(let ch=0;ch<3;ch++)image.data[i+ch]=alpha?Math.round(image.data[i+ch]*255/alpha):0;image.data[i+3]=alpha;}
       c.ctx.putImageData(image,0,0);c.key=key;
+      };
+      try{r.autoClear=true;r.setRenderTarget(target);r.setViewport(0,0,W,H);r.setScissorTest(false);r.render(a.scene,a.camera);
+        if(preview&&r.readRenderTargetPixelsAsync&&!c.asyncFailed){
+          if(c.bytes?.length!==W*H*4)c.bytes=new Uint8Array(W*H*4);c.pending=true;
+          r.readRenderTargetPixelsAsync(target,0,0,W,H,c.bytes).then(present).catch(()=>{c.asyncFailed=true;}).finally(()=>{c.pending=false;});
+        }else{r.readRenderTargetPixels(target,0,0,W,H,a.bytes);present(a.bytes);}
+      }finally{r.setRenderTarget(oldTarget);r.setViewport(viewport);r.setScissor(scissor);r.setScissorTest(scissorTest);r.autoClear=auto;}
     }
     g.save();g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(c.cv,x,y,w,h);g.restore();
   }

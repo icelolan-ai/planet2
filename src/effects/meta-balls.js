@@ -66,9 +66,10 @@ function hash33(v) {
     ],
     draw(g,it,x,y,w,h,k){
       const p={...defaults,...it.p},M=kitM(it),t=M.a?Math.floor(M.t*clamp(p.speed,0,3)*M.a*30)/30:0;
-      const scale=Math.min(512/Math.max(w,h),1),W=Math.max(8,Math.round(w*scale)),H=Math.max(8,Math.round(h*scale));
+      const preview=typeof KIT_PREVIEW!=='undefined'&&KIT_PREVIEW;
+      const scale=Math.min((preview?1024:2048)/Math.max(w,h),1),W=Math.max(8,Math.round(w*scale)),H=Math.max(8,Math.round(h*scale));
       const key=JSON.stringify([p,it.fill,W,H,Math.floor(t*30),M.a]);let c=cache.get(it);
-      if(!c||c.key!==key){
+      if((!c||c.key!==key)&&!(preview&&c?.pending)){
         const a=gpu||init();if(!a)return;
         if(!c){const cv=document.createElement('canvas');c={cv,ctx:cv.getContext('2d')};cache.set(it,c);}if(!c.ctx)return;
         const {renderer:r,uniforms:u,target}=a;target.setSize(W,H);if(a.bytes.length!==W*H*4)a.bytes=new Uint8Array(W*H*4);
@@ -79,14 +80,25 @@ function hash33(v) {
         // Upstream idle cursor orbit; deterministic instead of pointer-driven so export matches.
         u.iMouse.value.set(W*(.5+Math.cos(t)*.15),H*(.5+Math.sin(t)*.15),0);
         const oldTarget=r.getRenderTarget(),viewport=r.getViewport(new THREE.Vector4()),scissor=r.getScissor(new THREE.Vector4()),scissorTest=r.getScissorTest(),auto=r.autoClear;
-        try{r.autoClear=true;r.setRenderTarget(target);r.setViewport(0,0,W,H);r.setScissorTest(false);r.render(a.scene,a.camera);r.readRenderTargetPixels(target,0,0,W,H,a.bytes);}
+        const ticket=c.ticket=(c.ticket||0)+1;
+        const present=bytes=>{
+          if(c.ticket!==ticket||gpu!==a)return;
+          if(c.cv.width!==W||c.cv.height!==H){c.cv.width=W;c.cv.height=H;c.image=null;}
+          const image=c.image||(c.image=c.ctx.createImageData(W,H));
+          for(let row=0;row<H;row++)image.data.set(bytes.subarray((H-1-row)*W*4,(H-row)*W*4),row*W*4);
+          c.ctx.putImageData(image,0,0);c.key=key;
+        };
+        try{r.autoClear=true;r.setRenderTarget(target);r.setViewport(0,0,W,H);r.setScissorTest(false);r.render(a.scene,a.camera);
+          if(preview&&r.readRenderTargetPixelsAsync&&!c.asyncFailed){
+            if(c.bytes?.length!==W*H*4)c.bytes=new Uint8Array(W*H*4);c.pending=true;
+            // The existing Kit loop presents this cache under the native motion transforms.
+            r.readRenderTargetPixelsAsync(target,0,0,W,H,c.bytes).then(present).catch(()=>{c.asyncFailed=true;}).finally(()=>{c.pending=false;});
+          }else{r.readRenderTargetPixels(target,0,0,W,H,a.bytes);present(a.bytes);}
+        }
         finally{r.setRenderTarget(oldTarget);r.setViewport(viewport);r.setScissor(scissor);r.setScissorTest(scissorTest);r.autoClear=auto;}
-        c.cv.width=W;c.cv.height=H;const image=c.ctx.createImageData(W,H);
-        for(let row=0;row<H;row++)image.data.set(a.bytes.subarray((H-1-row)*W*4,(H-row)*W*4),row*W*4);
-        c.ctx.putImageData(image,0,0);c.key=key;
       }
       g.save();g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(c.cv,x,y,w,h);g.restore();
     }
   };
-  window.CerebraMetaBalls={kit,reference:'DavidHDev/react-bits/MetaBalls',renderer:'shared-webgl'};
+  window.CerebraMetaBalls={kit,reference:'DavidHDev/react-bits/MetaBalls',renderer:'shared-webgl',preview:'async-readback'};
 })();

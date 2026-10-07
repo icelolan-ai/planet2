@@ -125,8 +125,10 @@ fx_order = [
     'runtime-compat.js',
     'studio-guide-language.js',
     'studio-launch.js',
+    'light-pillar.js',
     'page-backdrops.js',
     'studio-reactbits-pages.js',
+    'viewport-controls.js',
     'studio-target-cursor.js',
     'studio-option-wheel.js',
 ]
