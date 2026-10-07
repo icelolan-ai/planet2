@@ -8564,6 +8564,9 @@ const KIT_SHAPES = [['circle', 'Circle'], ['ring', 'Ring'], ['triangle', 'Triang
 const KIT_SHAPE_SVG = { circle: '<circle cx="12" cy="12" r="6"/>', ring: '<circle cx="12" cy="12" r="6" fill="none" stroke-width="2"/>', triangle: '<path d="M12 4.5 20 18H4z"/>', square: '<rect x="6" y="6" width="12" height="12"/>', diamond: '<path d="M12 3.5 20.5 12 12 20.5 3.5 12z"/>', hexagon: '<path d="M12 4 19 8v8l-7 4-7-4V8z"/>', star: '<path d="m12 3.5 2.6 5.6 6 .7-4.4 4.2 1.2 6L12 17l-5.4 3 1.2-6-4.4-4.2 6-.7z"/>', cross: '<path d="M12 4v16M4 12h16" fill="none" stroke-width="2.4"/>' };
 const KIT_DASH = [['solid', 'Solid'], ['dashed', 'Dashed'], ['dotted', 'Dotted'], ['mixed', 'Mixed']];
 const KIT = {
+  ...window.CerebraVisualKits,
+  laserFlow: window.CerebraLaser.kit,
+  metaBalls: window.CerebraMetaBalls.kit,
   glassLabel: {
     label: 'Glass label', defaults: { title: 'ORBITAL DATA', sub: 'Frosted panel · live feed', font: 'mono', weight: '500', size: 15, radius: .16, blur: 14, tint: .14, border: .45, brackets: true, pointer: 'none', pointLen: .22, dot: true, lw: 1.2, align: 'left', caps: false, subK: .8, shine: 0 }, thumbK: .6, noShuffle: true, glass: true, geom: GLASS.geom, size: [.4, .18],
     ui: [{ k: 'title', t: 'text', label: 'Title' }, { k: 'sub', t: 'text', label: 'Subtitle' }, { k: 'font', t: 'select', label: 'Font', opts: KIT_FONT_OPTS }, { k: 'weight', t: 'select', label: 'Weight', opts: KIT_WEIGHTS }, { k: 'size', t: 'range', label: 'Text size', min: 8, max: 60, step: 1, unit: 'px' },
@@ -9091,6 +9094,8 @@ Object.values(KIT).forEach(d => {
 });
 // Motion style per Kit: the first option is the original behaviour (default).
 const KIT_MSTYLE = {
+  laserFlow: [['flow', 'Laser flow'], ['pulse', 'Pulsing beam']],
+  metaBalls: [['orbit', 'Liquid orbit'], ['breathe', 'Merge & separate']],
   rings: [['ripple', 'Ripple outward'], ['breathe', 'Breathe together'], ['wobble', 'Wobble off-centre'], ['crawl', 'Dashes crawl']],
   radial: [['shimmer', 'Shimmer'], ['sweep', 'Wave around the circle'], ['pulse', 'Pulse together']],
   arc: [['spin', 'Spin separately'], ['pendulum', 'Swing back and forth'], ['grow', 'Grow and shrink']],

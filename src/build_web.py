@@ -111,6 +111,9 @@ fx_order = [
     'formation.js',
     'hologram.js',
     'burst.js',
+    'laser-flow.js',
+    'meta-balls.js',
+    'reactbits-kit-pack.js',
     'post-stack.js',
     'diagnostics.js',
     'studio-menu-fix.js',
@@ -123,6 +126,9 @@ fx_order = [
     'runtime-compat.js',
     'studio-guide-language.js',
     'studio-launch.js',
+    'studio-reactbits-pages.js',
+    'studio-target-cursor.js',
+    'studio-option-wheel.js',
 ]
 fx_found = {f for f in os.listdir(fx_dir) if f.endswith('.js')}
 fx_files = [f for f in fx_order if f in fx_found]

@@ -58,7 +58,7 @@
     const originals=new WeakMap();
     function translateTree(root,guide=false){
       if(!root)return;const walk=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
-      while(walk.nextNode()){const node=walk.currentNode;if(node.parentElement.closest('[data-cl-lang],svg,input,textarea,canvas,.st-menu-info'))continue;let record=originals.get(node);if(!record||node.data!==record.output)record={source:node.data,output:node.data};
+      while(walk.nextNode()){const node=walk.currentNode;if(node.parentElement.closest('[data-cl-rotating],[data-cl-lang],svg,input,textarea,canvas,.st-menu-info'))continue;let record=originals.get(node);if(!record||node.data!==record.output)record={source:node.data,output:node.data};
         const trim=record.source.trim();let text=guide?language.text(trim):trim;
         if(language.current==='th'){text=language.label(text);if(guide&&/^\d+ topics$/.test(text))text=text.replace('topics','หัวข้อ');if(guide&&text==='Choose')text='เลือก';if(guide&&text==='your path')text='เส้นทางของคุณ';}
         const output=record.source.replace(trim,text);if(node.data!==output)node.data=output;record.output=output;originals.set(node,record);
@@ -86,7 +86,7 @@
     const slideFooter=document.createElement('div');slideFooter.className='cl-slide-footer';slideFooter.innerHTML='<p class="cl-slide-hint" data-cl-hint>Swipe up / down to choose</p><button type="button" class="cl-enter cl-slide-enter" data-cl-enter>Enter →</button>';page.querySelector('[data-cl-hub]').append(slideFooter);
     let pathIndex=0,pathGesture=null,suppressPathClick=0,wheelTotal=0,wheelTime=0,wheelLock=0;
     const pathButtons=[...page.querySelectorAll('[data-cl-path]')];
-    function selectPath(index){pathIndex=Math.max(0,Math.min(pathButtons.length-1,index));pathButtons.forEach((b,i)=>{b.classList.toggle('is-selected',i===pathIndex);b.setAttribute('aria-pressed',String(i===pathIndex));});}
+    function selectPath(index){pathIndex=((index%pathButtons.length)+pathButtons.length)%pathButtons.length;pathButtons.forEach((b,i)=>{b.classList.toggle('is-selected',i===pathIndex);b.setAttribute('aria-pressed',String(i===pathIndex));});}
     page.addEventListener('pointerdown',event=>{if(!page.classList.contains('cl-hub-open')||!event.isPrimary||event.button!==0||event.target.closest('[data-cl-lang],[data-cl-back]'))return;pathGesture={id:event.pointerId,x:event.clientX,y:event.clientY,moved:false};});
     page.addEventListener('pointermove',event=>{if(!pathGesture||event.pointerId!==pathGesture.id)return;const dy=event.clientY-pathGesture.y,dx=event.clientX-pathGesture.x;if(Math.abs(dy)>12&&Math.abs(dy)>Math.abs(dx)*1.2){pathGesture.moved=true;page.setPointerCapture(event.pointerId);}});
     function finishPath(event,cancel=false){if(!pathGesture||event.pointerId!==pathGesture.id)return;const g=pathGesture;pathGesture=null;if(page.hasPointerCapture(event.pointerId))page.releasePointerCapture(event.pointerId);if(g.moved){suppressPathClick=performance.now()+450;pressedButton=null;if(!cancel&&Math.abs(event.clientY-g.y)>45)selectPath(pathIndex+(event.clientY<g.y?1:-1));}}
