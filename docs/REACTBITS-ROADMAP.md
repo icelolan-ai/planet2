@@ -46,13 +46,21 @@ accent colour and speed, with Orbit and Merge & separate styles. The common
 Colour and opacity controls remain available. New parameter labels support
 English and Thai.
 
-These are Canvas2D adaptations rather than upstream GPU shader ports. Laser
-uses bounded glow strokes and wisps; Meta Balls uses a summed scalar field,
-bounded to a 160×160 raster and 12 blobs. Their transparent layers participate
-in the existing project/history and export pipeline. Shader-specific fluid
-iterations and pointer tilt/cursor balls are not offered as inactive controls;
-pointer interaction remains native selection and positioning. Laser Flow on
-other web pages is deferred to a separate page integration part.
+Correction after user visual review: the original Canvas2D approximations
+were not accepted as faithful React Bits implementations. Further approximate
+Part 2B tools are parked. Laser Flow and the page backgrounds still need
+replacement and visual reference QA; do not mark their fidelity complete.
+
+Meta Balls now uses the upstream fragment shader, deterministic hash and
+orbital equations through the existing Three renderer. Maximum 50 balls,
+animation scale and idle cursor-ball radius are editable. Existing size,
+separation, softness, palette and speed keys remain compatible with saves.
+Native Motion amount/time and the additional breathe style are retained.
+The renderer uses a bounded 512px offscreen target and native Kit composition
+for screen/export. The cursor follows the upstream idle orbit, deterministically
+for capture; live pointer-follow and full-resolution GPU composition are pending.
+License: MIT + Commons Clause, copyright 2026 David Haz; full notice embedded
+in template.html and the generated page.
 
 ## Part 2B onward — remaining editable Studio tools (pending)
 

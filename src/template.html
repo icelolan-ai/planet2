@@ -2170,6 +2170,33 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 </style>
 </head>
 <body class="is-loading">
+<script type="text/plain" id="reactbits-license">
+MIT + Commons Clause License Condition v1.0
+
+Copyright (c) 2026 David Haz
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, and distribute the Software **as part of an application, website, or product**, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+## Commons Clause Restriction
+
+You may use this Software, including for any commercial purpose, **so long as you do not sell, sublicense, or redistribute the components themselves-whether alone, in a bundle, or as a ported version.**
+
+## No Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</script>
 
 <div class="backword" aria-hidden="true"><span class="bl"><span class="ch">C</span><span class="ch">e</span><span class="ch">r</span><span class="ch">e</span></span><span class="br"><span class="ch">b</span><span class="ch">r</span><span class="ch">a</span></span></div>
 <div class="worldword" aria-hidden="true"></div>
@@ -12583,7 +12610,7 @@ class CoreStudio {
   }
   open() {
     const a = this.app;
-    if (this.active || this.pending || !a.worldsReady) return;
+    if (this.active || this.pending) return;
     if (a.detail.busy) return;
     if (a.detail.open) { this.pending = true; a.closeWorld(); return; }
     this.panel.querySelectorAll('details').forEach(section => { section.open = false; });
@@ -12632,7 +12659,7 @@ class CoreStudio {
       a.entry.track.scrollTop = i * a.entry.track.clientHeight;
       a.entry.progress = i;
       a.entry.select(i);
-    } else document.querySelector('.fab-btn').focus({ preventScroll: true });
+    } else document.querySelector('.fab-btn')?.focus({ preventScroll: true });
   }
   paintBackground() {
     this.bg.width = this.app.stage.width; this.bg.height = this.app.stage.height;
@@ -12857,6 +12884,10 @@ class App {
     this.resize();
     this.bindRuntime();
     this.entry = new WorldAtelier(this);
+    this.ambient = new AmbientDots(this);
+    // Cerebra and its editor do not depend on the seven downloaded worlds.
+    this.studio = new CoreStudio(this); netBackdrop();
+    this.studio.el.querySelectorAll('[data-studio-subject] option').forEach(o => { if (+o.value >= 0) o.disabled = true; });
 
     this.stage.post = new CerebraPostStack(this.stage,this.rig.camera);
     this.loader.set(at(0.85), 'Compiling shaders'); await nextFrame();
@@ -12880,6 +12911,7 @@ class App {
     pill.innerHTML = '<i></i><span data-ow>Charting the orbit</span><b data-owp>0%</b>';
     document.body.appendChild(pill);
     this.orbitWait = pill;
+    try {
     await this.loadWorlds((p, text) => {
       pill.querySelector('[data-owp]').textContent = Math.round(p * 100) + '%';
       if (text) pill.querySelector('[data-ow]').textContent = text;
@@ -12887,9 +12919,18 @@ class App {
     this.attachWorldLabels();
     await this.warmUp();
     this.worldsReady = true;
+    this.studio.el.querySelectorAll('[data-studio-subject] option').forEach(o => { o.disabled = +o.value >= this.orrery.worlds.length; });
+    dispatchEvent(new Event('cerebra:worlds-ready'));
     if (this.entry) this.entry.ready();
     this.metrics.ready(); CerebraDebug.open(this);
     pill.classList.add('is-done'); setTimeout(() => pill.remove(), 900);
+    } catch (error) {
+      this.worldsError = true;
+      console.error('World loading failed', error);
+      pill.querySelector('[data-ow]').textContent = 'World loading failed. Reload to retry.';
+      pill.classList.add('is-on');
+      dispatchEvent(new Event('cerebra:worlds-error'));
+    }
   }
 
   async loadWorlds(progress) {
@@ -12907,6 +12948,8 @@ class App {
       tick(`Decoding ${def.name}`);
       const gltf = await files[i];
       await nextFrame();
+      // Do not insert/compile worlds behind an active editor or recording.
+      while (this.studio?.active || this.cap) await nextFrame();
       if (gltf instanceof Error || !gltf || !gltf.scene) { console.error(gltf); tick(`${def.name} could not be decoded`); continue; }
       const w = new World(def, i, gltf, this.shared, { anisotropy: aniso, halo, mobile: this.mobile });
       this.orrery.add(w);
@@ -12917,9 +12960,7 @@ class App {
     this.orrery.creations = new Creations(this.orrery);
     WorldTune.wire(this);
     OrbitBuilder.wire(this); Fab.wire(this); Settings.wire(this);
-    this.studio = new CoreStudio(this); netBackdrop();
     this.orrery.environment = new OrbitEnvironment(this);
-    this.ambient = new AmbientDots(this);
   }
 
   /* Compile every program and upload every buffer and texture while the loader is still up,
@@ -12946,8 +12987,10 @@ class App {
     try {
       if (r.compileAsync) await r.compileAsync(scene, cam); else r.compile(scene, cam);
     } catch (e) { r.compile(scene, cam); }
-    r.render(scene, cam);
-    if(this.stage.post)this.stage.render(cam);
+    if (!this.studio?.active && !this.cap) {
+      r.render(scene, cam);
+      if(this.stage.post)this.stage.render(cam);
+    }
     await nextFrame();
     } finally {
     o.group.visible=orbitVisible;

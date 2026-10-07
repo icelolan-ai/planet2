@@ -1,5 +1,14 @@
 # AI Handoff Guide
 
+## 2026-10-07 — urgent Enter wait and Meta Balls fidelity correction
+
+- Source branch `fix/entry-reference-fidelity-20261007`; the unshipped Part 2B worktree is preserved separately and is not admitted into this release.
+- Root cause: Studio was constructed only after seven GLBs downloaded/decoded; launch paths additionally gated on `worldsReady`. Construct native Studio and AmbientDots before the gateway appears. Paths, guide and Cerebra editing no longer wait for world assets. AmbientDots must precede extensions that remove the old Tune reset pane. Native Close tolerates an absent Fab focus target before worlds finish.
+- Planet routes retain their asset requirement, show progress without closing the hub and open after `cerebra:worlds-ready` if still requested. Background insertion pauses during Studio/capture; warm-up does not render over active Studio/capture. Subject options unlock when ready. Background errors emit `cerebra:worlds-error` and expose a reload message rather than an unexplained permanent wait.
+- Replaced Meta Balls' 160px gradient raster with upstream shader/hash/orbit equations through the existing Three renderer and an offscreen render target. Native Kit clocks/state/history/project/composition remain in use; no extra renderer, RAF or WebGPU. Existing parameter keys retained; added animation area and idle cursor-ball radius. 50 balls, bounded 512px target, deterministic idle orbit and native Motion amount. Full MIT + Commons Clause notice embedded in template and generated page.
+- Reference ledger: old gradient, evenly spaced motion and fuzzy raster edges differed from upstream; shader field/derivative edges and deterministic hashed orbits now match the source. The default transparent 256px frame was compared pixel-by-pixel with an independently loaded upstream fragment shader, maximum byte difference 0. Intentional differences: native layer controls, bounded target, deterministic idle cursor instead of live pointer following, optional breathe style. Other page/laser approximations remain pending and must not be called visually faithful.
+- Validation: local build/syntax/diff; actual desktop 1440x900 and touch/mobile 390x844 gateway -> guide -> Studio -> File/Exit -> planets, with all world downloads held until after Studio closes. No renderer/update freezing in this entry test; no page errors after release and planet load. Independent Kit checks cover all exposed controls, Motion stop/resume, styles, Undo/Redo, group/hide/lock, real project export/import and native export-layer parity (difference 0). Software 3D is held still only for independent Kit checks, not entry/performance or full captures. Live Pages and full capture checks follow deployment. Physical iOS Safari remains untested.
+
 Use this file before changing Cerebra.
 
 ## First read
