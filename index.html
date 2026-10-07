@@ -2022,6 +2022,61 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 @media(max-width:900px){#studio .st-menubar{padding-left:8px;padding-right:8px;gap:0}#studio .st-menu-brand{margin-right:6px;font-size:9px;letter-spacing:.04em}#studio .st-menu-brand span{display:none}#studio .st-menubar button{padding:0 9px;font-size:12px}#studio .st-menu-info{font-size:9px}}
 @media(max-width:480px){#studio .st-menu-info{display:none}#studio .st-menu-exit{margin-left:auto}#studio .st-menubar button{padding:0 8px}#studio .st-menu-brand{font-size:8px}}
 
+/* Balanced route gateway: readable choices with native scrolling on small screens. */
+#gateway{overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y pinch-zoom;scrollbar-width:thin;scrollbar-color:#45455e #090b15;background:#090b15}
+#gateway .gateway-scroll-scene{position:relative;inset:auto;display:grid;grid-template-columns:1fr 1fr;min-height:100dvh}
+#gateway .gateway-choice{position:relative;inset:auto;min-height:max(720px,100dvh);min-width:0;overflow:hidden;clip-path:none;cursor:default;isolation:isolate;border:0;transition:filter .35s ease,background .35s ease;touch-action:pan-y pinch-zoom}
+#gateway .gateway-choice:nth-child(2){border-left:1px solid #ffffff1c;background:radial-gradient(ellipse at 65% 28%,#341326 0,transparent 65%),#0d0f19}
+#gateway .gw-a{background:radial-gradient(ellipse at 72% 32%,#64254c88,transparent 62%),linear-gradient(155deg,#11142f,#251630 75%,#161327)}
+#gateway .gateway-choice>*{opacity:1!important;visibility:visible!important}
+#gateway :is(.gateway-mark,.gateway-orb,.gateway-copy){transition:opacity .3s ease}
+#gateway .gateway-choice .gateway-net{opacity:.24!important}
+#gateway .gateway-edge,#gateway .gateway-back,#gateway .gw-words,#gateway .gw-side,#gateway .gw-num,#gateway .gw-bar{display:none!important}
+#gateway .gw-deco{inset:0;width:100%;height:100%;opacity:1!important}
+#gateway .gw-letter{right:-3%;bottom:24%;font-size:clamp(180px,30vw,440px);opacity:.07!important}
+#gateway .gateway-mark{top:calc(40px + env(safe-area-inset-top,0px));left:clamp(28px,4vw,64px);font:600 12px var(--f-cond);letter-spacing:.22em;color:#c3bdd0;z-index:4}
+#gateway .gw-a .gateway-mark{color:#ffa4ce}
+#gateway .gateway-choice .gateway-orb{left:64%!important;top:31%!important;width:clamp(180px,23vw,340px)!important;transform:translate(-50%,-50%)!important;z-index:1;pointer-events:none}
+#gateway .gateway-choice:nth-child(2) .gateway-orb{left:60%!important;top:31%!important;width:clamp(180px,24vw,350px)!important;border:1px solid #f6bfcb66;background:radial-gradient(circle at 32% 24%,#4e2a40,#211927 60%,#140f1c);box-shadow:0 0 0 22px #ffffff03,0 0 0 54px #ffffff02,inset -18px -12px 60px #ff465523}
+#gateway .gateway-choice .gateway-copy{left:clamp(28px,4vw,64px)!important;right:clamp(28px,4vw,64px)!important;bottom:clamp(44px,7vh,80px)!important;top:auto!important;width:auto!important;transform:none!important;gap:20px;align-items:flex-start!important;text-align:left!important;z-index:3}
+#gateway .gateway-choice strong{font:400 clamp(38px,4vw,60px)/1.08 var(--f-display)!important;max-width:12ch;letter-spacing:.01em;color:#f6f3ff;text-shadow:none}
+#gateway .gateway-choice small{font:400 clamp(15px,1.15vw,18px)/1.65 var(--f-sans);color:#c7c4d3;max-width:34ch;opacity:1!important;visibility:visible!important}
+#gateway .gateway-choice .gateway-enter{display:inline-flex;align-items:center;justify-content:center;align-self:flex-start;min-height:52px;max-width:100%;padding:14px 22px;box-sizing:border-box;border:1px solid #ffffff2e;border-radius:12px;font:600 12px/1.3 var(--f-cond);letter-spacing:.14em;background:#ee7bad;color:#191023;box-shadow:0 8px 28px #05071044;opacity:1;visibility:visible;transition:background .2s,transform .2s}
+#gateway .gateway-choice:nth-child(2) .gateway-enter{background:#ffffff09;color:#ffc1c8;border-color:#ff9ba455}
+#gateway .gateway-enter::after{display:none}
+#gateway .gateway-enter:hover{background:#ffacd0;transform:translateY(-2px)}
+#gateway .gateway-choice:nth-child(2) .gateway-enter:hover{background:#482631;color:#fff}
+#gateway .gateway-enter:focus-visible{outline:2px solid #fff;outline-offset:5px}
+#gateway .gateway-choice:focus-visible{outline:2px solid #d5c4ff;outline-offset:-6px}
+#gateway[data-sel=atelier] .gateway-choice:nth-child(2),#gateway[data-sel=orbit] .gateway-choice:first-child{filter:grayscale(1)}
+#gateway .gateway-status{position:fixed;z-index:8;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);padding:12px 18px;max-width:calc(100vw - 32px);border:1px solid #ffffff2e;border-radius:12px;background:#151827;color:#fff;font:13px/1.4 var(--f-sans);white-space:normal;text-align:center}
+#gateway.is-entering .gateway-choice.is-selected .gateway-orb{transform:translate(-50%,-50%) scale(1.12);opacity:0!important;transition:transform .5s,opacity .5s}
+@media(max-width:900px){
+  #gateway .gateway-scroll-scene{grid-template-columns:1fr}
+  #gateway .gateway-choice{min-height:540px}
+  #gateway .gateway-choice:nth-child(2){border-left:0;border-top:1px solid #ffffff24}
+  #gateway .gateway-mark{top:28px;left:32px}
+  #gateway .gateway-choice:first-child .gateway-mark{top:calc(28px + env(safe-area-inset-top,0px))}
+  #gateway .gateway-choice .gateway-orb,#gateway .gateway-choice:nth-child(2) .gateway-orb{top:30%!important;left:74%!important;width:220px!important}
+  #gateway .gateway-choice .gateway-copy{left:32px!important;right:32px!important;bottom:40px!important;gap:16px}
+  #gateway .gateway-choice strong{font-size:44px!important;max-width:12ch}
+  #gateway .gateway-choice small{font-size:16px;max-width:38ch}
+  #gateway .gw-letter{font-size:260px;bottom:22%;right:4%}
+}
+@media(max-width:480px){
+  #gateway .gateway-choice{min-height:510px}
+  #gateway .gateway-choice:last-child{padding-bottom:env(safe-area-inset-bottom,0px)}
+  #gateway .gateway-mark{left:24px;top:24px;font-size:11px}
+  #gateway .gateway-choice:first-child .gateway-mark{top:calc(24px + env(safe-area-inset-top,0px))}
+  #gateway .gateway-choice .gateway-orb,#gateway .gateway-choice:nth-child(2) .gateway-orb{top:27%!important;left:72%!important;width:150px!important}
+  #gateway .gateway-choice:nth-child(2) .gateway-orb{box-shadow:0 0 0 18px #ffffff03,0 0 0 38px #ffffff02,inset -12px -12px 40px #ff465523}
+  #gateway .gateway-choice .gateway-copy{left:24px!important;right:24px!important;bottom:32px!important;gap:16px}
+  #gateway .gateway-choice strong{font-size:36px!important;max-width:12ch}
+  #gateway .gateway-choice small{font-size:15px;line-height:1.6;max-width:34ch}
+  #gateway .gateway-choice .gateway-enter{min-height:50px;padding:13px 18px;font-size:11px;letter-spacing:.12em}
+  #gateway .gw-letter{font-size:210px;bottom:36%;right:2%}
+}
+@media(prefers-reduced-motion:reduce){#gateway *,#gateway *::after{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body class="is-loading">
@@ -2047,7 +2102,7 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 </div>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="rb-glass"><feTurbulence type="fractalNoise" baseFrequency=".012" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="18" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
-<section id="gateway" aria-label="Choose your experience" data-sel="none" hidden>
+<section id="gateway" class="gateway-balanced" aria-label="Choose your experience" data-sel="none" hidden>
   <div class="gateway-scroll-scene">
   <article class="gateway-choice gw-a" data-route="atelier" tabindex="0" aria-label="Select world atelier"><canvas class="gateway-net" aria-hidden="true"></canvas><div class="gw-deco" aria-hidden="true"><b class="gw-letter">S</b><p class="gw-words"><span>S H A P E</span><span>A</span><span class="dim">W O R L D</span><span>T U N E</span><span class="dim">I T</span></p><span class="gw-bar gw-bar-p"></span><span class="gw-bar gw-bar-c"></span><span class="gw-side gw-side-l">Cerebra · world atelier</span><span class="gw-num">001</span></div><span class="gateway-mark">01 / Create</span><button type="button" class="gateway-back" data-gateway-back>← Back</button><span class="gateway-orb" aria-hidden="true"></span><div class="gateway-copy"><strong data-split>Shape a world</strong><small>Choose Cerebra or a planet, bring it closer, and tune its colour, atmosphere and motion.</small><button type="button" class="gateway-enter" data-enter="atelier">Enter world atelier →</button></div></article>
   <article class="gateway-choice" data-route="orbit" tabindex="0" aria-label="Select solar system"><canvas class="gateway-net" aria-hidden="true"></canvas><span class="gateway-mark">02 / Explore</span><button type="button" class="gateway-back" data-gateway-back>← Back</button><span class="gateway-orb" aria-hidden="true"></span><div class="gateway-copy"><strong data-split>Explore the system</strong><small>Travel through Cerebra and its seven worlds in the original journey.</small><button type="button" class="gateway-enter" data-enter="orbit">Enter the solar system →</button></div></article>
@@ -2572,7 +2627,7 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
-<script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}, "build": "assets/app.b65a7aa44a.js"};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.b65a7aa44a.js", 1363093]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}, "build": "assets/app.f010cd5fc2.js"};</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.f010cd5fc2.js", 1363114]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>
