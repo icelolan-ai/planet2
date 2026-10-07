@@ -121,6 +121,8 @@ fx_order = [
     's9-ui.js',
     'library-defaults.js',
     'runtime-compat.js',
+    'studio-guide-language.js',
+    'studio-launch.js',
 ]
 fx_found = {f for f in os.listdir(fx_dir) if f.endswith('.js')}
 fx_files = [f for f in fx_order if f in fx_found]

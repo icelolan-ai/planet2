@@ -8181,8 +8181,8 @@ class WorldAtelier {
     // Vertical gestures resize the two choices inside one fixed viewport.
     let swipe = null, suppressClickUntil = 0, wheelAmount = 0, wheelAt = 0, wheelLock = 0;
     this.choice.addEventListener('pointerdown', e => {
-      if (this.choice.classList.contains('gateway-balanced') || this.entering || !e.isPrimary || e.button !== 0 || !matchMedia('(max-width:760px)').matches) return;
-      if (e.target.closest('button,input,select,textarea,a')) return;
+      if (this.entering || !e.isPrimary || e.button !== 0) return;
+      if (e.target.closest('input,select,textarea,a,[data-cl-lang]')) return;
       suppressClickUntil = 0;
       swipe = { id: e.pointerId, x: e.clientX, y: e.clientY, route: this.selectedRoute, split: parseFloat(getComputedStyle(this.choice).getPropertyValue('--s')) || 50, dragging: false };
     });
@@ -8191,8 +8191,7 @@ class WorldAtelier {
       const dy = e.clientY - swipe.y, dx = e.clientX - swipe.x;
       if (!swipe.dragging && Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx) * 1.2) { swipe.dragging = true; this.choice.setPointerCapture(e.pointerId); this.choice.classList.add('is-dragging'); }
       if (!swipe.dragging) return;
-      const split = Math.max(15, Math.min(84, swipe.split + dy / this.choice.clientHeight * 100));
-      this.choice.style.setProperty('--s', `${split}%`);
+      if (!this.choice.classList.contains('gateway-balanced')) { const split = Math.max(15, Math.min(84, swipe.split + dy / this.choice.clientHeight * 100)); this.choice.style.setProperty('--s', `${split}%`); }
     });
     const finishSwipe = (e, cancelled = false) => {
       if (!swipe || e.pointerId !== swipe.id) return;
@@ -8208,7 +8207,7 @@ class WorldAtelier {
     this.choice.addEventListener('pointercancel', e => finishSwipe(e, true));
     this.choice.addEventListener('click', e => { if (performance.now() < suppressClickUntil) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
     this.choice.addEventListener('wheel', e => {
-      if (this.choice.classList.contains('gateway-balanced') || this.entering || this.choice.hidden || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      if (this.entering || this.choice.hidden || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
       e.preventDefault(); e.stopPropagation(); const now = performance.now(); if (now < wheelLock) return;
       if (now - wheelAt > 180 || Math.sign(wheelAmount) !== Math.sign(e.deltaY)) wheelAmount = 0;
       wheelAt = now; wheelAmount += e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? this.choice.clientHeight : 1);
@@ -8304,11 +8303,11 @@ class WorldAtelier {
     this.choice.hidden = false; document.body.classList.add('route-choose'); document.documentElement.classList.add('route-lock');
     document.querySelector('main').inert = true;
     this.app.scroll.jumpTo(0);
-    this.selectRoute('none'); this.choice.querySelector('[data-enter="atelier"]').focus({ preventScroll: true });
+    this.selectRoute('atelier'); this.choice.querySelector('[data-enter="atelier"]').focus({ preventScroll: true });
     this.choice.scrollTop = 0;
   }
   selectRoute(route) {
-    if (this.entering || this.selectedRoute === route) return;
+    if (this.entering || (this.selectedRoute === route && this.choice.dataset.sel === route)) return;
     this.selectedRoute = route; this.choice.dataset.sel = route;
     this.choice.querySelectorAll('[data-route]').forEach(card => {
       const selected = card.dataset.route === route;
@@ -11338,7 +11337,7 @@ class CoreStudio {
       const name = it.name ? esc(it.name) : it.kind === 'text' ? esc((it.content || '').split('\n')[0].slice(0, 24) || 'Text') : this.label(it);
       const lk = it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-llock${it.locked ? ' is-on' : ''}" aria-pressed="${!!it.locked}" aria-label="${it.locked ? 'Unlock' : 'Lock'} layer">${it.locked ? this.icons.lock : this.icons.unlock}</button>`;
       const chk = (this.selMode || this.multi.size) ? `<button type="button" class="st-eye st-lcheck${this.multi.has(it.id) ? ' is-on' : ''}" role="checkbox" aria-checked="${this.multi.has(it.id)}" aria-label="Select layer">${this.multi.has(it.id) ? '✓' : ''}</button>` : '';
-      return `<li class="st-layer${this.multi.has(it.id) ? ' is-multi' : ''}${inGroup ? ' in-group' : ''}${it === this.sel ? ' is-sel' : ''}${it.hide ? ' is-hidden' : ''}${this.isHid(it) && !it.hide ? ' is-ghidden' : ''}${it.fxType === 'planet' ? ' is-planet' : ''}" data-layer="${this.items.indexOf(it)}">${chk}<span class="st-grip" aria-label="Drag to restack or into a group">⋮⋮</span>${sw}<span class="st-lname">${name}</span>${lk}${it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-lmore" aria-haspopup="menu" aria-label="Layer options"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>`}<button type="button" class="st-eye" data-leye aria-pressed="${!it.hide}" aria-label="${it.hide ? 'Show' : 'Hide'} layer">${eye}</button><button type="button" class="st-eye st-ldel" aria-label="Delete layer">${this.icons.trash}</button>${it === this.sel ? `<label class="st-lop">Opacity<input type="range" min="0" max="1" step="0.05" value="${it.alpha ?? 1}" aria-label="Layer opacity"><output>${Math.round((it.alpha ?? 1) * 100)}%</output></label>` : ''}</li>`;
+      return `<li class="st-layer${this.multi.has(it.id) ? ' is-multi' : ''}${inGroup ? ' in-group' : ''}${it === this.sel ? ' is-sel' : ''}${it.hide ? ' is-hidden' : ''}${this.isHid(it) && !it.hide ? ' is-ghidden' : ''}${it.fxType === 'planet' ? ' is-planet' : ''}" data-layer="${this.items.indexOf(it)}"><div class="st-lmain">${chk}<span class="st-grip" aria-label="Drag to restack or into a group">⋮⋮</span>${sw}<span class="st-lname">${name}</span>${lk}${it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-lmore" aria-haspopup="menu" aria-label="Layer options"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>`}<button type="button" class="st-eye" data-leye aria-pressed="${!it.hide}" aria-label="${it.hide ? 'Show' : 'Hide'} layer">${eye}</button><button type="button" class="st-eye st-ldel" aria-label="Delete layer">${this.icons.trash}</button></div>${it === this.sel ? `<label class="st-lop">Opacity<input type="range" min="0" max="1" step="0.05" value="${it.alpha ?? 1}" aria-label="Layer opacity"><output>${Math.round((it.alpha ?? 1) * 100)}%</output></label>` : ''}</li>`;
     };
     const head = g => { const m = this.items.filter(i => i.group === g.id), allLocked = m.length && m.every(i => i.locked); return `<li class="st-ghead${g.hide ? ' is-hidden' : ''}${m.length && m.every(i => this.multi.has(i.id)) ? ' is-multi' : ''}" data-gid="${g.id}">${(this.selMode || this.multi.size) && m.length ? `<button type="button" class="st-eye st-lcheck st-gcheck${m.every(i => this.multi.has(i.id)) ? ' is-on' : ''}" role="checkbox" aria-checked="${m.every(i => this.multi.has(i.id))}" aria-label="Select whole group">${m.every(i => this.multi.has(i.id)) ? '✓' : ''}</button>` : ''}<button type="button" class="st-eye st-gtog" aria-expanded="${!g.collapsed}" aria-label="${g.collapsed ? 'Expand' : 'Collapse'} group"><span class="st-chev${g.collapsed ? ' is-closed' : ''}" aria-hidden="true"></span></button>${folder}<span class="st-lname st-gname" data-gname>${esc(g.name)}</span><span class="st-gcount">${m.length}</span><button type="button" class="st-eye st-glock${allLocked ? ' is-on' : ''}" aria-pressed="${!!allLocked}" aria-label="Lock group">${allLocked ? this.icons.lock : this.icons.unlock}</button><button type="button" class="st-eye st-geye" aria-pressed="${!g.hide}" aria-label="${g.hide ? 'Show' : 'Hide'} group">${eye}</button><button type="button" class="st-eye st-gdel" aria-label="Ungroup">${this.icons.trash}</button></li>`; };
     const seen = new Set(), out = [];
@@ -12005,8 +12004,9 @@ class CoreStudio {
     const build = top => {
       pop.replaceChildren(); pop.setAttribute('aria-label', top.dataset.menuTop);
       entries[top.dataset.menuTop]().forEach(([label, run, checked, keys, disabled]) => {
-        const b = document.createElement('button'); b.type = 'button'; b.disabled = !!disabled; b.setAttribute('aria-label',label); b.setAttribute('role', checked == null ? 'menuitem' : 'menuitemcheckbox'); if (checked != null) b.setAttribute('aria-checked', String(checked));
-        const mark = document.createElement('span'); mark.className = 'st-menu-check'; mark.textContent = checked ? '✓' : ''; const text = document.createElement('span'); text.textContent = label; const key = document.createElement('small'); key.textContent = keys || ''; b.append(mark, text, key);
+        const displayLabel = window.__cerebraLanguage?.label(label) || label;
+        const b = document.createElement('button'); b.type = 'button'; b.disabled = !!disabled; b.setAttribute('aria-label',displayLabel); b.setAttribute('role', checked == null ? 'menuitem' : 'menuitemcheckbox'); if (checked != null) b.setAttribute('aria-checked', String(checked));
+        const mark = document.createElement('span'); mark.className = 'st-menu-check'; mark.textContent = checked ? '✓' : ''; const text = document.createElement('span'); text.textContent = displayLabel; const key = document.createElement('small'); key.textContent = keys || ''; b.append(mark, text, key);
         b.onclick = () => { close(); this.prepareMenuAction(top.dataset.menuTop, label); run(); this.syncMenuBar(); requestAnimationFrame(() => this.settleMenuAction()); }; pop.append(b);
       });
       const r = top.getBoundingClientRect(); pop.style.top = r.bottom + 'px'; pop.style.left = Math.max(8, Math.min(innerWidth - Math.min(292, innerWidth - 16) - 8, r.left)) + 'px';
