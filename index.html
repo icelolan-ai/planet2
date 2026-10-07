@@ -280,8 +280,9 @@ body:has(.picker[data-open="true"]) :is(main,.worldword,.backword,.labels){opaci
 @media (max-width:640px){.picker{left:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 48px)}}
 
 /* ------------------------------------------------------------------ Cursor */
-html.has-cursor:not(.studio-lock),html.has-cursor:not(.studio-lock) *{cursor:none!important}
-.cursor{position:fixed;inset:0;z-index:50;pointer-events:none;opacity:0;transition:opacity .4s}
+/* Keep the native pointer visible in modal pages and drawing surfaces.
+   Target corners are an additional decoration, never a cursor replacement. */
+.cursor{display:none;position:fixed;inset:0;z-index:50;pointer-events:none;opacity:0;transition:opacity .4s}
 .cursor.is-visible{opacity:1}
 .cursor-ring,.cursor-dot,.cursor-label{position:absolute;left:0;top:0;will-change:transform}
 .cursor-ring{width:40px;height:40px;border:1px solid rgba(223,228,234,.32);border-radius:50%;transition:border-color .35s,background-color .35s}
@@ -1492,7 +1493,7 @@ html,body{touch-action:pan-x pan-y}
 #studio .st-assist.is-erase .st-esize{display:grid}
 #studio .st-assist-new{min-height:38px;padding:0 14px;border:0;border-radius:11px;background:#ffffff1c;color:#fff;font:600 10px var(--f-cond);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:1px solid #ffffff2e}
 #studio .st-assist-seg button[data-atool].is-on{background:var(--cyg);color:#fff;box-shadow:0 0 14px #8b5cf666}
-#studio .st-draw-pad.is-erase{cursor:none}
+#studio .st-draw-pad.is-erase{cursor:crosshair}
 #studio .st-erase-cur{position:absolute;left:0;top:0;border:2px solid #fff;border-radius:50%;pointer-events:none;box-shadow:0 0 0 1px #0008,inset 0 0 0 1px #0008;z-index:3}
 #studio .st-erase-cur[hidden]{display:none}
 /* Settings popover */
@@ -1917,8 +1918,12 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .st-fly .st-fly-row:has(>select)>select,#studio .st-fly .st-fly-row:has(>input[type=text])>input{width:100%;justify-self:stretch}
 #studio .st-fly [hidden]{display:none!important}
 /* ---- Kit settings panel: card rows, chip pickers, switches, collapsible sections (same look as Tune the core) ---- */
-#studio [data-kit-panel]{padding:14px 14px 16px;gap:8px;border-radius:22px}
+#studio [data-kit-panel]{z-index:64;width:min(600px,calc(100vw - 24px));padding:16px;gap:10px;border-radius:22px;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+#studio [data-kit-panel]>.st-fly-title,#studio [data-kit-panel]>.st-ksec-h,#studio [data-kit-panel]>.st-ksec,#studio [data-kit-panel]>.st-kit-shuffle{grid-column:1/-1}
+#studio [data-kit-panel] .st-kit-area{grid-column:1/-1}
 #studio [data-kit-panel] .st-fly-title{font:600 13px var(--f-sans);letter-spacing:.04em;padding:2px 2px 8px;margin:0;border-bottom:1px solid #ffffff14}
+#studio [data-kit-panel] .st-fly-title{display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:-16px;background:#202330;z-index:2}
+#studio [data-kit-panel] [data-kit-close]{min-width:40px;min-height:40px;padding:0;font:20px var(--f-sans)}
 #studio [data-kit-panel] .st-fly-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 10px;padding:9px 12px 10px;margin:0;border-radius:14px;background:#ffffff09;border:1px solid #ffffff10;font:12px/1.3 var(--f-sans)}
 #studio [data-kit-panel] .st-fly-row>span{overflow-wrap:normal;word-break:normal;hyphens:manual;color:#dfe5ef}
 #studio [data-kit-panel] .st-fly-row output{justify-self:end;min-width:max-content;white-space:nowrap;text-align:center;padding:2px 8px;border-radius:999px;background:#ff465522;color:#ffb3ba;font:600 11px var(--f-mono)}
@@ -1932,7 +1937,8 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio [data-kit-panel] .st-fly-check input[type=checkbox]::after,#studio [data-kit-panel] .st-fly-check input[type=checkbox]::before{content:none!important;display:none!important}
 #studio [data-kit-panel] .st-fly-check input[type=checkbox]:checked{background-color:#e8364a;background-image:radial-gradient(circle,#fff 0 9px,#0000 9.5px);background-position:calc(100% - 2px) 50%;box-shadow:0 0 12px #ff465566}
 #studio [data-kit-panel] .st-ksec-h,#studio [data-kit-panel] summary{font:600 11px var(--f-sans);letter-spacing:.12em;text-transform:uppercase;color:#9aa4b6;padding:8px 4px 0;margin:0}
-#studio [data-kit-panel] .st-ksec{display:grid;gap:8px}
+#studio [data-kit-panel] .st-ksec{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+#studio [data-kit-panel] .st-ksec>summary,#studio [data-kit-panel] .st-ksec>.st-ksec-h{grid-column:1/-1}
 #studio [data-kit-panel] summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:36px;padding:0 12px;border-radius:12px;background:#ffffff0d;border:1px solid #ffffff14;color:#dfe5ef}
 #studio [data-kit-panel] summary::-webkit-details-marker{display:none}
 #studio [data-kit-panel] summary::after{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform .18s;margin-right:2px}
@@ -2752,7 +2758,7 @@ SOFTWARE.
 
 <noscript><style>#loader{display:none}.reveal,.w>span{opacity:1;transform:none}body{overflow:auto}.enter{display:none}</style></noscript>
 
-<script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}, "build": "assets/app.b4a6c6f4cd.js"};</script>
-<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.b4a6c6f4cd.js", 1571181]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
+<script>window.__ASSETS = {"draco": {"js": "assets/draco/draco_wasm_wrapper.8bb2952d2b.js", "wasm": "assets/draco/draco_decoder.a680d927be.wasm"}, "worlds": {"Aqua_Foam": "assets/worlds/Aqua_Foam.5dbddd0ff7.glb", "Arcanum": "assets/worlds/Arcanum.09f8ba494f.glb", "Emerald_Tide": "assets/worlds/Emerald_Tide.88805ea337.glb", "Inferno": "assets/worlds/Inferno.18f5cf3c13.glb", "Nebula_Planet": "assets/worlds/Nebula_Planet.f6d0c693b5.glb", "Terra_Nova": "assets/worlds/Terra_Nova.4900543690.glb", "Tempest": "assets/worlds/Tempest.7417ac3621.glb"}, "sizes": {"Aqua_Foam": 2088944, "Arcanum": 416256, "Emerald_Tide": 479020, "Inferno": 2146664, "Nebula_Planet": 416660, "Terra_Nova": 2220400, "Tempest": 339932}, "build": "assets/app.6dd46b297a.js"};</script>
+<script>(()=>{const F=[["assets/vendor.17bf759c99.js", 865871], ["assets/app.6dd46b297a.js", 1591807]],T=F.reduce((a,f)=>a+f[1],0),B=0.55;let got=0;const num=document.querySelector('#loader [data-num]'),bar=document.querySelector('#loader [data-bar]');const show=()=>{const p=Math.min(B,got/T*B);window.__BOOT_P=p;if(num)num.textContent=String(Math.floor(p*100)).padStart(3,'0');if(bar)bar.style.transform='scaleX('+p.toFixed(4)+')'};const get=async u=>{const r=await fetch(u);if(!r.ok||!r.body)throw 0;const rd=r.body.getReader(),ps=[];for(;;){const{done,value}=await rd.read();if(done)break;ps.push(value);got+=value.length;show();}return new Blob(ps,{type:'text/javascript'})};const run=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;document.body.appendChild(s)});Promise.all(F.map(f=>get(f[0]))).then(async bl=>{for(const b of bl)await run(URL.createObjectURL(b))}).catch(()=>{window.__BOOT_P=0;F.forEach(f=>run(f[0]))});})();</script>
 </body>
 </html>
