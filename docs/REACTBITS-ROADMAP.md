@@ -1,9 +1,29 @@
 # React Bits integration — staged delivery
 
+8 October UI correction: all Kit Design panels share a wider responsive two-column layout, with a viewport-safe anchor for oversized objects, an edge-pinned selection toolbar and complete Design/Motion reset. Native Lab Water/Particle Flow layers now expose visibility, opacity and delete/Undo. These are Studio usability fixes; the remaining React Bits component fidelity work below is still staged.
+
 Requested by Ice, 7 October 2026 (Asia/Bangkok). Deliver in reviewable parts;
 do not describe a source prototype as a deployed or verified tool.
 
+Bug correction 8 October: PC native pointer/full-width paths and optional full
+screen action; Meta Balls/Laser Flow async preview readback with reusable buffers,
+bounded 1024px moving / 2048px still-export shader rasters; native Kit scheduling
+and visible-layer resolution budget; fixed-height scrollable Layer group headers.
+Source shader equations and native save/history state are preserved. Extreme zoom
+is still memory-bounded. Software browser QA does not promise physical-device FPS.
+
 ## Part 1 — paths and guide
+
+Correction 8 October: Light Pillar page backdrop now uses the actual upstream
+shader through the shared stage renderer, with all three source quality profiles
+and matching colour/shape/light controls. Page quality is bounded to 256/384/512px;
+opacity, reset and existing session-only ownership are retained. Background and
+hub shell now fill the viewport on PC. Native mouse pointer stays visible, with
+Target corners as additional decoration. Optional native Full screen action is
+available in paths/guide and Studio View on supported browsers. Legacy Colour
+flow is no longer labelled as a real Liquid Ether simulation. Ether and
+Crystalized Ball fidelity remain pending; earlier adaptation notes below are
+historical and must not be read as a claim that those two match the source.
 
 - Option Wheel: three curved route choices, selected route at the centre.
   Touch swipe, mouse wheel and keyboard selection share `selectPath`; Enter

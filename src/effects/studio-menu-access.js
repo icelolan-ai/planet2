@@ -8,6 +8,9 @@
   #studio :is(.st-layer.is-sel,.st-ghead.is-multi){background:#413452!important}
   #studio .st-layers-tray:not(.is-folded){display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;padding-bottom:38px!important}#studio .st-layers-tray :is(.st-panel-head,.st-layer-bar,.studio-note){flex:0 0 auto}#studio .st-layers-tray .st-layers{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;align-content:start;padding:3px}#studio .st-layers .st-ghead .st-chev{display:block;width:9px!important;height:9px!important;max-width:9px;max-height:9px}
   #studio .st-layers .st-layer.in-group{border-left:2px solid #a78bfa!important}
+  #studio .st-layers{grid-auto-rows:max-content}
+  #studio .st-layers>li{flex-shrink:0}
+  #studio .st-layers .st-ghead{min-height:34px;box-sizing:border-box}
   #studio .st-layers .st-layer{--branch-y:15px;flex-direction:column;flex-wrap:nowrap!important;align-items:stretch;gap:0!important}
   #studio .st-layers .st-lmain{display:flex;align-items:center;flex-wrap:nowrap;gap:3px;min-width:0;min-height:30px;position:relative}
   #studio .st-layers .st-lmain .st-lname{flex:1 1 0;min-width:0!important}

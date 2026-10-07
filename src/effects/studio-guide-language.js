@@ -2,6 +2,8 @@
    Translate application labels, never artwork, layer names, input values or saved state. */
 (() => {
   const labels = {
+    'Reset Design':'คืนค่าการออกแบบ','Reset Design & Motion':'คืนค่าการออกแบบและการเคลื่อนไหว','Reset Design & Kit settings':'คืนค่าการออกแบบและ Kit','Close Design':'ปิดการปรับแต่ง',
+    'Full screen':'เต็มหน้าจอ','Exit full screen':'ออกจากเต็มหน้าจอ',
     'Beam horizontal offset':'ระยะเลื่อนลำแสงแนวนอน','Beam vertical offset':'ระยะเลื่อนลำแสงแนวตั้ง','Horizontal sizing':'ขนาดลำแสงแนวนอน','Vertical sizing':'ขนาดลำแสงแนวตั้ง','Wisp density':'ความหนาแน่นเส้นแสง','Wisp intensity':'ความเข้มเส้นแสง','Flow strength':'ความแรงการไหล','Fog intensity':'ความเข้มหมอก','Fog scale':'ขนาดลวดลายหมอก','Fog fall speed':'ความเร็วหมอก','Decay':'ระยะจางลำแสง','Falloff start':'รัศมีเริ่มจาง',
     'Laser colour':'สีเลเซอร์','Beam horizontal position':'ตำแหน่งลำแสงแนวนอน','Beam vertical position':'ตำแหน่งลำแสงแนวตั้ง','Beam length':'ความยาวลำแสง','Beam height':'ความสูงลำแสง','Beam width':'ความหนาลำแสง','Laser glow':'แสงฟุ้งของเลเซอร์','Laser haze':'หมอกแสงเลเซอร์','Laser wisps':'จำนวนเส้นแสงไหล','Wisp brightness':'ความสว่างเส้นแสง','Wisp speed':'ความเร็วเส้นแสง','Flow speed':'ความเร็วการไหล',
     'Ball count':'จำนวนก้อน','Ball size':'ขนาดก้อน','Ball separation':'ระยะห่างของก้อน','Liquid edge softness':'ความนุ่มของขอบ','Liquid accent colour':'สีรองของของเหลว','Liquid speed':'ความเร็วของของเหลว','Animation size':'ขนาดพื้นที่เคลื่อนไหว','Cursor ball size':'ขนาดก้อนที่เคลื่อนตามวงโคจร',
