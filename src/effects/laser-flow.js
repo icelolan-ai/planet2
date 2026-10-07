@@ -50,10 +50,11 @@
     ['falloffStart','Falloff start',.5,3,.01,'uFalloffStart']
   ];
   function draw(g,it,x,y,w,h,k,time=0,amount=0){
-    const p=params(it),t=amount?Math.floor(time*amount*30)/30:0;
+    const p=params(it),moving=p.flowSpeed>0||p.wispSpeed>0||p.fogFallSpeed>0||p.mstyle==='pulse';
+    // Zero speeds freeze the source's implicit lateral fog drift too, including export/resizes.
+    const t=amount&&moving?Math.floor(time*amount*30)/30:0;
     const preview=typeof KIT_PREVIEW!=='undefined'&&KIT_PREVIEW;
     const scale=Math.min((preview?1024:2048)/Math.max(w,h),1),W=Math.max(8,Math.round(w*scale)),H=Math.max(8,Math.round(h*scale));
-    const moving=p.flowSpeed>0||p.wispSpeed>0||p.fogFallSpeed>0||p.mstyle==='pulse';
     const key=JSON.stringify([p,W,H,moving?t:0,amount]);let c=cache.get(it);
     if((!c||c.key!==key)&&!(preview&&c?.pending)){
       const a=gpu||init();if(!a)return;
