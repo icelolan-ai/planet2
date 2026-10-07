@@ -34,17 +34,38 @@ uses 20 ms grapheme staggering, a 560 ms entrance and a 2800 ms guide interval;
 route headings change only with selection. Page Crystalized Ball uses a fixed,
 bounded dust/rim preset; editable object settings belong to Part 2.
 
-## Part 2 — editable Studio tools (pending)
+## Part 2A — Laser Flow and Meta Balls
+
+Both tools use the existing Kit palette and Design panel. Newly added objects
+start with Motion on; existing projects retain their saved Motion setting.
+Laser Flow exposes colour, horizontal/vertical origin, beam length/height/width,
+glow, haze, wisp count/brightness/speed and flow speed. Native Motion supplies
+amount, timing, direction, loop, rhythm, spin and extra motion. Flow and Pulse
+are its two styles. Meta Balls exposes count, size, separation, edge softness,
+accent colour and speed, with Orbit and Merge & separate styles. The common
+Colour and opacity controls remain available. New parameter labels support
+English and Thai.
+
+These are Canvas2D adaptations rather than upstream GPU shader ports. Laser
+uses bounded glow strokes and wisps; Meta Balls uses a summed scalar field,
+bounded to a 160×160 raster and 12 blobs. Their transparent layers participate
+in the existing project/history and export pipeline. Shader-specific fluid
+iterations and pointer tilt/cursor balls are not offered as inactive controls;
+pointer interaction remains native selection and positioning. Laser Flow on
+other web pages is deferred to a separate page integration part.
+
+## Part 2B onward — remaining editable Studio tools (pending)
 
 Use the existing `KIT` pipeline for selection, groups, hide/lock, Undo/Redo,
 project files, image export and video composition. Prototype checkpoint:
 repository branch `wip/reactbits-toolkit-20261007`; none of the tools below is
-included in Part 1. Validate every exposed control for a visible effect.
+included in Part 1. Part 2A admits only Laser Flow and Meta Balls; the rest
+remain prototypes. Validate every exposed control for a visible effect.
 
 | Reference | Customize studied in upstream demo | Cerebra adaptation to validate |
 | --- | --- | --- |
-| Laser Flow | colour, speed, beam offsets/sizing, wisps, fog, strength, decay, falloff, interaction | Editable laser layer; colour, width/length, position, glow/haze, wisps and native Motion |
-| Meta Balls | colour, cursor colour/size, count, speed, clump, animation size, transparency | Liquid scalar-field Kit; count, size, separation, softness, accent and Motion |
+| Laser Flow — Part 2A | colour, speed, beam offsets/sizing, wisps, fog, strength, decay, falloff, interaction | Editable laser layer; colour, width/length, position, glow/haze, wisps and native Motion |
+| Meta Balls — Part 2A | colour, cursor colour/size, count, speed, clump, animation size, transparency | Liquid scalar-field Kit; count, size, separation, softness, accent and Motion |
 | Aero Shards | placement, material/detail, flow, scale/spread/depth, speed/spin, density, size/stretch, turbulence, glow/bloom, grain, effects, interaction | Bounded shard Kit with real geometry/palette controls; omit unsupported GPU-only controls |
 | Lightfall | palette, speed/count, width/length, glow/density/twinkle, zoom, background glow, cursor light | Falling light Kit; palette, count, width/length, density, twinkle, zoom and Motion |
 | Light Pillar | top/bottom colour, intensity, rotation speed, glow, width/height, noise, rotation, blend, quality | Pillar Kit; native colour/shape/Motion and shared layer composition |
