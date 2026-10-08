@@ -9,6 +9,12 @@ Run after structural refactors and before calling a release complete.
 - Physics edits affect frozen fluid; palette edits preserve field. Moving readback at most one pending; hidden/reduced/disabled motion stops. Same-size export agrees with preview; larger capture preserves simulation and other composition content.
 - Desktop1440x900/mobile390x844/narrow/short bounds, native EN/Thai and no app console errors. Project saves settings/seed, not exact live phase. Software QA is not a hardware/iOS benchmark.
 
+## Animated Background (Liquid Ether / Light Pillar)
+- Image > Animated background presets selects one background and opens Customize at once; re-selecting keeps values; choosing the other replaces it (one Undo step). Background list: Customize, Turn on/off, Remove.
+- It always fills the frame (resize, orientation, stage shift, zoom/scale), sits under all layers, is not listed in Kit, cannot be selected/dragged/rotated from the canvas or the Layers grip, and is excluded from select-all/marquee.
+- Every visible control changes the result; Follow pointer only reacts to mouse hover on empty canvas. Undo/Redo, Reset, project save/restore, legacy projects (full-size object -> background) and image/video export (full frame, same as preview).
+- Fixture: `docs/qa/animated-background-ui.cjs` (VP env for 1440x900, 390x844, 820x1180, 844x390). Report emulation vs real device honestly.
+
 ## Entry / navigation
 - Studio Stepper: first entry, Previous/Next, all indicator jumps, rapid navigation, Skip, Back/Escape, session completion and replay from How to use. Complete/skip must launch Studio even with world GLBs pending. Replay from active Studio must return to the existing session. Check EN/Thai, actual directional content/height transitions, reduced motion, keyboard focus and desktop/mobile/narrow/short-screen bounds.
 - Landing page loads without visible errors.

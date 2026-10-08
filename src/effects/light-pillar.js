@@ -57,13 +57,14 @@
     }
     g.save();g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(c.canvas,0,0,w,h);g.restore();
   }
-  const kitDefaults={color1:defaults.color1,color2:defaults.color2,intensity:1,speed:.3,glowAmount:.002,pillarWidth:3,pillarHeight:.4,noiseIntensity:.5,rotation:25,quality:defaults.quality,lightMode:false,mstyle:'flow'};
-  const kit={label:'Light Pillar',size:[.6,.6],blend:'screen',noShuffle:true,anim:true,motionOnAdd:true,defaults:kitDefaults,
+  const kitDefaults={color1:defaults.color1,color2:defaults.color2,intensity:1,speed:.3,glowAmount:.002,pillarWidth:3,pillarHeight:.4,noiseIntensity:.5,rotation:25,quality:defaults.quality,lightMode:false,interactive:false,mstyle:'flow'};
+  const kit={label:'Light Pillar',size:[.6,.6],cover:true,background:true,blend:'screen',noShuffle:true,anim:true,motionOnAdd:true,defaults:kitDefaults,
+    bgGroups:{colour:['color1','color2','lightMode'],look:['intensity','glowAmount','pillarWidth','pillarHeight','rotation','noiseIntensity'],motion:['speed','mstyle'],interaction:['interactive'],quality:['quality']},
     ui:[{k:'color1',t:'color',label:'Top colour'},{k:'color2',t:'color',label:'Bottom colour'},
       ...[['intensity','Intensity',0,3,.1],['speed','Rotation speed',0,2,.1],['glowAmount','Glow amount',.001,.02,.001],['pillarWidth','Pillar width',1,10,.1],['pillarHeight','Pillar height',.1,2,.1],['noiseIntensity','Noise intensity',0,2,.1],['rotation','Pillar rotation',0,360,1]].map(([k,label,min,max,step])=>({k,t:'range',label,min,max,step})),
-      {k:'quality',t:'select',label:'Quality',opts:[['low','Low'],['medium','Medium'],['high','High']]},{k:'lightMode',t:'check',label:'Light mode'},
+      {k:'quality',t:'select',label:'Quality',opts:[['low','Low'],['medium','Medium'],['high','High']]},{k:'lightMode',t:'check',label:'Light mode'},{k:'interactive',t:'check',label:'Follow pointer'},
       {k:'mstyle',t:'select',label:'Motion style',opts:[['flow','Flow'],['pulse','Pulse']]}],
-    draw(g,it,x,y,w,h){const M=kitM(it),p={...kitDefaults,...it.p,interactive:false,mouseX:0,mouseY:0};if(p.mstyle==='pulse'&&M.a)p.intensity*=.7+.3*Math.sin(M.t*M.a*2);g.save();g.translate(x,y);try{draw(g,w,h,M.a?M.t*M.a:0,p,{studio:true,preview:typeof KIT_PREVIEW!=='undefined'&&KIT_PREVIEW,selected:it===window.__cerebra?.studio?.sel&&!window.__cerebra.studio.lite});}finally{g.restore();}}
+    draw(g,it,x,y,w,h){const M=kitM(it),ptr=window.CerebraStudioEffects?.pointerOf(it),p={...kitDefaults,...it.p,interactive:!!ptr,mouseX:ptr?.x??0,mouseY:ptr?.y??0};if(p.mstyle==='pulse'&&M.a)p.intensity*=.7+.3*Math.sin(M.t*M.a*2);g.save();g.translate(x,y);try{draw(g,w,h,M.a?M.t*M.a:0,p,{studio:true,preview:typeof KIT_PREVIEW!=='undefined'&&KIT_PREVIEW,selected:it===window.__cerebra?.studio?.sel&&!window.__cerebra.studio.lite});}finally{g.restore();}}
   };
   window.CerebraLightPillar={draw,defaults,kit,reference:'DavidHDev/react-bits/LightPillar',renderer:'shared-webgl',preview:'async-readback'};
 })();
