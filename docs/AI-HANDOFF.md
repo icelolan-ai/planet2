@@ -1,5 +1,12 @@
 # AI Handoff Guide
 
+## 2026-10-08 — menu effects move to Studio
+
+- Supersedes page ownership below: launch/guide have no Crystal/Backdrop canvas, Customize or effect clock. Rotating Text remains. `studio-scene-effects.js` registers original Crystal Ball and Liquid Ether in native KIT; explicit build order precedes the registry. Existing Light Pillar gains Design > Fit as background, as do both new tools. Ether defaults to the back; restored layer order is preserved.
+- Source renderer/shaders/solver remain unchanged apart from transport/ownership. Weak offscreen per-item buffers prevent source canvas clears from erasing other exported layers; native p/Motion/opacity/history/layers/project/capture remain owners. Delete/Undo restore/Design reset dispose resources. Crystal's eight presets apply before native commit, then rebuild control values. Native EN/Thai labels; page interaction/intro/takeover timing omitted to protect selection/drawing.
+- Ether's seeded native-clock driver warms six steps initially; physics edits reseed, palette edits preserve flow. Freeze static/capture, at most one moving async read. Capture reuses/resamples the current field instead of resetting on export size. Project preserves params/seed, not exact fluid phase. Ether960px desktop/672px coarse; Crystal preview selected1536/other768/still4096/8MP. No new renderer/RAF/dependency. Physical Safari/hardware FPS/long video untested.
+- Complete local and final generated Pages desktop/touch controls, native history/reset/project, layer ordering/hide/lock/delete and mixed export checks before release. Line Sidebar remains a separate pending Part.
+
 ## 2026-10-08 — pre-Studio Stepper
 
 - `studio-stepper.js` adapts the current upstream Stepper interaction/CSS inside the existing `.cl-page` dialog. Four real guidance steps: starting subject, Text/Shapes/Kit Design, Layers/Motion/Undo, and editable project versus image/video export. Source 32px inactive/active-dot/complete-check indicators, connectors and directional content plus dynamic height transitions; pink brand palette, 44px click targets, 0.4s existing GSAP easing rather than Motion spring and native typography are deliberate adaptations.

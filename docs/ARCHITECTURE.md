@@ -103,9 +103,8 @@ After the generated build lands, validate the deployed GitHub Pages site, not on
 
 Do not perform a whole-app rewrite. Extract one feature at a time, preserve its public state/API, build, then run the full QA checklist before moving to the next feature.
 
-### Page Crystalized Ball
-- `crystalized-ball.js` owns original electric/dust/MRT stirring/composite passes through a small Three bridge. `studio-reactbits-pages.js` owns session Customize/input/native clock. Never create another renderer/RAF or authored Studio layer for this page art. Preserve target viewport, async moving readback, stale-frame rejection, reduced/hidden pause and disposal of superseded particle buffers. Page and Studio Full Reset restore defaults.
-
-### Menu Liquid Ether
-- `src/effects/liquid-ether.js` owns only page-local fluid targets and source solver/palette passes. Reuse the stage renderer; `studio-reactbits-pages.js` owns the page clock, visibility, pointer input and session-only Customize.
-- `page-backdrops.js` routes Liquid Ether, Light Pillar and the separately labelled legacy Colour flow. No Studio/Lab state, extra renderer or independent RAF. Keep bounded resolution, asynchronous presentation, complete renderer-state restoration and disposal on Off/Reset/style change.
+### Studio Crystal Ball and backdrop tools (supersedes page ownership)
+- `studio-scene-effects.js` registers native `crystalBall` and `liquidEther` Kit definitions. Original shaders/solver remain in `crystalized-ball.js` and `liquid-ether.js`, reusing the shared stage renderer and native Kit clock. `studio-reactbits-pages.js` now owns rotating text only: no Crystal/Backdrop controls, canvases or effect RAF on launch/guide.
+- Per-item WeakMap offscreen buffers isolate drawing from native composition export; never serialize GPU caches. Native p/Motion/layer/history/project/capture are authoritative. Delete/restore/Design reset dispose resources. Crystal preserves eight source presets, with selected moving1536px/other768px/still4096px and8MP bounds.
+- Ether uses a seeded native-clock driver, not selection/drawing pointer input; first frame warms six solver steps. Physics edits reseed, palette edits preserve the field. Bounded output960px desktop/672px coarse with source simulation resolution0.2–0.5. Capture resamples the existing simulation without resetting its size. Project stores settings/seed, not velocity textures/exact live phase. Independent of Water Lab.
+- Ether starts full-area behind other native layers. Design > Fit as background also applies to Crystal and existing Light Pillar as one native undoable fit/reorder. Reset preserves geometry/order. Legacy Colour flow helper is compatibility-only, not a source-faithful Studio tool.
