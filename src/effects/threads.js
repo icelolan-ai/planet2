@@ -103,8 +103,8 @@ void main() {
   }
   function draw(g,w,h,t,options,mode={}){
     const p={...defaults,...options};
-    const limit=mode.preview?(mode.selected?1280:640):4096;
-    const scale=Math.min(limit/Math.max(w,h),Math.sqrt((mode.preview?1.5e6:8e6)/Math.max(1,w*h)),1),W=Math.max(8,Math.round(w*scale)),H=Math.max(8,Math.round(h*scale));
+    const limit=mode.preview?(mode.selected?960:512):4096;
+    const scale=Math.min(limit/Math.max(w,h),Math.sqrt((mode.preview?1e6:8e6)/Math.max(1,w*h)),1),W=Math.max(8,Math.round(w*scale)),H=Math.max(8,Math.round(h*scale));
     const time=Math.floor((t+clamp(p.start,0,600))*30)/30;
     const key=JSON.stringify([p,W,H,time]);let c=cache.get(g);
     if((!c||c.key!==key)&&!(mode.preview&&c?.pending)){
