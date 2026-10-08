@@ -8,7 +8,7 @@ Read this first; it supersedes the Codex section below where they differ. Rules:
 - **Line Sidebar (PR #325)**: RELEASED — merged, live bundle `app.01858defcf.js`, local + live fixtures passed (emulation). Fixtures: `docs/qa/line-sidebar-ui.cjs`, `docs/qa/line-sidebar-live-ui.cjs`.
 - Background visibility/fidelity fix (Customize sheet no longer covers the artwork; source AutoDriver port; Pillar blend/quality): see work log 23:50 entry; RELEASED (PR #330, live `app.eb570ecfc6.js`).
 - UI overlap guard, background smoothness and merged "Mood & poster presets" menu: see work log newest entry RELEASED (PR #332, live `app.8697e2ab5d.js`).
-- Threads Kit: RELEASED (PR #334, live `app.e44c6cd750.js`). Aero Shards: implemented on `feat/kit-aero-shards-20261008` (GLSL port, no pixel comparison with the WebGPU original; see work log), release status recorded after merge.
+- Threads Kit: RELEASED (PR #334, live `app.e44c6cd750.js`). Aero Shards: implemented on `feat/kit-aero-shards-20261008` (GLSL port, no pixel comparison with the WebGPU original; see work log), RELEASED (PR #336, live `app.2d3857df33.js`).
 - Generated `index.html`/`assets/` are produced by CI (`build-generated.yml`); do not commit local builds.
 
 ---

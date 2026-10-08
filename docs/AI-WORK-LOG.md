@@ -4,11 +4,9 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 ## Current work / ownership
 
-- Owner of both items below: Claude (took over from Codex on 2026-10-08; Codex released ownership at 20:14 Asia/Bangkok).
-- **Task A: DONE and live** (PR #327, see entry below). 
-- **Task B: DONE and live** (PR #325 merged, see entry below).
-- No active edit (overlap/smoothness/menu fix released). Parked checkpoint: Threads Kit on `feat/kit-threads-20261008` (source shader port; controls verified on desktop/tablet, mobile control check pending, not merged). Next: new Kit objects (Threads/Aero Shards) — claim in this section before editing.
-- Kit objects (Threads/Aero Shards) are not started; wait until A and B are closed.
+- Owner: none. Claude released ownership after finishing everything handed over by Codex and the follow-ups: Animated Background (#327, #330), Line Sidebar (#325), UI overlap/smoothness/menu merge (#332), Threads Kit (#334), Aero Shards Kit (#336). No branch is in progress; `feat/native-line-sidebar-20261008`, `feat/animated-background-20261008` and the other feature branches are merged and can be ignored.
+- Open caveats (see entries below): Liquid Ether is not frame-for-frame identical to the demo, the user's exact UI-overlap screenshot scenario was not reproduced, no real-device/Safari testing, Aero Shards has no pixel comparison with the WebGPU original.
+- Before editing, claim a task here (branch, base, files) per `AGENTS.md`.
 
 ## 2026-10-08 — Codex — PR #323 released
 
@@ -121,3 +119,9 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Controls kept from the demo page (names/defaults/ranges verified against the live demo Customize panel and the JSX): background/shard/accent colours, placement, flow, material, detail, effect, scale, spread, depth, speed, spin, density, shard size, stretch, turbulence, glow, edge softness, bloom, grain, chromatic aberration. Studio addition: Quality (low/medium/high instance counts 1900/3200/4600; default low on touch). Omitted because a Kit has no pointer: interaction/radius/strength, ripple intensity, hold to gather, transition duration (placement/flow changes snap instead of easing) and Paused (use the Kit's Motion toggle).
 - Deliberate differences: deterministic Kit clock (`flowDistance = t*speed*0.34`, travel phase from the same clock) instead of accumulated frame time; the source's `@interpolate(flat, first)` triangle colour is evaluated at every vertex (inputs are per instance/facet so the value is identical); ASCII/dither passes emulate WebGPU's top-left pixel origin; output is opaque (the source paints its background colour); preview render cap 1024/640 px and ~1.2 MP, capture up to 4096/8 MP.
 - Verification limits: I could not render the original WebGPU component in headless Chromium (its canvas stayed blank), so there is **no pixel comparison with the demo**; fidelity rests on the line-by-line port and on visual plausibility. Tests (headless Chromium emulation, local build): no shader/compile errors on first use of every pass (shards, bloom, blur, finish, dither, ASCII), every control changes the output (spin only changes with motion on — verified separately and deterministic), all placement/flow/material/effect/quality options render, Undo/Redo, restore, 1x export size; 1440x900 full sweep, 390x844 / 820x1180 / 844x390 render checks. Software-GL frame p50 ~170-180 ms vs 83 ms without it, no hitches; real-GPU smoothness untested.
+
+## 2026-10-08 Asia/Bangkok — Claude — Aero Shards Kit released
+
+- PR #336 merged (merge `ca2814a46c39516e8527551afaba8da414ab5456`), CI `build` succeeded, live bundle `assets/app.2d3857df33.js` on https://icelolan-ai.github.io/planet2/.
+- Live check (headless Chromium emulation): no shader errors, draws, every control changes output (spin only with motion on), Undo/Redo, restore, export size at 1440x900; render checks at 390x844. Still no pixel comparison with the WebGPU original and no real-GPU/iOS testing.
+- Remaining: none queued. Open caveats: Liquid Ether vs demo look, UI-overlap user scenario, real-device smoothness.
