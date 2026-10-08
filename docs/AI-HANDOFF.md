@@ -6,7 +6,7 @@ Read this first; it supersedes the Codex section below where they differ. Rules:
 
 - **Animated Background (Claude, branch `feat/animated-background-20261008`)**: Liquid Ether / Light Pillar are a real `bg:true` background layer (full frame, bottom of stack, not selectable/draggable/zoomable from the canvas, exported full frame, Background list with Customize/On-Off/Remove, grouped Customize, legacy projects migrated). Details, source comparison and tests: see the work-log entry of the same time. Status: RELEASED — PR #327 merged, live bundle `app.a11a652b97.js`, desktop/mobile live fixture passed (emulation).
 - **Line Sidebar (PR #325)**: RELEASED — merged, live bundle `app.01858defcf.js`, local + live fixtures passed (emulation). Fixtures: `docs/qa/line-sidebar-ui.cjs`, `docs/qa/line-sidebar-live-ui.cjs`.
-- Background visibility/fidelity fix (Customize sheet no longer covers the artwork; source AutoDriver port; Pillar blend/quality): see work log 23:50 entry; release status appended after merge.
+- Background visibility/fidelity fix (Customize sheet no longer covers the artwork; source AutoDriver port; Pillar blend/quality): see work log 23:50 entry; RELEASED (PR #330, live `app.eb570ecfc6.js`).
 - Kit objects (Threads/Aero Shards) not started.
 - Generated `index.html`/`assets/` are produced by CI (`build-generated.yml`); do not commit local builds.
 

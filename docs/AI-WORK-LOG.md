@@ -7,7 +7,7 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Owner of both items below: Claude (took over from Codex on 2026-10-08; Codex released ownership at 20:14 Asia/Bangkok).
 - **Task A: DONE and live** (PR #327, see entry below). 
 - **Task B: DONE and live** (PR #325 merged, see entry below).
-- Active (Claude): background fidelity/visibility fix, branch `fix/background-fidelity-20261008` (files: `src/template.html`, `src/effects/liquid-ether.js`, `src/effects/light-pillar.js`). Then: new Kit objects (Threads/Aero Shards) — claim in this section before editing.
+- No active task (background fix released). Next: new Kit objects (Threads/Aero Shards) — claim in this section before editing.
 - Kit objects (Threads/Aero Shards) are not started; wait until A and B are closed.
 
 ## 2026-10-08 — Codex — PR #323 released
@@ -82,3 +82,8 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Demo control comparison: Ether demo shows Colour 1-3, Mouse force 20, Cursor size 100, Resolution 0.5, Auto speed 0.5, Auto intensity 2.2, Pressure 32, Bounce, Auto animate, Viscous, Viscous coef 30, Viscous iterations 32 — all present (plus Studio extras BFECC, step, light background). Pillar demo: Top/Bottom colour, Intensity 1, Rotation speed 0.3, Glow 0.002, Pillar width 3, height 0.4, Noise 0.5, Pillar rotation 25, Interactive, Mix blend, Quality — all present.
 - Limitation: I could not run the original React demo and ours frame-for-frame; fluid motion is random-target driven, so a given instant never matches the demo exactly, and the headless software-GL runs show a slower flow than real GPUs. Visual match on a physical device is unverified.
 - Tests: `animated-background-ui.cjs` PASS at 1440x900, 390x844, 820x1180, 844x390 (local build, emulation). Live check pending the merge.
+
+## 2026-10-08 00:30 Asia/Bangkok — Claude — Background visibility/fidelity fix released
+
+- PR #330 merged (merge `dfcecb94cac8126a6eff24d74471202f0f2ef5b1`), CI `build` succeeded, live bundle `assets/app.eb570ecfc6.js` on https://icelolan-ai.github.io/planet2/.
+- Live `animated-background-ui.cjs` PASS at 1440x900 and 390x844 (headless Chromium emulation); the 390x844 screenshot shows the Customize bottom sheet with Cerebra visible above it. Not tested on physical devices; the fluid is still not a frame-for-frame match of the React Bits demo (random-target driven; large cursor footprint on narrow screens follows the source's cell-based size).
