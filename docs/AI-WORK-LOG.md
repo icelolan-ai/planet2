@@ -6,7 +6,8 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 - Owner of both items below: Claude (took over from Codex on 2026-10-08; Codex released ownership at 20:14 Asia/Bangkok).
 - **Task A: DONE and live** (PR #327, see entry below). 
-- **Task B (this change): Line Sidebar** PR #325, branch `feat/native-line-sidebar-20261008`, owner Claude; main merged in (`03466d8`). Files: `src/effects/line-sidebar.js`, `studio-launch.js`, `template.html`, `build_web.py`, `docs/qa/line-sidebar-*.cjs`.
+- **Task B: DONE and live** (PR #325 merged, see entry below).
+- No active task. Next: new Kit objects (Threads/Aero Shards) — claim in this section before editing.
 - Kit objects (Threads/Aero Shards) are not started; wait until A and B are closed.
 
 ## 2026-10-08 — Codex — PR #323 released
@@ -64,3 +65,10 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Local build tests (headless Chromium software GL, device emulation, not physical devices): `docs/qa/line-sidebar-ui.cjs` PASS at 1440x900, 390x844, 820x1180 and 844x390 (guide chapters mouse/Enter, EN/TH, falloff, reduced-motion fallback in guide, Studio section folds/presets/localization, rail click and focused Enter reach sections 1 and 2, no overflow, no page/console errors). New `docs/qa/line-sidebar-live-ui.cjs` with the renderer NOT frozen: desktop, desktop reduced-motion and mobile 390x844 touch — rail click, Enter, wheel, touch swipe (CDP touch events), return to section 1 and no horizontal overflow all pass, no page errors.
 - Baseline comparison on main: rail buttons did not navigate at all before this PR (scroll stayed 0). Wheel and touch scrolling are identical to main (same values); in reduced-motion a wheel at ~section 3 is ignored identically on main (pre-existing, not changed here).
 - Notes: Glide travel from section 3 back to 1 takes ~3 s under software GL; test waits accordingly. Physical iOS/Safari/hardware FPS untested.
+
+## 2026-10-08 23:00 Asia/Bangkok — Claude — Line Sidebar released
+
+- PR #325 merged (merge `907a35e693aa141b3ff7f9a526ac149174228ec3`); CI `build` succeeded; generated main live bundle `assets/app.01858defcf.js` confirmed on https://icelolan-ai.github.io/planet2/.
+- Live checks (headless Chromium device emulation, not physical devices): `line-sidebar-ui.cjs` PASS at 1440x900, 390x844, 820x1180, 844x390; `line-sidebar-live-ui.cjs` (renderer running) PASS for desktop, desktop reduced-motion and mobile touch, run one case at a time (a concurrent run once stalled a click under software GL; not reproduced alone).
+- Known/pre-existing: reduced-motion wheel is ignored near section 3 identically on main; Glide travel across sections takes ~3 s. Physical iOS/Safari and hardware FPS untested.
+- Pending: new Kit objects only (Threads/Aero Shards) — not started.
