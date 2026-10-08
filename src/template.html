@@ -8653,6 +8653,8 @@ const KIT_SHAPES = [['circle', 'Circle'], ['ring', 'Ring'], ['triangle', 'Triang
 const KIT_SHAPE_SVG = { circle: '<circle cx="12" cy="12" r="6"/>', ring: '<circle cx="12" cy="12" r="6" fill="none" stroke-width="2"/>', triangle: '<path d="M12 4.5 20 18H4z"/>', square: '<rect x="6" y="6" width="12" height="12"/>', diamond: '<path d="M12 3.5 20.5 12 12 20.5 3.5 12z"/>', hexagon: '<path d="M12 4 19 8v8l-7 4-7-4V8z"/>', star: '<path d="m12 3.5 2.6 5.6 6 .7-4.4 4.2 1.2 6L12 17l-5.4 3 1.2-6-4.4-4.2 6-.7z"/>', cross: '<path d="M12 4v16M4 12h16" fill="none" stroke-width="2.4"/>' };
 const KIT_DASH = [['solid', 'Solid'], ['dashed', 'Dashed'], ['dotted', 'Dotted'], ['mixed', 'Mixed']];
 const KIT = {
+  crystalBall: window.CerebraStudioEffects.crystalKit,
+  liquidEther: window.CerebraStudioEffects.etherKit,
   laserFlow: window.CerebraLaser.kit,
   metaBalls: window.CerebraMetaBalls.kit,
   lightPillar: window.CerebraLightPillar.kit,
@@ -10545,7 +10547,7 @@ class CoreStudio {
       el.innerHTML = `${kind === 'kit' ? '<canvas class="st-kitc" aria-hidden="true"></canvas>' : ''}<svg class="st-outline" aria-hidden="true"></svg><span class="st-handle" aria-hidden="true"></span><button type="button" class="st-lock"></button>`;
       el.querySelector('.st-lock').addEventListener('click', e => { e.stopPropagation(); this.lockItem(it, !it.locked); });
     }
-    this.stage.append(el); this.items.push(it); this.place(it); this.renderLayers();
+    this.stage.append(el); if (kind === 'kit' && KIT[it.kit].background && !this.restoring) { this.items.unshift(it); this.stackDom(); } else this.items.push(it); this.place(it); this.renderLayers();
     el.addEventListener('pointerdown', e => {
       if (e.button !== 0 || e.target.closest('.st-lock') || el.isContentEditable) return;
       e.stopPropagation(); e.preventDefault();
@@ -11685,6 +11687,7 @@ class CoreStudio {
     // Keep the artwork, placement and layer relationships; reset its editable look.
     if (it.kind === 'kit') {
       const def = KIT[it.kit]; if (!def) return;
+      def.dispose?.(it);
       it.p = JSON.parse(JSON.stringify(def.defaults));
       Object.assign(it, { opacity: 1, fill: '#e8ecf5', blend: def.blend || 'normal', seed: 7, mOn: !!def.motionOnAdd, mAmt: .6, mSpd: 1, mFx: 'none', spin: 0, spinOn: false, ang: 0 });
       KIT_MOTION_UI.forEach(u => { it[u.k] = u.def; });
@@ -11740,6 +11743,7 @@ class CoreStudio {
             : `<label class="st-fly-row"><span>${u.label}</span><select data-kmx="${u.k}">${u.opts.map(([o, n]) => `<option value="${o}"${String(o) === String(v) ? ' selected' : ''}>${n}</option>`).join('')}</select></label>`; }).join('') : '') + '</details>'
       + (def.noShuffle ? '' : '<button type="button" class="st-btn st-kit-shuffle" data-kit-shuffle>Shuffle pattern</button>')
       + '<button type="button" class="st-btn st-kit-shuffle" data-kit-reset>Reset Design &amp; Motion</button>';
+    window.CerebraStudioEffects.decorate(this, it, f);
     const op = f.querySelector('[data-kop]'), sOn = f.querySelector('[data-kspin-on]'), sp = f.querySelector('[data-kspin]');
     op.addEventListener('input', () => { it.opacity = +op.value; op.parentNode.querySelector('output').textContent = `${Math.round(it.opacity * 100)}%`; const co = this.ctx.querySelector('[data-ctx-opacity]'); co.value = it.opacity; co.nextElementSibling.textContent = `${Math.round(it.opacity * 100)}%`; this.kitRedraw(it); });
     sp.addEventListener('input', () => { const v = +sp.value; sp.parentNode.querySelector('output').textContent = v ? `${v}°/s` : 'still'; if (v && !it.spinOn) { sOn.checked = true; this.setKitSpin(it, { spin: v, spinOn: true }); } else this.setKitSpin(it, { spin: v }); });
@@ -12506,6 +12510,7 @@ class CoreStudio {
   lockItem(it, on) { it.locked = on; this.place(it); this.select(it); this.renderLayers(); this.commit(); }
   removeItem(it, quiet) {
     if (it.kind === 'fx' && it.fxType === 'planet' && !this.restoring) return;   // Cerebra's layer stays
+    if (it.kind === 'kit') KIT[it.kit]?.dispose?.(it);
     it.el.remove(); this.items = this.items.filter(i => i !== it); this.multi.delete(it.id); if (this.lineSel && this.lineSel.it === it) this.lineSel = null; if (this._movers) this._movers.delete(it); this.renderLayers();
     if (it.kind === 'fx' && !this.restoring && !this.fxSyncing) this.fxOff(it.fxType);
     if (this.sel === it) this.select(null);

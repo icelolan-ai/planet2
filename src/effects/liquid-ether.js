@@ -856,22 +856,27 @@
     live.add(state);return state;
   }
   function params(p){const a={...defaults,...p};for(const [key,min,max]of [['mouseForce',0,60],['cursorSize',10,300],['resolution',.2,.5],['viscosity',1,100],['iterationsViscous',1,64],['iterationsPoisson',1,64],['dt',.005,.05],['autoSpeed',0,1],['autoIntensity',0,4],['takeoverDuration',0,1],['autoResumeDelay',0,5000],['autoRampDuration',0,2]])a[key]=clamp(a[key],min,max);a.iterationsViscous=Math.round(a.iterationsViscous);a.iterationsPoisson=Math.round(a.iterationsPoisson);for(const [i,key]of ['color1','color2','color3'].entries())if(!/^#[0-9a-f]{6}$/i.test(a[key]))a[key]=['#5227ff','#ff9ffc','#b497cf'][i];return a;}
-  function draw(g,w,h,dpr,t,p){
+  function draw(g,w,h,dpr,t,p,mode={}){
     const renderer=window.__cerebra?.stage.renderer;if(!renderer)return;
     const a=params(p),coarse=matchMedia('(pointer:coarse)').matches,scale=Math.min(1,(coarse?672:960)/Math.max(w/dpr,h/dpr));
     const W=Math.max(8,Math.round(w/dpr*scale)),H=Math.max(8,Math.round(h/dpr*scale));let state=states.get(g);
-    if(!state||state.disposed||state.cv.width!==W||state.cv.height!==H){state?.dispose();state=create(renderer,g.canvas.parentElement,W,H,a);states.set(g,state);}else state.configure(a);
-    const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+    if(!state||state.disposed||state.cv.width!==W||state.cv.height!==H){state?.dispose();state=create(renderer,mode.host||g.canvas.parentElement,W,H,a);states.set(g,state);}else state.configure(a);
+    const reduced=mode.studio?!!mode.stopped:matchMedia('(prefers-reduced-motion:reduce)').matches;
     const key=JSON.stringify(a),advance=state.lastTime!==t||state.dirty||state.key!==key;
     if(advance&&(!state.pending||reduced)){
       const old=renderer.getRenderTarget(),vp=renderer.getViewport(new THREE.Vector4()),sc=renderer.getScissor(new THREE.Vector4()),test=renderer.getScissorTest(),clear=renderer.getClearColor(new THREE.Color()),alpha=renderer.getClearAlpha(),autoClear=renderer.autoClear;
       const ticket=++state.ticket;
       try{
         renderer.autoClear=false;renderer.setScissorTest(false);renderer.setClearColor(0,0);
-        if(!reduced)state.auto.update();else state.auto.forceStop();state.Mouse.update();
-        state.output.update();state.frames++;state.lastTime=t;state.key=key;state.dirty=false;
+        if(mode.studio){
+          state.auto.forceStop();
+          const first=state.frames===0,steps=first?6:reduced?0:1;
+          for(let n=0;n<steps;n++){const clock=first?n/30:t,phase=(mode.seed??7)*.013,angle=clock*a.autoSpeed*2+phase;state.Mouse.setNormalized(Math.sin(angle)*.6,Math.cos(angle*1.31)*.45);state.Mouse.isAutoActive=true;state.Mouse.autoIntensity=a.autoIntensity;state.Mouse.update();state.output.update();state.frames++;}
+          if(!steps)state.output.render();
+        }else{if(!reduced)state.auto.update();else state.auto.forceStop();state.Mouse.update();state.output.update();state.frames++;}
+        state.lastTime=t;state.key=key;state.dirty=false;
         const present=bytes=>{if(ticket!==state.ticket)return;for(let row=0;row<H;row++)state.image.data.set(bytes.subarray((H-1-row)*W*4,(H-row)*W*4),row*W*4);for(let i=0;i<state.image.data.length;i+=4){const alpha=state.image.data[i+3];if(alpha)for(let c=0;c<3;c++)state.image.data[i+c]=Math.min(255,Math.round(state.image.data[i+c]*255/alpha));}state.ctx.putImageData(state.image,0,0);};
-        if(!reduced&&renderer.readRenderTargetPixelsAsync&&!state.asyncFailed){state.pending=true;renderer.readRenderTargetPixelsAsync(state.target,0,0,W,H,state.bytes).then(present).catch(()=>{state.asyncFailed=true;state.dirty=true;}).finally(()=>{state.pending=false;});}
+        if(!mode.first&&!reduced&&renderer.readRenderTargetPixelsAsync&&!state.asyncFailed){state.pending=true;renderer.readRenderTargetPixelsAsync(state.target,0,0,W,H,state.bytes).then(present).catch(()=>{state.asyncFailed=true;state.dirty=true;}).finally(()=>{state.pending=false;});}
         else{renderer.readRenderTargetPixels(state.target,0,0,W,H,state.bytes);present(state.bytes);}
       }finally{renderer.setRenderTarget(old);renderer.setViewport(vp);renderer.setScissor(sc);renderer.setScissorTest(test);renderer.setClearColor(clear,alpha);renderer.autoClear=autoClear;}
     }

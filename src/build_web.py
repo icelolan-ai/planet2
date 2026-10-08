@@ -116,6 +116,7 @@ fx_order = [
     'light-pillar.js',
     'liquid-ether.js',
     'crystalized-ball.js',
+    'studio-scene-effects.js',
     'post-stack.js',
     'diagnostics.js',
     'studio-menu-fix.js',

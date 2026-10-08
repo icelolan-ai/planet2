@@ -2,6 +2,13 @@
 
 Run after structural refactors and before calling a release complete.
 
+## Studio scene effects migration (supersedes page-art tests below)
+- Launch/guide have no Crystal/Backdrop controls/canvases/clock. Rotating Text, native Enter-only routes, guide and Stepper still work.
+- Actual Kit > Crystal Ball / Liquid Ether adds visible native layers. Presets and Design/Motion/opacity/Reset reach source renderers and participate in native Undo/Redo/project restore.
+- Fit as background fits/reorders Crystal/Ether/Pillar behind other layers, retaining selection and Design. Saved order survives restore; hide/lock/group/delete and Reset resource disposal work. Reset preserves placement/order and restores parameters.
+- Physics edits affect frozen fluid; palette edits preserve field. Moving readback at most one pending; hidden/reduced/disabled motion stops. Same-size export agrees with preview; larger capture preserves simulation and other composition content.
+- Desktop1440x900/mobile390x844/narrow/short bounds, native EN/Thai and no app console errors. Project saves settings/seed, not exact live phase. Software QA is not a hardware/iOS benchmark.
+
 ## Entry / navigation
 - Studio Stepper: first entry, Previous/Next, all indicator jumps, rapid navigation, Skip, Back/Escape, session completion and replay from How to use. Complete/skip must launch Studio even with world GLBs pending. Replay from active Studio must return to the existing session. Check EN/Thai, actual directional content/height transitions, reduced motion, keyboard focus and desktop/mobile/narrow/short-screen bounds.
 - Landing page loads without visible errors.
