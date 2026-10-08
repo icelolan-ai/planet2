@@ -1,7 +1,7 @@
-/* Actual React Bits Light Pillar ray-march shader, adapted to page backdrop.
+/* Actual React Bits Light Pillar ray-march shader, adapted to page backdrop and Studio Kit.
  * DavidHDev/react-bits/src/content/Backgrounds/LightPillar/LightPillar.jsx
  * MIT + Commons Clause, copyright 2026 David Haz; full notice in template.html.
- * Shared stage renderer; caller owns page visibility, time and scheduling.
+ * Shared stage renderer; page clock and native Kit loop own visibility/time/scheduling.
  */
 (() => {
   if(window.CerebraLightPillar)return;
@@ -19,13 +19,14 @@
     addEventListener('pagehide',()=>{target.dispose();geometry.dispose();Object.values(gpu?.materials||{}).forEach(m=>m.dispose());gpu=null;},{once:true});return gpu;
   }
   function shader(profile){return fragmentTemplate.replaceAll('${settings.precision}',profile.precision).replaceAll('${settings.stepMultiplier.toFixed(1)}',profile.stepMultiplier.toFixed(1)).replaceAll('${settings.iterations}',profile.iterations).replaceAll('${settings.waveIterations}',profile.waveIterations);}
-  function draw(g,w,h,t,options){
+  function draw(g,w,h,t,options,mode={}){
     const p={...defaults,...options},q=profiles[p.quality]?p.quality:defaults.quality,profile=profiles[q];
-    const scale=Math.min(profile.size/Math.max(w,h),1),W=Math.max(8,Math.round(w*scale)),H=Math.max(8,Math.round(h*scale));
+    const limit=mode.studio?(mode.preview?{low:512,medium:768,high:1024}[q]:2048):profile.size;
+    const scale=Math.min(limit/Math.max(w,h),1),W=Math.max(8,Math.round(w*scale)),H=Math.max(8,Math.round(h*scale));
     // Page time advances in seconds; equivalent to source 60fps reference clock.
     const time=Math.floor(t*clamp(p.speed,0,2)*.96*30)/30;
-    const key=JSON.stringify([p,W,H,time]);let c=cache.get(g);
-    if(!c||c.key!==key){
+    const key=JSON.stringify([p,W,H,time,!!mode.studio]);let c=cache.get(g);
+    if((!c||c.key!==key)&&!(mode.preview&&c?.pending)){
       const a=gpu||init();if(!a)return;
       if(!c){const canvas=document.createElement('canvas');c={canvas,ctx:canvas.getContext('2d')};cache.set(g,c);}if(!c.ctx)return;
       if(!a.materials[q])a.materials[q]=new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:shader(profile),uniforms:a.uniforms,transparent:true,depthWrite:false,depthTest:false});
@@ -36,15 +37,33 @@
       const color=new THREE.Color(/^#[0-9a-f]{6}$/i.test(p.color1)?p.color1:defaults.color1);u.uTopColor.value.set(color.r,color.g,color.b);
       color.set(/^#[0-9a-f]{6}$/i.test(p.color2)?p.color2:defaults.color2);u.uBottomColor.value.set(color.r,color.g,color.b);
       u.uIntensity.value=clamp(p.intensity,0,3);u.uGlowAmount.value=clamp(p.glowAmount,.001,.02);u.uPillarWidth.value=clamp(p.pillarWidth,1,10);u.uPillarHeight.value=clamp(p.pillarHeight,.1,2);u.uNoiseIntensity.value=clamp(p.noiseIntensity,0,2);
+      u.uLightMode.value=p.lightMode?1:0;
       const rotation=clamp(p.rotation,0,360)*Math.PI/180;u.uPillarRotCos.value=Math.cos(rotation);u.uPillarRotSin.value=Math.sin(rotation);u.uRotCos.value=Math.cos(time*.3);u.uRotSin.value=Math.sin(time*.3);
       const old=r.getRenderTarget(),vp=r.getViewport(new THREE.Vector4()),sc=r.getScissor(new THREE.Vector4()),test=r.getScissorTest(),auto=r.autoClear;
-      try{r.autoClear=true;r.setRenderTarget(target);r.setViewport(0,0,W,H);r.setScissorTest(false);r.render(a.scene,a.camera);r.readRenderTargetPixels(target,0,0,W,H,a.bytes);}
+      const ticket=c.ticket=(c.ticket||0)+1;
+      const present=bytes=>{
+        if(c.ticket!==ticket||gpu!==a)return;
+        if(c.canvas.width!==W||c.canvas.height!==H){c.canvas.width=W;c.canvas.height=H;c.image=null;}const image=c.image||(c.image=c.ctx.createImageData(W,H));
+        for(let row=0;row<H;row++)image.data.set(bytes.subarray((H-1-row)*W*4,(H-row)*W*4),row*W*4);
+        // Native screen blend reproduces the upstream opaque black canvas without a black layer rectangle.
+        if(mode.studio)for(let i=0;i<image.data.length;i+=4){const alpha=Math.max(image.data[i],image.data[i+1],image.data[i+2]);for(let ch=0;ch<3;ch++)image.data[i+ch]=alpha?Math.round(image.data[i+ch]*255/alpha):0;image.data[i+3]=alpha;}
+        c.ctx.putImageData(image,0,0);c.key=key;
+      };
+      try{r.autoClear=true;r.setRenderTarget(target);r.setViewport(0,0,W,H);r.setScissorTest(false);r.render(a.scene,a.camera);
+        if(mode.preview&&r.readRenderTargetPixelsAsync&&!c.asyncFailed){if(c.bytes?.length!==W*H*4)c.bytes=new Uint8Array(W*H*4);c.pending=true;r.readRenderTargetPixelsAsync(target,0,0,W,H,c.bytes).then(present).catch(()=>{c.asyncFailed=true;}).finally(()=>{c.pending=false;});}
+        else{r.readRenderTargetPixels(target,0,0,W,H,a.bytes);present(a.bytes);}
+      }
       finally{r.setRenderTarget(old);r.setViewport(vp);r.setScissor(sc);r.setScissorTest(test);r.autoClear=auto;}
-      if(c.canvas.width!==W||c.canvas.height!==H){c.canvas.width=W;c.canvas.height=H;c.image=null;}const image=c.image||(c.image=c.ctx.createImageData(W,H));
-      for(let row=0;row<H;row++)image.data.set(a.bytes.subarray((H-1-row)*W*4,(H-row)*W*4),row*W*4);
-      c.ctx.putImageData(image,0,0);c.key=key;
     }
     g.save();g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(c.canvas,0,0,w,h);g.restore();
   }
-  window.CerebraLightPillar={draw,defaults,reference:'DavidHDev/react-bits/LightPillar',renderer:'shared-webgl'};
+  const kitDefaults={color1:defaults.color1,color2:defaults.color2,intensity:1,speed:.3,glowAmount:.002,pillarWidth:3,pillarHeight:.4,noiseIntensity:.5,rotation:25,quality:defaults.quality,lightMode:false,mstyle:'flow'};
+  const kit={label:'Light Pillar',size:[.6,.6],blend:'screen',noShuffle:true,anim:true,motionOnAdd:true,defaults:kitDefaults,
+    ui:[{k:'color1',t:'color',label:'Top colour'},{k:'color2',t:'color',label:'Bottom colour'},
+      ...[['intensity','Intensity',0,3,.1],['speed','Rotation speed',0,2,.1],['glowAmount','Glow amount',.001,.02,.001],['pillarWidth','Pillar width',1,10,.1],['pillarHeight','Pillar height',.1,2,.1],['noiseIntensity','Noise intensity',0,2,.1],['rotation','Pillar rotation',0,360,1]].map(([k,label,min,max,step])=>({k,t:'range',label,min,max,step})),
+      {k:'quality',t:'select',label:'Quality',opts:[['low','Low'],['medium','Medium'],['high','High']]},{k:'lightMode',t:'check',label:'Light mode'},
+      {k:'mstyle',t:'select',label:'Motion style',opts:[['flow','Flow'],['pulse','Pulse']]}],
+    draw(g,it,x,y,w,h){const M=kitM(it),p={...kitDefaults,...it.p,interactive:false,mouseX:0,mouseY:0};if(p.mstyle==='pulse'&&M.a)p.intensity*=.7+.3*Math.sin(M.t*M.a*2);g.save();g.translate(x,y);try{draw(g,w,h,M.a?M.t*M.a:0,p,{studio:true,preview:typeof KIT_PREVIEW!=='undefined'&&KIT_PREVIEW});}finally{g.restore();}}
+  };
+  window.CerebraLightPillar={draw,defaults,kit,reference:'DavidHDev/react-bits/LightPillar',renderer:'shared-webgl',preview:'async-readback'};
 })();

@@ -2,6 +2,7 @@
    Translate application labels, never artwork, layer names, input values or saved state. */
 (() => {
   const labels = {
+    'Top colour':'สีด้านบน','Bottom colour':'สีด้านล่าง','Rotation speed':'ความเร็วการหมุน','Glow amount':'แสงฟุ้ง','Pillar width':'ความกว้างเสาแสง','Pillar height':'ความสูงลวดลาย','Noise intensity':'ความเข้มเม็ดฟิล์ม','Pillar rotation':'มุมเสาแสง','Light mode':'โหมดสว่าง','Quality':'คุณภาพ','Low':'ต่ำ','Medium':'กลาง','High':'สูง',
     'Reset Design':'คืนค่าการออกแบบ','Reset Design & Motion':'คืนค่าการออกแบบและการเคลื่อนไหว','Reset Design & Kit settings':'คืนค่าการออกแบบและ Kit','Close Design':'ปิดการปรับแต่ง',
     'Full screen':'เต็มหน้าจอ','Exit full screen':'ออกจากเต็มหน้าจอ',
     'Beam horizontal offset':'ระยะเลื่อนลำแสงแนวนอน','Beam vertical offset':'ระยะเลื่อนลำแสงแนวตั้ง','Horizontal sizing':'ขนาดลำแสงแนวนอน','Vertical sizing':'ขนาดลำแสงแนวตั้ง','Wisp density':'ความหนาแน่นเส้นแสง','Wisp intensity':'ความเข้มเส้นแสง','Flow strength':'ความแรงการไหล','Fog intensity':'ความเข้มหมอก','Fog scale':'ขนาดลวดลายหมอก','Fog fall speed':'ความเร็วหมอก','Decay':'ระยะจางลำแสง','Falloff start':'รัศมีเริ่มจาง',

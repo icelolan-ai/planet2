@@ -1,5 +1,11 @@
 # AI Handoff Guide
 
+## 2026-10-08 — actual Light Pillar Studio Kit
+
+- Kit → Light Pillar now uses the same full upstream ray-march shader as the page backdrop. Source Customize controls: top/bottom colours, intensity, rotation speed, glow, pillar width/height, noise, pillar angle, low/medium/high quality and light mode. Layer blend uses native Layers → Blend mode; default screen reproduces the upstream light contribution. Studio pointer interaction is intentionally disabled so moving/selecting artwork does not alter saved renders.
+- Shared stage renderer and native Kit loop/clock/history/project/capture paths. No new context or animation owner. Moving reads are asynchronous with at most one pending frame per destination context; completed frames are painted by the native loop. Source quality changes ray count/precision; raster bounds are 512/768/1024px for moving low/medium/high, 2048px for still/export. Page raster bounds and timing remain unchanged.
+- Native opacity, spin, Motion flow/pulse, timing, Reset Design & Motion, wider responsive Design panel and edge toolbar all apply to the new tool. Persist only Kit parameters and native item state. Independent upstream comparison at equal size returned max byte difference 0 for all three qualities, dark/light. Desktop 1440x900 and touch 390x844: all exposed appearance sliders/colours, Reset/Undo/Redo, zero speed, asynchronous movement, layer hide/show and real project export/import passed locally; same-size export comparison allows one byte of Canvas2D rounding. Full poster and MP4 capture passed. Page controls, fullscreen, guide/Studio/Exit/planet routes and Enter with world assets held passed regression checks. No page/console errors in focused fixtures. Repeat live desktop/touch after Pages deployment before reporting release; physical hardware performance and iOS Safari remain untested.
+
 ## 2026-10-08 — edge toolbar, wider Kit Design, reset and Lab layers
 
 - Selection quick tools are pinned at the lower-left edge above the dock, rather than following an object's bounds. Hide behind open editing panels. Kit/text/shape flyouts fall back to the Edit menu anchor if their context-bar button is hidden or outside the viewport. VisualViewport, rails and dock still constrain the panel.
