@@ -1929,7 +1929,11 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio [data-kit-panel] .st-fly-check input[type=checkbox]::after,#studio [data-kit-panel] .st-fly-check input[type=checkbox]::before{content:none!important;display:none!important}
 #studio [data-kit-panel] .st-fly-check input[type=checkbox]:checked{background-color:#e8364a;background-image:radial-gradient(circle,#fff 0 9px,#0000 9.5px);background-position:calc(100% - 2px) 50%;box-shadow:0 0 12px #ff465566}
 #studio [data-kit-panel] .st-ksec-h,#studio [data-kit-panel] summary{font:600 11px var(--f-sans);letter-spacing:.12em;text-transform:uppercase;color:#9aa4b6;padding:8px 4px 0;margin:0}
-#studio [data-kit-panel] .st-ksec{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+#studio [data-kit-panel] .st-ksec{display:block;padding:8px;border:1px solid #ffffff18;border-radius:16px}
+#studio [data-kit-panel] .st-ksec-body{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));margin-top:10px}
+#studio [data-kit-panel] .st-ksec-body>.st-ksec-h,#studio [data-kit-panel] .st-ksec-body>.st-ksec{grid-column:1/-1}
+#studio [data-kit-panel] .st-ksec:not([open])>.st-ksec-body{display:none}
+#studio [data-kit-types] .st-kit-category{grid-column:1/-1;font:600 11px var(--f-sans);padding:12px 4px 4px;border-top:1px solid #ffffff20;color:#aab3c4}
 #studio [data-kit-panel] .st-ksec>summary,#studio [data-kit-panel] .st-ksec>.st-ksec-h{grid-column:1/-1}
 #studio [data-kit-panel] summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:36px;padding:0 12px;border-radius:12px;background:#ffffff0d;border:1px solid #ffffff14;color:#dfe5ef}
 #studio [data-kit-panel] summary::-webkit-details-marker{display:none}
@@ -9424,7 +9428,7 @@ class CoreStudio {
       <aside id="studio-tools" class="studio-panel st-glass" data-tray="panel" aria-label="Studio settings" hidden><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-panel-fold aria-expanded="true"><h2>Cerebra, in focus.</h2><span class="st-chev" aria-hidden="true"></span></button>
       <h3>Surface style</h3><div class="studio-corefx" data-studio-corefx></div>
       <h3>Mood</h3><div class="studio-preset-grid st-moods" data-studio-moods></div><button type="button" class="st-btn st-random" data-studio-random aria-label="Random look">${I('<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.2"/><circle cx="15" cy="15" r="1.2"/><circle cx="15" cy="9" r="1.2"/><circle cx="9" cy="15" r="1.2"/>')}<span>Random look (G)</span></button>
-      <h3>Poster presets</h3><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-preset="ember" style="--p1:#0c1625;--p2:#d26448">Ember dossier</button><button type="button" class="studio-preset" data-studio-preset="monolith" style="--p1:#e0e4e3;--p2:#666e72">Monolith</button><button type="button" class="studio-preset" data-studio-preset="blueprint" style="--p1:#f4f5f3;--p2:#becbd2">Orbital grid</button><button type="button" class="studio-preset" data-studio-preset="bio" style="--p1:#1a0b3a;--p2:#7b2fa8">Biocomputer</button><button type="button" class="studio-preset" data-studio-preset="mineral" style="--p1:#0b0c0e;--p2:#a4aab0">Mineral</button><button type="button" class="studio-preset" data-studio-preset="infinity" style="--p1:#05090b;--p2:#72b4b4">Infinity noir</button><button type="button" class="studio-preset" data-studio-preset="monoPoster" style="--p1:#f3f3f0;--p2:#8c8c86">Mono poster</button><button type="button" class="studio-preset" data-studio-preset="goldHud" style="--p1:#06070a;--p2:#c9a24a">Gold HUD</button><button type="button" class="studio-preset" data-studio-preset="glowOrbit" style="--p1:#02030a;--p2:#3558d8">Glow orbit</button><button type="button" class="studio-preset" data-studio-preset="neonCell" style="--p1:#040907;--p2:#22c58a">Neon cell</button><button type="button" class="studio-preset" data-studio-preset="astrolabe" style="--p1:#1a140e;--p2:#b89560">Astrolabe</button><button type="button" class="studio-preset" data-studio-preset="dataFlow" style="--p1:#090b13;--p2:#4a5ad8">Data flow</button></div><details class="studio-sub" data-tpl-sub><summary>Layout templates</summary><p class="studio-note">A scene look plus ready-made Kit items. Pick another preset or template to swap them.</p><div class="studio-preset-grid" data-tpl-grid><button type="button" class="studio-preset" data-studio-template="editorial" style="--p1:#f3f3f0;--p2:#9a9a94">Editorial calendar</button><button type="button" class="studio-preset" data-studio-template="cyclical" style="--p1:#02030a;--p2:#4a6ae8">Cyclical</button><button type="button" class="studio-preset" data-studio-template="physics" style="--p1:#090b13;--p2:#7a86e8">Physics series</button><button type="button" class="studio-preset" data-studio-template="dashboard" style="--p1:#06070a;--p2:#e8c872">Dashboard</button><button type="button" class="studio-preset" data-studio-template="radial" style="--p1:#1a140e;--p2:#d8a868">Cropped radial</button></div></details><p class="studio-note">Tap any poster text to edit it, drag to move it. Add shapes from the left to keep an area sharp and blur the rest.</p>
+      <h3>Poster presets</h3><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-preset="ember" style="--p1:#0c1625;--p2:#d26448">Ember dossier</button><button type="button" class="studio-preset" data-studio-preset="monolith" style="--p1:#e0e4e3;--p2:#666e72">Monolith</button><button type="button" class="studio-preset" data-studio-preset="blueprint" style="--p1:#f4f5f3;--p2:#becbd2">Orbital grid</button><button type="button" class="studio-preset" data-studio-preset="bio" style="--p1:#1a0b3a;--p2:#7b2fa8">Biocomputer</button><button type="button" class="studio-preset" data-studio-preset="mineral" style="--p1:#0b0c0e;--p2:#a4aab0">Mineral</button><button type="button" class="studio-preset" data-studio-preset="infinity" style="--p1:#05090b;--p2:#72b4b4">Infinity noir</button><button type="button" class="studio-preset" data-studio-preset="monoPoster" style="--p1:#f3f3f0;--p2:#8c8c86">Mono poster</button><button type="button" class="studio-preset" data-studio-preset="goldHud" style="--p1:#06070a;--p2:#c9a24a">Gold HUD</button><button type="button" class="studio-preset" data-studio-preset="glowOrbit" style="--p1:#02030a;--p2:#3558d8">Glow orbit</button><button type="button" class="studio-preset" data-studio-preset="neonCell" style="--p1:#040907;--p2:#22c58a">Neon cell</button><button type="button" class="studio-preset" data-studio-preset="astrolabe" style="--p1:#1a140e;--p2:#b89560">Astrolabe</button><button type="button" class="studio-preset" data-studio-preset="dataFlow" style="--p1:#090b13;--p2:#4a5ad8">Data flow</button></div><h3>Animated background presets</h3><p class="studio-note">Editable background layers. Select the layer, then open Design or Motion.</p><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-template="liquidEther" style="--p1:#5227ff;--p2:#ff9ffc">Liquid Ether</button><button type="button" class="studio-preset" data-studio-template="lightPillar" style="--p1:#5227ff;--p2:#ff9ffc">Light Pillar</button></div><details class="studio-sub" data-tpl-sub><summary>Layout templates</summary><p class="studio-note">A scene look plus ready-made Kit items. Pick another preset or template to swap them.</p><div class="studio-preset-grid" data-tpl-grid><button type="button" class="studio-preset" data-studio-template="editorial" style="--p1:#f3f3f0;--p2:#9a9a94">Editorial calendar</button><button type="button" class="studio-preset" data-studio-template="cyclical" style="--p1:#02030a;--p2:#4a6ae8">Cyclical</button><button type="button" class="studio-preset" data-studio-template="physics" style="--p1:#090b13;--p2:#7a86e8">Physics series</button><button type="button" class="studio-preset" data-studio-template="dashboard" style="--p1:#06070a;--p2:#e8c872">Dashboard</button><button type="button" class="studio-preset" data-studio-template="radial" style="--p1:#1a140e;--p2:#d8a868">Cropped radial</button></div></details><p class="studio-note">Tap any poster text to edit it, drag to move it. Add shapes from the left to keep an area sharp and blur the rest.</p>
       <h3>Grid</h3><label class="studio-control"><span>Grid</span><select data-studio-gridmode aria-label="Grid"><option value="always">Always</option><option value="focus">Only with a focus shape</option><option value="off">Off</option></select></label><input type="checkbox" data-studio-grid hidden checked><label class="studio-control"><span>Grid colour</span><input type="color" data-grid-c value="#ffffff" aria-label="Grid colour"><button type="button" class="st-chip" data-grid-auto>Auto</button></label><label class="studio-control"><span>Grid strength</span><input type="range" min="0.05" max="1" step="0.05" value="0.25" data-grid-a><output>25%</output></label><label class="studio-control"><span>Grid thickness</span><input type="range" min="0.5" max="6" step="0.5" value="1" data-grid-t><output>1px</output></label><label class="studio-control"><span>Grid size</span><input type="range" min="8" max="64" step="1" value="24" data-grid-n><output>24</output></label>
       <h3>Background</h3><select data-studio-background aria-label="Studio background"><option value="space">Space</option><option value="white">White</option><option value="studio">Studio light</option><option value="model">Model workspace</option><option value="solid">Solid colour</option><option value="gradient">Gradient</option><option value="points">Colour points</option></select>
       <div class="st-cpts-ed" data-cpts-ed hidden><p class="studio-note">Colour A is the base. Drag the dots on the canvas to place each colour.</p><div data-cpts-list></div><button type="button" class="st-btn" data-cpts-add>+ Add colour</button></div>
@@ -10068,6 +10072,8 @@ class CoreStudio {
     const kit = (k, x, y, size, p = {}, o = {}) => { const d = KIT[k].defaults, { ar, ...rest } = o; if (d.size != null) p = { ...p, size: Math.max(7, Math.round((p.size ?? d.size) * sc)) }; return ['kit', { kit: k, x, y, w: S(size), h: S(ar ? size * ar : size), p, ...rest }]; };
     const txt = (content, x, y, size, o = {}) => ['text', { content, x, y, size: px(size), align: 'l', font: 'display', upper: true, ...o }];
     const defs = {
+      liquidEther: { scene: 'infinity', items: [['kit', {kit:'liquidEther',x:.5,y:.5,w:(W+4)/U,h:(H+4)/U,mOn:true}]] },
+      lightPillar: { scene: 'infinity', items: [['kit', {kit:'lightPillar',x:.5,y:.5,w:(W+4)/U,h:(H+4)/U,mOn:true}]] },
       editorial: { scene: 'monoPoster', items: [
         kit('scaleRing', .5, .5, .98, { n: 120, major: 10, numbers: true, size: 11, majorLen: 14, minorLen: 6 }),
         kit('labelRing', .5, .5, .7, { items: months, size: 13, inner: .72, ticks: 'ticks' }),
@@ -10103,7 +10109,9 @@ class CoreStudio {
       D.items.forEach(([kind, o]) => { o.tpl = name; o.silent = true; if (kind === 'text') o.color = ink; else { o.fill = ink; o.opacity = o.opacity ?? 1; } this.addItem(kind, o); });
     } finally { this.commit = commit0; }
     this.groupPresetItems(this.el.querySelector(`[data-studio-template="${name}"]`)?.textContent.trim() || name, this.items.filter(i => i.tpl === name));
-    this.select(null); this.renderLayers(); this.updateFocus(); this.commit();
+    const background = this.items.find(i => i.tpl === name && ['liquidEther','lightPillar'].includes(i.kit));
+    if (background) { this.items = [background, ...this.items.filter(i => i !== background)]; this.stackDom(); }
+    this.select(background || null); this.renderLayers(); this.updateFocus(); this.commit();
   }
   // Poster words are ordinary text items: tap to edit, drag to move. A preset only lays them out.
   presetTexts(name, ink) {
@@ -11641,7 +11649,11 @@ class CoreStudio {
   initKit() {
     this.kitLoop();
     const box = this.el.querySelector('[data-kit-types]');
-    Object.entries(KIT).forEach(([key, def]) => {
+    const category = key => ['crystalBall','laserFlow','metaBalls','texture'].includes(key) ? 'Light & textures' : ['hubNetwork','plexus2d','chord','bundle','neural','cellCluster','flowField','circularFlow','spiral'].includes(key) ? 'Networks & flow' : ['hud','rings','radial','arc','scaleRing','dotRing','radialBars'].includes(key) ? 'Rings & geometry' : 'Text & objects';
+    let lastCategory;
+    Object.entries(KIT).filter(([key]) => !['liquidEther','lightPillar'].includes(key)).sort(([a],[b]) => category(a).localeCompare(category(b))).forEach(([key, def]) => {
+      const group = category(key);
+      if (group !== lastCategory) { const title = document.createElement('div'); title.className = 'st-kit-category'; title.textContent = group; box.append(title); lastCategory = group; }
       const b = document.createElement('button'); b.type = 'button'; b.className = 'st-btn'; b.dataset.studioKit = key; b.innerHTML = `<canvas width="88" height="88"></canvas>${def.label}`;
       def.draw(b.firstChild.getContext('2d'), { fill: '#e8ecf5', p: def.defaults, seed: 7 }, 0, 0, 88, 88, def.thumbK || 1);
       b.onclick = () => { this.closeFly(); this.addItem('kit', { decor: true, kit: key, fill: this.decorFill, opacity: 1, ...(def.motionOnAdd ? { mOn: true } : {}) }); };
@@ -11743,6 +11755,26 @@ class CoreStudio {
             : `<label class="st-fly-row"><span>${u.label}</span><select data-kmx="${u.k}">${u.opts.map(([o, n]) => `<option value="${o}"${String(o) === String(v) ? ' selected' : ''}>${n}</option>`).join('')}</select></label>`; }).join('') : '') + '</details>'
       + (def.noShuffle ? '' : '<button type="button" class="st-btn st-kit-shuffle" data-kit-shuffle>Shuffle pattern</button>')
       + '<button type="button" class="st-btn st-kit-shuffle" data-kit-reset>Reset Design &amp; Motion</button>';
+    const th = window.__cerebraLanguage?.current === 'th';
+    const section = (title, rows) => {
+      if (!rows.length) return;
+      const d = document.createElement('details'); d.className = 'st-ksec'; d.open = true;
+      const summary = document.createElement('summary'); summary.textContent = title;
+      const body = document.createElement('div'); body.className = 'st-ksec-body'; body.append(...rows);
+      d.append(summary, body); f.querySelector('.st-fly-title').after(d); return d;
+    };
+    const designRows = [...f.children].filter(el => el.matches('.st-fly-row') && !el.querySelector('[data-kop]'));
+    const appearance = f.querySelector('[data-kop]').closest('.st-fly-row');
+    f.querySelector(':scope > .st-ksec-h')?.remove();
+    section(th ? 'ลักษณะพื้นผิว' : 'Appearance', [appearance]);
+    const palette = designRows.filter(el => el.querySelector('input[type=color]'));
+    section(th ? 'สีและแสง' : 'Colour & light', palette);
+    section(th ? 'รูปทรงและรายละเอียด' : 'Shape & detail', designRows.filter(el => !palette.includes(el)));
+    f.querySelectorAll('details.st-ksec').forEach(d => {
+      if (d.querySelector(':scope > .st-ksec-body')) return;
+      const body = document.createElement('div'); body.className = 'st-ksec-body';
+      body.append(...[...d.children].filter(el => el.tagName !== 'SUMMARY')); d.append(body);
+    });
     window.CerebraStudioEffects.decorate(this, it, f);
     const op = f.querySelector('[data-kop]'), sOn = f.querySelector('[data-kspin-on]'), sp = f.querySelector('[data-kspin]');
     op.addEventListener('input', () => { it.opacity = +op.value; op.parentNode.querySelector('output').textContent = `${Math.round(it.opacity * 100)}%`; const co = this.ctx.querySelector('[data-ctx-opacity]'); co.value = it.opacity; co.nextElementSibling.textContent = `${Math.round(it.opacity * 100)}%`; this.kitRedraw(it); });
@@ -11791,7 +11823,10 @@ class CoreStudio {
     f.querySelector('[data-kit-reset]').onclick = () => { this.commit(); this.resetItemDesign(it); this.syncKit(); this.renderLayers(); this.commit(); };
     f.querySelector('[data-kit-close]').onclick = () => { this.closeFly(); this.closeCtxBar(); };
     const motion = f.querySelector('[data-ksec=mo]');
-    shown.filter(motionParam).forEach(u => { const input = f.querySelector(`[data-kp="${u.k}"]`); if (input) motion.append(input.closest('.st-fly-row')); });
+    shown.filter(motionParam).forEach(u => { const input = f.querySelector(`[data-kp="${u.k}"]`); if (input) motion.querySelector('.st-ksec-body').append(input.closest('.st-fly-row')); });
+    f.querySelectorAll('details.st-ksec:not([data-ksec])').forEach(d => { if (!d.querySelector('.st-ksec-body').children.length) d.remove(); });
+    const sourceRows = shown.filter(motionParam).map(u => f.querySelector(`[data-kp="${u.k}"]`)?.closest('.st-fly-row')).filter(Boolean);
+    if (sourceRows.length) { const h = document.createElement('div'); h.className = 'st-ksec-h'; h.textContent = th ? 'การเคลื่อนไหวเฉพาะวัตถุ' : 'Object motion'; sourceRows[0].before(h); }
     const foldIdle = () => { if (!it.mOn && !it.spinOn) { motion.open = false; this._kitMotionOpen?.set(it, false); } };
     [sOn, mOn].filter(Boolean).forEach(el => el.addEventListener('change', foldIdle));
     this.layoutKitFly();
@@ -12115,7 +12150,7 @@ class CoreStudio {
         ['Duplicate selection', () => { const set = this.layoutTargets(); if (set.length) this.sc.spawn(set.map(this.sc.snap), .03); }, null, '⌘/Ctrl D', !this.layoutTargets().length],
         ['Selection workflow…', () => this.workflowOpen?.()], ['Design selected…', () => { this.openCtxBar(); openFly(this.sel.kind === 'kit' ? 'kitdesign' : this.sel.kind === 'text' ? 'textdesign' : 'style'); },null,'',!this.sel || this.sel.kind === 'fx' || this.sel.locked], ['Kit library…',()=>openFly('kit')], ['Group selection', () => { const set = this.layoutTargets(); if (set.length) { this.moveLayers(set, { kind: 'new' }); this.clearGroup(); } }, null, '', this.layoutTargets().length < 2]],
       Image: () => [['Background & colours…', () => openSection('[data-studio-background]')], ['Lighting & shadow…', () => openSection('[data-studio-light]')],
-        ['Scene presets…', () => openSection('[data-studio-preset]')], ['Export image / video…', () => click('[data-studio-export]')]],
+        ['Scene presets…', () => openSection('[data-studio-preset]')], ['Animated background presets…', () => openSection('[data-studio-template=liquidEther]')], ['Export image / video…', () => click('[data-studio-export]')]],
       Layer: () => [['New group', () => this.addGroup()], ['Group selected layers', () => this.sc.act(this.layoutTargets(), 'group'), null, '⌘/Ctrl G', this.layoutTargets().length < 2],
         ['Ungroup selected layers', () => { const ids = new Set(selected().map(i => i.group).filter(g => g != null)); this.items.forEach(i => { if (ids.has(i.group)) i.group = null; }); this.groups = this.groups.filter(g => !ids.has(g.id)); this.renderLayers(); this.commit(); }, null, '⌘/Ctrl ⇧ G', !selected().some(i => i.group != null)],
         ['Lock / unlock selection', () => this.sc.act(selected(), 'lock'), selected().length ? selected().every(i => i.locked) : null, '', !selected().length],
