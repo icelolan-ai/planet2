@@ -98,3 +98,7 @@ After the generated build lands, validate the deployed GitHub Pages site, not on
 ## Refactor policy
 
 Do not perform a whole-app rewrite. Extract one feature at a time, preserve its public state/API, build, then run the full QA checklist before moving to the next feature.
+
+### Menu Liquid Ether
+- `src/effects/liquid-ether.js` owns only page-local fluid targets and source solver/palette passes. Reuse the stage renderer; `studio-reactbits-pages.js` owns the page clock, visibility, pointer input and session-only Customize.
+- `page-backdrops.js` routes Liquid Ether, Light Pillar and the separately labelled legacy Colour flow. No Studio/Lab state, extra renderer or independent RAF. Keep bounded resolution, asynchronous presentation, complete renderer-state restoration and disposal on Off/Reset/style change.

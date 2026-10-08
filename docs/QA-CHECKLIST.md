@@ -149,3 +149,9 @@ Record:
 - Straight/curved strokes have round continuous caps and joins at both ends; a tap is circular. No rectangular source-tile tips or per-triangle alpha bands. Glow zero and wide halo remain usable.
 - Same-size native preview/export agree within one Canvas2D rounding byte. Eraser, symmetry, alpha lock/masks and saved project metadata still use the native Drawing owner.
 - Drawing reset and object Design reset restore all Laser fields. Older saved strokes missing the extra fields render with defaults. Stopped/speed-zero strokes are visible on their first frame.
+
+## Liquid Ether page backdrop
+- Backdrop > Liquid Ether renders fluid driven by actual mouse/touch and the source auto driver; Colour flow remains a separate legacy option.
+- Source palette/force/radius/resolution, viscosity/pressure, BFECC/bounce, timestep, auto timings and light mode controls reach the source solver. Contextual fields, numeric outputs and EN/Thai fit desktop/narrow panels.
+- Compare the source solver/colour output using identical forces at equal dimensions. Verify real pixels, asynchronous moving readback, reduced-motion stop/manual update and late-frame rejection.
+- Off/style switch/Reset dispose fluid resources. Menu/Guide/Studio navigation pauses the page clock and never gates Enter on fluid/world assets. Native Studio and Water Lab state are unaffected.

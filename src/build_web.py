@@ -114,6 +114,7 @@ fx_order = [
     'laser-flow.js',
     'meta-balls.js',
     'light-pillar.js',
+    'liquid-ether.js',
     'post-stack.js',
     'diagnostics.js',
     'studio-menu-fix.js',
