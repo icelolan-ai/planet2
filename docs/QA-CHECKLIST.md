@@ -141,3 +141,11 @@ Record:
 - desktop/mobile difference
 - source file likely responsible
 - whether the issue blocks deployment
+
+## Laser Flow Pen Customize and caps
+- Pen effect settings scrolls directly to the Laser section; desktop has two readable columns and narrow screens one, within viewport bounds.
+- Colour, thickness, opacity, glow, flow, wisps, fog, decay/fade and animation controls change the native stroke. Omit Kit position/T geometry controls.
+- Opening an existing Laser Drawing loads its settings; Edit current drawing controls whether changes affect that Drawing. Slider gestures coalesce in Undo/Redo; Line records are preserved.
+- Straight/curved strokes have round continuous caps and joins at both ends; a tap is circular. No rectangular source-tile tips or per-triangle alpha bands. Glow zero and wide halo remain usable.
+- Same-size native preview/export agree within one Canvas2D rounding byte. Eraser, symmetry, alpha lock/masks and saved project metadata still use the native Drawing owner.
+- Drawing reset and object Design reset restore all Laser fields. Older saved strokes missing the extra fields render with defaults. Stopped/speed-zero strokes are visible on their first frame.

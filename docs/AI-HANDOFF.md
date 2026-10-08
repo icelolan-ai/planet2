@@ -1,5 +1,12 @@
 # AI Handoff Guide
 
+## 2026-10-08 — round Laser pen tips and pen-specific Customize
+
+- Supersedes the tapered per-triangle ribbon tip in the earlier Laser pen entry. Extend the source ribbon beyond both native path endpoints, then mask it with the original smooth path using round caps/joins and an adjustable shadow halo. Remove segment alpha steps and avoid the source T flare. A single-point stroke is a radial dot, not a shader rectangle. Keep native eraser, alpha lock, masks, history and export ownership; preview and export use the same draw function.
+- Draw > Pen effect settings opens the Laser section directly. Pen colour, thickness, opacity, glow spread, flow strength, wisp density/intensity, fog intensity/scale, decay, beam fade, animation/wisp/fog speed and animation toggle are available. Omit Kit positioning and T-geometry controls. Use the native shared source shader; master speed scales its clock without saturating the independent source speeds. Two desktop columns and one narrow-screen column fit the native bounded scrollable flyout.
+- Opening settings on a Laser Drawing loads that Drawing's saved parameters. Edit current drawing applies slider gestures to native Pen records with coalesced Undo; turn it off to configure new strokes. Apply effect remains explicit for converting a Drawing. Preserve Line records. Missing fields in older projects fall back to defaults. Drawing and object resets include every new field. Glow-aware native padding prevents a wide halo from being clipped.
+- Focused desktop 1440x900 and touch 390x844 Chromium checks: real pointer drawing, settings bounds, editing/Undo/Redo, eraser, project download/import, same-size export, both round tips and circular taps, glow extent, plain Pen and symmetry, frozen first frame and independent source control changes. Build, syntax and source diff checked. Recheck the deployed generated build before reporting done. Physical iOS Safari and hardware FPS remain untested.
+
 ## 2026-10-08 — native Laser Flow pen and enlarged Kit raster quality
 
 - `laser-pen.js` adapts the existing upstream Laser Flow shader into a tapered ribbon following native smoothed Pen paths. Sample the continuous beam above its T-shaped flare; this is a freehand adaptation, not the full T-shaped Kit geometry. Share the existing renderer, native line clock, stroke records, layers, symmetry, eraser, Undo, project and canvas export. No extra RAF, renderer or dependency. Existing Plain Pen/Line/Branch behavior remains available.
