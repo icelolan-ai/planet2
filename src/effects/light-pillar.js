@@ -21,8 +21,8 @@
   function shader(profile){return fragmentTemplate.replaceAll('${settings.precision}',profile.precision).replaceAll('${settings.stepMultiplier.toFixed(1)}',profile.stepMultiplier.toFixed(1)).replaceAll('${settings.iterations}',profile.iterations).replaceAll('${settings.waveIterations}',profile.waveIterations);}
   function draw(g,w,h,t,options,mode={}){
     const p={...defaults,...options},q=profiles[p.quality]?p.quality:defaults.quality,profile=profiles[q];
-    const limit=mode.studio?(mode.preview?{low:512,medium:768,high:1024}[q]:2048):profile.size;
-    const scale=Math.min(limit/Math.max(w,h),1),W=Math.max(8,Math.round(w*scale)),H=Math.max(8,Math.round(h*scale));
+    const limit=mode.studio?(mode.preview?(mode.selected?{low:768,medium:1536,high:2048}:{low:512,medium:768,high:1024})[q]:4096):profile.size;
+    const scale=Math.min(limit/Math.max(w,h),mode.studio?Math.sqrt((mode.preview?4e6:8e6)/Math.max(1,w*h)):1,1),W=Math.max(8,Math.round(w*scale)),H=Math.max(8,Math.round(h*scale));
     // Page time advances in seconds; equivalent to source 60fps reference clock.
     const time=Math.floor(t*clamp(p.speed,0,2)*.96*30)/30;
     const key=JSON.stringify([p,W,H,time,!!mode.studio]);let c=cache.get(g);
@@ -63,7 +63,7 @@
       ...[['intensity','Intensity',0,3,.1],['speed','Rotation speed',0,2,.1],['glowAmount','Glow amount',.001,.02,.001],['pillarWidth','Pillar width',1,10,.1],['pillarHeight','Pillar height',.1,2,.1],['noiseIntensity','Noise intensity',0,2,.1],['rotation','Pillar rotation',0,360,1]].map(([k,label,min,max,step])=>({k,t:'range',label,min,max,step})),
       {k:'quality',t:'select',label:'Quality',opts:[['low','Low'],['medium','Medium'],['high','High']]},{k:'lightMode',t:'check',label:'Light mode'},
       {k:'mstyle',t:'select',label:'Motion style',opts:[['flow','Flow'],['pulse','Pulse']]}],
-    draw(g,it,x,y,w,h){const M=kitM(it),p={...kitDefaults,...it.p,interactive:false,mouseX:0,mouseY:0};if(p.mstyle==='pulse'&&M.a)p.intensity*=.7+.3*Math.sin(M.t*M.a*2);g.save();g.translate(x,y);try{draw(g,w,h,M.a?M.t*M.a:0,p,{studio:true,preview:typeof KIT_PREVIEW!=='undefined'&&KIT_PREVIEW});}finally{g.restore();}}
+    draw(g,it,x,y,w,h){const M=kitM(it),p={...kitDefaults,...it.p,interactive:false,mouseX:0,mouseY:0};if(p.mstyle==='pulse'&&M.a)p.intensity*=.7+.3*Math.sin(M.t*M.a*2);g.save();g.translate(x,y);try{draw(g,w,h,M.a?M.t*M.a:0,p,{studio:true,preview:typeof KIT_PREVIEW!=='undefined'&&KIT_PREVIEW,selected:it===window.__cerebra?.studio?.sel&&!window.__cerebra.studio.lite});}finally{g.restore();}}
   };
   window.CerebraLightPillar={draw,defaults,kit,reference:'DavidHDev/react-bits/LightPillar',renderer:'shared-webgl',preview:'async-readback'};
 })();

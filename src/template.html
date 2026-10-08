@@ -9238,7 +9238,7 @@ const LINE_UI = [
   { k: 'cap', label: 'Ends', type: 'select', opts: [['round', 'Round'], ['butt', 'Flat'], ['dot', 'Dots'], ['arrow', 'Arrow']], def: 'round' },
   { k: 'bow', label: 'Curve (bow)', type: 'range', min: -1, max: 1, step: .05, def: 0 },
 ];
-const linePref = k => 'l' + k[0].toUpperCase() + k.slice(1), lineMoves = st => st.type === 'line' && !!st.motion && st.motion !== 'none';
+const linePref = k => 'l' + k[0].toUpperCase() + k.slice(1), lineMoves = st => st.type === 'laser' || (st.type === 'line' && !!st.motion && st.motion !== 'none');
 // Points along a line from A to B (screen px) at clock time t; k scales px-based values (amplitude) when exporting; plk(st) = when it was last plucked.
 const lineGeom = (st, A, B, t, plk, k = 1) => {
   const dx = B[0] - A[0], dy = B[1] - A[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L, N = clamp(Math.round(L / (6 * k)), 12, LINE_MAXPTS), mo = st.motion || 'none', amp = (st.amp || 0) * k, f = st.freq || 3, sp = st.speed || 1, bow = (st.bow || 0) * L * .5;
@@ -10710,7 +10710,7 @@ class CoreStudio {
     return t.strokes.map(o => ({ ...o, abs: o.pts.map(([u, v]) => [left + u * k, top + v * kh]) }));
   }
   strokePad(a) {
-    let pd = a.size; if (a.type === 'line') { const L = Math.hypot(a.abs[1][0] - a.abs[0][0], a.abs[1][1] - a.abs[0][1]); pd += (lineMoves(a) ? (a.amp || 0) * 1.4 + a.size : 0) + Math.abs(a.bow || 0) * L * .55 + (a.cap === 'arrow' ? a.size * 4.5 : a.cap === 'dot' ? a.size * 1.5 : 0); }
+    let pd = a.type === 'laser' ? a.size * 10 : a.size; if (a.type === 'line') { const L = Math.hypot(a.abs[1][0] - a.abs[0][0], a.abs[1][1] - a.abs[0][1]); pd += (lineMoves(a) ? (a.amp || 0) * 1.4 + a.size : 0) + Math.abs(a.bow || 0) * L * .55 + (a.cap === 'arrow' ? a.size * 4.5 : a.cap === 'dot' ? a.size * 1.5 : 0); }
     return pd;
   }
   // Rewrite a layer from absolute points (new box around everything) and keep the history / layers panel in step.
@@ -10803,7 +10803,7 @@ class CoreStudio {
     const cv = this._mcv && this._mcv.get(it); if (!cv) return; const w = it.el.offsetWidth, h = it.el.offsetHeight, d = Math.min(devicePixelRatio || 1, 2);
     if (cv.width !== Math.round(w * d) || cv.height !== Math.round(h * d)) { cv.width = Math.round(w * d); cv.height = Math.round(h * d); }
     const g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, w, h);
-    (it.strokes || []).forEach(st => { if (lineMoves(st)) { g.globalAlpha = st.opacity; this.lineCanvas(g, it, st, w, h, 0, 0, 1, this.lineT || 0); } });
+    (it.strokes || []).forEach(st => { if (lineMoves(st)) { g.globalAlpha = st.opacity; if (st.type === 'laser') window.CerebraLaserPen?.draw(g,it,st,w,h,0,0,1,this.lineT || 0,true); else this.lineCanvas(g, it, st, w, h, 0, 0, 1, this.lineT || 0); } });
   }
   lineLoop() {
     this.lineT = 0; this._plk = this._plk || new Map(); let last = performance.now(), acc = 0, cost = 0;
@@ -10816,7 +10816,7 @@ class CoreStudio {
       this._movers.forEach(it => {
         if (!this.items.includes(it)) { this._movers.delete(it); return; } if (this.isHid(it)) return;
         // a plucked string that has settled (and is not set to repeat) needs one last frame, then no more work until it is plucked again
-        const calm = it.strokes.every(st => !lineMoves(st) || (st.motion === 'pluck' && !(st.every > 0) && this.lineT - this.plucked(st) > 7 / (st.damp || 2.5)));
+        const calm = it.strokes.every(st => !lineMoves(st) || (st.type === 'laser' && (st.laser?.on === false || st.laser?.speed === 0)) || (st.motion === 'pluck' && !(st.every > 0) && this.lineT - this.plucked(st) > 7 / (st.damp || 2.5)));
         if (calm) { if (this._rest.has(it)) return; this._rest.add(it); } else this._rest.delete(it);
         this.drawMoving(it);
       });
@@ -10873,7 +10873,7 @@ class CoreStudio {
     if (it.kind === 'stroke' && it.strokes) {
       svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
       this.ensureMcv(it);
-      const sp = st => st.type === 'line' ? (lineMoves(st) ? '' : this.lineSvg(it, st, w, h)) : `<path d="${this.strokeD(it, w, h, 0, 0, st.pts)}" fill="none" stroke="${st.color}" stroke-width="${st.size}" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${this.dashArr({ lineW: st.size, dash: st.dash }).join(' ')}" opacity="${st.opacity}"/>`;
+      const sp = st => st.type === 'laser' ? '' : st.type === 'line' ? (lineMoves(st) ? '' : this.lineSvg(it, st, w, h)) : `<path d="${this.strokeD(it, w, h, 0, 0, st.pts)}" fill="none" stroke="${st.color}" stroke-width="${st.size}" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${this.dashArr({ lineW: st.size, dash: st.dash }).join(' ')}" opacity="${st.opacity}"/>`;
       const base = it.strokes.filter(x => !x.clip), clip = it.strokes.filter(x => x.clip);
       const am = clip.length ? `<mask id="al${it.id}" maskUnits="userSpaceOnUse" x="0" y="0" width="${w}" height="${h}">${base.map(st => `<path d="${this.strokeD(it, w, h, 0, 0, st.pts)}" fill="none" stroke="#fff" stroke-width="${st.size}" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}</mask>` : '';
       svg.innerHTML = `<defs>${mk}${am}</defs>${wrapO}${base.map(sp).join('')}${clip.length ? `<g mask="url(#al${it.id})">${clip.map(sp).join('')}</g>` : ''}${wrapC}<path class="st-guide" d="${this.strokeD(it, w, h)}"/>`;
@@ -10916,7 +10916,7 @@ class CoreStudio {
       KIT[it.kit].draw(g, it, x, y, w, h, k); g.restore(); return; }
     if (it.kind === 'stroke' && it.strokes) {
       g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
-      const one = (c, st) => { if (st.type === 'line') { c.save(); c.globalAlpha = st.opacity * (it.alpha ?? 1); this.lineCanvas(c, it, st, w, h, x, y, k, this.lineT || 0); c.restore(); return; } c.globalAlpha = st.opacity * (it.alpha ?? 1); c.strokeStyle = st.color; c.lineWidth = st.size * k; c.setLineDash(this.dashArr({ lineW: st.size, dash: st.dash }).map(v => v * k)); c.stroke(new Path2D(this.strokeD(it, w, h, x, y, st.pts))); };
+      const one = (c, st) => { if (st.type === 'laser' || st.type === 'line') { c.save(); c.globalAlpha = st.opacity * (it.alpha ?? 1); if(st.type === 'laser') window.CerebraLaserPen?.draw(c,it,st,w,h,x,y,k,this.lineT || 0,false); else this.lineCanvas(c, it, st, w, h, x, y, k, this.lineT || 0); c.restore(); return; } c.globalAlpha = st.opacity * (it.alpha ?? 1); c.strokeStyle = st.color; c.lineWidth = st.size * k; c.setLineDash(this.dashArr({ lineW: st.size, dash: st.dash }).map(v => v * k)); c.stroke(new Path2D(this.strokeD(it, w, h, x, y, st.pts))); };
       const base = it.strokes.filter(q => !q.clip), clip = it.strokes.filter(q => q.clip); base.forEach(st => one(g, st));
       if (clip.length) {
         const W = g.canvas.width, H = g.canvas.height, t = document.createElement('canvas'); t.width = W; t.height = H; const tg = t.getContext('2d'); tg.lineCap = 'round'; tg.lineJoin = 'round'; clip.forEach(st => one(tg, st));
@@ -11591,7 +11591,9 @@ class CoreStudio {
   }
   drawKit(it, w, h) {
     const c = it.el.querySelector('canvas.st-kitc'); if (!c) return;
-    const d0 = this.kitScale(), d = it.mOn ? Math.max(.6, Math.min(d0, this.lite ? 1 : 1.5, Math.sqrt((this.lite ? .5e6 : 1.5e6) / Math.max(1, w * h)))) : d0, W = Math.max(1, Math.round(w * d)), H = Math.max(1, Math.round(h * d));
+    const selected = it === this.sel, d0 = selected && !this.lite ? Math.min(devicePixelRatio || 1, 2) : this.kitScale();
+    const budget = it.mOn ? this.lite ? .5e6 : selected ? 4e6 : 1.5e6 : this.lite ? 4e6 : 8e6;
+    const d = Math.min(d0, it.mOn && !selected ? this.lite ? 1 : 1.5 : d0, Math.sqrt(budget / Math.max(1, w * h)), 4096 / Math.max(1,w,h)), W = Math.max(1, Math.round(w * d)), H = Math.max(1, Math.round(h * d));
     if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
     const g = c.getContext('2d'); g.clearRect(0, 0, W, H); g.globalAlpha = 1; KIT_LOW = this.lite || (!!this._kitBusy && it !== this.sel); KIT_PREVIEW = !!it.mOn && !this.app.reduced; try { KIT[it.kit].draw(g, it, 0, 0, W, H, d); } finally { KIT_LOW = false; KIT_PREVIEW = false; } c.style.opacity = it.opacity ?? 1;
     if (!it.p?.font || (this._fontOk && this._fontOk.has(it.p.font))) return;

@@ -67,7 +67,8 @@ function hash33(v) {
     draw(g,it,x,y,w,h,k){
       const p={...defaults,...it.p},M=kitM(it),t=M.a?Math.floor(M.t*clamp(p.speed,0,3)*M.a*30)/30:0;
       const preview=typeof KIT_PREVIEW!=='undefined'&&KIT_PREVIEW;
-      const scale=Math.min((preview?1024:2048)/Math.max(w,h),1),W=Math.max(8,Math.round(w*scale)),H=Math.max(8,Math.round(h*scale));
+      const selected=it===window.__cerebra?.studio?.sel&&!window.__cerebra.studio.lite,limit=preview?(selected?2048:1024):4096;
+      const scale=Math.min(limit/Math.max(w,h),Math.sqrt((preview?4e6:8e6)/Math.max(1,w*h)),1),W=Math.max(8,Math.round(w*scale)),H=Math.max(8,Math.round(h*scale));
       const key=JSON.stringify([p,it.fill,W,H,Math.floor(t*30),M.a]);let frames=cache.get(it);if(!frames)cache.set(it,frames=new WeakMap());let c=frames.get(g);
       if((!c||c.key!==key)&&!(preview&&c?.pending)){
         const a=gpu||init();if(!a)return;
