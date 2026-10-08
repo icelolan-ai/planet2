@@ -108,3 +108,9 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Controls: colour, amplitude (source default 1), distance (0), plus Studio additions Start time (offset of the source clock) and Pointer X/Y (the source's smoothed pointer value, static in Studio; source "mouse interaction" follow is not exposed because the Kit loop has no pointer feed and it would disturb selection). Native Motion drives `iTime` (default amount = 1x source clock). Preview render caps 960 (selected)/512 px, 1 MP.
 - Earlier "mobile check failing" was a test sampling artifact (hash ignoring alpha/colour); fixed in the fixture. Tests (headless Chromium emulation): Kit list entry, pixels drawn, every control changes the output and restores, Undo/Redo, snapshot restore, 1x export size, no page errors at 1440x900, 390x844, 844x390, 820x1180. Software-GL frame times: p50 ~180-300 ms vs 83 ms without it (shader is heavy by design; no hitches), real GPU untested.
 - Not done: Aero Shards (2000-line vgpu source). Live check pending the merge.
+
+## 2026-10-08 Asia/Bangkok — Claude — Threads Kit released
+
+- PR #334 merged (merge `77c4a9588044c083b63ccb1ad8725102b8edcbc3`), CI `build` succeeded, live bundle `assets/app.e44c6cd750.js` on https://icelolan-ai.github.io/planet2/.
+- Live check (headless Chromium emulation): Threads in the Kit list, draws, every control changes output, Undo/Redo, restore, export size at 1440x900 and 390x844 — PASS, no page errors. Real-GPU smoothness untested.
+- Pending: Aero Shards only (large vgpu source; not started).
