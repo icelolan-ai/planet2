@@ -8225,7 +8225,7 @@ class WorldAtelier {
       const dy = e.clientY - swipe.y, dx = e.clientX - swipe.x;
       if (!swipe.dragging && Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx) * 1.2) { swipe.dragging = true; this.choice.setPointerCapture(e.pointerId); this.choice.classList.add('is-dragging'); }
       if (!swipe.dragging) return;
-      if (this.choice.classList.contains('gateway-balanced')) this.paintGateway(swipe.progress - dy / Math.max(160, this.choice.clientHeight * .55));
+      if (this.choice.classList.contains('gateway-balanced')) this.paintGateway(swipe.progress - dy / Math.max(160, this.choice.clientHeight * .55), true);
       if (!this.choice.classList.contains('gateway-balanced')) { const split = Math.max(15, Math.min(84, swipe.split + dy / this.choice.clientHeight * 100)); this.choice.style.setProperty('--s', `${split}%`); }
     });
     const finishSwipe = (e, cancelled = false) => {
@@ -8233,8 +8233,14 @@ class WorldAtelier {
       const state = swipe; swipe = null;
       this.choice.classList.remove('is-dragging'); this.choice.style.removeProperty('--s');
       if (this.choice.hasPointerCapture(e.pointerId)) this.choice.releasePointerCapture(e.pointerId);
-      if (!state.dragging) { this.selectRoute(state.route); return; }
+      if (!state.dragging) { if (!this.choice.classList.contains('gateway-balanced')) this.selectRoute(state.route); return; }
       suppressClickUntil = performance.now() + 450;
+      // Keep the position reached by the finger. A short swipe is not a command
+      // to animate all the way to the next card; another swipe continues here.
+      if (this.choice.classList.contains('gateway-balanced')) {
+        this.paintGateway(cancelled ? state.progress : this.gatewayMotion.value, true);
+        return;
+      }
       const dy = e.clientY - state.y, threshold = Math.min(60, this.choice.clientHeight * .07);
       this.selectRoute(!cancelled && Math.abs(dy) >= threshold ? (dy < 0 ? 'orbit' : 'atelier') : state.route);
     };
@@ -8246,12 +8252,8 @@ class WorldAtelier {
       if (this.choice.classList.contains('gateway-balanced')) {
         e.preventDefault(); e.stopPropagation(); this.gatewayTween?.kill();
         const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? this.choice.clientHeight : 1);
-        const now = performance.now();
-        if (now - wheelAt > 180 || Math.sign(wheelAmount) !== Math.sign(delta)) wheelAmount = 0;
-        wheelAt = now; wheelAmount += delta;
-        this.paintGateway((this.gatewayMotion?.value || 0) + delta / Math.max(240, this.choice.clientHeight * .65));
+        this.paintGateway((this.gatewayMotion?.value || 0) + delta / Math.max(240, this.choice.clientHeight * .65), true);
         clearTimeout(this.gatewayWheelTimer);
-        this.gatewayWheelTimer = setTimeout(() => { const route = Math.abs(wheelAmount) >= 35 ? (wheelAmount > 0 ? 'orbit' : 'atelier') : this.gatewayMotion.value >= .5 ? 'orbit' : 'atelier'; wheelAmount = 0; this.selectRoute(route); }, 150);
         return;
       }
       e.preventDefault(); e.stopPropagation(); const now = performance.now(); if (now < wheelLock) return;
@@ -8349,7 +8351,9 @@ class WorldAtelier {
     this.choice.hidden = false; document.body.classList.add('route-choose'); document.documentElement.classList.add('route-lock');
     document.querySelector('main').inert = true;
     this.app.scroll.jumpTo(0);
-    this.selectRoute('atelier'); this.choice.querySelector('[data-enter="atelier"]').focus({ preventScroll: true });
+    this.selectRoute('atelier');
+    const button = this.choice.querySelector('[data-enter="atelier"]');
+    (button.disabled ? this.choice : button).focus({ preventScroll: true });
     this.choice.scrollTop = 0;
   }
   selectRoute(route) {
@@ -8360,7 +8364,7 @@ class WorldAtelier {
       const target = route === 'orbit' ? 1 : 0;
       if (!this.gatewayMotion) this.gatewayMotion = { value: target };
       this.paintGateway(this.gatewayMotion.value);
-      const commit = () => { this.selectedRoute = route; this.choice.dataset.sel = route; this.choice.querySelectorAll('[data-route]').forEach(card => { const selected = card.dataset.route === route; card.classList.toggle('is-selected', selected); card.classList.remove('is-animating'); card.setAttribute('aria-current', String(selected)); card.querySelector('[data-enter]').disabled = !selected; }); };
+      const commit = () => this.commitGateway(route);
       if (this.app.reduced || Math.abs(target - this.gatewayMotion.value) < .001) { this.paintGateway(target); commit(); }
       else this.gatewayTween = gsap.to(this.gatewayMotion, { value: target, duration: .7, ease: 'power2.out', onUpdate: () => this.paintGateway(this.gatewayMotion.value), onComplete: commit });
       return;
@@ -8374,7 +8378,16 @@ class WorldAtelier {
       if (selected) { void card.offsetWidth; card.classList.add('is-animating'); }
     });
   }
-  paintGateway(value) {
+  commitGateway(route) {
+    this.selectedRoute = route; this.choice.dataset.sel = route;
+    this.choice.querySelectorAll('[data-route]').forEach(card => {
+      const selected = card.dataset.route === route;
+      card.classList.toggle('is-selected', selected); card.classList.remove('is-animating');
+      card.setAttribute('aria-current', String(selected));
+      card.querySelector('[data-enter]').disabled = !selected || this.choice.classList.contains('is-dragging');
+    });
+  }
+  paintGateway(value, selectAtPosition = false) {
     const progress = Math.max(0, Math.min(1, value));
     this.gatewayMotion ||= { value: progress }; this.gatewayMotion.value = progress;
     this.choice.classList.add('gateway-smooth');
@@ -8388,6 +8401,7 @@ class WorldAtelier {
       const button = card.querySelector('[data-enter]'); const focused = document.activeElement === button; button.disabled = open < .999;
       if (focused && button.disabled) this.choice.focus({ preventScroll: true });
     });
+    if (selectAtPosition) this.commitGateway(progress === .5 ? this.selectedRoute : progress > .5 ? 'orbit' : 'atelier');
   }
   launch(route) {
     if (this.entering || this.choice.hidden) return;
@@ -8454,7 +8468,9 @@ class WorldAtelier {
   }
   back() {
     this.leave(); this.choice.hidden = false; document.body.classList.add('route-choose');
-    this.selectRoute('none'); this.choice.querySelector('[data-enter="atelier"]').focus({ preventScroll: true });
+    this.selectRoute('none');
+    const button = this.choice.querySelector('[data-enter="atelier"]');
+    (button.disabled ? this.choice : button).focus({ preventScroll: true });
   }
   orbit() {
     this.pending = false; this.leave(); this.choice.hidden = true; document.body.classList.remove('route-choose');
