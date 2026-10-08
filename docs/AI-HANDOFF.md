@@ -1,5 +1,29 @@
 # AI Handoff Guide
 
+## Latest handoff — 2026-10-08 — Codex to Claude
+
+Read this section first. It supersedes older pending/release statements below. User requested a persistent record after every completed task/fix and safe AI switching. Follow `../AGENTS.md` and `AI-WORK-LOG.md`.
+
+### Released
+
+PR #323 is merged and deployed: https://github.com/icelolan-ai/planet2/pull/323. Liquid Ether/Light Pillar are Image > Animated background presets, Kit has four categories, Design controls are grouped and Motion is responsive. Final verified generated main: `4d553369aadda382d5e934896b7505df39c69311` / `app.fc1b59c068.js`. Local and deployed desktop/mobile checks passed; physical Safari/FPS untested.
+
+### Unfinished checkpoint — resume instead of reimplementing
+
+Branch `feat/native-line-sidebar-20261008` contains Line Sidebar for guide, Studio headings and web rail, wrapper-safe localization/catalogue, toolbar caption wrapping and a native Glide scroll command fix. Base is the generated release above. This is NOT merged/deployed/completed. See `AI-WORK-LOG.md` for files, upstream blob references and actual QA status.
+
+The desktop UI fixture previously failed at rail mouse/keyboard section navigation: browser smooth scrolling raced native Glide idle snap. The final `Glide.to` change has passed build/syntax/diff only; UI retest remains. Guide/Studio checks reached before this failure must not be presented as a full four-viewport pass.
+
+### Claude takeover
+
+1. Fetch remote branches, inspect the checkpoint PR/diff and current work log. Claim this task in the log before editing; Codex will stop product edits after publishing this handoff.
+2. Resume `feat/native-line-sidebar-20261008`, preserving its four source files. Do not start a duplicate implementation or merge the checkpoint before QA. Rebase/merge current main carefully if necessary; do not force-push another AI's work.
+3. Build `python3 src/build_web.py`. Run `docs/qa/line-sidebar-ui.cjs` against a local HTTP server (requires externally installed Playwright/Chromium; see script configuration). It covers 1440x900, 390x844, 820x1180 and 844x390.
+4. Verify section rail mouse and focused Enter reach sections 1/2; check normal wheel, touch, reduced-motion fallback, resize, hidden/reopen, guide/Studio EN/TH/folding and no overflow. Review screenshots. The fixture freezes 3D after initial entry; also test normal rendering without that fixture override.
+5. Complete CI, merge and final generated Pages desktop/mobile checks before claiming release. Record commit, PR, deployed hash and tests in BOTH history and handoff when done.
+6. Additional new Kit objects, including Threads/Aero Shards, remain pending and unimplemented here. Implement separate source-faithful parts through existing controllers/rendering, never new renderers/RAF or unreviewed approximate prototypes.
+
+
 ## 2026-10-08 — menu effects move to Studio
 
 - Supersedes page ownership below: launch/guide have no Crystal/Backdrop canvas, Customize or effect clock. Rotating Text remains. `studio-scene-effects.js` registers original Crystal Ball and Liquid Ether in native KIT; explicit build order precedes the registry. Existing Light Pillar gains Design > Fit as background, as do both new tools. Ether defaults to the back; restored layer order is preserved.
