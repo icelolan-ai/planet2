@@ -115,6 +115,7 @@ fx_order = [
     'meta-balls.js',
     'light-pillar.js',
     'threads.js',
+    'aero-shards.js',
     'liquid-ether.js',
     'crystalized-ball.js',
     'studio-scene-effects.js',
