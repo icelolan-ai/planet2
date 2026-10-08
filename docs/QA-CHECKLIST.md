@@ -69,6 +69,8 @@ Verify:
 - Reset restores expected defaults without changing the wrong Surface Style.
 
 ## Drawing
+- Laser Flow Pen: actual mouse/touch draw, Pen effect settings panel bounds, colour/thickness/opacity and source appearance controls; apply to an existing drawing; symmetry, erase/Undo/Redo, reset, project roundtrip and canvas export. Still/reduced-motion export must match the displayed frozen frame.
+- Enlarged Kit: selected/unselected and lite raster budgets, stopped/export shader resolution, async moving transport and no new renderer/RAF. Check detailed edges at native size as well as target dimensions.
 - Pen
 - Line
 - Eraser

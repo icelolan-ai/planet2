@@ -36,6 +36,7 @@ Rule: one floating menu at a time. Starting a drawing gesture must clear obstruc
 
 ### Drawing
 - `src/effects/s7-brush.js` — Tentacle, Branch and Pen/Line symmetry.
+- `src/effects/laser-pen.js` — Laser Flow ribbon on native Pen strokes; shares Laser shader/renderer and native moving-stroke clock, history and export.
 
 Drawing additions must use the existing Studio stroke layer and undo/save path rather than a second canvas-state system.
 

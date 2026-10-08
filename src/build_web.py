@@ -118,6 +118,7 @@ fx_order = [
     'diagnostics.js',
     'studio-menu-fix.js',
     's7-brush.js',
+    'laser-pen.js',
     'nava-water.js',
     'water-collision.js',
     's9-core.js',
