@@ -5,7 +5,7 @@
 Read this first; it supersedes the Codex section below where they differ. Rules: `../AGENTS.md`, `AI-WORK-LOG.md`.
 
 - **Animated Background (Claude, branch `feat/animated-background-20261008`)**: Liquid Ether / Light Pillar are a real `bg:true` background layer (full frame, bottom of stack, not selectable/draggable/zoomable from the canvas, exported full frame, Background list with Customize/On-Off/Remove, grouped Customize, legacy projects migrated). Details, source comparison and tests: see the work-log entry of the same time. Status: RELEASED — PR #327 merged, live bundle `app.a11a652b97.js`, desktop/mobile live fixture passed (emulation).
-- **Line Sidebar (PR #325)** is claimed by Claude but not yet continued; it must be merged with main after the background PR (both touch `template.html`). The docs claim commit is on the branch. QA fixture `docs/qa/line-sidebar-ui.cjs` exists only on that branch.
+- **Line Sidebar (PR #325)**: Claude merged main in and verified it (see work log 22:00 entry); release status is recorded after merge/live check. Fixtures: `docs/qa/line-sidebar-ui.cjs`, `docs/qa/line-sidebar-live-ui.cjs`.
 - Kit objects (Threads/Aero Shards) not started.
 - Generated `index.html`/`assets/` are produced by CI (`build-generated.yml`); do not commit local builds.
 
