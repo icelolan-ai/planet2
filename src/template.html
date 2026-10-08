@@ -8599,6 +8599,7 @@ const KIT_DASH = [['solid', 'Solid'], ['dashed', 'Dashed'], ['dotted', 'Dotted']
 const KIT = {
   laserFlow: window.CerebraLaser.kit,
   metaBalls: window.CerebraMetaBalls.kit,
+  lightPillar: window.CerebraLightPillar.kit,
   glassLabel: {
     label: 'Glass label', defaults: { title: 'ORBITAL DATA', sub: 'Frosted panel · live feed', font: 'mono', weight: '500', size: 15, radius: .16, blur: 14, tint: .14, border: .45, brackets: true, pointer: 'none', pointLen: .22, dot: true, lw: 1.2, align: 'left', caps: false, subK: .8, shine: 0 }, thumbK: .6, noShuffle: true, glass: true, geom: GLASS.geom, size: [.4, .18],
     ui: [{ k: 'title', t: 'text', label: 'Title' }, { k: 'sub', t: 'text', label: 'Subtitle' }, { k: 'font', t: 'select', label: 'Font', opts: KIT_FONT_OPTS }, { k: 'weight', t: 'select', label: 'Weight', opts: KIT_WEIGHTS }, { k: 'size', t: 'range', label: 'Text size', min: 8, max: 60, step: 1, unit: 'px' },

@@ -14,6 +14,8 @@ is still memory-bounded. Software browser QA does not promise physical-device FP
 
 ## Part 1 — paths and guide
 
+Light Pillar Studio correction, 8 October: Kit now uses the upstream shader and its colour/intensity/rotation/glow/width/height/noise/quality/light-mode controls. Native blend, opacity, Motion/timing, reset and project/capture integration apply. Async moving readback and bounded raster sizes share the existing renderer/Kit loop. Interactive pointer tilt is omitted in Studio to keep authored/exported frames stable. The page backdrop stays on its existing independent page clock.
+
 Correction 8 October: Light Pillar page backdrop now uses the actual upstream
 shader through the shared stage renderer, with all three source quality profiles
 and matching colour/shape/light controls. Page quality is bounded to 256/384/512px;
