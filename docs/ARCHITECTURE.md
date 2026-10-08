@@ -99,6 +99,9 @@ After the generated build lands, validate the deployed GitHub Pages site, not on
 
 Do not perform a whole-app rewrite. Extract one feature at a time, preserve its public state/API, build, then run the full QA checklist before moving to the next feature.
 
+### Page Crystalized Ball
+- `crystalized-ball.js` owns original electric/dust/MRT stirring/composite passes through a small Three bridge. `studio-reactbits-pages.js` owns session Customize/input/native clock. Never create another renderer/RAF or authored Studio layer for this page art. Preserve target viewport, async moving readback, stale-frame rejection, reduced/hidden pause and disposal of superseded particle buffers. Page and Studio Full Reset restore defaults.
+
 ### Menu Liquid Ether
 - `src/effects/liquid-ether.js` owns only page-local fluid targets and source solver/palette passes. Reuse the stage renderer; `studio-reactbits-pages.js` owns the page clock, visibility, pointer input and session-only Customize.
 - `page-backdrops.js` routes Liquid Ether, Light Pillar and the separately labelled legacy Colour flow. No Studio/Lab state, extra renderer or independent RAF. Keep bounded resolution, asynchronous presentation, complete renderer-state restoration and disposal on Off/Reset/style change.

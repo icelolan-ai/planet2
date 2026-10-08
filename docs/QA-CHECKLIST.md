@@ -150,6 +150,10 @@ Record:
 - Same-size native preview/export agree within one Canvas2D rounding byte. Eraser, symmetry, alpha lock/masks and saved project metadata still use the native Drawing owner.
 - Drawing reset and object Design reset restore all Laser fields. Older saved strokes missing the extra fields render with defaults. Stopped/speed-zero strokes are visible on their first frame.
 
+## Crystalized Ball page art
+- Compare equal-size upstream field+dust+composite and check DPR2 particle/edge placement. Exercise real pointer/touch rim heat/stir/kick, all appearance sliders, count 0/40000, preset/motion/shape/speed/paused/interaction/intro, localization and reset on both pages. Bound panels at desktop/mobile/narrow/landscape and prevent editor gestures from switching routes.
+- Check at most one async read per moving state, reduced-motion/static manual update, Studio/hidden clock stop, superseded-buffer disposal and native Full Reset hook. Enter-only routing, Studio/Lab state and existing backdrops remain unaffected.
+
 ## Liquid Ether page backdrop
 - Backdrop > Liquid Ether renders fluid driven by actual mouse/touch and the source auto driver; Colour flow remains a separate legacy option.
 - Source palette/force/radius/resolution, viscosity/pressure, BFECC/bounce, timestep, auto timings and light mode controls reach the source solver. Contextual fields, numeric outputs and EN/Thai fit desktop/narrow panels.
