@@ -870,8 +870,15 @@
         renderer.autoClear=false;renderer.setScissorTest(false);renderer.setClearColor(0,0);
         if(mode.studio){
           state.auto.forceStop();
-          const first=state.frames===0,steps=first?6:reduced?0:1;
-          for(let n=0;n<steps;n++){const clock=first?n/30:t,phase=(mode.seed??7)*.013,angle=clock*a.autoSpeed*2+phase;state.Mouse.setNormalized(Math.sin(angle)*.6,Math.cos(angle*1.31)*.45);state.Mouse.isAutoActive=true;state.Mouse.autoIntensity=a.autoIntensity;state.Mouse.update();state.output.update();state.frames++;}
+          const first=state.frames===0,steps=first?6:reduced?0:1,now=performance.now();
+          // Studio drives the seeded auto path only while Auto animation is on and no pointer took over (source takeover/resume/ramp timings apply).
+          const driving=first||a.autoDemo&&now-state.manager.lastUserInteraction>=a.autoResumeDelay;
+          if(driving&&!state.driving)state.resumeFrom=now;state.driving=driving;
+          const ramp=first||!a.autoRampDuration||state.resumeFrom===undefined?1:Math.min(1,(now-state.resumeFrom)/(a.autoRampDuration*1000));
+          for(let n=0;n<steps;n++){
+            if(driving){const clock=first?n/30:t,phase=(mode.seed??7)*.013,angle=clock*a.autoSpeed*2+phase;state.Mouse.setNormalized(Math.sin(angle)*.6,Math.cos(angle*1.31)*.45);state.Mouse.isAutoActive=true;state.Mouse.autoIntensity=a.autoIntensity*ramp;}
+            else{state.Mouse.isAutoActive=false;state.Mouse.autoIntensity=a.autoIntensity;}
+            state.Mouse.update();state.output.update();state.frames++;}
           if(!steps)state.output.render();
         }else{if(!reduced)state.auto.update();else state.auto.forceStop();state.Mouse.update();state.output.update();state.frames++;}
         state.lastTime=t;state.key=key;state.dirty=false;
