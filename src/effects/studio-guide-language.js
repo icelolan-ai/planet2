@@ -2,7 +2,7 @@
    Translate application labels, never artwork, layer names, input values or saved state. */
 (() => {
   const labels = {
-    'Pen effect':'เอฟเฟกต์ปากกา','Pen effect settings':'ปรับแต่งเอฟเฟกต์ปากกา','Plain pen':'ปากกาปกติ','Animate Laser Flow':'เปิดการเคลื่อนไหว Laser Flow','Apply effect to selected drawing':'ใช้เอฟเฟกต์กับเลเยอร์เส้นที่เลือก',
+    'Laser Flow pen':'ปากกา Laser Flow','Edit current drawing':'ปรับเส้นในเลเยอร์ปัจจุบัน','Glow spread':'การกระจายแสง','Animation speed':'ความเร็วการเคลื่อนไหว','Fog speed':'ความเร็วหมอก','Beam fade':'การจางของลำแสง','Pen effect':'เอฟเฟกต์ปากกา','Pen effect settings':'ปรับแต่งเอฟเฟกต์ปากกา','Plain pen':'ปากกาปกติ','Animate Laser Flow':'เปิดการเคลื่อนไหว Laser Flow','Apply effect to selected drawing':'ใช้เอฟเฟกต์กับเลเยอร์เส้นที่เลือก',
     'Top colour':'สีด้านบน','Bottom colour':'สีด้านล่าง','Rotation speed':'ความเร็วการหมุน','Glow amount':'แสงฟุ้ง','Pillar width':'ความกว้างเสาแสง','Pillar height':'ความสูงลวดลาย','Noise intensity':'ความเข้มเม็ดฟิล์ม','Pillar rotation':'มุมเสาแสง','Light mode':'โหมดสว่าง','Quality':'คุณภาพ','Low':'ต่ำ','Medium':'กลาง','High':'สูง',
     'Reset Design':'คืนค่าการออกแบบ','Reset Design & Motion':'คืนค่าการออกแบบและการเคลื่อนไหว','Reset Design & Kit settings':'คืนค่าการออกแบบและ Kit','Close Design':'ปิดการปรับแต่ง',
     'Full screen':'เต็มหน้าจอ','Exit full screen':'ออกจากเต็มหน้าจอ',
