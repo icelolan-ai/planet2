@@ -7,7 +7,7 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Owner of both items below: Claude (took over from Codex on 2026-10-08; Codex released ownership at 20:14 Asia/Bangkok).
 - **Task A: DONE and live** (PR #327, see entry below). 
 - **Task B: DONE and live** (PR #325 merged, see entry below).
-- Active (Claude): UI overlap guard, background smoothness, merged Mood & poster presets menu — branch `fix/ui-overlap-bg-smooth-20261008` (files: `src/template.html`, `src/effects/liquid-ether.js`, `src/effects/light-pillar.js`, `src/effects/studio-guide-language.js`). Parked checkpoint: Threads Kit on `feat/kit-threads-20261008` (source shader port; controls verified on desktop/tablet, mobile control check pending, not merged). Next: new Kit objects (Threads/Aero Shards) — claim in this section before editing.
+- No active edit (overlap/smoothness/menu fix released). Parked checkpoint: Threads Kit on `feat/kit-threads-20261008` (source shader port; controls verified on desktop/tablet, mobile control check pending, not merged). Next: new Kit objects (Threads/Aero Shards) — claim in this section before editing.
 - Kit objects (Threads/Aero Shards) are not started; wait until A and B are closed.
 
 ## 2026-10-08 — Codex — PR #323 released
@@ -95,6 +95,12 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Overlap: a post-layout guard in `layoutTrays` pushes a stacked tray below the previous one if their real rectangles overlap, shrinks bottom trays that run under the side rails and caps rails (scrollable) when needed, and a ResizeObserver re-lays out when Layers/panel change size. Reproduced real overlaps at 320x640 (Layers over the Add rail) and 844x390 (Add/Decor rails over dock and Layers); none remain in the 1440/1024/390/844x390 checks. The exact user scenario (settings panel under an expanded Layers) was not reproduced locally; the guard covers any size growth after layout.
 - Menu: "Mood" and "Poster presets" are one section "Mood & poster presets" with two labelled blocks (Mood: grid + Random look; Poster presets: grid); the Mood block is still hidden when no planet is shown, without hiding poster presets. Thai label added.
 - Tests: `animated-background-ui.cjs` PASS 1440x900, 390x844, 844x390 (local, emulation); tray overlap probe at 6 viewports; screenshots reviewed. Live check pending the merge.
+
+## 2026-10-08 Asia/Bangkok — Claude — overlap / smoothness / merged presets menu released
+
+- PR #332 merged (merge `b19557850d8aa4463fd328f2c731d043485abd0c`), CI `build` succeeded, live bundle `assets/app.8697e2ab5d.js`.
+- Live checks (headless Chromium emulation): `animated-background-ui.cjs` PASS 1440x900 and 390x844; tray overlap probe with Layers open and a background added: no overlaps at 844x390, 320x640, 1440x900. Smoothness numbers are software-GL proxies; real-device FPS, the user's exact overlap screenshot scenario and physical Safari/iOS remain unverified.
+- Pending: Threads Kit checkpoint (`feat/kit-threads-20261008`), Aero Shards.
 
 ## 2026-10-08 Asia/Bangkok — Claude — Threads Kit (PR pending)
 
