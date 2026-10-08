@@ -10,6 +10,8 @@ PR #323 is merged and deployed: https://github.com/icelolan-ai/planet2/pull/323.
 
 ### Unfinished checkpoint — resume instead of reimplementing
 
+Published checkpoint https://github.com/icelolan-ai/planet2/pull/325, commit `650012ac6660bac396cb06de025d43f61f7f86f4`. Codex ownership released at 2026-10-08 20:14 Asia/Bangkok; awaiting Claude claim. Shared rules/history merged in PR #324.
+
 Branch `feat/native-line-sidebar-20261008` contains Line Sidebar for guide, Studio headings and web rail, wrapper-safe localization/catalogue, toolbar caption wrapping and a native Glide scroll command fix. Base is the generated release above. This is NOT merged/deployed/completed. See `AI-WORK-LOG.md` for files, upstream blob references and actual QA status.
 
 The desktop UI fixture previously failed at rail mouse/keyboard section navigation: browser smooth scrolling raced native Glide idle snap. The final `Glide.to` change has passed build/syntax/diff only; UI retest remains. Guide/Studio checks reached before this failure must not be presented as a full four-viewport pass.
