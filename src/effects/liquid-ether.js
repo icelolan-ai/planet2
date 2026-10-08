@@ -870,7 +870,12 @@
         renderer.autoClear=false;renderer.setScissorTest(false);renderer.setClearColor(0,0);
         if(mode.studio){
           state.auto.forceStop();
-          const first=state.frames===0,coarseNow=matchMedia('(pointer:coarse)').matches,steps=first?(coarseNow?16:30):reduced?0:state.frames<200?4:2,now=performance.now();
+          const first=state.frames===0,coarseNow=matchMedia('(pointer:coarse)').matches,now=performance.now();
+          // Load shedding: when page frames arrive late, run one sim step per frame and halve the solver iterations; recover when frames are on time again.
+          const gap=state.lastDrawAt?now-state.lastDrawAt:0;state.lastDrawAt=now;
+          if(gap>0){state.gapAvg=state.gapAvg?state.gapAvg*.85+gap*.15:gap;state.load=state.gapAvg>55?2:state.gapAvg>42?1:0;}
+          const steps=first?(coarseNow?16:30):reduced?0:state.load?1:state.frames<200?3:2;
+          {const shed=state.load===2,sim=state.output.simulation;sim.options.iterations_poisson=shed?Math.max(8,a.iterationsPoisson>>1):a.iterationsPoisson;sim.options.iterations_viscous=shed?Math.max(8,a.iterationsViscous>>1):a.iterationsViscous;}
           // Source AutoDriver ported to a seeded virtual clock: random targets inside the 0.2 margin, `autoSpeed` units/s, smoothstep ramp, 60 steps/s (two per 30 fps page frame; four while the first ~3 s of flow build up, so a fresh layer fills in quickly without one long blocking frame).
           // Studio drives it only while Auto animation is on and no pointer took over (source takeover/resume/ramp timings apply).
           const sim=state.sim||(state.sim=(()=>{let seed=((mode.seed??7)>>>0)||1;const rng=()=>{seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
