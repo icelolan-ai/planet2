@@ -10816,7 +10816,7 @@ class CoreStudio {
       this._movers.forEach(it => {
         if (!this.items.includes(it)) { this._movers.delete(it); return; } if (this.isHid(it)) return;
         // a plucked string that has settled (and is not set to repeat) needs one last frame, then no more work until it is plucked again
-        const calm = it.strokes.every(st => !lineMoves(st) || (st.motion === 'pluck' && !(st.every > 0) && this.lineT - this.plucked(st) > 7 / (st.damp || 2.5)));
+        const calm = it.strokes.every(st => !lineMoves(st) || (st.type === 'laser' && (st.laser?.on === false || st.laser?.speed === 0)) || (st.motion === 'pluck' && !(st.every > 0) && this.lineT - this.plucked(st) > 7 / (st.damp || 2.5)));
         if (calm) { if (this._rest.has(it)) return; this._rest.add(it); } else this._rest.delete(it);
         this.drawMoving(it);
       });
