@@ -5,7 +5,7 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 ## Current work / ownership
 
 - Owner of both items below: Claude (took over from Codex on 2026-10-08; Codex released ownership at 20:14 Asia/Bangkok).
-- **Task A (active, this change): real full-frame Animated Background** (Liquid Ether / Light Pillar). Branch `feat/animated-background-20261008` from main `d262704`. Files: `src/template.html`, `src/effects/studio-scene-effects.js`, `src/effects/liquid-ether.js`, `src/effects/light-pillar.js`, `src/effects/studio-guide-language.js`, `docs/qa/animated-background-ui.cjs`, docs.
+- **Task A: DONE and live** (PR #327, see entry below). 
 - **Task B (queued, separate PR): Line Sidebar.** Resume PR #325 / branch `feat/native-line-sidebar-20261008` (checkpoint `650012ac…`, plus Claude claim commit `5c0d2ef` merging main docs). Touches `src/effects/line-sidebar.js`, `studio-launch.js`, `template.html`, `build_web.py`. Task A also edits `template.html`; Task B must be rebased/merged onto main after Task A lands. No Line Sidebar product code was changed by Claude yet.
 - Kit objects (Threads/Aero Shards) are not started; wait until A and B are closed.
 
@@ -51,3 +51,9 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Validation actually run (headless Chromium software GL, device emulation, NOT physical iOS/Safari): build, `node --check`; fixture `docs/qa/animated-background-ui.cjs` at 1440x900, 390x844, 820x1180, 844x390 with the real unfrozen renderer: select/replace/re-select keeps values, geometry equals the viewport after rotating/resizing, canvas drag/click does not select or move it, zoom/scale/stage-shift keep it in frame, hide + Undo/Redo, snapshot restore, legacy-project migration, export 1x frame size, Thai manager text, no page errors. Control sweep (motion off, deterministic): every visible control changes pixels except those that need motion/pointer/light-mode; those were verified separately with motion on / real mouse moves (speed 0 stops Pillar, pulse moves, pointer on/off, Ether pointer, autoDemo on vs off).
 - Not tested: physical iPhone/iPad/Safari, hardware FPS, long video export. Live Pages check pending the merge.
 - Remaining: merge PR + live desktop/mobile check; then Task B (Line Sidebar PR #325); then new Kit objects.
+
+## 2026-10-08 21:30 Asia/Bangkok — Claude — Animated Background released
+
+- PR #327 merged (merge `0726e95a2961b3b14f17f633a872a68f78123a08`, source `53a3ad2`); CI `build` succeeded; generated main `af1ef9e`, live bundle `assets/app.a11a652b97.js` confirmed on https://icelolan-ai.github.io/planet2/.
+- Live check: `docs/qa/animated-background-ui.cjs` against the deployed site, headless Chromium device emulation (not physical devices), desktop 1440x900 and mobile 390x844 PASS (select/replace/keep values, frame-exact geometry, no canvas selection, zoom/shift, undo/redo, restore, legacy migration, export size, Thai, no page errors). Tablet 820x1180 and landscape 844x390 passed on the local build only.
+- Still pending: Line Sidebar (PR #325, Claude-owned; rebase/merge main first, rerun `line-sidebar-ui.cjs` and unfrozen checks), then new Kit objects. Physical Safari/iOS and hardware FPS untested.
