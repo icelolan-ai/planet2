@@ -26,7 +26,7 @@
       .cl-hero:has(.cl-crystal) .cl-art,.cl-hero:has(.cl-crystal) .cl-orbit{visibility:hidden}
       .cl-guide-head{position:relative;isolation:isolate}.cl-guide-head>.cl-crystal{width:170px;height:170px;right:30%;top:-30px;opacity:.45;z-index:-1}
       .cl-guide-head>div:not(.cl-crystal),.cl-guide-head input{position:relative;z-index:1}
-      @media(max-width:760px){.cl-hero>.cl-crystal{width:240px;height:240px;right:-75px;opacity:.65}.cl-guide-head>.cl-crystal{right:-65px;top:-10px;width:180px;height:180px;opacity:.3}}
+      @media(max-width:760px){.cl-hero>.cl-crystal{width:220px;height:220px;right:-25px;opacity:.65}.cl-guide-head>.cl-crystal{right:-35px;top:-10px;width:150px;height:150px;opacity:.3}}
       @media(max-height:620px){.cl-ready-prefix{font-size:13px;line-height:1.2}.cl-hero .cl-rotating-line{line-height:1.2}.cl-hero>.cl-crystal{width:140px;height:140px;right:0}}
     `;
     document.head.append(css);
@@ -87,30 +87,24 @@
       if(!active()) {animations.forEach(a=>a.cancel());animations=[];}
       if(previousGuide!==String(guideVisible)){previousGuide=String(guideVisible);}
     }
-    // A bounded Canvas2D adaptation of the reference's electric rim + dust.
-    // One scheduler, <=30fps, <=500 particles total, no extra WebGL contexts.
+    // Source electric rim / GPU dust, using this page's existing clock.
     const crystals=[];let frame=0,last=0,clock=0;
     function crystal(root, size, color) {
       const host=document.createElement('div');host.className='cl-crystal';host.setAttribute('aria-hidden','true');
       const canvas=document.createElement('canvas');host.append(canvas);root.append(host);
       const ctx=canvas.getContext('2d');if(!ctx){host.remove();return;}
-      let seed=913;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
-      const dust=Array.from({length:size},()=>({a:rand()*Math.PI*2,r:Math.sqrt(rand()),z:rand(),phase:rand()*6.28}));
-      const item={host,canvas,ctx,dust,color,x:0,y:0};crystals.push(item);
+      const item={host,canvas,ctx,settings:{...window.CerebraCrystalBall.defaults,color},x:0,y:0};crystals.push(item);
       new ResizeObserver(()=>{const dpr=Math.min(devicePixelRatio||1,1.5);canvas.width=Math.max(1,Math.round(host.clientWidth*dpr));canvas.height=Math.max(1,Math.round(host.clientHeight*dpr));draw(item,clock);}).observe(host);
     }
     function draw(item,t) {
-      const {canvas,ctx,dust,color}=item,w=canvas.width,h=canvas.height,cx=w/2,cy=h/2,R=Math.min(w,h)*.34;
-      ctx.clearRect(0,0,w,h);ctx.save();ctx.translate(cx,cy);
-      const haze=ctx.createRadialGradient(0,R*.28,0,0,0,R*1.4);haze.addColorStop(0,color+'22');haze.addColorStop(.65,color+'0c');haze.addColorStop(1,color+'00');ctx.fillStyle=haze;ctx.fillRect(-cx,-cy,w,h);
-      ctx.save();ctx.beginPath();ctx.arc(0,0,R*.97,0,Math.PI*2);ctx.clip();
-      for(const p of dust){const a=p.a+t*.07,pulse=.35+.65*(.5+.5*Math.sin(t*.9+p.phase)),x=Math.cos(a)*p.r*R+item.x*p.z*R*.04,y=Math.sin(a)*p.r*R*.85+R*.1+Math.sin(t*.35+p.phase)*R*.025;ctx.globalAlpha=(.2+p.z*.7)*pulse;ctx.fillStyle=p.z>.88?'#fff4fb':color;const s=(.7+p.z*1.3)*w/300;ctx.fillRect(x,y,s,s);}
-      ctx.restore();ctx.globalAlpha=1;ctx.shadowColor=color;ctx.shadowBlur=R*.075;
-      for(let strand=0;strand<3;strand++){ctx.beginPath();for(let i=0;i<=180;i++){const a=i/180*Math.PI*2,r=R*(1+.012*Math.sin(a*19+t*(1+strand*.2)+strand)+.007*Math.sin(a*47-t*.6+strand));const x=Math.cos(a)*r,y=Math.sin(a)*r;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.strokeStyle=strand===0?'#ffeaf5':color;ctx.globalAlpha=strand===0?.85:.5;ctx.lineWidth=(strand===0?.7:1.1)*w/300;ctx.stroke();}
-      ctx.shadowBlur=0;ctx.restore();
+      if(!active()||!item.host.getClientRects().length)return;
+      const dpr=Math.min(devicePixelRatio||1,2),w=item.host.clientWidth,h=item.host.clientHeight;
+      if(item.canvas.width!==Math.round(w*dpr)||item.canvas.height!==Math.round(h*dpr)){item.canvas.width=Math.max(1,Math.round(w*dpr));item.canvas.height=Math.max(1,Math.round(h*dpr));}
+      window.CerebraCrystalBall.draw(item.ctx,w,h,dpr,t,item.settings,reduced.matches);
     }
     crystal(page.querySelector('.cl-hero'),innerWidth<760?260:360,'#ec7ba8');
     crystal(page.querySelector('.cl-guide-head'),100,'#9478ff');
+    window.CerebraCrystalBall.pages=crystals;
     // A subdued, customizable backdrop stays behind all route controls.
     const laserHost=document.createElement('div');laserHost.className='cl-page-laser';laserHost.setAttribute('aria-hidden','true');
     const laserCanvas=document.createElement('canvas');laserHost.append(laserCanvas);page.append(laserHost);
@@ -153,14 +147,59 @@
     // Debug/review view of session-only settings; no project/storage owner.
     window.CerebraPageBackdrop.settings=backdrop;
     const laserContext=laserCanvas.getContext('2d');
+    const ballConfig={...window.CerebraCrystalBall.defaults};
+    for(const c of crystals)c.settings=ballConfig;
+    const ballRows=[
+      ['preset','Preset','ชุดสี','select',Object.keys(window.CerebraCrystalBall.presets)],
+      ['motion','Dust motion','การเคลื่อนฝุ่น','select',['rise','fall','drift','orbit']],
+      ['particleShape','Particle shape','รูปทรงอนุภาค','select',['square','round']],
+      ['color','Colour','สี','color'],
+      ['size','Size','ขนาด','range',.25,1,.01],
+      ['glow','Glow','แสงฟุ้ง','range',0,1.5,.05],['haze','Haze','หมอกแสง','range',0,1.5,.05],
+      ['strands','Strands','เส้นขอบไฟฟ้า','range',1,8,1],['crackle','Crackle','ความปั่นป่วนขอบ','range',0,1,.05],
+      ['flares','Flares','แสงเปลวขอบ','range',0,1,.05],['sparks','Sparks','ประกายไฟ','range',0,1,.05],
+      ['particleCount','Particles','จำนวนอนุภาค','range',0,40000,500],['fill','Fill','ระดับฝุ่น','range',0,1,.05],
+      ['depth','Depth','มิติความลึก','range',0,1,.05],['twinkle','Twinkle','การกะพริบ','range',0,1,.05],
+      ['speed','Rim speed','ความเร็วขอบ','range',0,2,.05],['dustSpeed','Dust speed','ความเร็วฝุ่น','range',0,2,.05],
+      ['sway','Sway','การแกว่ง','range',0,1,.05],['interactive','Interactive','ตอบสนองเมาส์ / นิ้ว','checkbox'],
+      ['hoverStrength','Touch strength','แรงสัมผัส','range',0,1,.05],['intro','Intro','เปิดตัวลูกแก้ว','checkbox'],
+      ['paused','Paused','หยุดการเคลื่อนไหว','checkbox']
+    ];
+    const ballMenus=[];
+    function syncBall(){
+      const th=language.current==='th';
+      for(const menu of ballMenus){
+        menu.querySelector('summary').textContent=th?'ลูกแก้ว':'Crystal Ball';
+        for(const [k,en,label]of ballRows){const input=menu.querySelector('[data-ball-key='+k+']');if(input.type==='checkbox')input.checked=!!ballConfig[k];else input.value=String(ballConfig[k]);const title=input.closest('label').querySelector('span');title.textContent=th?label:en;if(input.type==='range'){const output=document.createElement('output');output.style.cssText='display:block;color:#ec7ba8;font:11px monospace';output.textContent=input.value;title.append(output);}if(k==='hoverStrength')input.closest('label').hidden=!ballConfig.interactive;}
+        menu.querySelector('[data-ball-reset]').textContent=th?'คืนค่าลูกแก้ว':'Reset Crystal Ball';
+      }
+    }
+    for(const root of [page.querySelector('.cl-slide-footer'),page.querySelector('.cl-guide-head')]){
+      const menu=document.createElement('details');menu.className='cl-bg-choose cl-ball-choose';menu.dataset.clBg='';menu.dataset.ballMenu='';
+      menu.innerHTML='<summary>Crystal Ball</summary><div class="cl-bg-panel">'+ballRows.map(([k,en,label,type,min,max,step])=>'<label><span>'+en+'</span>'+(type==='select'?'<select data-ball-key="'+k+'">'+min.map(v=>'<option value="'+v+'">'+v[0].toUpperCase()+v.slice(1)+'</option>').join('')+'</select>':'<input type="'+type+'" data-ball-key="'+k+'"'+(type==='range'?' min="'+min+'" max="'+max+'" step="'+step+'"':'')+'>')+'</label>').join('')+'<button type="button" data-ball-reset>Reset Crystal Ball</button></div>';
+      root.prepend(menu);ballMenus.push(menu);
+      menu.addEventListener('input',event=>{const input=event.target.closest('[data-ball-key]');if(!input)return;const k=input.dataset.ballKey,v=input.type==='checkbox'?input.checked:input.type==='range'?+input.value:input.value;if(k==='preset')Object.assign(ballConfig,window.CerebraCrystalBall.presets[v]);ballConfig[k]=v;if(k==='intro')for(const c of crystals)window.CerebraCrystalBall.reset(c.ctx);syncBall();for(const c of crystals)draw(c,reduced.matches?0:clock);});
+      menu.querySelector('[data-ball-reset]').addEventListener('click',()=>{Object.assign(ballConfig,window.CerebraCrystalBall.defaults);for(const c of crystals)window.CerebraCrystalBall.reset(c.ctx);syncBall();for(const c of crystals)draw(c,reduced.matches?0:clock);});
+      menu.addEventListener('toggle',()=>{if(menu.open)for(const other of [...ballMenus,settings])if(other!==menu)other.open=false;});
+    }
+    css.textContent+='.cl-slide-footer{gap:10px}.cl-ball-choose .cl-bg-panel{bottom:calc(100% + 10px);max-height:min(420px,60dvh)}.cl-guide-head>.cl-ball-choose{align-self:start;z-index:5}.cl-guide-head>.cl-ball-choose .cl-bg-panel{bottom:auto;top:calc(100% + 8px);left:0}.cl-guide-head .cl-ball-choose .cl-bg-panel{width:min(480px,calc(100vw - 48px))}.cl-ball-choose [hidden]{display:none!important}';
+    document.addEventListener('pointerdown',event=>{for(const menu of ballMenus)if(!menu.contains(event.target))menu.open=false;},{passive:true});
+    settings.addEventListener('toggle',()=>{if(settings.open)for(const menu of ballMenus)menu.open=false;});
+    language.onChange(syncBall);syncBall();
+    css.textContent+='@media(max-width:360px){.cl-hub-open .cl-slide-footer{gap:6px}.cl-hub-open .cl-slide-enter{min-width:94px;padding-inline:12px}.cl-ball-choose summary{padding-inline:7px}}';
+    window.CerebraCrystalBall.pageSettings=ballConfig;
+    // Native Studio Full Reset already dispatches this hidden page reset.
+    settings.querySelector('[data-bg-reset]').addEventListener('click',()=>{if(app.studio.active)ballMenus[0].querySelector('[data-ball-reset]').click();});
     function drawLaser(t){if(!laserContext||!laserHost.getClientRects().length)return;const dpr=Math.min(devicePixelRatio||1,1.5),w=Math.max(1,Math.round(laserHost.clientWidth*dpr)),h=Math.max(1,Math.round(laserHost.clientHeight*dpr));if(laserCanvas.width!==w||laserCanvas.height!==h){laserCanvas.width=w;laserCanvas.height=h;}laserCanvas.style.width='100%';laserCanvas.style.height='100%';laserContext.clearRect(0,0,w,h);window.CerebraPageBackdrop.draw(laserContext,w,h,dpr,t,backdrop);}
-    let laserTimer=0,backdropStart=0;
+    let laserTimer=0,backdropStart=0,backdropLast=0;
     function queueLaser(){clearTimeout(laserTimer);backdropStart=performance.now()+150;laserTimer=setTimeout(()=>{laserTimer=0;if(active())drawLaser(reduced.matches?0:clock);},150);}
     new ResizeObserver(queueLaser).observe(laserHost);
-    function tick(now){frame=0;if(!active())return;if(now-last>=1000/(backdrop.kind==='liquidEther'?30:15)){clock+=Math.min((now-last)/1000,.08);last=now;for(const c of crystals)if(c.host.getClientRects().length)draw(c,reduced.matches?0:clock);if(now>=backdropStart)drawLaser(reduced.matches?0:clock);}if(!reduced.matches)frame=requestAnimationFrame(tick);}
+    function tick(now){frame=0;if(!active())return;if(now-last>=1000/30){clock+=Math.min((now-last)/1000,.08);last=now;for(const c of crystals)if(c.host.getClientRects().length)draw(c,reduced.matches?0:clock);if(now>=backdropStart&&now-backdropLast>=1000/(backdrop.kind==='liquidEther'?30:15)){backdropLast=now;drawLaser(reduced.matches?0:clock);}}if(!reduced.matches)frame=requestAnimationFrame(tick);}
     function wake(){if(!active()){cancelAnimationFrame(frame);clearTimeout(laserTimer);laserTimer=0;frame=0;return;}for(const c of crystals)if(c.host.getClientRects().length)draw(c,reduced.matches?0:clock);queueLaser();if(!frame&&!reduced.matches){last=performance.now();frame=requestAnimationFrame(tick);}}
     page.addEventListener('pointermove',event=>{if(backdrop.kind==='liquidEther'&&!settings.contains(event.target)){window.CerebraLiquidEther.pointer(laserContext,event);if(reduced.matches)drawLaser(0);}if(backdrop.interactive&&!reduced.matches&&backdrop.kind==='lightPillar'){const r=laserHost.getBoundingClientRect();backdrop.mouseX=Math.max(-1,Math.min(1,(event.clientX-r.left)/Math.max(1,r.width)*2-1));backdrop.mouseY=Math.max(-1,Math.min(1,-(event.clientY-r.top)/Math.max(1,r.height)*2+1));}if(event.pointerType==='touch'||reduced.matches)return;for(const c of crystals){const r=c.host.getBoundingClientRect();c.x=Math.max(-1,Math.min(1,(event.clientX-r.left-r.width/2)/(r.width/2)));}},{passive:true});
-    page.addEventListener('pointerleave',()=>{window.CerebraLiquidEther.leave(laserContext);backdrop.mouseX=backdrop.mouseY=0;},{passive:true});
+    page.addEventListener('pointerleave',()=>{window.CerebraLiquidEther.leave(laserContext);backdrop.mouseX=backdrop.mouseY=0;for(const c of crystals)window.CerebraCrystalBall.leave(c.ctx);},{passive:true});
+    for(const eventName of ['pointermove','pointerdown'])page.addEventListener(eventName,event=>{if(event.target.closest('[data-cl-bg]')){for(const c of crystals)window.CerebraCrystalBall.leave(c.ctx);return;}for(const c of crystals)if(c.host.getClientRects().length)window.CerebraCrystalBall.pointer(c.ctx,event,eventName==='pointerdown');},{passive:true});
+    page.addEventListener('pointerup',event=>{if(event.pointerType==='touch')for(const c of crystals)window.CerebraCrystalBall.leave(c.ctx);},{passive:true});
     const observer=new MutationObserver(()=>{sync();wake();});
     observer.observe(page,{attributes:true,attributeFilter:['open','class']});
     page.querySelectorAll('[data-cl-path]').forEach(b=>observer.observe(b,{attributes:true,attributeFilter:['class']}));
