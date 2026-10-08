@@ -3,6 +3,7 @@
 Run after structural refactors and before calling a release complete.
 
 ## Entry / navigation
+- Studio Stepper: first entry, Previous/Next, all indicator jumps, rapid navigation, Skip, Back/Escape, session completion and replay from How to use. Complete/skip must launch Studio even with world GLBs pending. Replay from active Studio must return to the existing session. Check EN/Thai, actual directional content/height transitions, reduced motion, keyboard focus and desktop/mobile/narrow/short-screen bounds.
 - Landing page loads without visible errors.
 - Enter World Atelier.
 - Enter Studio Mode.

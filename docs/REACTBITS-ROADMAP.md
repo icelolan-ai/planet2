@@ -1,5 +1,7 @@
 # React Bits integration — staged delivery
 
+Stepper, 8 October: four-step quick start before the first Studio entry in this session. Native numbered/active/completed indicators and connectors follow the reference; clickable steps, Previous/Next, final Enter, Skip and Back/Escape connect to the existing route. Subsequent entry is immediate; How to use > Start here offers replay, including return to an active Studio. Bilingual real workspace guidance replaces sample inputs/images. Same dialog and existing GSAP; no React/Motion dependency, renderer, independent loop or authored state. Pink brand palette, 44px touch targets, GSAP 0.4s directional/height easing instead of the source spring, and session completion are deliberate adaptations. Local desktop/touch navigation, intermediate frames, rapid changes, pending-world entry and narrow/landscape bounds pass; generated Pages/live repeat required. Physical Safari/FPS untested.
+
 Crystalized Ball page correction, 8 October: original electric field, seeded dust, MRT cursor wake/kick and composite replace Canvas2D imitation in paths/How to use. Crystal Ball Customize exposes eight presets and meaningful source dark-page controls, bilingual responsive panels and Reset. Shared renderer/native page clock, bounded 1024px/DPR2 output, async moving reads and hidden/reduced-motion pauses. Independent default static WebGL2 output at 128x128 matches exactly. Session-only page state; Studio Kit/planet halo still future work. Local desktop/touch checks pass; generated Pages/live repeat required.
 
 Liquid Ether page correction, 8 October: Backdrop now includes the actual upstream fluid solver and all meaningful source Customize controls (palette, force/radius, resolution, viscosity/pressure, BFECC/bounce, timestep, auto motion/timings, light mode/background). Shared renderer and existing page clock; bounded output 960px desktop / 672px coarse-pointer, async moving transport, reduced-motion pause/manual updates and complete Off/Reset disposal. Keep Colour flow separately labelled as legacy sine art. Independent equal-size solver/colour comparison gives zero-byte difference in two source configurations. Pointer/touch, native menu/Studio entry and desktop/mobile controls are verified locally; repeat deployed checks before release. Crystalized Ball fidelity remains pending.
@@ -153,12 +155,15 @@ copy; do not put every full-strength effect on every page.
 | Wake Slider | value/min/max/step, bars/height/gap, fill/track/crest, sensitivity/reach/skew/glide/smoothing, value display | Native range controls, preserving keyboard and numerical semantics |
 | Rubber Segment | items/value, colours, size/radius/inset, equal slots, stretch/squash/speed/glide, dragging | Existing tabs/segmented controls and language switch |
 
-## Part 4 — Stepper and integration QA (pending)
+## Part 4 — Stepper and integration QA
 
 Stepper Customize: initial/current step, step callbacks, final-step callback,
 indicator rendering/disable, content/footer classes, Back/Next labels/props.
-Adapt the existing Library Spotlight guide before Studio; keep its real
-examples, close control, Previous/Next, Open work and Don't show again.
+The native pre-Studio quick start uses four workspace-specific steps, interactive
+indicators, Previous/Next, final Enter and Skip. It appears once per session and
+can be replayed from How to use. The separate Library Spotlight retains its
+existing real examples, Open work and Don't show again behavior. Broader
+integration QA and remaining component parts are still pending.
 
 ## Source research
 

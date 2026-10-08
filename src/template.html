@@ -906,7 +906,7 @@ body.tune-open .picker,body.obuild-open .picker,body.wtune-open .picker{opacity:
 @media (prefers-reduced-motion:reduce){.w::after{display:none}.is-active .w>span{transition-delay:0s}.is-active .title{animation:none}}
 /* Studio is a separate, reversible view of the same core and tuning state. */
 html.studio-lock,html.studio-lock body{overflow:hidden!important;overscroll-behavior:none}
-body.studio-on> :not(#gl):not(#net-bg):not(#studio):not(#studio-bg):not(#studio-fx):not(#studio-vfx):not(#tune):not(#wtune):not(script),body.studio-on> :not(#gl):not(#net-bg):not(#studio):not(#studio-bg):not(#studio-fx):not(#studio-vfx):not(#tune):not(#wtune):not(script) *{visibility:hidden!important;pointer-events:none!important}
+body.studio-on> :not(#gl):not(#net-bg):not(#studio):not(#studio-bg):not(#studio-fx):not(#studio-vfx):not(#tune):not(#wtune):not(.cl-page):not(script),body.studio-on> :not(#gl):not(#net-bg):not(#studio):not(#studio-bg):not(#studio-fx):not(#studio-vfx):not(#tune):not(#wtune):not(.cl-page):not(script) *{visibility:hidden!important;pointer-events:none!important}
 body.studio-on #gl{transform:none!important;pointer-events:none;position:absolute;inset:0;z-index:auto}
 /* Cerebra is a layer: inside Studio the canvas (with its colour-effect copies) lives in the item stack, so layers can sit above or below it. The catcher takes presses that hit no item. */
 .st-planetbox{position:absolute;inset:0;isolation:isolate;pointer-events:none;transition:translate .35s cubic-bezier(.3,.7,.2,1)}

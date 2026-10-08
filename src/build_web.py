@@ -129,6 +129,7 @@ fx_order = [
     'runtime-compat.js',
     'studio-guide-language.js',
     'studio-launch.js',
+    'studio-stepper.js',
     'page-backdrops.js',
     'studio-reactbits-pages.js',
     'viewport-controls.js',
