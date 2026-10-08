@@ -13,6 +13,10 @@ This document is the primary map for humans and AI agents working on this reposi
 
 ## Feature ownership
 
+### Studio quick start
+- `studio-stepper.js` adds the native React Bits-style four-step tutorial inside the existing launch dialog. `studio-launch.js` delegates only fresh Studio entry to it; returning to an active Studio stays immediate.
+- The tutorial uses existing GSAP, keeps session-only completion state, and never owns project/history/rendering. First entry offers Previous/Next, indicator jumps, Skip and Back; subsequent entry is immediate. How to use > Start here exposes replay. Preserve native modal focus/route locking, EN/Thai, reduced motion and scrollable short screens.
+
 ### Planet surface
 - `src/effects/surface.js` — renderer, styles, defaults, style-specific controls.
 - `src/effects/surface-shapes.js` — generated-surface base-shape deformation and shape controls.
