@@ -22,7 +22,7 @@
     const textureKey=JSON.stringify([parameters,!!preview,p.on!==false]);let texture=textures.get(textureKey);
     if(!texture){const cv=document.createElement('canvas');cv.width=256;cv.height=1024;texture={cv,g:cv.getContext('2d'),source:{p:parameters}};textures.set(textureKey,texture);if(textures.size>12)textures.delete(textures.keys().next().value);}
     if(!texture.g)return;texture.g.clearRect(0,0,256,1024);
-    window.CerebraLaser.draw(texture.g,texture.source,0,0,256,1024,1,s.app.reduced?0:time,p.on===false?0:1,{preview:preview&&!s.app.reduced});
+    window.CerebraLaser.draw(texture.g,texture.source,0,0,256,1024,1,s.app.reduced?0:time,p.on===false?0:1,{preview:preview&&!s.app.reduced&&p.on!==false&&(p.speed??1)>0});
     if(c.w!==w||c.h!==h||c.w0!==it.w0||c.h0!==it.h0||c.pts!==st.pts){
       c.path.setAttribute('d',s.strokeD(it,w,h,0,0,st.pts));const length=c.path.getTotalLength();
       c.length=length;const n=Math.max(2,Math.min(128,Math.ceil(length/10)));c.points=[];
