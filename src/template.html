@@ -7103,7 +7103,14 @@ const Glide = (() => {
     }, { passive: false });
     requestAnimationFrame(tick);
   };
-  return { start };
+  // Route native section commands through the same scroll owner as the wheel.
+  // Browser smooth-scroll otherwise races the idle snap and can return to the old section.
+  const to = top => {
+    if (!fine || still || blocked()) return false;
+    cur = scrollY; tgt = Math.max(0, Math.min(document.documentElement.scrollHeight - innerHeight, top));
+    active = true; idle = 0; return true;
+  };
+  return { start, to };
 })();
 
 /* Live: local time and the ISS position (wheretheiss.at) in a small HUD pill. */
@@ -7156,7 +7163,7 @@ class ScrollDirector {
     const r = s.getBoundingClientRect();
     return Math.max(0, r.top + scrollY + r.height / 2 - innerHeight / 2);
   }
-  scrollTo(i, reduced) { window.scrollTo({ top: this.top(i), behavior: reduced ? 'auto' : 'smooth' }); }
+  scrollTo(i, reduced) { const top = this.top(i); if (!reduced && Glide.to(top)) return; window.scrollTo({ top, behavior: reduced ? 'auto' : 'smooth' }); }
   jumpTo(i) { window.scrollTo({ top: this.top(i), behavior: 'instant' }); this.snapNext = true; }
 }
 
