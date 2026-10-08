@@ -4,16 +4,10 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 ## Current work / ownership
 
-- Task: native React Bits Line Sidebar and section-scroll command fix.
-- State: CHECKPOINT / awaiting Claude takeover; not released, do not merge without remaining QA.
-- Previous owner: Codex. Ownership RELEASED at 2026-10-08 20:14 Asia/Bangkok; awaiting Claude claim before editing.
-- Branch: `feat/native-line-sidebar-20261008`.
-- Published checkpoint: https://github.com/icelolan-ai/planet2/pull/325 (OPEN / WIP / not merged), commit `650012ac6660bac396cb06de025d43f61f7f86f4`.
-- Base: `4d553369aadda382d5e934896b7505df39c69311` (generated main after PR #323).
-- Intended source files: `src/effects/line-sidebar.js`, `src/effects/studio-launch.js`, `src/template.html`, `src/build_web.py`.
-- QA fixture saved with checkpoint: `docs/qa/line-sidebar-ui.cjs`.
-- Next action: build and rerun the four-viewport UI fixture, especially section rail mouse/Enter scrolling after the last Glide fix. Then finish regression/live QA and release through PR.
-- Other Kit objects (including Threads/Aero Shards) have not been implemented in this checkpoint. Do not treat parked approximate prototypes as accepted source-faithful effects.
+- Owner of both items below: Claude (took over from Codex on 2026-10-08; Codex released ownership at 20:14 Asia/Bangkok).
+- **Task A (active, this change): real full-frame Animated Background** (Liquid Ether / Light Pillar). Branch `feat/animated-background-20261008` from main `d262704`. Files: `src/template.html`, `src/effects/studio-scene-effects.js`, `src/effects/liquid-ether.js`, `src/effects/light-pillar.js`, `src/effects/studio-guide-language.js`, `docs/qa/animated-background-ui.cjs`, docs.
+- **Task B (queued, separate PR): Line Sidebar.** Resume PR #325 / branch `feat/native-line-sidebar-20261008` (checkpoint `650012ac…`, plus Claude claim commit `5c0d2ef` merging main docs). Touches `src/effects/line-sidebar.js`, `studio-launch.js`, `template.html`, `build_web.py`. Task A also edits `template.html`; Task B must be rebased/merged onto main after Task A lands. No Line Sidebar product code was changed by Claude yet.
+- Kit objects (Threads/Aero Shards) are not started; wait until A and B are closed.
 
 ## 2026-10-08 — Codex — PR #323 released
 
@@ -46,3 +40,14 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Exact source checkpoint published via https://github.com/icelolan-ai/planet2/pull/325, commit `650012ac6660bac396cb06de025d43f61f7f86f4`; all five uploaded source/fixture blobs matched local git hashes. The PR is open/WIP and must stay unmerged until remaining QA passes.
 - Codex releases the Line Sidebar task and stops product edits. Claude must claim ownership and merge latest main documentation into the checkpoint before continuing. No new Kit object work was started.
 - Handoff references/status checked and fixture syntax/diff checks passed. UI and live QA for the final scroll fix remain pending as documented above.
+
+## 2026-10-08 21:16 Asia/Bangkok — Claude — Animated Background as a real layer (PR pending; NOT yet released)
+
+- Owner: Claude. Branch `feat/animated-background-20261008`, base main `d262704`. PR/merge/deploy state is recorded in the handoff once done; until then this is unreleased.
+- Liquid Ether / Light Pillar are no longer enlarged Kit objects. An item with `bg:true` (still a `kit` item, so the existing renderer, page clock, compositor, history, project JSON and export are reused; no new renderer/RAF/dependency) now: always takes the visible frame (`placeBase` recomputes x/y/w/h, rot 0, no spin), counters the stage shift with a synced `translate`, ignores pointer events (cannot be selected/dragged/resized/rotated from the canvas, excluded from marquee/select-all/layout targets, no edit/rotate handles, no selection bar), is pinned to the bottom by `stackDom` and cannot be dragged in the Layers list, and is exported with the exact frame rectangle. Only one background exists; choosing the other replaces it in one Undo step.
+- UI: Image > Animated background presets selects/replaces the background and opens Customize immediately; a Background list (name, Customize, Turn on/off, Remove) re-opens Customize without recreating it and keeps values. Customize groups: Colour / Appearance / Motion / Interaction / Quality, two columns on wide screens, one on narrow, numeric outputs, per-tool Reset, EN/TH.
+- Migration: old projects with `liquidEther`/`lightPillar` items that came from the template (`tpl`) or cover >=80% of the frame become backgrounds (parameters, opacity, seed kept); smaller ones stay ordinary objects and show "Convert to background". Crystal Ball keeps its previous "Fit as background" button.
+- Source comparison (DavidHDev/react-bits main, MIT + Commons Clause, copyright David Haz; notice in the source files retained; LiquidEther.jsx / LightPillar.jsx read 2026-10-08): added the missing Liquid Ether controls `autoDemo`, `takeoverDuration`, `autoResumeDelay`, `autoRampDuration`, and "Follow pointer" for both effects. In Studio the seeded auto path now honours Auto animation, pointer takeover, resume delay and ramp. Differences kept on purpose: pointer following defaults OFF and is fed only by mouse/pen hover over empty canvas (never touch, buttons held, drawing or dragging) so it cannot disturb selection/drawing; Light Pillar glow default .002 (source .005) and Studio clamped ranges were already in place; fluid momentum persists after Auto animation is turned off (decays by viscosity like the source); Light Pillar uses the existing shared WebGL renderer.
+- Validation actually run (headless Chromium software GL, device emulation, NOT physical iOS/Safari): build, `node --check`; fixture `docs/qa/animated-background-ui.cjs` at 1440x900, 390x844, 820x1180, 844x390 with the real unfrozen renderer: select/replace/re-select keeps values, geometry equals the viewport after rotating/resizing, canvas drag/click does not select or move it, zoom/scale/stage-shift keep it in frame, hide + Undo/Redo, snapshot restore, legacy-project migration, export 1x frame size, Thai manager text, no page errors. Control sweep (motion off, deterministic): every visible control changes pixels except those that need motion/pointer/light-mode; those were verified separately with motion on / real mouse moves (speed 0 stops Pillar, pulse moves, pointer on/off, Ether pointer, autoDemo on vs off).
+- Not tested: physical iPhone/iPad/Safari, hardware FPS, long video export. Live Pages check pending the merge.
+- Remaining: merge PR + live desktop/mobile check; then Task B (Line Sidebar PR #325); then new Kit objects.
