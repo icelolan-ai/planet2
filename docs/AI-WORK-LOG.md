@@ -7,7 +7,7 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Owner of both items below: Claude (took over from Codex on 2026-10-08; Codex released ownership at 20:14 Asia/Bangkok).
 - **Task A: DONE and live** (PR #327, see entry below). 
 - **Task B: DONE and live** (PR #325 merged, see entry below).
-- No active task. Next: new Kit objects (Threads/Aero Shards) — claim in this section before editing.
+- Active (Claude): background fidelity/visibility fix, branch `fix/background-fidelity-20261008` (files: `src/template.html`, `src/effects/liquid-ether.js`, `src/effects/light-pillar.js`). Then: new Kit objects (Threads/Aero Shards) — claim in this section before editing.
 - Kit objects (Threads/Aero Shards) are not started; wait until A and B are closed.
 
 ## 2026-10-08 — Codex — PR #323 released
@@ -72,3 +72,13 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Live checks (headless Chromium device emulation, not physical devices): `line-sidebar-ui.cjs` PASS at 1440x900, 390x844, 820x1180, 844x390; `line-sidebar-live-ui.cjs` (renderer running) PASS for desktop, desktop reduced-motion and mobile touch, run one case at a time (a concurrent run once stalled a click under software GL; not reproduced alone).
 - Known/pre-existing: reduced-motion wheel is ignored near section 3 identically on main; Glide travel across sections takes ~3 s. Physical iOS/Safari and hardware FPS untested.
 - Pending: new Kit objects only (Threads/Aero Shards) — not started.
+
+## 2026-10-08 23:50 Asia/Bangkok — Claude — Animated Background: visibility and demo-fidelity fix (PR pending)
+
+- User report: presets did not look like the React Bits demo, and Cerebra / the effect was hidden. The linked page (`/components/masonry`) is a gallery component, not a background; I compared against the Liquid Ether and Light Pillar demo pages instead (screenshots taken 2026-10-08, demo controls and defaults read from the pages and from LiquidEther.jsx / LightPillar.jsx).
+- Cause of "hidden": the Customize panel (600 px wide, up to full height) covered the artwork; on 390x844 it covered the whole screen. Now it is a bottom sheet (<=42% height, first section open) on narrow screens, a half-width side sheet on short landscape screens, and 520 px wide on desktop. Planet order was already correct (background under Cerebra).
+- Liquid Ether look: the Studio driver was a Lissajous loop at 30 fps (fat flat blobs). It is now the source AutoDriver logic on a seeded virtual clock: random targets inside the 0.2 margin, `autoSpeed` units/s, smoothstep ramp, 60 steps/s (2 per page frame, 4 during the first ~3 s so a new layer fills in without one long blocking frame; initial warm-up 30 steps desktop / 16 coarse instead of an earlier 120/60 that froze software GL). Simulation/output shaders unchanged (previous byte-exact check stands).
+- Light Pillar: default Quality is High on non-touch devices (source default); added Blend mode (Normal/Screen/Lighten/Overlay/Soft light/Colour dodge/Plus lighter; default Screen).
+- Demo control comparison: Ether demo shows Colour 1-3, Mouse force 20, Cursor size 100, Resolution 0.5, Auto speed 0.5, Auto intensity 2.2, Pressure 32, Bounce, Auto animate, Viscous, Viscous coef 30, Viscous iterations 32 — all present (plus Studio extras BFECC, step, light background). Pillar demo: Top/Bottom colour, Intensity 1, Rotation speed 0.3, Glow 0.002, Pillar width 3, height 0.4, Noise 0.5, Pillar rotation 25, Interactive, Mix blend, Quality — all present.
+- Limitation: I could not run the original React demo and ours frame-for-frame; fluid motion is random-target driven, so a given instant never matches the demo exactly, and the headless software-GL runs show a slower flow than real GPUs. Visual match on a physical device is unverified.
+- Tests: `animated-background-ui.cjs` PASS at 1440x900, 390x844, 820x1180, 844x390 (local build, emulation). Live check pending the merge.
