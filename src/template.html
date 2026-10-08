@@ -935,6 +935,7 @@ body.studio-on #studio{display:block}
 .st-decor{color:#ff3d8a}
 #studio .st-kitc{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:block}
 #studio [data-kit-types] .st-btn canvas{width:44px;height:44px;display:block;margin:0 auto 2px}
+#studio [data-kit-panel].st-bgpanel{width:min(520px,calc(100vw - 24px))}
 #studio .st-bgm{display:grid;gap:8px;margin:10px 0 4px;padding:10px 12px;border-radius:14px;background:#ffffff0a;border:1px solid #ffffff14}
 #studio .st-bgm-t{margin:0;font:12px var(--f-sans);color:#dfe5ef;overflow-wrap:anywhere}
 #studio .st-bgm-a{display:flex;flex-wrap:wrap;gap:8px}#studio .st-bgm-a .st-btn{min-height:40px;flex:1 1 90px}
@@ -8662,7 +8663,7 @@ const L2 = {
 // Smooth 2D value noise (seeded) and a hex colour blend, shared by the flow kits.
 const kitNoise = seed => { const r = mulberry32(seed), P = Array.from({ length: 256 }, () => r()), h = (i, j) => P[(i * 73 + j * 151 & 255 ^ (i * 31 + j * 17 >> 3 & 255)) & 255], sm = t => t * t * (3 - 2 * t);
   return (x, y) => { const i = Math.floor(x), j = Math.floor(y), fx = sm(x - i), fy = sm(y - j), a = h(i, j), b = h(i + 1, j), c = h(i, j + 1), d = h(i + 1, j + 1); return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy; }; };
-const BG_KITS = ['liquidEther', 'lightPillar'];
+const BG_KITS = ['liquidEther', 'lightPillar'], BG_BLEND_KITS = ['lightPillar'];
 let KIT_LOW = false, KIT_PREVIEW = false;
 const kitRgb = c => { const m = /^#?([0-9a-f]{6})$/i.exec(String(c).trim()); const n = m ? parseInt(m[1], 16) : 0xffffff; return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
 const kitMix = (a, b, t) => { const x = kitRgb(a), y = kitRgb(b); return `rgb(${Math.round(x[0] + (y[0] - x[0]) * t)},${Math.round(x[1] + (y[1] - x[1]) * t)},${Math.round(x[2] + (y[2] - x[2]) * t)})`; };
@@ -11732,10 +11733,15 @@ class CoreStudio {
     if (f.hasAttribute('data-kit-panel') && (window.visualViewport?.width || innerWidth) <= 700) { b.left = (window.visualViewport?.offsetLeft || 0) + margin; b.right = (window.visualViewport?.offsetLeft || 0) + (window.visualViewport?.width || innerWidth) - margin; }
     f.style.maxWidth = Math.max(80, b.right - b.left) + 'px';
     f.style.maxHeight = Math.max(80, Math.min(centered ? 620 : Infinity, b.bottom - b.top)) + 'px';
+    // The background's Customize panel must leave the artwork visible: bottom sheet on tall narrow screens, half-width side sheet on short (landscape) screens.
+    const bgSheet = f.hasAttribute('data-kit-panel') && this.sel?.bg ? ((window.visualViewport?.height || innerHeight) <= 520 ? 'side' : (window.visualViewport?.width || innerWidth) <= 700 ? 'bottom' : '') : '';
+    if (bgSheet === 'side') { f.style.maxWidth = Math.max(80, Math.min(420, (b.right - b.left) * .5)) + 'px'; f.style.maxHeight = Math.max(80, b.bottom - b.top) + 'px'; }
+    else if (bgSheet === 'bottom') f.style.maxHeight = Math.max(150, (b.bottom - b.top) * .42) + 'px';
     const w = f.offsetWidth, h = f.offsetHeight;
     let x = centered ? r.left + r.width / 2 - w / 2 : r.right + margin, y = r.top;
     if (centered) y = r.top - h - margin >= b.top ? r.top - h - margin : r.bottom + margin + h <= b.bottom ? r.bottom + margin : b.top + (b.bottom - b.top - h) / 2;
     else if (x + w > b.right) { x = r.left - w - margin; if (x < b.left) { x = r.left + r.width / 2 - w / 2; y = r.top - h - margin; if (y < b.top) y = r.bottom + margin; } }
+    if (bgSheet === 'side') { x = b.right - w; y = b.top; } else if (bgSheet === 'bottom') { x = b.left + (b.right - b.left - w) / 2; y = b.bottom - h; }
     f.style.left = clamp(x, b.left, Math.max(b.left, b.right - w)) + 'px';
     f.style.top = clamp(y, b.top, Math.max(b.top, b.bottom - h)) + 'px';
   }
@@ -11803,7 +11809,7 @@ class CoreStudio {
             : `<label class="st-fly-row"><span>${u.label}</span><select data-kmx="${u.k}">${u.opts.map(([o, n]) => `<option value="${o}"${String(o) === String(v) ? ' selected' : ''}>${n}</option>`).join('')}</select></label>`; }).join('') : '') + '</details>'
       + (def.noShuffle ? '' : '<button type="button" class="st-btn st-kit-shuffle" data-kit-shuffle>Shuffle pattern</button>')
       + '<button type="button" class="st-btn st-kit-shuffle" data-kit-reset>Reset Design &amp; Motion</button>';
-    const th = window.__cerebraLanguage?.current === 'th';
+    const th = window.__cerebraLanguage?.current === 'th'; f.classList.remove('st-bgpanel');
     const section = (title, rows) => {
       if (!rows.length) return;
       const d = document.createElement('details'); d.className = 'st-ksec'; d.open = true;
@@ -11834,10 +11840,18 @@ class CoreStudio {
       Object.keys(titles).forEach(g => { lists[g] = (groups[g] || []).map(rows).filter(Boolean); });
       lists.look.push(opacityRow);
       f.querySelectorAll('details.st-ksec:not([data-ksec])').forEach(d => d.remove());
+      if (BG_BLEND_KITS.includes(it.kit)) {
+        const row = document.createElement('label'); row.className = 'st-fly-row';
+        row.innerHTML = `<span>${th ? 'โหมดผสมสี' : 'Blend mode'}</span><select data-kblend>${[['normal', 'Normal'], ['screen', 'Screen'], ['lighten', 'Lighten'], ['overlay', 'Overlay'], ['soft-light', 'Soft light'], ['color-dodge', 'Colour dodge'], ['plus-lighter', 'Plus lighter']].map(([v, n]) => `<option value="${v}"${(it.blend || 'normal') === v ? ' selected' : ''}>${n}</option>`).join('')}</select>`;
+        row.querySelector('select').addEventListener('change', e => { it.blend = e.target.value; this.place(it); this.kitRedraw(it); this.commit(); });
+        lists.look.push(row);
+      }
       Object.keys(titles).reverse().forEach(g => {
         if (g === 'motion') { mo.querySelector('.st-ksec-body').prepend(...lists.motion); f.querySelector('.st-fly-title').after(mo); return; }
         if (lists[g].length) section(titles[g], lists[g]);
       });
+      f.classList.add('st-bgpanel');
+      if ((window.visualViewport?.width || innerWidth) <= 700 || (window.visualViewport?.height || innerHeight) <= 520) f.querySelectorAll('details.st-ksec').forEach((d, i) => { d.open = i === 0; });
     }
     const op = f.querySelector('[data-kop]'), sOn = f.querySelector('[data-kspin-on]'), sp = f.querySelector('[data-kspin]');
     op.addEventListener('input', () => { it.opacity = +op.value; op.parentNode.querySelector('output').textContent = `${Math.round(it.opacity * 100)}%`; const co = this.ctx.querySelector('[data-ctx-opacity]'); co.value = it.opacity; co.nextElementSibling.textContent = `${Math.round(it.opacity * 100)}%`; this.kitRedraw(it); });

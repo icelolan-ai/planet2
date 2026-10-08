@@ -870,14 +870,20 @@
         renderer.autoClear=false;renderer.setScissorTest(false);renderer.setClearColor(0,0);
         if(mode.studio){
           state.auto.forceStop();
-          const first=state.frames===0,steps=first?6:reduced?0:1,now=performance.now();
-          // Studio drives the seeded auto path only while Auto animation is on and no pointer took over (source takeover/resume/ramp timings apply).
+          const first=state.frames===0,coarseNow=matchMedia('(pointer:coarse)').matches,steps=first?(coarseNow?16:30):reduced?0:state.frames<200?4:2,now=performance.now();
+          // Source AutoDriver ported to a seeded virtual clock: random targets inside the 0.2 margin, `autoSpeed` units/s, smoothstep ramp, 60 steps/s (two per 30 fps page frame; four while the first ~3 s of flow build up, so a fresh layer fills in quickly without one long blocking frame).
+          // Studio drives it only while Auto animation is on and no pointer took over (source takeover/resume/ramp timings apply).
+          const sim=state.sim||(state.sim=(()=>{let seed=((mode.seed??7)>>>0)||1;const rng=()=>{seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
+            const o={cur:new THREE.Vector2(0,0),tgt:new THREE.Vector2(),rng,warm:0,pick(){o.tgt.set((rng()*2-1)*.8,(rng()*2-1)*.8);}};o.pick();return o;})());
           const driving=first||a.autoDemo&&now-state.manager.lastUserInteraction>=a.autoResumeDelay;
           if(driving&&!state.driving)state.resumeFrom=now;state.driving=driving;
           const ramp=first||!a.autoRampDuration||state.resumeFrom===undefined?1:Math.min(1,(now-state.resumeFrom)/(a.autoRampDuration*1000));
           for(let n=0;n<steps;n++){
-            if(driving){const clock=first?n/30:t,phase=(mode.seed??7)*.013,angle=clock*a.autoSpeed*2+phase;state.Mouse.setNormalized(Math.sin(angle)*.6,Math.cos(angle*1.31)*.45);state.Mouse.isAutoActive=true;state.Mouse.autoIntensity=a.autoIntensity*ramp;}
-            else{state.Mouse.isAutoActive=false;state.Mouse.autoIntensity=a.autoIntensity;}
+            if(driving){
+              const dx=sim.tgt.x-sim.cur.x,dy=sim.tgt.y-sim.cur.y,dist=Math.hypot(dx,dy);
+              if(dist<.01)sim.pick();else{const r=first?1:ramp,sm=r*r*(3-2*r),mv=Math.min(a.autoSpeed/60*(first?1:sm),dist);sim.cur.x+=dx/dist*mv;sim.cur.y+=dy/dist*mv;}
+              state.Mouse.setNormalized(sim.cur.x,sim.cur.y);state.Mouse.isAutoActive=true;state.Mouse.autoIntensity=a.autoIntensity;
+            }else{state.Mouse.isAutoActive=false;state.Mouse.autoIntensity=a.autoIntensity;sim.cur.copy(state.Mouse.coords);}
             state.Mouse.update();state.output.update();state.frames++;}
           if(!steps)state.output.render();
         }else{if(!reduced)state.auto.update();else state.auto.forceStop();state.Mouse.update();state.output.update();state.frames++;}
