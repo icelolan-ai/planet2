@@ -5,8 +5,8 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 ## Current work / ownership
 
 - Task: native React Bits Line Sidebar and section-scroll command fix.
-- State: CHECKPOINT / awaiting Claude takeover; not released, do not merge without remaining QA.
-- Previous owner: Codex. Ownership RELEASED at 2026-10-08 20:14 Asia/Bangkok; awaiting Claude claim before editing.
+- State: IN PROGRESS — owned by Claude (claimed 2026-10-08, session claude.ai/code/session_01UKR39Xtus9fEgvY11h7hn7); not released, do not merge without remaining QA.
+- Previous owner: Codex (released 2026-10-08 20:14 Asia/Bangkok). Claude merged current main (#324/#326 docs) into the branch; files being edited: the four source files below plus docs.
 - Branch: `feat/native-line-sidebar-20261008`.
 - Published checkpoint: https://github.com/icelolan-ai/planet2/pull/325 (OPEN / WIP / not merged), commit `650012ac6660bac396cb06de025d43f61f7f86f4`.
 - Base: `4d553369aadda382d5e934896b7505df39c69311` (generated main after PR #323).
