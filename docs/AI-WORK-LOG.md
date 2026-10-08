@@ -101,3 +101,10 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - PR #332 merged (merge `b19557850d8aa4463fd328f2c731d043485abd0c`), CI `build` succeeded, live bundle `assets/app.8697e2ab5d.js`.
 - Live checks (headless Chromium emulation): `animated-background-ui.cjs` PASS 1440x900 and 390x844; tray overlap probe with Layers open and a background added: no overlaps at 844x390, 320x640, 1440x900. Smoothness numbers are software-GL proxies; real-device FPS, the user's exact overlap screenshot scenario and physical Safari/iOS remain unverified.
 - Pending: Threads Kit checkpoint (`feat/kit-threads-20261008`), Aero Shards.
+
+## 2026-10-08 Asia/Bangkok — Claude — Threads Kit (PR pending)
+
+- New Kit object **Threads**: the React Bits Threads fragment shader copied verbatim (40 Perlin lines; source blend SRC_ALPHA/ONE_MINUS_SRC_ALPHA reproduced so alpha = value^2) in `src/effects/threads.js`, rendered through the shared stage renderer with async readback (no OGL, no own renderer/RAF/dependency); Kit category "Light & textures". Source: DavidHDev/react-bits `Backgrounds/Threads/Threads.jsx` (MIT + Commons Clause, notice in file header and template.html).
+- Controls: colour, amplitude (source default 1), distance (0), plus Studio additions Start time (offset of the source clock) and Pointer X/Y (the source's smoothed pointer value, static in Studio; source "mouse interaction" follow is not exposed because the Kit loop has no pointer feed and it would disturb selection). Native Motion drives `iTime` (default amount = 1x source clock). Preview render caps 960 (selected)/512 px, 1 MP.
+- Earlier "mobile check failing" was a test sampling artifact (hash ignoring alpha/colour); fixed in the fixture. Tests (headless Chromium emulation): Kit list entry, pixels drawn, every control changes the output and restores, Undo/Redo, snapshot restore, 1x export size, no page errors at 1440x900, 390x844, 844x390, 820x1180. Software-GL frame times: p50 ~180-300 ms vs 83 ms without it (shader is heavy by design; no hitches), real GPU untested.
+- Not done: Aero Shards (2000-line vgpu source). Live check pending the merge.

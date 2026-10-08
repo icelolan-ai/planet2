@@ -114,6 +114,7 @@ fx_order = [
     'laser-flow.js',
     'meta-balls.js',
     'light-pillar.js',
+    'threads.js',
     'liquid-ether.js',
     'crystalized-ball.js',
     'studio-scene-effects.js',
