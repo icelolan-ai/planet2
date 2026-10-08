@@ -7,7 +7,7 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Owner of both items below: Claude (took over from Codex on 2026-10-08; Codex released ownership at 20:14 Asia/Bangkok).
 - **Task A: DONE and live** (PR #327, see entry below). 
 - **Task B: DONE and live** (PR #325 merged, see entry below).
-- No active task (background fix released). Next: new Kit objects (Threads/Aero Shards) — claim in this section before editing.
+- Active (Claude): UI overlap guard, background smoothness, merged Mood & poster presets menu — branch `fix/ui-overlap-bg-smooth-20261008` (files: `src/template.html`, `src/effects/liquid-ether.js`, `src/effects/light-pillar.js`, `src/effects/studio-guide-language.js`). Parked checkpoint: Threads Kit on `feat/kit-threads-20261008` (source shader port; controls verified on desktop/tablet, mobile control check pending, not merged). Next: new Kit objects (Threads/Aero Shards) — claim in this section before editing.
 - Kit objects (Threads/Aero Shards) are not started; wait until A and B are closed.
 
 ## 2026-10-08 — Codex — PR #323 released
@@ -87,3 +87,11 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 - PR #330 merged (merge `dfcecb94cac8126a6eff24d74471202f0f2ef5b1`), CI `build` succeeded, live bundle `assets/app.eb570ecfc6.js` on https://icelolan-ai.github.io/planet2/.
 - Live `animated-background-ui.cjs` PASS at 1440x900 and 390x844 (headless Chromium emulation); the 390x844 screenshot shows the Customize bottom sheet with Cerebra visible above it. Not tested on physical devices; the fluid is still not a frame-for-frame match of the React Bits demo (random-target driven; large cursor footprint on narrow screens follows the source's cell-based size).
+
+## 2026-10-08 Asia/Bangkok — Claude — UI overlap, background stutter, merged Mood & Poster presets (PR pending)
+
+- User reports: (1) overlapping UI (Layers tray over the settings panel), (2) animated background presets stutter, (3) Mood and Poster presets should be one tidy menu.
+- Stutter: measured main-thread frame times in headless software GL with `perf` harness (7 s, 1440x900): with Liquid Ether frames hitched up to 1.1-1.3 s (13 frames) and after changes max 0.3 s (42 frames), Light Pillar 1.35 s -> 0.25 s. Causes/changes: backgrounds no longer use the "selected" high-quality budget while Customize is open (canvas backing store 0.55 MP moving / 2 MP static, upscaled by CSS); Light Pillar background preview render cap 384/512/768 and default Quality back to Medium on desktop (High stays selectable; this reverses my earlier High default, deliberately, for smoothness); Liquid Ether load shedding: 1 sim step per frame and half solver iterations when frames arrive >42/55 ms apart, 3 steps (was 4) during build-up. Software GL numbers are a proxy; real-GPU smoothness untested.
+- Overlap: a post-layout guard in `layoutTrays` pushes a stacked tray below the previous one if their real rectangles overlap, shrinks bottom trays that run under the side rails and caps rails (scrollable) when needed, and a ResizeObserver re-lays out when Layers/panel change size. Reproduced real overlaps at 320x640 (Layers over the Add rail) and 844x390 (Add/Decor rails over dock and Layers); none remain in the 1440/1024/390/844x390 checks. The exact user scenario (settings panel under an expanded Layers) was not reproduced locally; the guard covers any size growth after layout.
+- Menu: "Mood" and "Poster presets" are one section "Mood & poster presets" with two labelled blocks (Mood: grid + Random look; Poster presets: grid); the Mood block is still hidden when no planet is shown, without hiding poster presets. Thai label added.
+- Tests: `animated-background-ui.cjs` PASS 1440x900, 390x844, 844x390 (local, emulation); tray overlap probe at 6 viewports; screenshots reviewed. Live check pending the merge.
