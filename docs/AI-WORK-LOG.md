@@ -6,7 +6,7 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 - Owner of both items below: Claude (took over from Codex on 2026-10-08; Codex released ownership at 20:14 Asia/Bangkok).
 - **Task A: DONE and live** (PR #327, see entry below). 
-- **Task B (queued, separate PR): Line Sidebar.** Resume PR #325 / branch `feat/native-line-sidebar-20261008` (checkpoint `650012ac…`, plus Claude claim commit `5c0d2ef` merging main docs). Touches `src/effects/line-sidebar.js`, `studio-launch.js`, `template.html`, `build_web.py`. Task A also edits `template.html`; Task B must be rebased/merged onto main after Task A lands. No Line Sidebar product code was changed by Claude yet.
+- **Task B (this change): Line Sidebar** PR #325, branch `feat/native-line-sidebar-20261008`, owner Claude; main merged in (`03466d8`). Files: `src/effects/line-sidebar.js`, `studio-launch.js`, `template.html`, `build_web.py`, `docs/qa/line-sidebar-*.cjs`.
 - Kit objects (Threads/Aero Shards) are not started; wait until A and B are closed.
 
 ## 2026-10-08 — Codex — PR #323 released
@@ -57,3 +57,10 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - PR #327 merged (merge `0726e95a2961b3b14f17f633a872a68f78123a08`, source `53a3ad2`); CI `build` succeeded; generated main `af1ef9e`, live bundle `assets/app.a11a652b97.js` confirmed on https://icelolan-ai.github.io/planet2/.
 - Live check: `docs/qa/animated-background-ui.cjs` against the deployed site, headless Chromium device emulation (not physical devices), desktop 1440x900 and mobile 390x844 PASS (select/replace/keep values, frame-exact geometry, no canvas selection, zoom/shift, undo/redo, restore, legacy migration, export size, Thai, no page errors). Tablet 820x1180 and landscape 844x390 passed on the local build only.
 - Still pending: Line Sidebar (PR #325, Claude-owned; rebase/merge main first, rerun `line-sidebar-ui.cjs` and unfrozen checks), then new Kit objects. Physical Safari/iOS and hardware FPS untested.
+
+## 2026-10-08 22:00 Asia/Bangkok — Claude — Line Sidebar verified (PR #325; release status in the next entry once merged/live)
+
+- Resumed Codex checkpoint `650012ac`; merged main (Animated Background) — no code conflicts, only the work-log doc (took main's, re-recorded here). No new Line Sidebar code was needed: the final `Glide.to` command fix works.
+- Local build tests (headless Chromium software GL, device emulation, not physical devices): `docs/qa/line-sidebar-ui.cjs` PASS at 1440x900, 390x844, 820x1180 and 844x390 (guide chapters mouse/Enter, EN/TH, falloff, reduced-motion fallback in guide, Studio section folds/presets/localization, rail click and focused Enter reach sections 1 and 2, no overflow, no page/console errors). New `docs/qa/line-sidebar-live-ui.cjs` with the renderer NOT frozen: desktop, desktop reduced-motion and mobile 390x844 touch — rail click, Enter, wheel, touch swipe (CDP touch events), return to section 1 and no horizontal overflow all pass, no page errors.
+- Baseline comparison on main: rail buttons did not navigate at all before this PR (scroll stayed 0). Wheel and touch scrolling are identical to main (same values); in reduced-motion a wheel at ~section 3 is ignored identically on main (pre-existing, not changed here).
+- Notes: Glide travel from section 3 back to 1 takes ~3 s under software GL; test waits accordingly. Physical iOS/Safari/hardware FPS untested.

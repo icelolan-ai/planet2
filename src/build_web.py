@@ -131,6 +131,7 @@ fx_order = [
     'studio-guide-language.js',
     'studio-launch.js',
     'studio-stepper.js',
+    'line-sidebar.js',
     'page-backdrops.js',
     'studio-reactbits-pages.js',
     'viewport-controls.js',
