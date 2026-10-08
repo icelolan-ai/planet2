@@ -7,6 +7,7 @@
   function draw(g,w,h,dpr,t,p){
     if(p.kind==='off')return;
     if(p.kind==='lightPillar'){window.CerebraLightPillar.draw(g,w,h,t,p);return;}
+    if(p.kind==='liquidEther'){window.CerebraLiquidEther.draw(g,w,h,dpr,t,p);return;}
     const color1=/^#[0-9a-f]{6}$/i.test(p.color1)?p.color1:'#5227ff';
     const color2=/^#[0-9a-f]{6}$/i.test(p.color2)?p.color2:'#ff9ffc';
     const color3=/^#[0-9a-f]{6}$/i.test(p.color3)?p.color3:'#b497cf';

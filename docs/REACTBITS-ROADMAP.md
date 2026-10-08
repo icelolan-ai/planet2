@@ -1,5 +1,7 @@
 # React Bits integration — staged delivery
 
+Liquid Ether page correction, 8 October: Backdrop now includes the actual upstream fluid solver and all meaningful source Customize controls (palette, force/radius, resolution, viscosity/pressure, BFECC/bounce, timestep, auto motion/timings, light mode/background). Shared renderer and existing page clock; bounded output 960px desktop / 672px coarse-pointer, async moving transport, reduced-motion pause/manual updates and complete Off/Reset disposal. Keep Colour flow separately labelled as legacy sine art. Independent equal-size solver/colour comparison gives zero-byte difference in two source configurations. Pointer/touch, native menu/Studio entry and desktop/mobile controls are verified locally; repeat deployed checks before release. Crystalized Ball fidelity remains pending.
+
 8 October UI correction: all Kit Design panels share a wider responsive two-column layout, with a viewport-safe anchor for oversized objects, an edge-pinned selection toolbar and complete Design/Motion reset. Native Lab Water/Particle Flow layers now expose visibility, opacity and delete/Undo. These are Studio usability fixes; the remaining React Bits component fidelity work below is still staged.
 
 Requested by Ice, 7 October 2026 (Asia/Bangkok). Deliver in reviewable parts;
