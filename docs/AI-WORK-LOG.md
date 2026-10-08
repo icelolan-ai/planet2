@@ -6,8 +6,9 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 - Task: native React Bits Line Sidebar and section-scroll command fix.
 - State: CHECKPOINT / awaiting Claude takeover; not released, do not merge without remaining QA.
-- Previous owner: Codex. Ownership is released once the remote checkpoint is published; Claude must record its claim before editing.
+- Previous owner: Codex. Ownership RELEASED at 2026-10-08 20:14 Asia/Bangkok; awaiting Claude claim before editing.
 - Branch: `feat/native-line-sidebar-20261008`.
+- Published checkpoint: https://github.com/icelolan-ai/planet2/pull/325 (OPEN / WIP / not merged), commit `650012ac6660bac396cb06de025d43f61f7f86f4`.
 - Base: `4d553369aadda382d5e934896b7505df39c69311` (generated main after PR #323).
 - Intended source files: `src/effects/line-sidebar.js`, `src/effects/studio-launch.js`, `src/template.html`, `src/build_web.py`.
 - QA fixture saved with checkpoint: `docs/qa/line-sidebar-ui.cjs`.
@@ -38,3 +39,10 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Added repository-wide `AGENTS.md`, this work log and matching `CLAUDE.md` rules. Updated the latest handoff with released/pending status and takeover steps.
 - Every future completed task/fix must record owner, files, commit/PR, actual tests, release evidence, limitations and next steps. Before editing, check other active work and publish a claim. Switching AI requires a published checkpoint and explicit ownership release.
 - Documentation validation: relative links/files and `git diff --check`; no product behavior is changed by these rules.
+
+## 2026-10-08 20:14 Asia/Bangkok — Codex — handoff published, ownership released
+
+- Shared AI history/rules merged via https://github.com/icelolan-ai/planet2/pull/324, source `1aef0d50703c4b303853bc586253f86bb9918729`, merge `ab360cca381b52a25fd82b885cf92449c28b8d53`. Documentation only; production source/bundle unchanged. No product release is implied.
+- Exact source checkpoint published via https://github.com/icelolan-ai/planet2/pull/325, commit `650012ac6660bac396cb06de025d43f61f7f86f4`; all five uploaded source/fixture blobs matched local git hashes. The PR is open/WIP and must stay unmerged until remaining QA passes.
+- Codex releases the Line Sidebar task and stops product edits. Claude must claim ownership and merge latest main documentation into the checkpoint before continuing. No new Kit object work was started.
+- Handoff references/status checked and fixture syntax/diff checks passed. UI and live QA for the final scroll fix remain pending as documented above.
