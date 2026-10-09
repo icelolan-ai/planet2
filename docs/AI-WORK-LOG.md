@@ -151,3 +151,10 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 - PR #340 merged (merge `9b90be9ee937a0d79488b1c259f9927eaa98a9ec`), CI `build` succeeded, live bundle `assets/app.19074dce3e.js`. Live `studio-planet-lifecycle-ui.cjs` PASS at 1440x900 and 390x844 (headless Chromium emulation; add menu, add, delete, Undo/Redo, factory-default re-add). No 3D loader exists yet; use `CerebraStudioPlanets.register`. Physical devices untested.
 - Still open from the earlier list: Liquid Ether vs demo look, new Kit objects from the roadmap (Lightfall, Galaxy, Hyperspeed, …), real-device smoothness measurements.
+
+## 2026-10-09 Asia/Bangkok — Claude — Empty-canvas card close button; ghost planet selection ring fixed (PR pending)
+
+- User reports: the "Empty canvas" card needs a close (×) button; after deleting Cerebra/a planet an invisible selection circle with corner handles (the multi-select box + planet ring) remained.
+- Cause of the ghost: Select-all/marquee left `multiPlanet` (and the planet ring/box) set; deleting or hiding the planet did not clear it and `planetCircle()` kept reporting a circle from the last frame. Fix: deleting/hiding the planet clears `multiPlanet` and `selMode`; `planetCircle()`/`onPlanet()` return nothing when no planet is present or it is hidden; Select-all only includes the planet when it is present.
+- Card: × button (40 px, aria-label, EN/TH); closing keeps it closed until a planet exists again; the Layers "+ Planet", Layer menu and dock select still add planets while it is closed. Branch `fix/empty-card-close-planet-ring-20261009`, file `src/template.html`, fixture `docs/qa/studio-planet-lifecycle-ui.cjs` extended (select-all then delete → no ring/box/multiPlanet; card closes and stays closed).
+- Tests (headless Chromium emulation, local build): lifecycle fixture PASS 1440x900 and 390x844; empty-canvas fixture PASS; screenshots reviewed. Live check pending the merge.

@@ -936,8 +936,10 @@ body.studio-on #studio{display:block}
 #studio .st-kitc{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:block}
 #studio [data-kit-types] .st-btn canvas{width:44px;height:44px;display:block;margin:0 auto 2px}
 #studio [data-kit-panel].st-bgpanel{width:min(520px,calc(100vw - 24px))}
-#studio .st-empty{position:fixed;z-index:6;left:calc(var(--lay-l,0px) + (100% - var(--lay-l,0px) - var(--lay-r,0px)) / 2);top:46%;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 32px));padding:22px 24px 20px;border-radius:20px;text-align:center;background:#07091299;border:1px solid #ffffff1f;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 18px 60px #0008;pointer-events:auto}
+#studio .st-empty{position:fixed;z-index:6;left:calc(var(--lay-l,0px) + (100% - var(--lay-l,0px) - var(--lay-r,0px)) / 2);top:46%;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 32px));padding:46px 24px 20px;border-radius:20px;text-align:center;background:#07091299;border:1px solid #ffffff1f;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 18px 60px #0008;pointer-events:auto}
 #studio .st-empty[hidden]{display:none}
+#studio .st-empty-x{position:absolute;top:6px;right:6px;width:40px;height:40px;min-width:40px;min-height:40px;padding:0;border-radius:12px;border:1px solid #ffffff24;background:#ffffff0d;color:#dfe5ef;font:24px/1 var(--f-sans);cursor:pointer;display:grid;place-items:center}
+#studio .st-empty-x:hover{background:#ffffff1c}
 #studio .st-empty-t{margin:0 0 4px;font:600 13px var(--f-cond);letter-spacing:.22em;text-transform:uppercase;color:#ff8f98}
 #studio .st-empty-s{margin:0 0 16px;font:14px/1.5 var(--f-sans);color:#c9d0de}
 #studio .st-empty-a{display:grid;gap:10px}
@@ -9934,6 +9936,7 @@ class CoreStudio {
     if (this.showSubject === on && !quiet) return;
     this.showSubject = on; const pl = this.fxItem('planet'); if (pl) { pl.hide = !on; if (on) pl.deleted = false; }
     const b = this.el.querySelector('[data-studio-show]'); if (b) { b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', on ? 'Hide subject' : 'Show subject'); }
+    if (!on) { this.multiPlanet = false; if (this.multi.size === 0) this.selMode = false; this.updateMultiUI?.(); }
     if (quiet) { this.syncEmptyHint?.(); return; }
     this.renderLayers(); this.paintBackground(); this.updateAvail(); this.commit();
   }
@@ -9968,7 +9971,7 @@ class CoreStudio {
   }
   deletePlanet(quiet) {
     const pl = this.fxItem('planet'); if (!pl || pl.deleted) return;
-    pl.deleted = true; pl.group = null; this.multi.delete(pl.id);
+    pl.deleted = true; pl.group = null; this.multi.delete(pl.id); this.multiPlanet = false; if (this.multi.size === 0) this.selMode = false;
     this.setSubjectVisible(false, true); this.renderLayers(); this.paintBackground(); this.updateAvail(); this.updateFocus();
     if (!quiet) this.commit(); this.syncEmptyHint();
   }
@@ -9987,10 +9990,12 @@ class CoreStudio {
       if (gone) { if (h) h.textContent = th ? 'ยังไม่มีดาว' : 'No planet yet'; if (sel) sel.value = '-2'; }
       else if (h && this.subject != null) { const name = this.subject < 0 ? 'Cerebra' : this.app.orrery.worlds[this.subject]?.def.name; if (name) h.textContent = `${name}, in focus.`; if (sel) sel.value = String(this.subject); } }
     const box = this.emptyHint; if (!box) return;
-    const empty = this.active !== false && !this.planetPresent() && !this.items.some(i => i.kind !== 'fx' && !i.bg);
+    if (this.planetPresent()) this.emptyDismissed = false;
+    const empty = this.active !== false && !this.emptyDismissed && !this.planetPresent() && !this.items.some(i => i.kind !== 'fx' && !i.bg);
     const th = window.__cerebraLanguage?.current === 'th', key = `${empty}|${th}`;
     box.hidden = !empty; if (!empty || box.dataset.key === key) return; box.dataset.key = key;
-    box.innerHTML = `<p class="st-empty-t">${th ? 'แคนวาสว่างเปล่า' : 'Empty canvas'}</p><p class="st-empty-s">${th ? 'เพิ่ม Cerebra หรือดาวดวงอื่น แล้วค่อยแต่งภาพ' : 'Add Cerebra or another world, then compose.'}</p><div class="st-empty-a"><button type="button" class="st-btn" data-empty-add="-1">${th ? 'เพิ่ม Cerebra' : 'Add Cerebra'}</button><button type="button" class="st-btn" data-empty-more aria-haspopup="menu">${th ? 'ดาวดวงอื่น / ไฟล์ 3D…' : 'More planets / 3D file…'}</button></div>`;
+    box.innerHTML = `<button type="button" class="st-empty-x" data-empty-close aria-label="${th ? 'ปิด' : 'Close'}">×</button><p class="st-empty-t">${th ? 'แคนวาสว่างเปล่า' : 'Empty canvas'}</p><p class="st-empty-s">${th ? 'เพิ่ม Cerebra หรือดาวดวงอื่น แล้วค่อยแต่งภาพ' : 'Add Cerebra or another world, then compose.'}</p><div class="st-empty-a"><button type="button" class="st-btn" data-empty-add="-1">${th ? 'เพิ่ม Cerebra' : 'Add Cerebra'}</button><button type="button" class="st-btn" data-empty-more aria-haspopup="menu">${th ? 'ดาวดวงอื่น / ไฟล์ 3D…' : 'More planets / 3D file…'}</button></div>`;
+    box.querySelector('[data-empty-close]').onclick = () => { this.emptyDismissed = true; this.syncEmptyHint(); };
     box.querySelector('[data-empty-add]').onclick = () => this.addPlanet(-1);
     box.querySelector('[data-empty-more]').onclick = e => { e.stopPropagation(); this.openPlanetMenu(e.currentTarget); };
   }
@@ -12062,7 +12067,7 @@ class CoreStudio {
       { group: 'Edit', label: 'Paste', keys: ['mod+v'], run: () => { if (!this.clip || !this.clip.length) return false; this.pasteN = (this.pasteN || 0) + 1; spawn(this.clip, .03 * this.pasteN); } },
       { group: 'Edit', label: 'Duplicate', keys: ['mod+d'], run: () => { const set = targets().filter(i => i.kind !== 'fx'); if (!set.length) return; spawn(set.map(snap), .03); } },
       { group: 'Edit', label: 'Delete', keys: ['delete', 'backspace'], run: () => { if (this.lineSel) return this.deleteLine(); const set = targets(); if (!set.length) return false; if (set.length === 1 && !this.multi.size) this.removeItem(set[0]); else act(set, 'delete'); } },
-      { group: 'Edit', label: 'Select all', keys: ['mod+a'], run: () => { this.select(null); this.selMode = true; this.multi = new Set(this.items.filter(i => i.kind !== 'fx' && !i.bg && !i.locked && !i.hide).map(i => i.id)); this.multiPlanet = true; this.renderLayers(); } },
+      { group: 'Edit', label: 'Select all', keys: ['mod+a'], run: () => { this.select(null); this.selMode = true; this.multi = new Set(this.items.filter(i => i.kind !== 'fx' && !i.bg && !i.locked && !i.hide).map(i => i.id)); this.multiPlanet = this.planetPresent() && this.showSubject !== false; this.renderLayers(); } },
       { group: 'Arrange', label: 'Group', keys: ['mod+g'], run: () => { const set = targets(); if (!set.length) return false; this.moveLayers(set, { kind: 'new' }); this.multi.clear(); this.selMode = false; this.renderLayers(); } },
       { group: 'Arrange', label: 'Ungroup', keys: ['mod+shift+g'], run: () => { const ids = new Set(targets().map(i => i.group).filter(g => g != null)); if (!ids.size) return false; this.items.forEach(i => { if (ids.has(i.group)) i.group = null; }); this.groups = this.groups.filter(g => !ids.has(g.id)); this.renderLayers(); this.commit(); } },
       { group: 'Arrange', label: 'Lock / unlock', keys: ['mod+l'], run: () => { const set = targets(); if (!set.length) return false; act(set, 'lock'); const it = this.sel; if (it) this.select(it); } },
@@ -12403,9 +12408,9 @@ class CoreStudio {
       if (!this.onPlanet(e.clientX, e.clientY)) { this.clearGroup(); this.select(null); }
     }, true);
     // ---- where the planet is on screen, and whether a point is on it
-    const planetCircle = () => { if (this.subject < 0) { app.hitCore(-1e5, -1e5); const c = app.coreScreen; return c && c.r > 0 ? { x: c.x, y: c.y, r: c.r } : null; } const w = app.orrery.worlds[this.subject], sc = w && w.screen; return sc && sc.on ? { x: sc.x, y: sc.y, r: sc.r } : null; };
+    const planetCircle = () => { if (!this.planetPresent() || this.showSubject === false || this.fxItem('planet')?.hide) return null; if (this.subject < 0) { app.hitCore(-1e5, -1e5); const c = app.coreScreen; return c && c.r > 0 ? { x: c.x, y: c.y, r: c.r } : null; } const w = app.orrery.worlds[this.subject], sc = w && w.screen; return sc && sc.on ? { x: sc.x, y: sc.y, r: sc.r } : null; };
     this.planetCircle = planetCircle;
-    this.onPlanet = (x, y) => { if (this.subject < 0) return app.hitCore(x, y); const c = planetCircle(); return !!c && Math.hypot(x - c.x, y - c.y) < Math.max(c.r * 1.12, 26); };
+    this.onPlanet = (x, y) => { if (!this.planetPresent() || this.showSubject === false) return false; if (this.subject < 0) return app.hitCore(x, y); const c = planetCircle(); return !!c && Math.hypot(x - c.x, y - c.y) < Math.max(c.r * 1.12, 26); };
     // ---- hit tests
     const inter = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
     const pip = (poly, x, y) => { let inside = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside; } return inside; };
