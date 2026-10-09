@@ -535,6 +535,14 @@ void main(){
 }
 `.replaceAll('@@NGLYPHS@@',NG).replace('@@LASTGLYPH@@',NG-1).replace('@@GLYPHS@@',ASCII_GLYPHS.map(rows=>`uvec2(${rows.slice(0,4).reduce((s,r,i)=>s+r*2**(i*5),0)}u,${rows.slice(4).reduce((s,r,i)=>s+r*2**(i*5),0)}u)`).join(',')));
   // ---- GPU resources (shared renderer) ----
+    // Backgrounds render sharp by default; if the page cadence (time between draws) slows down, drop to the cheaper cap and recover when it is steady again.
+  const loadOf=new WeakMap();
+  function loadLow(g,mode){
+    if(!(mode.preview&&mode.background))return !!mode.low;
+    const now=performance.now(),l=loadOf.get(g)||{at:0,gap:0,slow:false};
+    if(l.at){const d=Math.min(500,now-l.at);l.gap=l.gap?l.gap*.85+d*.15:d;l.slow=l.slow?l.gap>42:l.gap>58;}
+    l.at=now;loadOf.set(g,l);return !!mode.low||l.slow;
+  }
   const cache=new WeakMap();let gpu;
   const v4=()=>new THREE.Vector4();
   const uni=(p,names)=>Object.fromEntries(names.map(n=>[`u${p}_${n}`,{value:v4()}]));
@@ -577,8 +585,9 @@ void main(){
   const set4=(u,v)=>u.value.set(v[0],v[1],v[2],v[3]);
   function draw(g,w,h,t,options,mode={}){
     const p={...defaults,...options},cssW=Math.max(1,w/(mode.k||1)),cssH=Math.max(1,h/(mode.k||1));
-    const limit=mode.preview?(mode.background?640:mode.selected?1024:640):4096;
-    const scale=Math.min(limit/Math.max(w,h),Math.sqrt((mode.preview?1.2e6:8e6)/Math.max(1,w*h)),1),W=Math.max(16,Math.round(w*scale)),H=Math.max(16,Math.round(h*scale));
+    const low=loadLow(g,mode);
+    const limit=mode.preview?(mode.background?(low?640:1280):mode.selected?1024:640):4096;
+    const scale=Math.min(limit/Math.max(w,h),Math.sqrt((mode.preview?(mode.background?(low?.8e6:1.6e6):1.2e6):8e6)/Math.max(1,w*h)),1),W=Math.max(16,Math.round(w*scale)),H=Math.max(16,Math.round(h*scale));
     const time=Math.floor(Math.max(0,t)*30)/30;
     const key=JSON.stringify([p,W,H,time]);let c=cache.get(g);
     if((!c||c.key!==key)&&!(mode.preview&&c?.pending)){
@@ -646,7 +655,7 @@ void main(){
       range('density','Density',.5,1.5,.05),range('shardSize','Shard size',.5,1.5,.05),range('stretch','Stretch',.6,1.8,.05),range('turbulence','Turbulence',0,2,.05),
       range('glow','Glow',0,2,.05),range('edgeSoftness','Edge softness',0,2,.05),range('bloom','Bloom',0,3,.05),range('grain','Grain',0,.12,.005),range('chromaticAberration','Chromatic aberration',0,.01,.0005),
       select('quality','Quality',[['low','Low'],['medium','Medium'],['high','High']])],
-    draw(g,it,x,y,w,h,k){const M=kitM(it),p={...defaults,...it.p};g.save();g.translate(x,y);try{draw(g,w,h,M.a?M.t*M.a/.6:0,p,{k:k||1,preview:typeof KIT_PREVIEW!=='undefined'&&KIT_PREVIEW,selected:it===window.__cerebra?.studio?.sel&&!it.bg&&!window.__cerebra.studio.lite,background:!!it.bg});}finally{g.restore();}}
+    draw(g,it,x,y,w,h,k){const M=kitM(it),p={...defaults,...it.p};g.save();g.translate(x,y);try{draw(g,w,h,M.a?M.t*M.a/.6:0,p,{k:k||1,preview:typeof KIT_PREVIEW!=='undefined'&&KIT_PREVIEW,selected:it===window.__cerebra?.studio?.sel&&!it.bg&&!window.__cerebra.studio.lite,background:!!it.bg,low:typeof KIT_LOW!=='undefined'&&KIT_LOW});}finally{g.restore();}}
   };
-  window.CerebraAeroShards={draw,defaults,kit,reference:'DavidHDev/react-bits/AeroShards',renderer:'shared-webgl',preview:'async-readback'};
+  window.CerebraAeroShards={draw,defaults,kit,inspect:g=>{const c=cache.get(g);return c?{width:c.canvas.width,height:c.canvas.height}:null;},reference:'DavidHDev/react-bits/AeroShards',renderer:'shared-webgl',preview:'async-readback'};
 })();

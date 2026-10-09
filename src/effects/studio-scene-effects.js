@@ -28,7 +28,7 @@
       const physics=JSON.stringify(['mouseForce','cursorSize','autoDemo','autoSpeed','autoIntensity','resolution','isViscous','viscosity','iterationsViscous','iterationsPoisson','dt','BFECC','isBounce','takeoverDuration','autoResumeDelay','autoRampDuration'].map(k=>it.p[k]).concat(it.mAmt??.6,it.seed));
       if(b.physics!==undefined&&b.physics!==physics){ether.reset(b.g);b.first=true;}b.physics=physics;
       b.g.clearRect(0,0,b.canvas.width,b.canvas.height);
-      ether.draw(b.g,b.canvas.width,b.canvas.height,1,M.t,{...it.p,autoIntensity:it.p.autoIntensity*(it.mAmt??.6)/.6},{studio:true,stopped:capture||!KIT_PREVIEW,first:b.first,seed:it.seed,host:b.host});g.drawImage(b.canvas,x,y,w,h);b.first=false;
+      ether.draw(b.g,b.canvas.width,b.canvas.height,1,M.t,{...it.p,autoIntensity:it.p.autoIntensity*(it.mAmt??.6)/.6},{studio:true,stopped:capture||!KIT_PREVIEW,first:b.first,seed:it.seed,host:b.host});g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(b.canvas,x,y,w,h);b.first=false;
     },
     dispose(it){const b=buffers.get(it);if(b)ether.reset(b.g);buffers.delete(it);}
   };
