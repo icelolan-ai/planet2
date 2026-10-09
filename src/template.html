@@ -11762,7 +11762,7 @@ class CoreStudio {
   drawKit(it, w, h) {
     const c = it.el.querySelector('canvas.st-kitc'); if (!c) return;
     const selected = it === this.sel && !it.bg, d0 = selected && !this.lite ? Math.min(devicePixelRatio || 1, 2) : this.kitScale();
-    const budget = it.bg ? (it.mOn ? this.lite ? .3e6 : .55e6 : 2e6) : it.mOn ? this.lite ? .5e6 : selected ? 4e6 : 1.5e6 : this.lite ? 4e6 : 8e6;
+    const budget = it.bg ? (it.mOn ? this.lite ? .5e6 : (this._kitBusy ? .9e6 : 1.7e6) : 3e6) : it.mOn ? this.lite ? .5e6 : selected ? 4e6 : 1.5e6 : this.lite ? 4e6 : 8e6;
     const d = Math.min(d0, it.mOn && !selected ? this.lite ? 1 : 1.5 : d0, Math.sqrt(budget / Math.max(1, w * h)), 4096 / Math.max(1,w,h)), W = Math.max(1, Math.round(w * d)), H = Math.max(1, Math.round(h * d));
     if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
     const g = c.getContext('2d'); g.clearRect(0, 0, W, H); g.globalAlpha = 1; KIT_LOW = this.lite || (!!this._kitBusy && it !== this.sel); KIT_PREVIEW = !!it.mOn && !this.app.reduced; try { KIT[it.kit].draw(g, it, 0, 0, W, H, d); } finally { KIT_LOW = false; KIT_PREVIEW = false; } c.style.opacity = it.opacity ?? 1;
