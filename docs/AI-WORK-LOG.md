@@ -146,3 +146,8 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Cosmetics: panel heading shows "No planet yet" and the dock select shows "—" while the canvas has no planet.
 - Tests (headless Chromium emulation, local build): `docs/qa/studio-planet-lifecycle-ui.cjs` PASS at 1440x900, 390x844, 844x390, 820x1180 — menu lists Cerebra, 7 worlds and the disabled 3D entry; add; customise (theme, layer flags, opacity, pan); delete from Layers; Undo restores, Redo deletes; re-add equals the first default (Tune snapshot, layer flags, opacity, pan) ; add world 0 then delete; no page errors. `studio-empty-canvas-ui` and `animated-background-ui` still PASS at 1440. Live check pending the merge.
 - Limitations: one planet at a time; world look tested only for add/delete (not every world's tune values); physical devices untested.
+
+## 2026-10-09 Asia/Bangkok — Claude — Studio planet lifecycle released
+
+- PR #340 merged (merge `9b90be9ee937a0d79488b1c259f9927eaa98a9ec`), CI `build` succeeded, live bundle `assets/app.19074dce3e.js`. Live `studio-planet-lifecycle-ui.cjs` PASS at 1440x900 and 390x844 (headless Chromium emulation; add menu, add, delete, Undo/Redo, factory-default re-add). No 3D loader exists yet; use `CerebraStudioPlanets.register`. Physical devices untested.
+- Still open from the earlier list: Liquid Ether vs demo look, new Kit objects from the roadmap (Lightfall, Galaxy, Hyperspeed, …), real-device smoothness measurements.
