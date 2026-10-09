@@ -913,7 +913,7 @@ body.studio-on #gl{transform:none!important;pointer-events:none;position:absolut
 .st-planetbox>*{position:absolute!important;inset:0;z-index:auto!important}
 .st-catcher{position:absolute;left:-400px;top:-400px;right:-400px;bottom:-400px;pointer-events:auto;touch-action:none;cursor:grab}
 .st-catcher:active{cursor:grabbing}
-#studio .st-layer.is-planet .st-ldel{display:none}
+#studio .st-layer .st-pdel{width:34px;color:#9aa3b5}#studio .st-layer .st-pdel:hover{color:#ff6571}#studio .st-layer .st-pdel svg.st-i{width:17px;height:17px}
 #studio-bg{position:fixed;inset:0;z-index:0;pointer-events:none;display:none}
 body.studio-on #studio-bg{display:block}
 #studio-fx,#studio-vfx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;display:none}
@@ -942,6 +942,8 @@ body.studio-on #studio{display:block}
 #studio .st-empty-s{margin:0 0 16px;font:14px/1.5 var(--f-sans);color:#c9d0de}
 #studio .st-empty-a{display:grid;gap:10px}
 #studio .st-empty-a .st-btn{min-height:44px;justify-content:center}
+#studio .st-pm-n{margin:2px 8px 6px;font:12px/1.4 var(--f-sans);color:#9aa3b5}
+#studio .st-planetmenu .st-lm-i[disabled]{opacity:.45}
 #studio .st-empty-pick{display:grid;gap:6px;text-align:left;font:600 11px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:#aeb7c8}
 #studio .st-empty-pick select{min-height:44px;width:100%;padding:6px 12px;border-radius:12px;border:1px solid #ffffff2a;background:#ffffff10;color:#fff;font:14px var(--f-sans)}
 #studio .st-bgm{display:grid;gap:8px;margin:10px 0 4px;padding:10px 12px;border-radius:14px;background:#ffffff0a;border:1px solid #ffffff14}
@@ -3268,7 +3270,7 @@ const WorldTune = (() => {
     Signals.on('world:exit', () => open(false));
     Signals.on('world:swap', () => { if (P.dataset.open === 'true') setTimeout(() => open(true), 0); });
   };
-  return { wire, open, tab, applyValues(target,values){Object.entries(values).forEach(([k,v])=>target.setTune(k,v));store[target.def.id]={...(store[target.def.id]||{}),...values};save();if(w===target){syncAccent();fill();}} };
+  return { wire, open, tab, resetWorld(target){const def=Object.assign({},World.TUNE_DEFAULT,{tilt:target.def.tilt},rippleDefaults());Object.keys(def).forEach(k=>target.setTune(k,def[k]));delete store[target.def.id];save();if(w===target){syncAccent();fill();}}, applyValues(target,values){Object.entries(values).forEach(([k,v])=>target.setTune(k,v));store[target.def.id]={...(store[target.def.id]||{}),...values};save();if(w===target){syncAccent();fill();}} };
 })();
 
 /* Core tuning drawer. Talks to the planet through PlanetBody.active once the scene exists.
@@ -8167,6 +8169,11 @@ function netBackdrop() {
   document.querySelectorAll('.net-host, #at-net').forEach(h => NET.bind(h));
 }
 /** Planets the user made in Studio ('Save planet'): the Cerebra core's Tune settings + Surface/Burst effects, newest first. */
+// Planet sources for Studio's Add-planet menu. Built-ins (Cerebra, the seven worlds) are listed by the Studio itself; add more with
+// CerebraStudioPlanets.register({ id, label, labelTh, hint, available(studio), add(studio) }). `add` should call studio.addPlanet-style code or load
+// its own model; the menu already lists the reserved "Open 3D file" entry (disabled until a loader registers under the same id).
+window.CerebraStudioPlanets = window.CerebraStudioPlanets || { sources: [], register(def) { if (!def || !def.id) return; const i = this.sources.findIndex(x => x.id === def.id); if (i >= 0) this.sources[i] = def; else this.sources.push(def); } };
+window.CerebraStudioPlanets.register({ id: 'file3d', label: 'Open 3D file…', labelTh: 'เปิดไฟล์ 3D…', hint: 'soon', available: () => false, add: () => {} });
 const PLANETS = {
   KEY: 'cerebra.planets.v1',
   list() { try { const l = JSON.parse(localStorage.getItem(this.KEY) || '[]'); return Array.isArray(l) ? l : []; } catch (e) { return []; } },
@@ -9415,7 +9422,7 @@ class CoreStudio {
         <div class="st-lib-track" data-lib-track></div><label class="st-lib-slider"><span class="sr-only">Scroll saved works</span><input type="range" min="0" max="1000" step="1" value="0" data-lib-scroll aria-label="Scroll saved works" disabled></label><p class="st-lib-empty" data-lib-empty>Nothing kept yet. Press Keep in the toolbar to save this composition.</p></div>
       <div class="st-dock st-glass" data-tray="dock" role="toolbar" aria-label="Studio"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button>
         <button type="button" class="st-btn st-dock-fold" data-dock-fold aria-expanded="true" aria-label="Fold toolbar"><span class="st-chev" aria-hidden="true"></span></button>
-        <select data-studio-subject aria-label="Object in studio"><option value="-1">Cerebra</option>${WORLDS.map((d,i) => `<option value="${i}">${d.name}</option>`).join('')}</select>
+        <select data-studio-subject aria-label="Object in studio"><option value="-2" disabled hidden>—</option><option value="-1">Cerebra</option>${WORLDS.map((d,i) => `<option value="${i}">${d.name}</option>`).join('')}</select>
         <button type="button" class="st-btn is-primary" data-studio-tune>${I('<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>')}<span class="st-label" data-tune-label>Tune the core</span></button>
         <div class="st-group" data-grp="fx"><button type="button" class="st-btn" data-grp-btn aria-expanded="false" aria-label="Effects menu"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg><span class="st-label">Effects</span><i class="st-caret" aria-hidden="true"></i></button><div class="st-sub st-sub-wide" hidden>
           <div class="st-fxbox" data-fxbox><p class="st-sub-t">Colour effect</p><div class="st-chips"><button type="button" class="st-chip" data-fxv="off">Off</button><button type="button" class="st-chip" data-fxv="chromatic">Chromatic</button><button type="button" class="st-chip" data-fxv="rgb">RGB split</button><button type="button" class="st-chip" data-fxv="color">Color split</button><button type="button" class="st-chip" data-fxv="vhs">VHS</button><button type="button" class="st-chip" data-fxv="glitch">Glitch</button></div>
@@ -9468,7 +9475,7 @@ class CoreStudio {
       <h3>Planet parts</h3><div class="studio-layers">${Object.keys(names).map(k => `<button type="button" class="studio-layer" data-studio-layer="${k}" aria-pressed="${k !== 'dust'}" aria-label="Show ${names[k]}"><span>${names[k]}</span>${eye}</button>`).join('')}</div>
       <h3>Inside the core</h3><div class="studio-layers">${LAYER_NAMES.map((name, i) => `<button type="button" class="studio-layer" data-studio-core="${i}" aria-pressed="true" aria-label="Hide ${name}"><span>${name}</span>${eye}</button>`).join('')}</div>
       <button type="button" class="st-btn st-reset" data-studio-reset>Reset settings</button></aside>
-      <aside class="studio-panel st-layers-tray st-glass" data-tray="layers" aria-label="Layers"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-layers-fold aria-expanded="true"><h2>Layers</h2><span class="st-chev" aria-hidden="true"></span></button><div class="st-layer-bar"><button type="button" class="st-btn st-addgroup" data-add-group aria-label="Add a group">+ Group</button><button type="button" class="st-btn st-addgroup" data-sel-mode aria-pressed="false">Select</button></div><div class="st-lsel" data-lsel hidden></div><button type="button" class="st-lresize" data-lresize aria-label="Resize layers panel"></button><ul class="st-layers" data-studio-objects></ul><p class="studio-note" data-objects-empty>Add text, shapes or decor. Drag ⋮⋮ to restack, the eye hides a layer.</p></aside>`;
+      <aside class="studio-panel st-layers-tray st-glass" data-tray="layers" aria-label="Layers"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-layers-fold aria-expanded="true"><h2>Layers</h2><span class="st-chev" aria-hidden="true"></span></button><div class="st-layer-bar"><button type="button" class="st-btn st-addgroup" data-add-group aria-label="Add a group">+ Group</button><button type="button" class="st-btn st-addgroup" data-add-planet aria-haspopup="menu" aria-label="Add a planet">+ Planet</button><button type="button" class="st-btn st-addgroup" data-sel-mode aria-pressed="false">Select</button></div><div class="st-lsel" data-lsel hidden></div><button type="button" class="st-lresize" data-lresize aria-label="Resize layers panel"></button><ul class="st-layers" data-studio-objects></ul><p class="studio-note" data-objects-empty>Add text, shapes or decor. Drag ⋮⋮ to restack, the eye hides a layer.</p></aside>`;
     document.body.append(this.bg, this.fx, this.vfx, this.el);
     this.panel = this.el.querySelector('.studio-panel'); this.stage = this.el.querySelector('[data-studio-stage]'); this.catcher = document.createElement('div'); this.catcher.className = 'st-catcher'; this.planetBox = document.createElement('div'); this.planetBox.className = 'st-planetbox'; this.planetBox.setAttribute('aria-hidden', 'true'); this.stage.prepend(this.catcher); this.ctx = this.el.querySelector('[data-studio-context]');
     this.emptyHint = document.createElement('div'); this.emptyHint.className = 'st-empty'; this.emptyHint.hidden = true; this.el.append(this.emptyHint);
@@ -9494,6 +9501,7 @@ class CoreStudio {
     fold(this.el.querySelector('[data-panel-fold]'), this.panel);
     fold(this.el.querySelector('[data-layers-fold]'), this.el.querySelector('[data-tray="layers"]'));
     this.el.querySelector('[data-add-group]').addEventListener('click', () => this.addGroup());
+    this.el.querySelector('[data-add-planet]').addEventListener('click', e => { e.stopPropagation(); this.openPlanetMenu(e.currentTarget); });
     this.el.querySelector('[data-sel-mode]').addEventListener('click', () => { this.selMode = !this.selMode; if (!this.selMode) this.multi.clear(); this.renderLayers(); });
     // Effects popover: pick an effect, set its strength, and the network backdrop live together.
     {
@@ -9598,7 +9606,7 @@ class CoreStudio {
     this.cpts = [{ c: '#ff3d8a', x: .28, y: .3 }, { c: '#2fc8ff', x: .72, y: .65 }, { c: '#7b2cbf', x: .5, y: .9 }];
     this.cptLayer = document.createElement('div'); this.cptLayer.className = 'st-cpts'; this.stage.after(this.cptLayer);
     this.el.querySelector('[data-cpts-add]').onclick = () => { this.cpts.push({ c: '#ffb04a', x: .5, y: .5 }); this.paintBackground(); this.renderCpts(); this.commit(); };
-    this.el.querySelector('[data-studio-subject]').onchange = e => { this.setSubject(+e.target.value); this.setSubjectVisible(true); };
+    this.el.querySelector('[data-studio-subject]').onchange = e => { const pl = this.fxItem('planet'); if (pl?.deleted) this.addPlanet(+e.target.value); else this.setSubject(+e.target.value); };
     this.el.querySelectorAll('[data-studio-preset]').forEach(b => b.onclick = () => { this.items.filter(i => i.tpl).forEach(i => this.removeItem(i, true)); this.applyPreset(b.dataset.studioPreset); });
     this.el.querySelectorAll('[data-studio-template]').forEach(b => b.onclick = () => BG_KITS.includes(b.dataset.studioTemplate) ? this.setBackground(b.dataset.studioTemplate) : this.applyTemplate(b.dataset.studioTemplate));
     this.el.querySelectorAll('[data-studio-add]').forEach(b => b.onclick = () => this.addItem(b.dataset.studioAdd));
@@ -9765,7 +9773,7 @@ class CoreStudio {
     this.el.querySelector('[data-studio-home]').onclick = () => this.home();
     const resetCanvas = () => {
       this.closeFly(); this.closeCtxBar();
-      this.items.slice().forEach(it => this.removeItem(it, true)); { const pl = this.fxItem('planet'); if (pl) { pl.hide = true; pl.alpha = 1; pl.group = null; } } this.groups = []; this.multi.clear(); this.multiPlanet = false; this.selMode = false;
+      this.items.slice().forEach(it => this.removeItem(it, true)); { const pl = this.fxItem('planet'); if (pl) { pl.hide = true; pl.deleted = true; pl.alpha = 1; pl.group = null; } } this.groups = []; this.multi.clear(); this.multiPlanet = false; this.selMode = false;
       Object.keys(this.layers).forEach(k => { this.layers[k] = k !== 'dust'; }); this.coreLayers.fill(true);
       this.blur = 8; this.dim = 0; this.focusInv = 0; this.focusTarget = 'scene'; this.focusText = false; this.focusObj = false; this.guides = true; this.el.classList.remove('hide-guides');
       this.frozen = false; this.showSubject = false; this.fxOn = false; this.grain = false; NET.set('on', false);
@@ -9909,7 +9917,7 @@ class CoreStudio {
     this.undoBtn = this.el.querySelector('[data-studio-undo]'); this.redoBtn = this.el.querySelector('[data-studio-redo]');
     this.undoBtn.onclick = () => this.undo(); this.redoBtn.onclick = () => this.redo();
     if (!this.fxItem('planet')) this.addItem('fx', { fxType: 'planet' });
-    this.setSubjectVisible(false, true);
+    { const pl = this.fxItem('planet'); if (pl) pl.deleted = true; } this.setSubjectVisible(false, true);
     this.hist = []; this.hi = -1; this.commit();
     // Settings changes are history steps too (committed when a control is let go).
     this.panel.addEventListener('change', e => { if (!e.target.closest('.net-host')) this.commit(); });
@@ -9924,20 +9932,67 @@ class CoreStudio {
   // Show or hide the planet layer (Cerebra or the chosen world). Studio starts with it hidden: an empty canvas the user fills in.
   setSubjectVisible(on, quiet) {
     if (this.showSubject === on && !quiet) return;
-    this.showSubject = on; const pl = this.fxItem('planet'); if (pl) pl.hide = !on;
+    this.showSubject = on; const pl = this.fxItem('planet'); if (pl) { pl.hide = !on; if (on) pl.deleted = false; }
     const b = this.el.querySelector('[data-studio-show]'); if (b) { b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', on ? 'Hide subject' : 'Show subject'); }
     if (quiet) { this.syncEmptyHint?.(); return; }
     this.renderLayers(); this.paintBackground(); this.updateAvail(); this.commit();
   }
+  // ---- Planet lifecycle -------------------------------------------------------------------------------------------------------------
+  // One planet (Cerebra or a world) lives on the stage at a time. Deleting it empties the canvas; adding one always starts from that
+  // planet's factory settings. Sources are a registry so future sources (e.g. an opened 3D file) plug in without touching the menus:
+  //   CerebraStudioPlanets.register({ id, label, labelTh, available() -> bool, add(studio) -> Promise|void, hint, labelHint })
+  planetSources() {
+    const th = window.__cerebraLanguage?.current === 'th', worlds = this.app.orrery?.worlds || [], list = [{ id: 'cerebra', index: -1, label: 'Cerebra', ok: true }];
+    WORLDS.forEach((d, i) => list.push({ id: `world:${i}`, index: i, label: d.name, ok: i < worlds.length }));
+    (window.CerebraStudioPlanets?.sources || []).forEach(src => list.push({ id: src.id, label: th && src.labelTh ? src.labelTh : src.label, ok: src.available ? !!src.available(this) : true, hint: src.hint, src }));
+    return list;
+  }
+  planetPresent() { const pl = this.fxItem('planet'); return !!pl && !pl.deleted; }
+  // Factory settings for the subject about to be added: the core's Tune values, surface style and layer flags, or the world's tune; nothing from the previous planet survives.
+  resetSubjectDefaults(index) {
+    if (index < 0) { try { window.CerebraTune?.reset(); } catch (e) {} } else { const w = this.app.orrery.worlds[index]; if (w) { try { WorldTune.resetWorld(w); } catch (e) {} } }
+    this.resetFx('subject');
+    Object.keys(this.layers).forEach(k => { this.layers[k] = k !== 'dust'; }); this.coreLayers.fill(true);
+    this.el.querySelectorAll('[data-studio-layer],[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioLayer !== 'dust')));
+    this.home(); try { PlanetBody.active?.setView(1); } catch (e) {}
+    const pl = this.fxItem('planet'); if (pl) { Object.assign(pl, { alpha: 1, group: null, hide: false, deleted: false, locked: false }); ['blend', 'rot', 'keyframes', 'name', 'focusMode'].forEach(k => { delete pl[k]; }); }
+  }
+  addPlanet(source) {
+    const index = typeof source === 'number' ? source : (source?.index ?? -1);
+    if (index >= 0 && !this.app.orrery.worlds[index]) return false;
+    this.flushCommit?.(); const pre = this.planetLook(), commit0 = this.commit; this.commit = () => {};
+    try { this.setSubject(index); this.resetSubjectDefaults(index); this.setSubjectVisible(true, true); this.stackDom(); this.syncCoreFx(); }
+    finally { this.commit = commit0; }
+    this.select(null); this.renderLayers(); this.paintBackground(); this.updateAvail(); this.paintVfx();
+    const post = this.planetLook(); this.commit(post ? { pre, pl: post } : undefined); this.syncEmptyHint(); return true;
+  }
+  deletePlanet(quiet) {
+    const pl = this.fxItem('planet'); if (!pl || pl.deleted) return;
+    pl.deleted = true; pl.group = null; this.multi.delete(pl.id);
+    this.setSubjectVisible(false, true); this.renderLayers(); this.paintBackground(); this.updateAvail(); this.updateFocus();
+    if (!quiet) this.commit(); this.syncEmptyHint();
+  }
+  openPlanetMenu(anchor) {
+    const th = window.__cerebraLanguage?.current === 'th', old = this.el.querySelector('.st-planetmenu'); if (old) { old.remove(); return; }
+    const pop = document.createElement('div'); pop.className = 'st-lmenu st-glass st-planetmenu'; pop.setAttribute('role', 'menu');
+    const sources = this.planetSources(), note = this.planetPresent() ? (th ? 'แทนที่ดาวปัจจุบันด้วยค่าเริ่มต้นใหม่' : 'Replaces the current planet with fresh defaults') : (th ? 'เริ่มจากค่าเริ่มต้นเสมอ' : 'Always starts from default settings');
+    pop.innerHTML = `<p class="st-pm-n">${note}</p>` + sources.map(o => `<button type="button" role="menuitem" class="st-lm-i" data-pm="${o.id}"${o.ok ? '' : ' disabled'}><span>${o.label}</span>${o.hint ? `<i>${o.hint}</i>` : o.ok ? '' : `<i>${th ? 'กำลังโหลด' : 'loading'}</i>`}</button>`).join('');
+    this.el.append(pop); const r = anchor.getBoundingClientRect(); pop.style.width = '240px'; pop.style.left = clamp(r.left, 8, innerWidth - 248) + 'px'; pop.style.top = clamp(r.bottom + 6, 8, innerHeight - pop.offsetHeight - 8) + 'px';
+    const close = () => { pop.remove(); document.removeEventListener('pointerdown', away, true); }, away = e => { if (!pop.contains(e.target) && e.target !== anchor) close(); };
+    document.addEventListener('pointerdown', away, true);
+    pop.querySelectorAll('[data-pm]').forEach(b => b.onclick = () => { const o = sources.find(x => x.id === b.dataset.pm); close(); if (!o || !o.ok) return; if (o.src) { Promise.resolve(o.src.add(this)).then(() => this.syncEmptyHint()); } else this.addPlanet(o); });
+  }
   syncEmptyHint() {
+    { const th = window.__cerebraLanguage?.current === 'th', gone = !!this.fxItem('planet')?.deleted, sel = this.el.querySelector('[data-studio-subject]'), h = this.panel?.querySelector('h2');
+      if (gone) { if (h) h.textContent = th ? 'ยังไม่มีดาว' : 'No planet yet'; if (sel) sel.value = '-2'; }
+      else if (h && this.subject != null) { const name = this.subject < 0 ? 'Cerebra' : this.app.orrery.worlds[this.subject]?.def.name; if (name) h.textContent = `${name}, in focus.`; if (sel) sel.value = String(this.subject); } }
     const box = this.emptyHint; if (!box) return;
-    const empty = this.active !== false && this.showSubject === false && !this.items.some(i => i.kind !== 'fx' && !i.bg);
+    const empty = this.active !== false && !this.planetPresent() && !this.items.some(i => i.kind !== 'fx' && !i.bg);
     const th = window.__cerebraLanguage?.current === 'th', key = `${empty}|${th}`;
     box.hidden = !empty; if (!empty || box.dataset.key === key) return; box.dataset.key = key;
-    const sel = this.el.querySelector('[data-studio-subject]');
-    box.innerHTML = `<p class="st-empty-t">${th ? 'แคนวาสว่างเปล่า' : 'Empty canvas'}</p><p class="st-empty-s">${th ? 'เพิ่ม Cerebra หรือดาวดวงอื่น แล้วค่อยแต่งภาพ' : 'Add Cerebra or another world, then compose.'}</p><div class="st-empty-a"><button type="button" class="st-btn" data-empty-add="-1">${th ? 'เพิ่ม Cerebra' : 'Add Cerebra'}</button><label class="st-empty-pick"><span>${th ? 'เพิ่มดาวดวงอื่น' : 'Add another world'}</span><select data-empty-world aria-label="${th ? 'เลือกดาว' : 'Choose a world'}"><option value="">—</option>${[...sel.options].filter(o => +o.value >= 0 && !o.disabled).map(o => `<option value="${o.value}">${o.textContent}</option>`).join('')}</select></label></div>`;
-    box.querySelector('[data-empty-add]').onclick = () => { this.setSubject(-1); this.setSubjectVisible(true); };
-    box.querySelector('[data-empty-world]').onchange = e => { if (e.target.value === '') return; this.setSubject(+e.target.value); this.setSubjectVisible(true); };
+    box.innerHTML = `<p class="st-empty-t">${th ? 'แคนวาสว่างเปล่า' : 'Empty canvas'}</p><p class="st-empty-s">${th ? 'เพิ่ม Cerebra หรือดาวดวงอื่น แล้วค่อยแต่งภาพ' : 'Add Cerebra or another world, then compose.'}</p><div class="st-empty-a"><button type="button" class="st-btn" data-empty-add="-1">${th ? 'เพิ่ม Cerebra' : 'Add Cerebra'}</button><button type="button" class="st-btn" data-empty-more aria-haspopup="menu">${th ? 'ดาวดวงอื่น / ไฟล์ 3D…' : 'More planets / 3D file…'}</button></div>`;
+    box.querySelector('[data-empty-add]').onclick = () => this.addPlanet(-1);
+    box.querySelector('[data-empty-more]').onclick = e => { e.stopPropagation(); this.openPlanetMenu(e.currentTarget); };
   }
   point(e) { const r = this.app.stage.renderer.domElement.getBoundingClientRect(); return { x:clamp((e.clientX-r.left)/r.width,0,1), y:clamp((e.clientY-r.top)/r.height,0,1) }; }
   setSubject(index) {
@@ -11544,11 +11599,12 @@ class CoreStudio {
     const folder = '<svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
     const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const row = (it, inGroup) => {
+      if (it.deleted) return '';
       const sw = it.kind === 'fx' ? `<i class="st-sw is-fx">${{ colour: '◐', grain: '▒', network: '⌘', planet: '●', water: '≈', waterParticles: '✦' }[it.fxType]}</i>` : it.kind === 'text' ? `<i class="st-sw" style="color:${it.color}">T</i>` : `<i class="st-sw ${it.decor ? 'is-fill' : ''}" style="color:${it.decor ? it.fill : '#fff'}">${this.icons[it.kind]}</i>`;
       const name = it.name ? esc(it.name) : it.kind === 'text' ? esc((it.content || '').split('\n')[0].slice(0, 24) || 'Text') : this.label(it);
       const lk = it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-llock${it.locked ? ' is-on' : ''}" aria-pressed="${!!it.locked}" aria-label="${it.locked ? 'Unlock' : 'Lock'} layer">${it.locked ? this.icons.lock : this.icons.unlock}</button>`;
       const chk = (this.selMode || this.multi.size) ? `<button type="button" class="st-eye st-lcheck${this.multi.has(it.id) ? ' is-on' : ''}" role="checkbox" aria-checked="${this.multi.has(it.id)}" aria-label="Select layer">${this.multi.has(it.id) ? '✓' : ''}</button>` : '';
-      return `<li class="st-layer${this.multi.has(it.id) ? ' is-multi' : ''}${inGroup ? ' in-group' : ''}${it === this.sel ? ' is-sel' : ''}${it.hide ? ' is-hidden' : ''}${this.isHid(it) && !it.hide ? ' is-ghidden' : ''}${it.fxType === 'planet' ? ' is-planet' : ''}${it.bg ? ' is-bg' : ''}" data-layer="${this.items.indexOf(it)}"><div class="st-lmain">${chk}<span class="st-grip" aria-label="Drag to restack or into a group">⋮⋮</span>${sw}<span class="st-lname">${name}</span>${lk}${it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-lmore" aria-haspopup="menu" aria-label="Layer options"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>`}<button type="button" class="st-eye" data-leye aria-pressed="${!it.hide}" aria-label="${it.hide ? 'Show' : 'Hide'} layer">${eye}</button><button type="button" class="st-eye st-ldel" aria-label="Delete layer">${this.icons.trash}</button></div>${it === this.sel ? `<label class="st-lop">Opacity<input type="range" min="0" max="1" step="0.05" value="${it.alpha ?? 1}" aria-label="Layer opacity"><output>${Math.round((it.alpha ?? 1) * 100)}%</output></label>` : ''}</li>`;
+      return `<li class="st-layer${this.multi.has(it.id) ? ' is-multi' : ''}${inGroup ? ' in-group' : ''}${it === this.sel ? ' is-sel' : ''}${it.hide ? ' is-hidden' : ''}${this.isHid(it) && !it.hide ? ' is-ghidden' : ''}${it.fxType === 'planet' ? ' is-planet' : ''}${it.bg ? ' is-bg' : ''}" data-layer="${this.items.indexOf(it)}"><div class="st-lmain">${chk}<span class="st-grip" aria-label="Drag to restack or into a group">⋮⋮</span>${sw}<span class="st-lname">${name}</span>${lk}${it.kind === 'fx' ? '' : `<button type="button" class="st-eye st-lmore" aria-haspopup="menu" aria-label="Layer options"><svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>`}<button type="button" class="st-eye" data-leye aria-pressed="${!it.hide}" aria-label="${it.hide ? 'Show' : 'Hide'} layer">${eye}</button>${it.fxType === 'planet' ? `<button type="button" class="st-eye st-pdel" aria-label="Delete planet">${this.icons.trash}</button>` : `<button type="button" class="st-eye st-ldel" aria-label="Delete layer">${this.icons.trash}</button>`}</div>${it === this.sel ? `<label class="st-lop">Opacity<input type="range" min="0" max="1" step="0.05" value="${it.alpha ?? 1}" aria-label="Layer opacity"><output>${Math.round((it.alpha ?? 1) * 100)}%</output></label>` : ''}</li>`;
     };
     const head = g => { const m = this.items.filter(i => i.group === g.id), allLocked = m.length && m.every(i => i.locked); return `<li class="st-ghead${g.hide ? ' is-hidden' : ''}${m.length && m.every(i => this.multi.has(i.id)) ? ' is-multi' : ''}" data-gid="${g.id}">${(this.selMode || this.multi.size) && m.length ? `<button type="button" class="st-eye st-lcheck st-gcheck${m.every(i => this.multi.has(i.id)) ? ' is-on' : ''}" role="checkbox" aria-checked="${m.every(i => this.multi.has(i.id))}" aria-label="Select whole group">${m.every(i => this.multi.has(i.id)) ? '✓' : ''}</button>` : ''}<button type="button" class="st-eye st-gtog" aria-expanded="${!g.collapsed}" aria-label="${g.collapsed ? 'Expand' : 'Collapse'} group"><span class="st-chev${g.collapsed ? ' is-closed' : ''}" aria-hidden="true"></span></button>${folder}<span class="st-lname st-gname" data-gname>${esc(g.name)}</span><span class="st-gcount">${m.length}</span><button type="button" class="st-eye st-glock${allLocked ? ' is-on' : ''}" aria-pressed="${!!allLocked}" aria-label="Lock group">${allLocked ? this.icons.lock : this.icons.unlock}</button><button type="button" class="st-eye st-geye" aria-pressed="${!g.hide}" aria-label="${g.hide ? 'Show' : 'Hide'} group">${eye}</button><button type="button" class="st-eye st-gdel" aria-label="Ungroup">${this.icons.trash}</button></li>`; };
     const seen = new Set(), out = [];
@@ -11586,7 +11642,8 @@ class CoreStudio {
     });
     ul.querySelectorAll('.st-layer').forEach(li => {
       const it = this.items[+li.dataset.layer];
-      li.querySelector('.st-ldel').addEventListener('click', () => this.removeItem(it));
+      li.querySelector('.st-ldel')?.addEventListener('click', () => this.removeItem(it));
+      li.querySelector('.st-pdel')?.addEventListener('click', () => this.deletePlanet());
       const mo = li.querySelector('.st-lmore'); if (mo) mo.addEventListener('click', e => { e.stopPropagation(); this.openLayerMenu(it, li); });
       li.addEventListener('contextmenu', e => { if (it.kind !== 'fx') { e.preventDefault(); this.openLayerMenu(it, li); } });
       const lk = li.querySelector('.st-llock'); if (lk) lk.addEventListener('click', () => this.lockItem(it, !it.locked));
@@ -12277,7 +12334,7 @@ class CoreStudio {
         ['Selection workflow…', () => this.workflowOpen?.()], ['Design selected…', () => { this.openCtxBar(); openFly(this.sel.kind === 'kit' ? 'kitdesign' : this.sel.kind === 'text' ? 'textdesign' : 'style'); },null,'',!this.sel || this.sel.kind === 'fx' || this.sel.locked], ['Kit library…',()=>openFly('kit')], ['Group selection', () => { const set = this.layoutTargets(); if (set.length) { this.moveLayers(set, { kind: 'new' }); this.clearGroup(); } }, null, '', this.layoutTargets().length < 2]],
       Image: () => [['Background & colours…', () => openSection('[data-studio-background]')], ['Lighting & shadow…', () => openSection('[data-studio-light]')],
         ['Scene presets…', () => openSection('[data-studio-preset]')], ['Animated background presets…', () => openSection('[data-studio-template=liquidEther]')], ['Export image / video…', () => click('[data-studio-export]')]],
-      Layer: () => [['New group', () => this.addGroup()], ['Group selected layers', () => this.sc.act(this.layoutTargets(), 'group'), null, '⌘/Ctrl G', this.layoutTargets().length < 2],
+      Layer: () => [['Add planet…', () => this.openPlanetMenu(this.el.querySelector('[data-menu-top="Layer"]') || this.el)], ['Delete planet', () => this.deletePlanet(), null, '', !this.planetPresent()], ['New group', () => this.addGroup()], ['Group selected layers', () => this.sc.act(this.layoutTargets(), 'group'), null, '⌘/Ctrl G', this.layoutTargets().length < 2],
         ['Ungroup selected layers', () => { const ids = new Set(selected().map(i => i.group).filter(g => g != null)); this.items.forEach(i => { if (ids.has(i.group)) i.group = null; }); this.groups = this.groups.filter(g => !ids.has(g.id)); this.renderLayers(); this.commit(); }, null, '⌘/Ctrl ⇧ G', !selected().some(i => i.group != null)],
         ['Lock / unlock selection', () => this.sc.act(selected(), 'lock'), selected().length ? selected().every(i => i.locked) : null, '', !selected().length],
         ['Hide / show selection', () => this.sc.act(selected(), 'hide'), selected().length ? selected().every(i => i.hide) : null, '', !selected().length],
@@ -12671,7 +12728,7 @@ class CoreStudio {
   }
   lockItem(it, on) { it.locked = on; this.place(it); this.select(it); this.renderLayers(); this.commit(); }
   removeItem(it, quiet) {
-    if (it.kind === 'fx' && it.fxType === 'planet' && !this.restoring) return;   // Cerebra's layer stays
+    if (it.kind === 'fx' && it.fxType === 'planet' && !this.restoring) { this.deletePlanet(quiet); return; }   // the planet layer is never destroyed: deleting it marks it removed (and hidden) so Undo, projects and the engine keep a stable layer
     if (it.kind === 'kit') KIT[it.kit]?.dispose?.(it);
     it.el.remove(); this.items = this.items.filter(i => i !== it); this.multi.delete(it.id); if (this.lineSel && this.lineSel.it === it) this.lineSel = null; if (this._movers) this._movers.delete(it); this.renderLayers();
     if (it.kind === 'fx' && !this.restoring && !this.fxSyncing) this.fxOff(it.fxType);
