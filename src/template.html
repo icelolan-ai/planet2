@@ -936,6 +936,14 @@ body.studio-on #studio{display:block}
 #studio .st-kitc{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:block}
 #studio [data-kit-types] .st-btn canvas{width:44px;height:44px;display:block;margin:0 auto 2px}
 #studio [data-kit-panel].st-bgpanel{width:min(520px,calc(100vw - 24px))}
+#studio .st-empty{position:fixed;z-index:6;left:calc(var(--lay-l,0px) + (100% - var(--lay-l,0px) - var(--lay-r,0px)) / 2);top:46%;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 32px));padding:22px 24px 20px;border-radius:20px;text-align:center;background:#07091299;border:1px solid #ffffff1f;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 18px 60px #0008;pointer-events:auto}
+#studio .st-empty[hidden]{display:none}
+#studio .st-empty-t{margin:0 0 4px;font:600 13px var(--f-cond);letter-spacing:.22em;text-transform:uppercase;color:#ff8f98}
+#studio .st-empty-s{margin:0 0 16px;font:14px/1.5 var(--f-sans);color:#c9d0de}
+#studio .st-empty-a{display:grid;gap:10px}
+#studio .st-empty-a .st-btn{min-height:44px;justify-content:center}
+#studio .st-empty-pick{display:grid;gap:6px;text-align:left;font:600 11px var(--f-cond);letter-spacing:.14em;text-transform:uppercase;color:#aeb7c8}
+#studio .st-empty-pick select{min-height:44px;width:100%;padding:6px 12px;border-radius:12px;border:1px solid #ffffff2a;background:#ffffff10;color:#fff;font:14px var(--f-sans)}
 #studio .st-bgm{display:grid;gap:8px;margin:10px 0 4px;padding:10px 12px;border-radius:14px;background:#ffffff0a;border:1px solid #ffffff14}
 #studio .st-bgm-t{margin:0;font:12px var(--f-sans);color:#dfe5ef;overflow-wrap:anywhere}
 #studio .st-bgm-a{display:flex;flex-wrap:wrap;gap:8px}#studio .st-bgm-a .st-btn{min-height:40px;flex:1 1 90px}
@@ -8474,7 +8482,7 @@ class WorldAtelier {
     this.app.studio.open();
     if (this.app.studio.active) {
       this.app.studio.returnToAtelier = i;
-      this.app.studio.setSubject(Math.max(-1, i - this.S - 1));
+      this.app.studio.setSubject(Math.max(-1, i - this.S - 1)); this.app.studio.setSubjectVisible(true);
       if (mine) PLANETS.show(this.app.studio, mine.snap, mine.fx);
     }
   }
@@ -9450,7 +9458,7 @@ class CoreStudio {
       <h3>Mood &amp; poster presets</h3><div class="st-mood-block"><p class="st-sub-t">Mood</p><div class="studio-preset-grid st-moods" data-studio-moods></div><button type="button" class="st-btn st-random" data-studio-random aria-label="Random look">${I('<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.2"/><circle cx="15" cy="15" r="1.2"/><circle cx="15" cy="9" r="1.2"/><circle cx="9" cy="15" r="1.2"/>')}<span>Random look (G)</span></button></div>
       <div class="st-poster-block"><p class="st-sub-t">Poster presets</p><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-preset="ember" style="--p1:#0c1625;--p2:#d26448">Ember dossier</button><button type="button" class="studio-preset" data-studio-preset="monolith" style="--p1:#e0e4e3;--p2:#666e72">Monolith</button><button type="button" class="studio-preset" data-studio-preset="blueprint" style="--p1:#f4f5f3;--p2:#becbd2">Orbital grid</button><button type="button" class="studio-preset" data-studio-preset="bio" style="--p1:#1a0b3a;--p2:#7b2fa8">Biocomputer</button><button type="button" class="studio-preset" data-studio-preset="mineral" style="--p1:#0b0c0e;--p2:#a4aab0">Mineral</button><button type="button" class="studio-preset" data-studio-preset="infinity" style="--p1:#05090b;--p2:#72b4b4">Infinity noir</button><button type="button" class="studio-preset" data-studio-preset="monoPoster" style="--p1:#f3f3f0;--p2:#8c8c86">Mono poster</button><button type="button" class="studio-preset" data-studio-preset="goldHud" style="--p1:#06070a;--p2:#c9a24a">Gold HUD</button><button type="button" class="studio-preset" data-studio-preset="glowOrbit" style="--p1:#02030a;--p2:#3558d8">Glow orbit</button><button type="button" class="studio-preset" data-studio-preset="neonCell" style="--p1:#040907;--p2:#22c58a">Neon cell</button><button type="button" class="studio-preset" data-studio-preset="astrolabe" style="--p1:#1a140e;--p2:#b89560">Astrolabe</button><button type="button" class="studio-preset" data-studio-preset="dataFlow" style="--p1:#090b13;--p2:#4a5ad8">Data flow</button></div></div><h3>Animated background presets</h3><p class="studio-note">Full-frame animated background behind your work. Pick one; Customize opens straight away.</p><div class="studio-preset-grid"><button type="button" class="studio-preset" data-studio-template="liquidEther" style="--p1:#5227ff;--p2:#ff9ffc">Liquid Ether</button><button type="button" class="studio-preset" data-studio-template="lightPillar" style="--p1:#5227ff;--p2:#ff9ffc">Light Pillar</button></div><div class="st-bgm" data-bg-manager></div><details class="studio-sub" data-tpl-sub><summary>Layout templates</summary><p class="studio-note">A scene look plus ready-made Kit items. Pick another preset or template to swap them.</p><div class="studio-preset-grid" data-tpl-grid><button type="button" class="studio-preset" data-studio-template="editorial" style="--p1:#f3f3f0;--p2:#9a9a94">Editorial calendar</button><button type="button" class="studio-preset" data-studio-template="cyclical" style="--p1:#02030a;--p2:#4a6ae8">Cyclical</button><button type="button" class="studio-preset" data-studio-template="physics" style="--p1:#090b13;--p2:#7a86e8">Physics series</button><button type="button" class="studio-preset" data-studio-template="dashboard" style="--p1:#06070a;--p2:#e8c872">Dashboard</button><button type="button" class="studio-preset" data-studio-template="radial" style="--p1:#1a140e;--p2:#d8a868">Cropped radial</button></div></details><p class="studio-note">Tap any poster text to edit it, drag to move it. Add shapes from the left to keep an area sharp and blur the rest.</p>
       <h3>Grid</h3><label class="studio-control"><span>Grid</span><select data-studio-gridmode aria-label="Grid"><option value="always">Always</option><option value="focus">Only with a focus shape</option><option value="off">Off</option></select></label><input type="checkbox" data-studio-grid hidden checked><label class="studio-control"><span>Grid colour</span><input type="color" data-grid-c value="#ffffff" aria-label="Grid colour"><button type="button" class="st-chip" data-grid-auto>Auto</button></label><label class="studio-control"><span>Grid strength</span><input type="range" min="0.05" max="1" step="0.05" value="0.25" data-grid-a><output>25%</output></label><label class="studio-control"><span>Grid thickness</span><input type="range" min="0.5" max="6" step="0.5" value="1" data-grid-t><output>1px</output></label><label class="studio-control"><span>Grid size</span><input type="range" min="8" max="64" step="1" value="24" data-grid-n><output>24</output></label>
-      <h3>Background</h3><select data-studio-background aria-label="Studio background"><option value="space">Space</option><option value="white">White</option><option value="studio">Studio light</option><option value="model">Model workspace</option><option value="solid">Solid colour</option><option value="gradient">Gradient</option><option value="points">Colour points</option></select>
+      <h3>Background</h3><select data-studio-background aria-label="Studio background"><option value="discovery">Crimson void</option><option value="space">Space</option><option value="white">White</option><option value="studio">Studio light</option><option value="model">Model workspace</option><option value="solid">Solid colour</option><option value="gradient">Gradient</option><option value="points">Colour points</option></select>
       <div class="st-cpts-ed" data-cpts-ed hidden><p class="studio-note">Colour A is the base. Drag the dots on the canvas to place each colour.</p><div data-cpts-list></div><button type="button" class="st-btn" data-cpts-add>+ Add colour</button></div>
       <div class="studio-two"><label>Colour A<input type="color" data-studio-bg-a value="#111727"></label><label>Colour B<input type="color" data-studio-bg-b value="#274052"></label></div>
       <label class="studio-control"><span>Gradient angle</span><input type="range" min="0" max="360" value="115" data-studio-angle><output>115°</output></label>
@@ -9463,6 +9471,7 @@ class CoreStudio {
       <aside class="studio-panel st-layers-tray st-glass" data-tray="layers" aria-label="Layers"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><button type="button" class="st-panel-head" data-layers-fold aria-expanded="true"><h2>Layers</h2><span class="st-chev" aria-hidden="true"></span></button><div class="st-layer-bar"><button type="button" class="st-btn st-addgroup" data-add-group aria-label="Add a group">+ Group</button><button type="button" class="st-btn st-addgroup" data-sel-mode aria-pressed="false">Select</button></div><div class="st-lsel" data-lsel hidden></div><button type="button" class="st-lresize" data-lresize aria-label="Resize layers panel"></button><ul class="st-layers" data-studio-objects></ul><p class="studio-note" data-objects-empty>Add text, shapes or decor. Drag ⋮⋮ to restack, the eye hides a layer.</p></aside>`;
     document.body.append(this.bg, this.fx, this.vfx, this.el);
     this.panel = this.el.querySelector('.studio-panel'); this.stage = this.el.querySelector('[data-studio-stage]'); this.catcher = document.createElement('div'); this.catcher.className = 'st-catcher'; this.planetBox = document.createElement('div'); this.planetBox.className = 'st-planetbox'; this.planetBox.setAttribute('aria-hidden', 'true'); this.stage.prepend(this.catcher); this.ctx = this.el.querySelector('[data-studio-context]');
+    this.emptyHint = document.createElement('div'); this.emptyHint.className = 'st-empty'; this.emptyHint.hidden = true; this.el.append(this.emptyHint);
     this.items = []; this.itemId = 0; this.sel = null; this.groups = []; this.multi = new Set(); this.selMode = false; this.rotSnap = 0; try { this.rotSnap = +localStorage.getItem('cerebra-rot-snap') || 0; } catch (e) {}
     const typing = e => e.target.matches && (e.target.matches('input[type=text],textarea') || e.target.isContentEditable);
     const inMenu = e => !!(e.target.closest && e.target.closest('.studio-panel,.st-dock,.st-fly,.st-save'));   // a field inside a menu must not hide that menu while you type
@@ -9589,7 +9598,7 @@ class CoreStudio {
     this.cpts = [{ c: '#ff3d8a', x: .28, y: .3 }, { c: '#2fc8ff', x: .72, y: .65 }, { c: '#7b2cbf', x: .5, y: .9 }];
     this.cptLayer = document.createElement('div'); this.cptLayer.className = 'st-cpts'; this.stage.after(this.cptLayer);
     this.el.querySelector('[data-cpts-add]').onclick = () => { this.cpts.push({ c: '#ffb04a', x: .5, y: .5 }); this.paintBackground(); this.renderCpts(); this.commit(); };
-    this.el.querySelector('[data-studio-subject]').onchange = e => this.setSubject(+e.target.value);
+    this.el.querySelector('[data-studio-subject]').onchange = e => { this.setSubject(+e.target.value); this.setSubjectVisible(true); };
     this.el.querySelectorAll('[data-studio-preset]').forEach(b => b.onclick = () => { this.items.filter(i => i.tpl).forEach(i => this.removeItem(i, true)); this.applyPreset(b.dataset.studioPreset); });
     this.el.querySelectorAll('[data-studio-template]').forEach(b => b.onclick = () => BG_KITS.includes(b.dataset.studioTemplate) ? this.setBackground(b.dataset.studioTemplate) : this.applyTemplate(b.dataset.studioTemplate));
     this.el.querySelectorAll('[data-studio-add]').forEach(b => b.onclick = () => this.addItem(b.dataset.studioAdd));
@@ -9756,14 +9765,14 @@ class CoreStudio {
     this.el.querySelector('[data-studio-home]').onclick = () => this.home();
     const resetCanvas = () => {
       this.closeFly(); this.closeCtxBar();
-      this.items.slice().forEach(it => this.removeItem(it, true)); { const pl = this.fxItem('planet'); if (pl) { pl.hide = false; pl.alpha = 1; pl.group = null; } } this.groups = []; this.multi.clear(); this.multiPlanet = false; this.selMode = false;
+      this.items.slice().forEach(it => this.removeItem(it, true)); { const pl = this.fxItem('planet'); if (pl) { pl.hide = true; pl.alpha = 1; pl.group = null; } } this.groups = []; this.multi.clear(); this.multiPlanet = false; this.selMode = false;
       Object.keys(this.layers).forEach(k => { this.layers[k] = k !== 'dust'; }); this.coreLayers.fill(true);
       this.blur = 8; this.dim = 0; this.focusInv = 0; this.focusTarget = 'scene'; this.focusText = false; this.focusObj = false; this.guides = true; this.el.classList.remove('hide-guides');
-      this.frozen = false; this.showSubject = true; this.fxOn = false; this.grain = false; NET.set('on', false);
-      [['[data-studio-freeze]', 'false'], ['[data-studio-show]', 'true'], ['[data-studio-fx]', 'false']].forEach(([s, v]) => this.el.querySelector(s).setAttribute('aria-pressed', v));
+      this.frozen = false; this.showSubject = false; this.fxOn = false; this.grain = false; NET.set('on', false);
+      [['[data-studio-freeze]', 'false'], ['[data-studio-show]', 'false'], ['[data-studio-fx]', 'false']].forEach(([s, v]) => this.el.querySelector(s).setAttribute('aria-pressed', v));
       this.el.querySelector('[data-freeze-label]').textContent = 'Stop';
       this.el.querySelectorAll('[data-studio-layer],[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioLayer !== 'dust')));
-      this.home(); this.applyPreset('ember'); this.paintVfx(); this.renderLayers();
+      this.home(); this.applyPreset('discovery', false); this.paintVfx(); this.renderLayers();
       ['[data-t-clarity]', '[data-t-rim]'].forEach(sel => { const e = document.querySelector(sel); if (e) { e.value = 0; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); } }); // Glass is always 0 after a reset
     };
     const resetFull = () => {
@@ -9896,10 +9905,11 @@ class CoreStudio {
     }, { signal, capture: true });
     addEventListener('resize', () => { if (this.active) requestAnimationFrame(() => requestAnimationFrame(() => { this.layoutTrays(); this.layoutOpenFlyouts(); this.paintGuides(); this.paintBackground(); this.items.forEach(it => this.place(it)); this.updateFocus(); })); }, { signal });
     this.hist = []; this.hi = -1; this.restoring = false;
-    this.applyPreset('ember');
+    this.applyPreset('discovery', false);
     this.undoBtn = this.el.querySelector('[data-studio-undo]'); this.redoBtn = this.el.querySelector('[data-studio-redo]');
     this.undoBtn.onclick = () => this.undo(); this.redoBtn.onclick = () => this.redo();
     if (!this.fxItem('planet')) this.addItem('fx', { fxType: 'planet' });
+    this.setSubjectVisible(false, true);
     this.hist = []; this.hi = -1; this.commit();
     // Settings changes are history steps too (committed when a control is let go).
     this.panel.addEventListener('change', e => { if (!e.target.closest('.net-host')) this.commit(); });
@@ -9911,6 +9921,24 @@ class CoreStudio {
   }
   tools(on) { if (on && this.closeFly) this.closeFly(); if (on && innerWidth <= 900 && this.closeGrp) this.closeGrp(); this.panel.hidden = !on; if (this.cptLayer) this.cptLayer.classList.toggle('is-off', !on); this.el.classList.toggle('panel-closed', !on); this.el.querySelector('[data-studio-tools]').setAttribute('aria-expanded', String(on)); this.layoutTrays(); }
   home() { this.x = this.y = this.vx = this.vy = 0; this.app.core.planet.resetView(); }
+  // Show or hide the planet layer (Cerebra or the chosen world). Studio starts with it hidden: an empty canvas the user fills in.
+  setSubjectVisible(on, quiet) {
+    if (this.showSubject === on && !quiet) return;
+    this.showSubject = on; const pl = this.fxItem('planet'); if (pl) pl.hide = !on;
+    const b = this.el.querySelector('[data-studio-show]'); if (b) { b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', on ? 'Hide subject' : 'Show subject'); }
+    if (quiet) { this.syncEmptyHint?.(); return; }
+    this.renderLayers(); this.paintBackground(); this.updateAvail(); this.commit();
+  }
+  syncEmptyHint() {
+    const box = this.emptyHint; if (!box) return;
+    const empty = this.active !== false && this.showSubject === false && !this.items.some(i => i.kind !== 'fx' && !i.bg);
+    const th = window.__cerebraLanguage?.current === 'th', key = `${empty}|${th}`;
+    box.hidden = !empty; if (!empty || box.dataset.key === key) return; box.dataset.key = key;
+    const sel = this.el.querySelector('[data-studio-subject]');
+    box.innerHTML = `<p class="st-empty-t">${th ? 'แคนวาสว่างเปล่า' : 'Empty canvas'}</p><p class="st-empty-s">${th ? 'เพิ่ม Cerebra หรือดาวดวงอื่น แล้วค่อยแต่งภาพ' : 'Add Cerebra or another world, then compose.'}</p><div class="st-empty-a"><button type="button" class="st-btn" data-empty-add="-1">${th ? 'เพิ่ม Cerebra' : 'Add Cerebra'}</button><label class="st-empty-pick"><span>${th ? 'เพิ่มดาวดวงอื่น' : 'Add another world'}</span><select data-empty-world aria-label="${th ? 'เลือกดาว' : 'Choose a world'}"><option value="">—</option>${[...sel.options].filter(o => +o.value >= 0 && !o.disabled).map(o => `<option value="${o.value}">${o.textContent}</option>`).join('')}</select></label></div>`;
+    box.querySelector('[data-empty-add]').onclick = () => { this.setSubject(-1); this.setSubjectVisible(true); };
+    box.querySelector('[data-empty-world]').onchange = e => { if (e.target.value === '') return; this.setSubject(+e.target.value); this.setSubjectVisible(true); };
+  }
   point(e) { const r = this.app.stage.renderer.domElement.getBoundingClientRect(); return { x:clamp((e.clientX-r.left)/r.width,0,1), y:clamp((e.clientY-r.top)/r.height,0,1) }; }
   setSubject(index) {
     WorldTune.open(false); document.querySelector('[data-tune-close]').click();
@@ -10061,6 +10089,7 @@ class CoreStudio {
   }
   applyPreset(name, texts = true, custom = null) {
     const presets = {
+      discovery:{background:'discovery',a:'#05070d',b:'#d4264a',angle:0,grid:false,light:1.15,lightX:3,shadow:.7,soft:.7,effect:'off',amount:0,ink:'#f3f6ff'},
       ember:{background:'gradient',a:'#111726',b:'#7b3c33',angle:120,grid:true,light:1,lightX:4,shadow:.8,soft:.55,effect:'off',amount:4,ink:'#e9ecf2'},
       monolith:{background:'gradient',a:'#d9dddc',b:'#879096',angle:150,grid:false,light:1.35,lightX:-2,shadow:.72,soft:.45,effect:'off',amount:0,ink:'#0b0e12'},
       blueprint:{background:'gradient',a:'#f7f8f6',b:'#dae1e6',angle:75,grid:true,light:1.15,lightX:3,shadow:.5,soft:.7,effect:'off',amount:0,ink:'#0d111c'},
@@ -11509,7 +11538,7 @@ class CoreStudio {
   // Photoshop-style layer list: top of the list is the front. Drag ⋮⋮ to restack, the eye hides, a tap selects.
   renderLayers() {
     const ul = this.el.querySelector('[data-studio-objects]'); if (!ul || this.dragLayer) return;
-    cancelAnimationFrame(this.relayRaf); this.relayRaf = requestAnimationFrame(() => this.layoutTrays()); this.renderBackgroundManager?.();
+    cancelAnimationFrame(this.relayRaf); this.relayRaf = requestAnimationFrame(() => this.layoutTrays()); this.renderBackgroundManager?.(); this.syncEmptyHint?.();
     this.el.querySelector('[data-objects-empty]').hidden = this.items.some(i => i.fxType !== 'planet') || this.groups.length > 0;
     const eye = '<svg class="studio-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg>';
     const folder = '<svg class="st-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
@@ -12693,7 +12722,7 @@ class CoreStudio {
     this.el.querySelectorAll('[data-studio-layer]').forEach(b => b.setAttribute('aria-pressed', String(this.layers[b.dataset.studioLayer])));
     this.el.querySelectorAll('[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(this.coreLayers[+b.dataset.studioCore])));
     this.el.classList.toggle('hide-guides', this.guides === false); if (this.syncGrain) this.syncGrain(); this.cpts = JSON.parse(JSON.stringify(this.cpts || [])); this.renderCpts(); this.fxSyncing = true; NET.set('on', !!this.fxItem('network')); this.fxSyncing = false; this.applyFx(); this.updateFocus(); this.paintBackground(); this.paintVfx();
-    this.restoring = false; if (!this.fxItem('planet')) this.addItem('fx', { fxType: 'planet' }); this.stackDom(); this.applyFx(); this.syncHist(); this.syncTimelineUI?.();
+    this.restoring = false; if (!this.fxItem('planet')) this.addItem('fx', { fxType: 'planet' }); this.stackDom(); this.applyFx(); this.syncHist(); this.syncTimelineUI?.(); this.syncEmptyHint?.();
   }
 
   // Shapes keep their area sharp: the scene is blurred and a clipped, sharp copy sits on top. Works in Safari, unlike masked backdrop blur.
@@ -12861,7 +12890,7 @@ class CoreStudio {
     if (a.detail.busy) return;
     if (a.detail.open) { this.pending = true; a.closeWorld(); return; }
     this.panel.querySelectorAll('details').forEach(section => { section.open = false; });
-    this.active = true; this.home(); this.tools(innerWidth > 900); this.renderCpts(); this.syncFxLayers(); requestAnimationFrame(() => this.layoutTrays());
+    this.active = true; this.syncEmptyHint?.(); if (!this._emptyLang && window.__cerebraLanguage?.onChange) { this._emptyLang = true; window.__cerebraLanguage.onChange(() => this.syncEmptyHint?.()); } this.home(); this.tools(innerWidth > 900); this.renderCpts(); this.syncFxLayers(); requestAnimationFrame(() => this.layoutTrays());
     this.coreLayers.fill(true); this.el.querySelectorAll('[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', 'true'));
     OrbitBuilder.open(false); WorldTune.open(false);
     document.querySelector('[data-tune-close]').click();
@@ -12914,6 +12943,32 @@ class CoreStudio {
     document.body.style.backgroundColor = this.background === 'white' ? '#ffffff' : '#05070a';
     this.updateFocus();
   }
+  // "Crimson void": near-black navy, a cold corner glow, a crimson haze, bokeh and dust, and a dotted floor receding to a thin horizon line.
+  // Seeded, so the preview, export and thumbnails always match. bgA is the base colour and bgB the accent (crimson by default).
+  paintDiscovery(g, w, h) {
+    const rgb = c => { const m = /^#?([0-9a-f]{6})$/i.exec(String(c).trim()), n = m ? parseInt(m[1], 16) : 0x7a1a35; return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+    const base = rgb(this.bgA || '#05070d'), acc = rgb(this.bgB || '#d4264a'), A = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`, M = Math.max(w, h), u = w / 1440, hz = h * .56, rnd = mulberry32(20261009);
+    g.save();
+    const sky = g.createLinearGradient(0, 0, 0, h); sky.addColorStop(0, A(base, 1)); sky.addColorStop(.56, `rgb(${Math.min(255, base[0] + 5)},${Math.min(255, base[1] + 6)},${Math.min(255, base[2] + 14)})`); sky.addColorStop(1, A(base, 1)); g.fillStyle = sky; g.fillRect(0, 0, w, h);
+    let gr = g.createRadialGradient(w, 0, 0, w, 0, M * .78); gr.addColorStop(0, 'rgba(46,118,158,.62)'); gr.addColorStop(.45, 'rgba(26,70,110,.22)'); gr.addColorStop(1, 'rgba(26,70,110,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    gr = g.createRadialGradient(w * .48, h * .5, 0, w * .48, h * .5, M * .52); gr.addColorStop(0, A(acc, .26)); gr.addColorStop(.55, A(acc, .09)); gr.addColorStop(1, A(acc, 0)); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    gr = g.createRadialGradient(w * .52, h * .47, 0, w * .52, h * .47, M * .2); gr.addColorStop(0, A(acc, .3)); gr.addColorStop(1, A(acc, 0)); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 16; i++) { const x = rnd() * w, y = rnd() * hz * 1.05, r = (.018 + rnd() * .05) * Math.min(w, h), a = .035 + rnd() * .075, c = rnd() < .75 ? acc : [255, 150, 170];
+      gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, A(c, a)); gr.addColorStop(.7, A(c, a * .5)); gr.addColorStop(1, A(c, 0)); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
+    // Dotted floor in perspective.
+    const rows = 56, floor = h - hz;
+    for (let i = 0; i < rows; i++) { const t = Math.pow((i + 1) / rows, 2.1), y = hz + t * floor, step = (.011 + t * .05) * w, size = (.8 + t * 1.9) * Math.max(.75, u), a = (.32 + t * .68) * (1 - Math.max(0, t - .85) * 1.6), off = (i % 2) * step / 2;
+      g.fillStyle = A([Math.min(255, acc[0] + 25), Math.min(255, acc[1] + 18), Math.min(255, acc[2] + 25)], Math.max(.04, a));
+      for (let x = -off; x < w + step; x += step) g.fillRect(x - size / 2, y - size / 2, size, size); }
+    gr = g.createLinearGradient(0, hz, 0, h); gr.addColorStop(0, 'rgba(2,3,8,0)'); gr.addColorStop(1, 'rgba(2,3,8,.55)'); g.fillStyle = gr; g.fillRect(0, hz, w, floor);
+    gr = g.createLinearGradient(0, hz - 26 * u, 0, hz + 18 * u); gr.addColorStop(0, A(acc, 0)); gr.addColorStop(.6, A(acc, .16)); gr.addColorStop(1, A(acc, 0)); g.fillStyle = gr; g.fillRect(0, hz - 26 * u, w, 44 * u);
+    gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.18, 'rgba(255,255,255,.75)'); gr.addColorStop(.82, 'rgba(255,255,255,.75)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, hz, w, Math.max(1, u));
+    // Drifting dust, denser around the haze.
+    for (let i = 0; i < 360; i++) { const gx = (rnd() + rnd() + rnd() - 1.5) / 1.5, gy = (rnd() + rnd() + rnd() - 1.5) / 1.5, x = w * (.48 + gx * .42), y = h * (.46 + gy * .36), r = (.35 + rnd() * rnd() * 1.6) * Math.max(.6, u), hot = rnd() < .55;
+      g.fillStyle = hot ? A([255, Math.min(255, acc[1] + 60), Math.min(255, acc[2] + 70)], .18 + rnd() * .5) : `rgba(255,255,255,${.12 + rnd() * .4})`; g.fillRect(x, y, r, r); }
+    gr = g.createRadialGradient(w / 2, h * .5, Math.min(w, h) * .3, w / 2, h * .5, M * .78); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.72)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.restore();
+  }
   paint(g, w, h) {
     const mode = this.background;
     if(mode==='gradient'){
@@ -12922,6 +12977,7 @@ class CoreStudio {
       gr.addColorStop(0,this.bgA);gr.addColorStop(1,this.bgB);g.fillStyle=gr;
     }else g.fillStyle=mode==='solid'||mode==='points'?this.bgA:mode==='white'?'#ffffff':mode==='model'?'#333945':'#05070a';
     g.fillRect(0,0,w,h);
+    if (mode === 'discovery') this.paintDiscovery(g, w, h);
     if (mode === 'points') (this.cpts || []).forEach(p => { const R = Math.max(w, h) * .55, gr = g.createRadialGradient(p.x * w, p.y * h, 0, p.x * w, p.y * h, R); gr.addColorStop(0, p.c); gr.addColorStop(1, p.c + '00'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
     if (mode === 'studio' || mode === 'model') {
       const grd = g.createRadialGradient(w * .45, h * .32, 0, w * .5, h * .5, Math.max(w, h) * .7);
