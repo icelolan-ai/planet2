@@ -158,3 +158,7 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Cause of the ghost: Select-all/marquee left `multiPlanet` (and the planet ring/box) set; deleting or hiding the planet did not clear it and `planetCircle()` kept reporting a circle from the last frame. Fix: deleting/hiding the planet clears `multiPlanet` and `selMode`; `planetCircle()`/`onPlanet()` return nothing when no planet is present or it is hidden; Select-all only includes the planet when it is present.
 - Card: × button (40 px, aria-label, EN/TH); closing keeps it closed until a planet exists again; the Layers "+ Planet", Layer menu and dock select still add planets while it is closed. Branch `fix/empty-card-close-planet-ring-20261009`, file `src/template.html`, fixture `docs/qa/studio-planet-lifecycle-ui.cjs` extended (select-all then delete → no ring/box/multiPlanet; card closes and stays closed).
 - Tests (headless Chromium emulation, local build): lifecycle fixture PASS 1440x900 and 390x844; empty-canvas fixture PASS; screenshots reviewed. Live check pending the merge.
+
+## 2026-10-09 Asia/Bangkok — Claude — Empty-card close + ghost ring fix released
+
+- PR #342 merged (merge `804a6cd59db9d56a24ce7f3755a25abe6b15b553`), CI `build` succeeded, live bundle `assets/app.2d2e2055b4.js`. Live `studio-planet-lifecycle-ui.cjs` PASS at 1440x900 and 390x844 (headless Chromium emulation): no ring/box/multiPlanet after select-all + delete, card closes and stays closed. Physical devices untested.
