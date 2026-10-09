@@ -577,7 +577,7 @@ void main(){
   const set4=(u,v)=>u.value.set(v[0],v[1],v[2],v[3]);
   function draw(g,w,h,t,options,mode={}){
     const p={...defaults,...options},cssW=Math.max(1,w/(mode.k||1)),cssH=Math.max(1,h/(mode.k||1));
-    const limit=mode.preview?(mode.selected?1024:640):4096;
+    const limit=mode.preview?(mode.background?640:mode.selected?1024:640):4096;
     const scale=Math.min(limit/Math.max(w,h),Math.sqrt((mode.preview?1.2e6:8e6)/Math.max(1,w*h)),1),W=Math.max(16,Math.round(w*scale)),H=Math.max(16,Math.round(h*scale));
     const time=Math.floor(Math.max(0,t)*30)/30;
     const key=JSON.stringify([p,W,H,time]);let c=cache.get(g);
@@ -636,7 +636,8 @@ void main(){
     if(c?.key&&c.canvas.width){g.save();g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(c.canvas,0,0,w,h);g.restore();}
   }
   const range=(k,label,min,max,step)=>({k,t:'range',label,min,max,step}),select=(k,label,opts)=>({k,t:'select',label,opts}),color=(k,label)=>({k,t:'color',label});
-  const kit={label:'Aero Shards',size:[.9,.6],noShuffle:true,anim:true,motionOnAdd:true,defaults,
+  const kit={label:'Aero Shards',size:[.9,.6],cover:true,background:true,noShuffle:true,
+    bgGroups:{colour:['backgroundColor','shardColor','accentColor'],look:['placement','flow','material','detail','effect','scale','spread','depth','density','shardSize','stretch','turbulence','glow','edgeSoftness','bloom','grain','chromaticAberration'],motion:['speed','spin'],interaction:[],quality:['quality']},anim:true,motionOnAdd:true,defaults,
     ui:[color('backgroundColor','Background colour'),color('shardColor','Shard colour'),color('accentColor','Accent colour'),
       select('placement','Placement',[['full','Full'],['right','Right'],['left','Left'],['center','Centre']]),select('flow','Flow',[['stream','Stream'],['vortex','Vortex'],['ribbon','Ribbon']]),
       select('material','Material',[['pearl','Pearl'],['chrome','Chrome'],['satin','Satin']]),select('detail','Detail',[['balanced','Balanced'],['bold','Bold'],['fine','Fine']]),
@@ -645,7 +646,7 @@ void main(){
       range('density','Density',.5,1.5,.05),range('shardSize','Shard size',.5,1.5,.05),range('stretch','Stretch',.6,1.8,.05),range('turbulence','Turbulence',0,2,.05),
       range('glow','Glow',0,2,.05),range('edgeSoftness','Edge softness',0,2,.05),range('bloom','Bloom',0,3,.05),range('grain','Grain',0,.12,.005),range('chromaticAberration','Chromatic aberration',0,.01,.0005),
       select('quality','Quality',[['low','Low'],['medium','Medium'],['high','High']])],
-    draw(g,it,x,y,w,h,k){const M=kitM(it),p={...defaults,...it.p};g.save();g.translate(x,y);try{draw(g,w,h,M.a?M.t*M.a/.6:0,p,{k:k||1,preview:typeof KIT_PREVIEW!=='undefined'&&KIT_PREVIEW,selected:it===window.__cerebra?.studio?.sel&&!window.__cerebra.studio.lite});}finally{g.restore();}}
+    draw(g,it,x,y,w,h,k){const M=kitM(it),p={...defaults,...it.p};g.save();g.translate(x,y);try{draw(g,w,h,M.a?M.t*M.a/.6:0,p,{k:k||1,preview:typeof KIT_PREVIEW!=='undefined'&&KIT_PREVIEW,selected:it===window.__cerebra?.studio?.sel&&!it.bg&&!window.__cerebra.studio.lite,background:!!it.bg});}finally{g.restore();}}
   };
   window.CerebraAeroShards={draw,defaults,kit,reference:'DavidHDev/react-bits/AeroShards',renderer:'shared-webgl',preview:'async-readback'};
 })();
