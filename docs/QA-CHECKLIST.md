@@ -20,6 +20,10 @@ Run after structural refactors and before calling a release complete.
 - Add Cerebra / another world from the card or the dock select reveals it and hides the card; Undo/Redo, Reset canvas and project restore keep the empty state consistent; opening from the Atelier with a world still shows that world; empty export shows the background.
 - Hub/guide page backdrop (navy, crimson haze, dotted floor, horizon) legible at desktop/mobile/landscape. Fixture: `docs/qa/studio-empty-canvas-ui.cjs`.
 
+## Studio planet lifecycle
+- Delete from the planet's Layers row, Layer > Delete planet; canvas shows the empty card, heading "No planet yet". Add from Layers "+ Planet", Layer > Add planet…, the card, and the dock select; the menu lists Cerebra, every loaded world and the reserved disabled "Open 3D file…".
+- Re-adding any planet gives factory settings (Tune, surface style, layer flags, opacity, pan/zoom); Undo/Redo and project restore keep present/deleted state. Fixture: `docs/qa/studio-planet-lifecycle-ui.cjs`.
+
 ## Entry / navigation
 - Studio Stepper: first entry, Previous/Next, all indicator jumps, rapid navigation, Skip, Back/Escape, session completion and replay from How to use. Complete/skip must launch Studio even with world GLBs pending. Replay from active Studio must return to the existing session. Check EN/Thai, actual directional content/height transitions, reduced motion, keyboard focus and desktop/mobile/narrow/short-screen bounds.
 - Landing page loads without visible errors.
