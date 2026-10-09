@@ -21,12 +21,19 @@ const base=await info();console.log('added',JSON.stringify({...base,tune:base.tu
 // customise: tune + layer flags + planet item opacity + pan/zoom
 await p.evaluate(()=>{const s=__cerebra.studio;const t=window.CerebraTune.snapshot();window.CerebraTune.apply({...t,theme:'toxic',neon:'#9dff4c'});s.layers.atmo=false;s.coreLayers[1]=false;s.fxItem('planet').alpha=.4;s.x=.2;});
 const dirty=await info();assert(dirty.tune!==base.tune&&dirty.layers!==base.layers);
+// select-all (planet included) then delete: no ghost selection ring/box may remain
+await p.evaluate(()=>{const s=__cerebra.studio;s.select(null);s.selMode=true;s.multi=new Set(s.items.filter(i=>i.kind!=='fx'&&!i.bg).map(i=>i.id));s.multiPlanet=true;s.renderLayers();s.updateMultiUI&&s.updateMultiUI();});await p.waitForTimeout(400);
 // delete via Layers trash
 await p.locator('.st-pdel').click();await p.waitForTimeout(600);
+await p.waitForTimeout(400);const ghost=await p.evaluate(()=>{const s=__cerebra.studio;const vis=e=>!!e&&!e.hidden&&e.getClientRects().length>0;return {multiPlanet:s.multiPlanet,ring:vis(s.planetRing),box:vis(s.multiBox)};});console.log('ghost',JSON.stringify(ghost));assert(!ghost.multiPlanet&&!ghost.ring&&!ghost.box);
 const del=await info();console.log('deleted',JSON.stringify({...del,tune:del.tune.length,layers:undefined}));assert(!del.present&&del.hint&&!del.rows.some(r=>/Cerebra/.test(r)));
+// the empty card can be closed and stays closed until a planet exists again
+await p.locator('[data-empty-close]').click();await p.waitForTimeout(300);assert(await p.evaluate(()=>__cerebra.studio.emptyHint.hidden));
+await p.evaluate(()=>{const s=__cerebra.studio;s.syncEmptyHint();});assert(await p.evaluate(()=>__cerebra.studio.emptyHint.hidden));
 // undo restores presence, redo deletes again
 await p.evaluate(()=>__cerebra.studio.undo());await p.waitForTimeout(500);const u=await info();console.log('undo',u.present);assert(u.present);
-await p.evaluate(()=>__cerebra.studio.redo());await p.waitForTimeout(500);const r2=await info();assert(!r2.present&&r2.hint);
+await p.evaluate(()=>__cerebra.studio.redo());await p.waitForTimeout(500);const r2=await info();assert(!r2.present);
+await p.evaluate(()=>{__cerebra.studio.emptyDismissed=false;__cerebra.studio.syncEmptyHint();});assert((await info()).hint);
 // add again: must be fresh defaults, not the customised ones
 await p.locator('[data-empty-add]').click();await p.waitForTimeout(1200);
 const fresh=await info();console.log('fresh equals first default',fresh.tune===base.tune,fresh.layers===base.layers);
