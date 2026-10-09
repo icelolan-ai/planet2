@@ -15,6 +15,11 @@ Run after structural refactors and before calling a release complete.
 - Every visible control changes the result; Follow pointer only reacts to mouse hover on empty canvas. Undo/Redo, Reset, project save/restore, legacy projects (full-size object -> background) and image/video export (full frame, same as preview).
 - Fixture: `docs/qa/animated-background-ui.cjs` (VP env for 1440x900, 390x844, 820x1180, 844x390). Report emulation vs real device honestly.
 
+## Studio default empty canvas
+- First entry: no selection, no objects, planet hidden, "Crimson void" background, Layers shows only the hidden Cerebra row, empty-state card visible.
+- Add Cerebra / another world from the card or the dock select reveals it and hides the card; Undo/Redo, Reset canvas and project restore keep the empty state consistent; opening from the Atelier with a world still shows that world; empty export shows the background.
+- Hub/guide page backdrop (navy, crimson haze, dotted floor, horizon) legible at desktop/mobile/landscape. Fixture: `docs/qa/studio-empty-canvas-ui.cjs`.
+
 ## Entry / navigation
 - Studio Stepper: first entry, Previous/Next, all indicator jumps, rapid navigation, Skip, Back/Escape, session completion and replay from How to use. Complete/skip must launch Studio even with world GLBs pending. Replay from active Studio must return to the existing session. Check EN/Thai, actual directional content/height transitions, reduced motion, keyboard focus and desktop/mobile/narrow/short-screen bounds.
 - Landing page loads without visible errors.

@@ -9,6 +9,7 @@ Read this first; it supersedes the Codex section below where they differ. Rules:
 - Background visibility/fidelity fix (Customize sheet no longer covers the artwork; source AutoDriver port; Pillar blend/quality): see work log 23:50 entry; RELEASED (PR #330, live `app.eb570ecfc6.js`).
 - UI overlap guard, background smoothness and merged "Mood & poster presets" menu: see work log newest entry RELEASED (PR #332, live `app.8697e2ab5d.js`).
 - Threads Kit: RELEASED (PR #334, live `app.e44c6cd750.js`). Aero Shards: implemented on `feat/kit-aero-shards-20261008` (GLSL port, no pixel comparison with the WebGPU original; see work log), RELEASED (PR #336, live `app.2d3857df33.js`).
+- Studio now opens on an EMPTY canvas (planet hidden, nothing selected, "Crimson void" background, empty-state card to add Cerebra/worlds); PR pending until recorded as released. Hub page restyled to match.
 - Generated `index.html`/`assets/` are produced by CI (`build-generated.yml`); do not commit local builds.
 
 ---
