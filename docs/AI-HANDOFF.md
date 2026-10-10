@@ -1,6 +1,11 @@
 # AI Handoff Guide
 
-## Latest handoff — 2026-10-11 04:38 Asia/Bangkok — Codex Cloud
+## Latest handoff — 2026-10-11 04:37 Asia/Bangkok — Codex Cloud — Branch QA PASS
+
+- PR #349 head `f8f8900a`; buildCI38088038420 and GitHub-hosted QA38088035962 passed. Full desktop1440x900/mobile390x844 controls/reset/project/history/instance matrices/PNG exports; errors[] including strict resource checks. Mobile screenshots reviewed.
+- Ready for merge after current docs-only head CI. Then await generated main/Pages and automatic live QA. Not released yet. Owner Codex Cloud active. Physical Safari/GPU/FPS/long video and original slot-swap/Part Gallery remain untested/outside adapter.
+
+## Latest handoff — 2026-10-11 04:32 Asia/Bangkok — Codex Cloud
 
 - Owner Codex Cloud resumed PR #349; claim `72967629`. Build/syntax/hash checks passed; cloud-local browser launch blocked by socket permissions. GitHub-hosted desktop/mobile QA workflow added, followed by live QA after Pages deployment. Resource diagnostics now assert non-favicon HTTP/request failures.
 - Still pending: remote QA, merge #349, generated main/Pages and live controls/reset/export/errors. Do not duplicate this task or claim release yet. Original physical-device/long-video and slot-swap/Part Gallery limitations apply.
