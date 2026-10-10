@@ -11868,7 +11868,7 @@ class CoreStudio {
     if (it.kind === 'kit') {
       const def = KIT[it.kit]; if (!def) return;
       def.dispose?.(it);
-      it.p = JSON.parse(JSON.stringify(def.defaults));
+      it.p = JSON.parse(JSON.stringify(def.resetDefaults?.(it) || def.defaults));
       Object.assign(it, { opacity: 1, fill: '#e8ecf5', blend: def.blend || 'normal', seed: 7, mOn: !!def.motionOnAdd, mAmt: .6, mSpd: 1, mFx: 'none', spin: 0, spinOn: false, ang: 0 });
       KIT_MOTION_UI.forEach(u => { it[u.k] = u.def; });
       KIT_T.delete(it); this._kitMotionOpen?.delete(it);

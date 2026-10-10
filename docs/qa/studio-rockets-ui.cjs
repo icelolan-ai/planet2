@@ -5,7 +5,10 @@ const {chromium}=require('playwright'),assert=require('assert'),os=require('os')
 const vp=JSON.parse(process.env.VP||'{"width":1440,"height":900}');
 const b=await chromium.launch({headless:true,...(process.env.QA_CHROMIUM_PATH?{executablePath:process.env.QA_CHROMIUM_PATH}:{channel:'chrome'}),args:['--no-sandbox','--use-gl=swiftshader','--enable-unsafe-swiftshader']});
 const p=await b.newPage({viewport:vp,isMobile:vp.width<700,hasTouch:vp.width<700});const errors=[];
-p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error'&&!/favicon|404 \(File not found\)/.test(m.text()))errors.push(m.text());});
+const optionalIcon=url=>/\/favicon\.ico(?:$|\?)/.test(url);
+p.on('requestfailed',r=>{const message='REQUEST_FAILED '+r.url()+' '+r.failure()?.errorText;console.log(message);if(!optionalIcon(r.url()))errors.push(message);});
+p.on('response',r=>{if(r.status()>=400&&!optionalIcon(r.url()))errors.push('HTTP '+r.status()+' '+r.url());});
+p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error'&&!/\/favicon\.ico(?:$|\?)/.test(m.location().url||''))errors.push(m.text()+' '+(m.location().url||''));});
 await p.addInitScript(()=>localStorage.setItem('cerebra-hide-welcome','true'));
 await p.goto(process.env.QA_URL||'http://127.0.0.1:8000');await p.locator('#gateway').waitFor({state:'visible',timeout:90000});
 console.log('identity',await p.title(),p.url());
@@ -54,6 +57,13 @@ for(const model of ['f9','fh','sv']){
  await p.waitForFunction(()=>CerebraRockets.inspect(__cerebra.studio.sel)?.meshes>0,null,{timeout:90000});
  await p.evaluate(()=>{const s=__cerebra.studio;s.closeFly();for(const i of s.items.filter(i=>i.kit==='rocket')){i.hide=i!==s.sel;s.place(i);}s.select(null);});
  await p.screenshot({path:path.join(process.env.QA_SCREENSHOT_DIR||os.tmpdir(),`rocket-${model}-${vp.width}.png`)});
+ await p.evaluate(()=>{const s=__cerebra.studio;s.select(s.items.filter(i=>i.kit==='rocket').at(-1));});
+ await p.locator('[data-menu-top="Edit"]').click();await p.getByRole('menuitem',{name:'Design selected…',exact:true}).click();
+ await p.locator('[data-kit-reset]').click();
+ assert.equal(await p.evaluate(()=>__cerebra.studio.sel.p.model),model);
+ await p.waitForFunction(()=>CerebraRockets.inspect(__cerebra.studio.sel)?.meshes>0,null,{timeout:90000});
+ assert.equal((await pixel()).hash,base.hash);
+ assert.equal(await p.evaluate(()=>{const s=__cerebra.studio,snap=s.snapshot();s.restore(snap);const i=s.items.filter(i=>i.kit==='rocket').at(-1);s.select(i);s.closeFly();return i.p.model;}),model);
 }
 const bounds=await p.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,iframes:document.querySelectorAll('iframe').length}));assert(!bounds.overflow);assert.equal(bounds.iframes,0);
 if(process.env.QA_EXPORT==='1'){const out=await p.evaluate(async()=>{const c=await __cerebra.studio.composePoster(1,true);return {w:c.width,h:c.height,size:c.toDataURL().length};});assert(out.w>0&&out.h>0&&out.size>10000);console.log('composition export',out);}

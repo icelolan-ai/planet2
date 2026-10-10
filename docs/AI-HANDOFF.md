@@ -1,5 +1,22 @@
 # AI Handoff Guide
 
+## Latest handoff — 2026-10-11 04:37 Asia/Bangkok — Codex Cloud — Branch QA PASS
+
+- PR #349 head `f8f8900a`; buildCI38088038420 and GitHub-hosted QA38088035962 passed. Full desktop1440x900/mobile390x844 controls/reset/project/history/instance matrices/PNG exports; errors[] including strict resource checks. Mobile screenshots reviewed.
+- Ready for merge after current docs-only head CI. Then await generated main/Pages and automatic live QA. Not released yet. Owner Codex Cloud active. Physical Safari/GPU/FPS/long video and original slot-swap/Part Gallery remain untested/outside adapter.
+
+## Latest handoff — 2026-10-11 04:32 Asia/Bangkok — Codex Cloud
+
+- Owner Codex Cloud resumed PR #349; claim `72967629`. Build/syntax/hash checks passed; cloud-local browser launch blocked by socket permissions. GitHub-hosted desktop/mobile QA workflow added, followed by live QA after Pages deployment. Resource diagnostics now assert non-favicon HTTP/request failures.
+- Still pending: remote QA, merge #349, generated main/Pages and live controls/reset/export/errors. Do not duplicate this task or claim release yet. Original physical-device/long-video and slot-swap/Part Gallery limitations apply.
+
+## Latest handoff — 2026-10-11 04:19 Asia/Bangkok — Codex — Reset identity follow-up
+
+- PR #348 merged (`0e4efc5d`), generated `98863874`, bundle `app.ad3961f684.js`; CI38086978383/Pages38086993049 succeeded. Live baseline desktop/mobile tests are running.
+- Additional lifecycle review found that the shared Rocket Kit default `model:f9` would change vehicle identity on Design Reset. Follow-up on the same published task branch adds optional native `resetDefaults(item)` and preserves the selected Rocket model while resetting appearance. Fixture now resets each of the three vehicles and verifies exact default pixels and identity after project restore.
+- This follow-up is pending build/local/live QA and its own PR. Do not report the overall task complete until it is merged/deployed/verified. Owner remains Codex. Other limits below remain unchanged.
+- Update04:23: PR #349 source `b2c836e`, CI38087309118 passed. Latest extended local mobile reset fixture passed completely. Earlier network-console failures and URL-specific optional favicon handling are documented in the newest work-log entry. Desktop repeat/merge/final deployed checks still pending.
+
 ## Latest handoff — 2026-10-11 04:13 Asia/Bangkok — Codex — Rocket QA passed; deployment pending
 
 - PR: https://github.com/icelolan-ai/planet2/pull/348, branch `feat/studio-rockets-20261011`. Source checkpoint `b8bf0d4` plus final QA fixes in the next commit. This section supersedes the validation-pending note below; NOT yet a production release.
@@ -252,3 +269,7 @@ For each completed change leave a short note covering:
 - See `REACTBITS-ROADMAP.md` for upstream Customize mapping and pending work. Part 2B+ tools and Part 3/4 navigation/onboarding remain pending; web-page Laser Flow integration is deferred. Canvas2D visual adaptations intentionally omit shader-only and pointer interaction controls. Meta Balls raster is bounded to 160×160, at most 12 blobs; native item pixel/frame budgets remain in effect.
 - Local validation: unminified build, generated JS syntax and diff checks; every exposed geometry/palette control changes pixels; native keyboard Undo/Redo; Motion on/off, zero speed/resume and styles; English/Thai labels; group/lock; real `.cerebra` download/FileReader import preserving parameters. Native export-layer comparison returned maximum byte difference 0 for both tools. Full poster composition and native MP4 recording passed; both tools were observed in the video compositor and a nonempty MP4 blob was generated.
 - Chromium QA: desktop 1440×900, touch/mobile 390×844, panel bounds at tablet 820×1180 and landscape 844×390. No page or console errors. Software-rendered 3D was held still during independent Kit/control checks, then restored for full capture and visual QA; this is not a device performance benchmark. Repeat deployed desktop/mobile checks after Pages builds. Physical iOS Safari recording remains untested.
+
+## 2026-10-11 Asia/Bangkok — Rocket cloud takeover
+
+User requested cloud continuation before shutting down the PC. Local ownership is released for cloud takeover. All implementation and QA source is published on feat/studio-rockets-20261011; checkpoint before this note: 8cd48d8ce3e974f9b350eb34426e2d926ec3125c. PR #348 is merged and deployed. Follow-up PR #349 remains draft; do not duplicate it. Latest local reset-preservation QA passed at desktop 1440x900 (including native PNG export) and mobile 390x844, with errors []. Remaining: inspect latest CI, review/merge #349, wait for generated main build and Pages, rerun deployed desktop/mobile QA and resolve any actual resource errors, then record release/handoff. Earlier deployed baseline QA reported resource 404s; favicon was identified separately, but all other failures must still be investigated. Physical Safari/device performance and long video export remain untested. Local generated index/assets changes are build output only and are not committed. Continue from the remote branch, read current repo instructions, and publish the cloud ownership claim before editing.

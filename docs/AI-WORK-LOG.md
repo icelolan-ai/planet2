@@ -4,7 +4,7 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 ## Current work / ownership
 
-- Active owner: Codex, 2026-10-11 Asia/Bangkok. Task: native Rocket category and three original GLB models. Branch: feat/studio-rockets-20261011. Base: 5199dabc79ec676ed3ee2e4276a9af0f26209cd5. Intended files: src/template.html, src/effects/studio-rockets.js, src/effects/rocket-model.js, src/assets-src/rockets/**, src/build_web.py, docs/qa/studio-rockets-ui.cjs, docs/AI-HANDOFF.md, docs/AI-WORK-LOG.md. Remote branches/PRs and latest log checked; no Rocket checkpoint or active owner found.
+- Active owner: Codex Cloud, 2026-10-11 04:32 Asia/Bangkok. Task: resume PR #349 reset identity validation, merge and deployed Rocket desktop/mobile QA. Branch: feat/studio-rockets-20261011. Base/checkpoint: 8257991a61961d7ac7796303ad2cf06ddf1099b5. Intended files: docs/AI-WORK-LOG.md, docs/AI-HANDOFF.md, docs/qa/studio-rockets-ui.cjs; product sources only if QA identifies a defect. Local ownership release verified; open PRs #349 and unrelated #1 inspected; latest checkpoint CI38087708493 succeeded. No duplicate implementation.
 
 - Owner: none. Claude released ownership after finishing everything handed over by Codex and the follow-ups: Animated Background (#327, #330), Line Sidebar (#325), UI overlap/smoothness/menu merge (#332), Threads Kit (#334), Aero Shards Kit (#336). No branch is in progress; `feat/native-line-sidebar-20261008`, `feat/animated-background-20261008` and the other feature branches are merged and can be ignored.
 - Open caveats (see entries below): Liquid Ether is not frame-for-frame identical to the demo, the user's exact UI-overlap screenshot scenario was not reproduced, no real-device/Safari testing, Aero Shards has no pixel comparison with the WebGPU original.
@@ -24,6 +24,18 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Per-part painting covers paintable descendants of selected assemblies. Native readiness explicitly draws queued parameters before/after async loading/variants, preventing cold/rapid-edit export from capturing stale content. Removed clone instance buffers are disposed. Mobile Rocket Design uses the existing bottom/side-sheet sizing to preserve artwork visibility; no second UI/state/renderer owner.
 - QA timing correction: early pixel assertions could observe the previous queued frame. The final helper waits through the actual native readiness/render path. Extended full-stage Chromium desktop1440x900/mobile390x844 passes now cover each vehicle's real pixels, explode/yaw/zoom/global+part colour/finish, hide/unhide, source variants, project snapshot restore, remove/Undo/Redo, exact assembled instance arrays, zero app errors/no iframe/no overflow. Desktop native PNG composition1440x900 passed. Mobile rerun/screenshot review after sheet sizing passed. Emulation/software GL only.
 - PR CI run38086368417 passed for checkpoint `b8bf0d4`; final CI/merge/generated Pages/live QA still pending. Physical Safari/hardware FPS/long MP4 and Rocket slot-swap/Part Gallery untested/outside adapter. Owner Codex remains active through release verification.
+
+## 2026-10-11 04:19 Asia/Bangkok — Codex — Reset vehicle identity follow-up
+
+- PR #348 merged as `0e4efc5dd204eaed27e8b7716c8d0afc2efc8f27`; generated `98863874601f6007b46d68fb0bfa32cc97c0a0bb`, live `app.ad3961f684.js`. Final PR CI38086919071/build38086978383/Pages38086993049 succeeded; deployed baseline fixture still running.
+- Before closing, lifecycle review found Design Reset overwrote `p.model` with shared Kit default `f9`. Added optional native `resetDefaults(item)` in `src/template.html` and Rocket-specific preserved model defaults in `studio-rockets.js`. Extended fixture resets all three via the visible Reset button, compares exact baseline pixels and restores projects to verify identity.
+- Follow-up branch remains `feat/studio-rockets-20261011`; base product is PR #348. Build/local desktop/mobile/follow-up PR/CI/deployed checks pending for this fix. Overall task NOT complete yet; owner remains Codex. Log/handoff updated in same change.
+
+## 2026-10-11 04:23 Asia/Bangkok — Codex — Reset fixture network diagnosis
+
+- Follow-up PR: https://github.com/icelolan-ai/planet2/pull/349, source `b2c836eb7c73c331f8d7c48f26f1531c1fb85edc`; CI38087309118 passed.
+- First reset runs reached all vehicle/reset/default-pixel/project checks, but console checks failed on two transient `ERR_CONNECTION_REFUSED` messages without resource URLs; these are not recorded as clean passes. Earlier deployed baseline failed two HTTP404 console entries. A separate deployed probe identified the existing root `/favicon.ico`404. The fixture now excludes only that optional icon by console resource URL and logs every other failed request with its URL; it does not suppress arbitrary HTTP/network/application errors.
+- Latest rerun of the reset fixture on local mobile390x844 passed completely, including console health. Desktop repeat and final deployed reruns remain. Files: fixture plus log/handoff; no further product changes in this diagnostic update.
 
 ## 2026-10-08 — Codex — PR #323 released
 
@@ -200,3 +212,20 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 ## 2026-10-09 Asia/Bangkok — Claude — Sharper backgrounds released
 
 - PR #346 merged (merge `5e6b57c0ec60333a24b9f11bc25f8bbfe04646f3`), CI `build` succeeded, live bundle `assets/app.4d39a9f020.js`. Live check (headless Chromium emulation): mocked-clock buffer probe on the deployed site gives the same results as local (healthy cadence: sharp caps; slow: fallback), Aero background fixture PASS at 1440x900, no errors. Real-device sharpness/FPS not measured.
+
+## 2026-10-11 Asia/Bangkok — Rocket cloud takeover
+
+User requested cloud continuation before shutting down the PC. Local ownership is released for cloud takeover. All implementation and QA source is published on feat/studio-rockets-20261011; checkpoint before this note: 8cd48d8ce3e974f9b350eb34426e2d926ec3125c. PR #348 is merged and deployed. Follow-up PR #349 remains draft; do not duplicate it. Latest local reset-preservation QA passed at desktop 1440x900 (including native PNG export) and mobile 390x844, with errors []. Remaining: inspect latest CI, review/merge #349, wait for generated main build and Pages, rerun deployed desktop/mobile QA and resolve any actual resource errors, then record release/handoff. Earlier deployed baseline QA reported resource 404s; favicon was identified separately, but all other failures must still be investigated. Physical Safari/device performance and long video export remain untested. Local generated index/assets changes are build output only and are not committed. Continue from the remote branch, read current repo instructions, and publish the cloud ownership claim before editing.
+
+
+## 2026-10-11 04:32 Asia/Bangkok — Codex Cloud — Remote QA runner
+
+- Resumed existing PR #349 after published cloud ownership claim `72967629`. Reviewed source reset hook; build and generated JS syntax/diff checks passed. Rocket source remains `f0fe3e63`; all three imported GLB hashes match original assets exactly.
+- Cloud scratch Chrome installation succeeded from official Google package, but browser launch is blocked by runtime socket permission (`process_singleton_posix.cc`, Operation not permitted). No cloud-local UI pass claimed. Cloud Browser loaded text fallback, so it cannot verify native 3D Studio in this session.
+- Added `.github/workflows/rocket-qa.yml`: GitHub-hosted local branch QA at desktop1440x900/mobile390x844, native export for both; automatic live QA after successful main Pages deployment. Existing fixture now fails on non-favicon HTTP>=400 and request failures as well as console/page errors. Screenshots stored as workflow artifacts. No product change/generated output commit.
+- Local desktop/mobile evidence from previous owner remains valid for that checkpoint only. New remote runner, review/merge #349 and deployed verification remain pending. Physical Safari/device GPU/FPS/long video untested.
+
+## 2026-10-11 04:37 Asia/Bangkok — Codex Cloud — Branch QA passed
+
+- PR #349 source/QA head `f8f8900a90edef678ce287c05b725980ab8e9927`. Build CI38088038420 passed. GitHub-hosted Native Rocket UI QA38088035962 passed both desktop1440x900 and mobile390x844 with full stage rendering; real mesh counts152/230/59, control pixels/history/project/reset identity/exact baseline pixels/instance matrices and PNG exports1440x900 +390x844. Both errors[]; stricter HTTP/request failure assertions passed. Mobile menu/Design screenshots visually reviewed. Artifacts attached to the workflow run.
+- Changed files this update: log/handoff only. Product fix reviewed: optional resetDefaults hook preserves model identity while disposing per-item GPU resources and restoring default appearance. No generated outputs committed. Merge/generated Pages/final live QA still pending; owner remains Codex Cloud.
