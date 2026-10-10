@@ -8692,6 +8692,7 @@ const KIT_SHAPES = [['circle', 'Circle'], ['ring', 'Ring'], ['triangle', 'Triang
 const KIT_SHAPE_SVG = { circle: '<circle cx="12" cy="12" r="6"/>', ring: '<circle cx="12" cy="12" r="6" fill="none" stroke-width="2"/>', triangle: '<path d="M12 4.5 20 18H4z"/>', square: '<rect x="6" y="6" width="12" height="12"/>', diamond: '<path d="M12 3.5 20.5 12 12 20.5 3.5 12z"/>', hexagon: '<path d="M12 4 19 8v8l-7 4-7-4V8z"/>', star: '<path d="m12 3.5 2.6 5.6 6 .7-4.4 4.2 1.2 6L12 17l-5.4 3 1.2-6-4.4-4.2 6-.7z"/>', cross: '<path d="M12 4v16M4 12h16" fill="none" stroke-width="2.4"/>' };
 const KIT_DASH = [['solid', 'Solid'], ['dashed', 'Dashed'], ['dotted', 'Dotted'], ['mixed', 'Mixed']];
 const KIT = {
+  rocket: window.CerebraRockets.kit,
   crystalBall: window.CerebraStudioEffects.crystalKit,
   liquidEther: window.CerebraStudioEffects.etherKit,
   laserFlow: window.CerebraLaser.kit,
@@ -9979,10 +9980,11 @@ class CoreStudio {
     const th = window.__cerebraLanguage?.current === 'th', old = this.el.querySelector('.st-planetmenu'); if (old) { old.remove(); return; }
     const pop = document.createElement('div'); pop.className = 'st-lmenu st-glass st-planetmenu'; pop.setAttribute('role', 'menu');
     const sources = this.planetSources(), note = this.planetPresent() ? (th ? 'แทนที่ดาวปัจจุบันด้วยค่าเริ่มต้นใหม่' : 'Replaces the current planet with fresh defaults') : (th ? 'เริ่มจากค่าเริ่มต้นเสมอ' : 'Always starts from default settings');
-    pop.innerHTML = `<p class="st-pm-n">${note}</p>` + sources.map(o => `<button type="button" role="menuitem" class="st-lm-i" data-pm="${o.id}"${o.ok ? '' : ' disabled'}><span>${o.label}</span>${o.hint ? `<i>${o.hint}</i>` : o.ok ? '' : `<i>${th ? 'กำลังโหลด' : 'loading'}</i>`}</button>`).join('');
+    pop.innerHTML = `<p class="st-pm-n">${note}</p><button type="button" role="menuitem" class="st-lm-i" data-rocket-category aria-haspopup="menu"><span>Rocket / จรวด</span><i>›</i></button>` + sources.map(o => `<button type="button" role="menuitem" class="st-lm-i" data-pm="${o.id}"${o.ok ? '' : ' disabled'}><span>${o.label}</span>${o.hint ? `<i>${o.hint}</i>` : o.ok ? '' : `<i>${th ? 'กำลังโหลด' : 'loading'}</i>`}</button>`).join('');
     this.el.append(pop); const r = anchor.getBoundingClientRect(); pop.style.width = '240px'; pop.style.left = clamp(r.left, 8, innerWidth - 248) + 'px'; pop.style.top = clamp(r.bottom + 6, 8, innerHeight - pop.offsetHeight - 8) + 'px';
     const close = () => { pop.remove(); document.removeEventListener('pointerdown', away, true); }, away = e => { if (!pop.contains(e.target) && e.target !== anchor) close(); };
     document.addEventListener('pointerdown', away, true);
+    pop.querySelector('[data-rocket-category]').onclick = () => { close(); window.CerebraRockets.openMenu(this, anchor); };
     pop.querySelectorAll('[data-pm]').forEach(b => b.onclick = () => { const o = sources.find(x => x.id === b.dataset.pm); close(); if (!o || !o.ok) return; if (o.src) { Promise.resolve(o.src.add(this)).then(() => this.syncEmptyHint()); } else this.addPlanet(o); });
   }
   syncEmptyHint() {
@@ -10483,6 +10485,7 @@ class CoreStudio {
     const half = wide ? Math.min(cxv, W - cxv) : W / 2, x0 = wide ? cxv - half : 0, cw = wide ? half * 2 : W;   // the same poster crop as Save image
     const k = Math.min(2, size / Math.max(cw, H)), rw = 2 * Math.round(cw * k / 2), rh = 2 * Math.round(H * k / 2), FW = Math.round(W * k), FH = Math.round(H * k);
     await Promise.all(this.items.filter(i => i.kind === 'kit').map(kitFontWait));
+    await Promise.all(this.items.filter(i => i.kind === 'kit').map(i => KIT[i.kit]?.ready?.(i)));
     const sx = FW / this.app.stage.width, sy = FH / this.app.stage.height, shapes = this.focusShapes();
     const dyn = i => i.keyframes?.length || (i.kind === 'kit' && (i.mOn || (i.spinOn && i.spin))) || (i.kind === 'stroke' && this._movers && this._movers.has(i));
     const seq = []; let cur = null, hasPlanet = false;
@@ -11811,7 +11814,7 @@ class CoreStudio {
     const box = this.el.querySelector('[data-kit-types]');
     const category = key => ['crystalBall','laserFlow','metaBalls','texture','threads'].includes(key) ? 'Light & textures' : ['hubNetwork','plexus2d','chord','bundle','neural','cellCluster','flowField','circularFlow','spiral'].includes(key) ? 'Networks & flow' : ['hud','rings','radial','arc','scaleRing','dotRing','radialBars'].includes(key) ? 'Rings & geometry' : 'Text & objects';
     let lastCategory;
-    Object.entries(KIT).filter(([key]) => !BG_KITS.includes(key)).sort(([a],[b]) => category(a).localeCompare(category(b))).forEach(([key, def]) => {
+    Object.entries(KIT).filter(([key]) => !BG_KITS.includes(key) && key !== 'rocket').sort(([a],[b]) => category(a).localeCompare(category(b))).forEach(([key, def]) => {
       const group = category(key);
       if (group !== lastCategory) { const title = document.createElement('div'); title.className = 'st-kit-category'; title.textContent = group; box.append(title); lastCategory = group; }
       const b = document.createElement('button'); b.type = 'button'; b.className = 'st-btn'; b.dataset.studioKit = key; b.innerHTML = `<canvas width="88" height="88"></canvas>${def.label}`;
@@ -12017,6 +12020,7 @@ class CoreStudio {
     if (sourceRows.length) { const h = document.createElement('div'); h.className = 'st-ksec-h'; h.textContent = th ? 'การเคลื่อนไหวเฉพาะวัตถุ' : 'Object motion'; sourceRows[0].before(h); }
     const foldIdle = () => { if (!it.mOn && !it.spinOn) { motion.open = false; this._kitMotionOpen?.set(it, false); } };
     [sOn, mOn].filter(Boolean).forEach(el => el.addEventListener('change', foldIdle));
+    window.CerebraRockets.decorate(this, f, it);
     this.layoutKitFly();
   }
   // ---- Keyboard shortcuts: ONE table (SHORTCUTS) drives the key handler, the "?" sheet and the button tooltips.
@@ -12884,6 +12888,7 @@ class CoreStudio {
     if(this.sel)this.select(null);
       const planetIdx0=this.items.findIndex(i=>i.kind==='fx'&&i.fxType==='planet'),hasBelow=planetIdx0>0&&this.items.slice(0,planetIdx0).some(i=>i.kind!=='fx'&&!i.ref&&!this.isHid(i));
       await Promise.all(this.items.filter(i=>i.kind==='kit').map(kitFontWait));
+      await Promise.all(this.items.filter(i=>i.kind==='kit').map(i=>KIT[i.kit]?.ready?.(i)));
       const {blob,width,height}=await this.app.capture({type:'image/png',scale,transparent:false,bare:hasBelow});
       if(!blob)throw Error('Canvas capture failed');
       const bitmap=await createImageBitmap(blob), out=document.createElement('canvas');out.width=width;out.height=height;

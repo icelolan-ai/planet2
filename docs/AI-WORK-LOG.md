@@ -10,6 +10,14 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Open caveats (see entries below): Liquid Ether is not frame-for-frame identical to the demo, the user's exact UI-overlap screenshot scenario was not reproduced, no real-device/Safari testing, Aero Shards has no pixel comparison with the WebGPU original.
 - Before editing, claim a task here (branch, base, files) per `AGENTS.md`.
 
+## 2026-10-11 04:04 Asia/Bangkok — Codex — Native Rocket integration checkpoint
+
+- Branch `feat/studio-rockets-20261011`; base `5199dabc79ec676ed3ee2e4276a9af0f26209cd5`; published ownership claim `8aad43c`. Checked both repos/open PRs/branches/latest history; no overlapping Rocket work. Existing unrelated old PR #1 left unchanged.
+- Add Planet > Rocket > Falcon 9 / Falcon Heavy / Saturn V adds real CAD models as native Kit layers. Original three GLB SHA-256 hashes match Rocket `f0fe3e6321c5713f745d26d4497f2d386376f9a5`. Shared renderer and native state/history/project/composition owners retained; no iframe. Global/per-part paint, finish, textures, variants, hide parts, 3D axes, model zoom, native item geometry and cumulative instanced exploded view.
+- Files: `src/template.html`, `src/build_web.py`, `src/effects/{rocket-model,studio-rockets}.js`, `src/assets-src/rockets/**`, `docs/qa/studio-rockets-ui.cjs`, this log/handoff. Build-generated outputs excluded. Asset provenance/license/readiness/resource behavior documented.
+- Actual tests before this checkpoint: build/syntax/diff; desktop1440x900/mobile390x844 all three lazy GLBs, nonempty rendered pixels, explode/yaw/zoom/paint, project snapshot/restore, delete/Undo/Redo, exact assembled instanced-array restoration, no overflow/iframe/app errors. Desktop native PNG composition 1440x900 nonempty. Initial UI-only runs paused the main-stage render; final baseline passes ran full stage rendering. Extended tests for latest finish/per-part/variant controls pending. Browser plugin not available, used installed Chrome via Playwright; device emulation/software GL, not a performance benchmark.
+- Both deployed reference pages inspected in Chromium/HTTP200 with no page errors. This checkpoint is NOT released; CI/merge/live checks pending. Physical Safari/GPU FPS/long MP4 and Rocket's separate slot-swap/Part Gallery workflow not covered. Owner remains Codex while validation continues.
+
 ## 2026-10-08 — Codex — PR #323 released
 
 - PR: https://github.com/icelolan-ai/planet2/pull/323 (merged).
