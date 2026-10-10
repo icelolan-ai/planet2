@@ -54,6 +54,13 @@ for(const model of ['f9','fh','sv']){
  await p.waitForFunction(()=>CerebraRockets.inspect(__cerebra.studio.sel)?.meshes>0,null,{timeout:90000});
  await p.evaluate(()=>{const s=__cerebra.studio;s.closeFly();for(const i of s.items.filter(i=>i.kit==='rocket')){i.hide=i!==s.sel;s.place(i);}s.select(null);});
  await p.screenshot({path:path.join(process.env.QA_SCREENSHOT_DIR||os.tmpdir(),`rocket-${model}-${vp.width}.png`)});
+ await p.evaluate(()=>{const s=__cerebra.studio;s.select(s.items.filter(i=>i.kit==='rocket').at(-1));});
+ await p.locator('[data-menu-top="Edit"]').click();await p.getByRole('menuitem',{name:'Design selected…',exact:true}).click();
+ await p.locator('[data-kit-reset]').click();
+ assert.equal(await p.evaluate(()=>__cerebra.studio.sel.p.model),model);
+ await p.waitForFunction(()=>CerebraRockets.inspect(__cerebra.studio.sel)?.meshes>0,null,{timeout:90000});
+ assert.equal((await pixel()).hash,base.hash);
+ assert.equal(await p.evaluate(()=>{const s=__cerebra.studio,snap=s.snapshot();s.restore(snap);const i=s.items.filter(i=>i.kit==='rocket').at(-1);s.select(i);s.closeFly();return i.p.model;}),model);
 }
 const bounds=await p.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,iframes:document.querySelectorAll('iframe').length}));assert(!bounds.overflow);assert.equal(bounds.iframes,0);
 if(process.env.QA_EXPORT==='1'){const out=await p.evaluate(async()=>{const c=await __cerebra.studio.composePoster(1,true);return {w:c.width,h:c.height,size:c.toDataURL().length};});assert(out.w>0&&out.h>0&&out.size>10000);console.log('composition export',out);}

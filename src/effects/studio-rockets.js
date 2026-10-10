@@ -8,6 +8,7 @@
   const range = (k,label,min,max,step=1) => ({k,label,t:'range',min,max,step});
   const kit = {
     label: 'Rocket', noShuffle: true, size: [.35,.65],
+    resetDefaults: it => ({...kit.defaults, model: it.p.model}),
     defaults: { model:'f9', explode:0, pitch:0, yaw:25, roll:0, zoom:1, painted:false, colour:'#ffffff', finished:false, roughness:.5, metalness:.1, texture:true },
     ui: [range('explode','Exploded view / แยกชิ้นส่วน',0,1,.01),range('pitch','Pitch / หมุนแกน X',-180,180),range('yaw','Yaw / หมุนแกน Y',-180,180),range('roll','Roll / หมุนแกน Z',-180,180),range('zoom','Zoom / ขนาดโมเดล',.25,2,.05),
       {k:'painted',t:'check',label:'Custom paint / ปรับสี'}, {k:'colour',t:'color',label:'Paint colour / สีจรวด',when:['painted',true]},

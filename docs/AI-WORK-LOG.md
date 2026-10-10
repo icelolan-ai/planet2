@@ -25,6 +25,12 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - QA timing correction: early pixel assertions could observe the previous queued frame. The final helper waits through the actual native readiness/render path. Extended full-stage Chromium desktop1440x900/mobile390x844 passes now cover each vehicle's real pixels, explode/yaw/zoom/global+part colour/finish, hide/unhide, source variants, project snapshot restore, remove/Undo/Redo, exact assembled instance arrays, zero app errors/no iframe/no overflow. Desktop native PNG composition1440x900 passed. Mobile rerun/screenshot review after sheet sizing passed. Emulation/software GL only.
 - PR CI run38086368417 passed for checkpoint `b8bf0d4`; final CI/merge/generated Pages/live QA still pending. Physical Safari/hardware FPS/long MP4 and Rocket slot-swap/Part Gallery untested/outside adapter. Owner Codex remains active through release verification.
 
+## 2026-10-11 04:19 Asia/Bangkok — Codex — Reset vehicle identity follow-up
+
+- PR #348 merged as `0e4efc5dd204eaed27e8b7716c8d0afc2efc8f27`; generated `98863874601f6007b46d68fb0bfa32cc97c0a0bb`, live `app.ad3961f684.js`. Final PR CI38086919071/build38086978383/Pages38086993049 succeeded; deployed baseline fixture still running.
+- Before closing, lifecycle review found Design Reset overwrote `p.model` with shared Kit default `f9`. Added optional native `resetDefaults(item)` in `src/template.html` and Rocket-specific preserved model defaults in `studio-rockets.js`. Extended fixture resets all three via the visible Reset button, compares exact baseline pixels and restores projects to verify identity.
+- Follow-up branch remains `feat/studio-rockets-20261011`; base product is PR #348. Build/local desktop/mobile/follow-up PR/CI/deployed checks pending for this fix. Overall task NOT complete yet; owner remains Codex. Log/handoff updated in same change.
+
 ## 2026-10-08 — Codex — PR #323 released
 
 - PR: https://github.com/icelolan-ai/planet2/pull/323 (merged).

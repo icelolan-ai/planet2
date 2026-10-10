@@ -1,5 +1,11 @@
 # AI Handoff Guide
 
+## Latest handoff — 2026-10-11 04:19 Asia/Bangkok — Codex — Reset identity follow-up
+
+- PR #348 merged (`0e4efc5d`), generated `98863874`, bundle `app.ad3961f684.js`; CI38086978383/Pages38086993049 succeeded. Live baseline desktop/mobile tests are running.
+- Additional lifecycle review found that the shared Rocket Kit default `model:f9` would change vehicle identity on Design Reset. Follow-up on the same published task branch adds optional native `resetDefaults(item)` and preserves the selected Rocket model while resetting appearance. Fixture now resets each of the three vehicles and verifies exact default pixels and identity after project restore.
+- This follow-up is pending build/local/live QA and its own PR. Do not report the overall task complete until it is merged/deployed/verified. Owner remains Codex. Other limits below remain unchanged.
+
 ## Latest handoff — 2026-10-11 04:13 Asia/Bangkok — Codex — Rocket QA passed; deployment pending
 
 - PR: https://github.com/icelolan-ai/planet2/pull/348, branch `feat/studio-rockets-20261011`. Source checkpoint `b8bf0d4` plus final QA fixes in the next commit. This section supersedes the validation-pending note below; NOT yet a production release.
