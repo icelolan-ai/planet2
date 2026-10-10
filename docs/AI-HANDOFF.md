@@ -5,6 +5,7 @@
 - PR #348 merged (`0e4efc5d`), generated `98863874`, bundle `app.ad3961f684.js`; CI38086978383/Pages38086993049 succeeded. Live baseline desktop/mobile tests are running.
 - Additional lifecycle review found that the shared Rocket Kit default `model:f9` would change vehicle identity on Design Reset. Follow-up on the same published task branch adds optional native `resetDefaults(item)` and preserves the selected Rocket model while resetting appearance. Fixture now resets each of the three vehicles and verifies exact default pixels and identity after project restore.
 - This follow-up is pending build/local/live QA and its own PR. Do not report the overall task complete until it is merged/deployed/verified. Owner remains Codex. Other limits below remain unchanged.
+- Update04:23: PR #349 source `b2c836e`, CI38087309118 passed. Latest extended local mobile reset fixture passed completely. Earlier network-console failures and URL-specific optional favicon handling are documented in the newest work-log entry. Desktop repeat/merge/final deployed checks still pending.
 
 ## Latest handoff — 2026-10-11 04:13 Asia/Bangkok — Codex — Rocket QA passed; deployment pending
 

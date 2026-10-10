@@ -31,6 +31,12 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Before closing, lifecycle review found Design Reset overwrote `p.model` with shared Kit default `f9`. Added optional native `resetDefaults(item)` in `src/template.html` and Rocket-specific preserved model defaults in `studio-rockets.js`. Extended fixture resets all three via the visible Reset button, compares exact baseline pixels and restores projects to verify identity.
 - Follow-up branch remains `feat/studio-rockets-20261011`; base product is PR #348. Build/local desktop/mobile/follow-up PR/CI/deployed checks pending for this fix. Overall task NOT complete yet; owner remains Codex. Log/handoff updated in same change.
 
+## 2026-10-11 04:23 Asia/Bangkok — Codex — Reset fixture network diagnosis
+
+- Follow-up PR: https://github.com/icelolan-ai/planet2/pull/349, source `b2c836eb7c73c331f8d7c48f26f1531c1fb85edc`; CI38087309118 passed.
+- First reset runs reached all vehicle/reset/default-pixel/project checks, but console checks failed on two transient `ERR_CONNECTION_REFUSED` messages without resource URLs; these are not recorded as clean passes. Earlier deployed baseline failed two HTTP404 console entries. A separate deployed probe identified the existing root `/favicon.ico`404. The fixture now excludes only that optional icon by console resource URL and logs every other failed request with its URL; it does not suppress arbitrary HTTP/network/application errors.
+- Latest rerun of the reset fixture on local mobile390x844 passed completely, including console health. Desktop repeat and final deployed reruns remain. Files: fixture plus log/handoff; no further product changes in this diagnostic update.
+
 ## 2026-10-08 — Codex — PR #323 released
 
 - PR: https://github.com/icelolan-ai/planet2/pull/323 (merged).
