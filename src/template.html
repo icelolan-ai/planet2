@@ -11848,7 +11848,7 @@ class CoreStudio {
     f.style.maxWidth = Math.max(80, b.right - b.left) + 'px';
     f.style.maxHeight = Math.max(80, Math.min(centered ? 620 : Infinity, b.bottom - b.top)) + 'px';
     // The background's Customize panel must leave the artwork visible: bottom sheet on tall narrow screens, half-width side sheet on short (landscape) screens.
-    const bgSheet = f.hasAttribute('data-kit-panel') && this.sel?.bg ? ((window.visualViewport?.height || innerHeight) <= 520 ? 'side' : (window.visualViewport?.width || innerWidth) <= 700 ? 'bottom' : '') : '';
+    const bgSheet = f.hasAttribute('data-kit-panel') && (this.sel?.bg || this.sel?.kit === 'rocket') ? ((window.visualViewport?.height || innerHeight) <= 520 ? 'side' : (window.visualViewport?.width || innerWidth) <= 700 ? 'bottom' : '') : '';
     if (bgSheet === 'side') { f.style.maxWidth = Math.max(80, Math.min(420, (b.right - b.left) * .5)) + 'px'; f.style.maxHeight = Math.max(80, b.bottom - b.top) + 'px'; }
     else if (bgSheet === 'bottom') f.style.maxHeight = Math.max(150, (b.bottom - b.top) * .42) + 'px';
     const w = f.offsetWidth, h = f.offsetHeight;

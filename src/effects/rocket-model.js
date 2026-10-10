@@ -427,7 +427,7 @@ class Model {
 
   /* ---------- lifecycle ---------- */
   dispose() {
-    for (const m of this.meshes) { this.#dropClone(m); m._fdim?.dispose(); m._fdim = null; }
+    for (const m of this.meshes) { this.#dropClone(m); m._fdim?.dispose(); m._fdim = null; if (m.isInstancedMesh) m.dispose(); }
     // geometry/materials of the source gltf are cached and shared; only drop the clones
     this.root.removeFromParent();
   }

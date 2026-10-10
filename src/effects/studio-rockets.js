@@ -57,7 +57,8 @@
           if(p.finished)m.paint.fin[mesh._pid]={r:p.roughness,m:p.metalness};
           if(!p.texture)m.paint.noTex[mesh._pid]=true;
         }
-        Object.assign(m.paint.parts,p.partPaint||{});m.refreshMaterials();s.paintKey=paintKey;
+        for(const [id,hex]of Object.entries(p.partPaint||{}))for(const mesh of m.meshesUnder(id))if(m.isPaintable(mesh))m.paint.parts[mesh._pid]=hex;
+        m.refreshMaterials();s.paintKey=paintKey;
       }
       m.showAll();for(const id of p.hiddenParts||[])m.setHidden(id,true);
       s.pivot.rotation.set(p.pitch*Math.PI/180,p.yaw*Math.PI/180,p.roll*Math.PI/180);
@@ -72,7 +73,7 @@
         s.ctx.putImageData(s.image,0,0);g.drawImage(s.canvas,x,y,w,h);
       }finally{r.setRenderTarget(target);r.setViewport(vp);r.setScissor(sc);r.setScissorTest(test);r.autoClear=auto;r.setClearColor(col,alpha);r.toneMapping=tone;r.toneMappingExposure=exposure;}
     },
-    async ready(it){if(!states.has(it))window.__cerebra.studio.kitRedraw(it);const s=states.get(it);await s?.loadPromise;await s?.variantTask;if(s?.error)throw Error('Rocket: '+s.error);},
+    async ready(it){const studio=window.__cerebra.studio,draw=()=>studio.drawKit(it,it.w*studio.U(),it.h*studio.U());draw();const s=states.get(it);await s?.loadPromise;draw();await s?.variantTask;if(s?.error)throw Error('Rocket: '+s.error);draw();},
     dispose(it){const s=states.get(it);if(!s)return;s.disposed=true;s.model?.dispose();s.target?.dispose();states.delete(it);}
   };
   function decorate(studio,panel,it){
@@ -86,7 +87,7 @@
     const colour=row('Part colour / สีชิ้นนี้',document.createElement('input'));colour.type='color';colour.dataset.rocketPartColour='';
     const hidden=row('Hide part / ซ่อนชิ้นนี้',document.createElement('input'));hidden.type='checkbox';hidden.dataset.rocketPartHidden='';
     const reset=document.createElement('button');reset.type='button';reset.className='st-btn';reset.textContent='Restore part paint / คืนสีชิ้นนี้';section.append(reset);
-    const sync=()=>{const id=parts.value,paintable=m.meshesOf(id).some(x=>m.isPaintable(x));colour.closest('label').hidden=!paintable;reset.hidden=!paintable;colour.value=it.p.partPaint?.[id]||'#ffffff';hidden.checked=(it.p.hiddenParts||[]).includes(id);};sync();
+    const sync=()=>{const id=parts.value,paintable=m.meshesUnder(id).some(x=>m.isPaintable(x));colour.closest('label').hidden=!paintable;reset.hidden=!paintable;colour.value=it.p.partPaint?.[id]||'#ffffff';hidden.checked=(it.p.hiddenParts||[]).includes(id);};sync();
     parts.onchange=()=>{it.p.selectedPart=parts.value;sync();studio.commit();};
     const paint=()=>{it.p.partPaint={...it.p.partPaint,[parts.value]:colour.value};studio.kitRedraw(it);};colour.oninput=paint;colour.onchange=()=>{paint();studio.commit();};
     hidden.onchange=()=>{const ids=new Set(it.p.hiddenParts||[]);hidden.checked?ids.add(parts.value):ids.delete(parts.value);it.p.hiddenParts=[...ids];studio.kitRedraw(it);studio.commit();};
@@ -102,5 +103,5 @@
     const close=()=>{pop.remove();document.removeEventListener('pointerdown',away,true);},away=e=>{if(!pop.contains(e.target)&&e.target!==anchor)close();};document.addEventListener('pointerdown',away,true);
     pop.querySelectorAll('[data-rocket]').forEach(b=>b.onclick=()=>{close();studio.closeFly();const it=studio.addItem('kit',{kit:'rocket',name:names[b.dataset.rocket],p:{...kit.defaults,model:b.dataset.rocket},opacity:1});studio.select(it);studio.syncEmptyHint();});
   }
-  window.CerebraRockets={kit,openMenu,decorate,inspect:it=>{const s=states.get(it);return s?{loading:s.loading,error:s.error,meshes:s.model?.meshes.length,exploded:s.model?.t,canvas:s.canvas,instances:s.model?.inst.map(i=>Array.from(i.mesh.instanceMatrix.array))}:null;}};
+  window.CerebraRockets={kit,openMenu,decorate,inspect:it=>{const s=states.get(it);return s?{loading:s.loading,error:s.error,meshes:s.model?.meshes.length,exploded:s.model?.t,canvas:s.canvas,paint:s.model?.paint.parts,painted:s.model?.meshes.filter(m=>s.model.isPaintable(m)).map(m=>[m._pid,m.material.color.getHexString(T.SRGBColorSpace)]),instances:s.model?.inst.map(i=>Array.from(i.mesh.instanceMatrix.array))}:null;}};
 })();

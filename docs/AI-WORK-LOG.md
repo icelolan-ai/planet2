@@ -18,6 +18,13 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 - Actual tests before this checkpoint: build/syntax/diff; desktop1440x900/mobile390x844 all three lazy GLBs, nonempty rendered pixels, explode/yaw/zoom/paint, project snapshot/restore, delete/Undo/Redo, exact assembled instanced-array restoration, no overflow/iframe/app errors. Desktop native PNG composition 1440x900 nonempty. Initial UI-only runs paused the main-stage render; final baseline passes ran full stage rendering. Extended tests for latest finish/per-part/variant controls pending. Browser plugin not available, used installed Chrome via Playwright; device emulation/software GL, not a performance benchmark.
 - Both deployed reference pages inspected in Chromium/HTTP200 with no page errors. This checkpoint is NOT released; CI/merge/live checks pending. Physical Safari/GPU FPS/long MP4 and Rocket's separate slot-swap/Part Gallery workflow not covered. Owner remains Codex while validation continues.
 
+## 2026-10-11 04:13 Asia/Bangkok — Codex — Rocket extended QA/final fixes (PR #348)
+
+- PR https://github.com/icelolan-ai/planet2/pull/348; checkpoint `b8bf0d4`, final fixes follow in this commit. Files: `src/template.html`, `src/effects/{studio-rockets,rocket-model}.js`, source-asset README, architecture, QA fixture, log/handoff. Still NOT released.
+- Per-part painting covers paintable descendants of selected assemblies. Native readiness explicitly draws queued parameters before/after async loading/variants, preventing cold/rapid-edit export from capturing stale content. Removed clone instance buffers are disposed. Mobile Rocket Design uses the existing bottom/side-sheet sizing to preserve artwork visibility; no second UI/state/renderer owner.
+- QA timing correction: early pixel assertions could observe the previous queued frame. The final helper waits through the actual native readiness/render path. Extended full-stage Chromium desktop1440x900/mobile390x844 passes now cover each vehicle's real pixels, explode/yaw/zoom/global+part colour/finish, hide/unhide, source variants, project snapshot restore, remove/Undo/Redo, exact assembled instance arrays, zero app errors/no iframe/no overflow. Desktop native PNG composition1440x900 passed. Mobile rerun/screenshot review after sheet sizing passed. Emulation/software GL only.
+- PR CI run38086368417 passed for checkpoint `b8bf0d4`; final CI/merge/generated Pages/live QA still pending. Physical Safari/hardware FPS/long MP4 and Rocket slot-swap/Part Gallery untested/outside adapter. Owner Codex remains active through release verification.
+
 ## 2026-10-08 — Codex — PR #323 released
 
 - PR: https://github.com/icelolan-ai/planet2/pull/323 (merged).
