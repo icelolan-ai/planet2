@@ -4,6 +4,8 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 ## Current work / ownership
 
+- Active owner: Codex, 2026-10-11 Asia/Bangkok. Task: native Rocket category and three original GLB models. Branch: feat/studio-rockets-20261011. Base: 5199dabc79ec676ed3ee2e4276a9af0f26209cd5. Intended files: src/template.html, src/effects/studio-rockets.js, src/effects/rocket-model.js, src/assets-src/rockets/**, src/build_web.py, docs/qa/studio-rockets-ui.cjs, docs/AI-HANDOFF.md, docs/AI-WORK-LOG.md. Remote branches/PRs and latest log checked; no Rocket checkpoint or active owner found.
+
 - Owner: none. Claude released ownership after finishing everything handed over by Codex and the follow-ups: Animated Background (#327, #330), Line Sidebar (#325), UI overlap/smoothness/menu merge (#332), Threads Kit (#334), Aero Shards Kit (#336). No branch is in progress; `feat/native-line-sidebar-20261008`, `feat/animated-background-20261008` and the other feature branches are merged and can be ignored.
 - Open caveats (see entries below): Liquid Ether is not frame-for-frame identical to the demo, the user's exact UI-overlap screenshot scenario was not reproduced, no real-device/Safari testing, Aero Shards has no pixel comparison with the WebGPU original.
 - Before editing, claim a task here (branch, base, files) per `AGENTS.md`.
