@@ -229,3 +229,8 @@ User requested cloud continuation before shutting down the PC. Local ownership i
 
 - PR #349 source/QA head `f8f8900a90edef678ce287c05b725980ab8e9927`. Build CI38088038420 passed. GitHub-hosted Native Rocket UI QA38088035962 passed both desktop1440x900 and mobile390x844 with full stage rendering; real mesh counts152/230/59, control pixels/history/project/reset identity/exact baseline pixels/instance matrices and PNG exports1440x900 +390x844. Both errors[]; stricter HTTP/request failure assertions passed. Mobile menu/Design screenshots visually reviewed. Artifacts attached to the workflow run.
 - Changed files this update: log/handoff only. Product fix reviewed: optional resetDefaults hook preserves model identity while disposing per-item GPU resources and restoring default appearance. No generated outputs committed. Merge/generated Pages/final live QA still pending; owner remains Codex Cloud.
+
+## 2026-10-11 04:41 Asia/Bangkok — Codex Cloud — Pages verified; live QA trigger repair
+
+- PR #349 merged `16291136cf0ff37f595f64c56186d5af0445e6b9`; generated main `ba8fa081348ddfb3891b9fb25604250bff6cab24`, live bundle `assets/app.8c870a5f37.js`. Main build38088396236 and Pages38088409338 succeeded; live HTTP bundle confirmed.
+- Original workflow_run on GitHub's dynamic Pages workflow did not start QA. Changed trigger to successful main Build generated site, waits for exact generated bundle on public Pages before UI tests; dedicated test/rocket-live-20261011 push runs live QA now. Files: workflow/log/handoff only, no product/generated edits. Build/desktop/mobile branch pass remains QA38088035962. Deployed UI validation still pending; owner active.

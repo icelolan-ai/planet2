@@ -1,5 +1,10 @@
 # AI Handoff Guide
 
+## Latest handoff — 2026-10-11 04:41 Asia/Bangkok — Codex Cloud — Deployed follow-up QA
+
+- PR #349 merged `16291136`; generated `ba8fa081`, public `app.8c870a5f37.js`. Build38088396236/Pages38088409338 succeeded. Branch desktop/mobile QA38088035962 passed; final live QA pending.
+- Continuing on test/rocket-live-20261011 for QA workflow trigger repair: dynamic Pages workflow did not trigger workflow_run. Use successful main Build generated site plus exact bundle readiness wait. Dedicated branch push runs live desktop/mobile export/reset/errors checks. No product changes. Owner Codex Cloud active until live pass/history release.
+
 ## Latest handoff — 2026-10-11 04:37 Asia/Bangkok — Codex Cloud — Branch QA PASS
 
 - PR #349 head `f8f8900a`; buildCI38088038420 and GitHub-hosted QA38088035962 passed. Full desktop1440x900/mobile390x844 controls/reset/project/history/instance matrices/PNG exports; errors[] including strict resource checks. Mobile screenshots reviewed.
