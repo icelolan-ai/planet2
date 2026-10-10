@@ -1,10 +1,10 @@
 name: Native Rocket UI QA
 on:
   push:
-    branches: [feat/studio-rockets-20261011]
+    branches: [feat/studio-rockets-20261011, test/rocket-live-20261011]
     paths: ['src/**', 'docs/qa/studio-rockets-ui.cjs', '.github/workflows/rocket-qa.yml']
   workflow_run:
-    workflows: ['pages build and deployment']
+    workflows: ['Build generated site']
     types: [completed]
   workflow_dispatch:
 permissions:
@@ -36,16 +36,34 @@ jobs:
           npm install --prefix /tmp/rocket-qa playwright
           /tmp/rocket-qa/node_modules/.bin/playwright install --with-deps chromium
       - name: Build and serve source
-        if: github.event_name != 'workflow_run'
+        if: github.event_name != 'workflow_run' && github.ref_name != 'test/rocket-live-20261011'
         run: |
           python3 src/build_web.py
           python3 -m http.server 8000 > /tmp/rocket-http.log 2>&1 &
+      - name: Wait for generated bundle on Pages
+        if: github.event_name == 'workflow_run' || github.ref_name == 'test/rocket-live-20261011'
+        run: |
+          python3 - <<'PY'
+          import pathlib,re,time,urllib.request
+          expected=re.search(r'assets/app\.[a-f0-9]+\.js',pathlib.Path('index.html').read_text()).group()
+          for attempt in range(24):
+              try:
+                  actual=urllib.request.urlopen('https://icelolan-ai.github.io/planet2/',timeout=15).read().decode()
+                  if expected in actual:
+                      print('Deployed bundle',expected)
+                      break
+              except Exception as error:
+                  print(error)
+              time.sleep(5)
+          else:
+              raise SystemExit('Pages did not publish expected bundle '+expected)
+          PY
       - name: Verify native Rocket controls, reset and export
         env:
           NODE_PATH: /tmp/rocket-qa/node_modules
           VP: ${{ matrix.viewport }}
           QA_EXPORT: '1'
-          QA_URL: ${{ github.event_name == 'workflow_run' && 'https://icelolan-ai.github.io/planet2/' || 'http://127.0.0.1:8000' }}
+          QA_URL: ${{ (github.event_name == 'workflow_run' || github.ref_name == 'test/rocket-live-20261011') && 'https://icelolan-ai.github.io/planet2/' || 'http://127.0.0.1:8000' }}
           QA_SCREENSHOT_DIR: /tmp/rocket-screenshots
         run: |
           mkdir -p /tmp/rocket-screenshots

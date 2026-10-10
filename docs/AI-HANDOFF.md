@@ -1,5 +1,17 @@
 # AI Handoff Guide
 
+## Latest handoff — 2026-10-11 04:44 Asia/Bangkok — Codex Cloud — Rocket RELEASED / ownership released
+
+- PR #348 integration and #349 reset fix merged/deployed. #349 merge `16291136`; generated `ba8fa081`; verified live bundle `app.8c870a5f37.js`. Build38088396236/Pages38088409338 succeeded.
+- Final deployed QA38088538639 PASS desktop1440x900/mobile390x844 with stage rendering running: real models152/230/59 meshes, controls/parts/variants/history/project/assembled transforms, exact reset pixels + vehicle identity, PNG exports at both sizes, errors[] under strict HTTP/request/page/console checks. Deployed screenshots reviewed. Artifacts in run; no arbitrary network suppression.
+- PR #350 contains QA-trigger repair and this release record only; merge this documentation/QA checkpoint per repo rules, then no queued Rocket work. Owner released; do not duplicate integration or reset fix. Automatic listener now targets main generated builds and waits for exact Pages bundle; live branch-push path verified, future listener awaits next source build.
+- Limits: physical Safari/iOS/device GPU/FPS and long MP4 untested; original Rocket slot-swap/Part Gallery outside adapter. Existing unrelated Planet2 caveats in older logs remain separate. No PC files/server/screenshots required.
+
+## Latest handoff — 2026-10-11 04:41 Asia/Bangkok — Codex Cloud — Deployed follow-up QA
+
+- PR #349 merged `16291136`; generated `ba8fa081`, public `app.8c870a5f37.js`. Build38088396236/Pages38088409338 succeeded. Branch desktop/mobile QA38088035962 passed; final live QA pending.
+- Continuing on test/rocket-live-20261011 for QA workflow trigger repair: dynamic Pages workflow did not trigger workflow_run. Use successful main Build generated site plus exact bundle readiness wait. Dedicated branch push runs live desktop/mobile export/reset/errors checks. No product changes. Owner Codex Cloud active until live pass/history release.
+
 ## Latest handoff — 2026-10-11 04:37 Asia/Bangkok — Codex Cloud — Branch QA PASS
 
 - PR #349 head `f8f8900a`; buildCI38088038420 and GitHub-hosted QA38088035962 passed. Full desktop1440x900/mobile390x844 controls/reset/project/history/instance matrices/PNG exports; errors[] including strict resource checks. Mobile screenshots reviewed.
