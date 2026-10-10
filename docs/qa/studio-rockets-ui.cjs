@@ -5,7 +5,9 @@ const {chromium}=require('playwright'),assert=require('assert'),os=require('os')
 const vp=JSON.parse(process.env.VP||'{"width":1440,"height":900}');
 const b=await chromium.launch({headless:true,...(process.env.QA_CHROMIUM_PATH?{executablePath:process.env.QA_CHROMIUM_PATH}:{channel:'chrome'}),args:['--no-sandbox','--use-gl=swiftshader','--enable-unsafe-swiftshader']});
 const p=await b.newPage({viewport:vp,isMobile:vp.width<700,hasTouch:vp.width<700});const errors=[];
-p.on('requestfailed',r=>console.log('REQUEST_FAILED',r.url(),r.failure()?.errorText));
+const optionalIcon=url=>/\/favicon\.ico(?:$|\?)/.test(url);
+p.on('requestfailed',r=>{const message='REQUEST_FAILED '+r.url()+' '+r.failure()?.errorText;console.log(message);if(!optionalIcon(r.url()))errors.push(message);});
+p.on('response',r=>{if(r.status()>=400&&!optionalIcon(r.url()))errors.push('HTTP '+r.status()+' '+r.url());});
 p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error'&&!/\/favicon\.ico(?:$|\?)/.test(m.location().url||''))errors.push(m.text()+' '+(m.location().url||''));});
 await p.addInitScript(()=>localStorage.setItem('cerebra-hide-welcome','true'));
 await p.goto(process.env.QA_URL||'http://127.0.0.1:8000');await p.locator('#gateway').waitFor({state:'visible',timeout:90000});

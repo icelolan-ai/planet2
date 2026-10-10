@@ -1,0 +1,58 @@
+name: Native Rocket UI QA
+on:
+  push:
+    branches: [feat/studio-rockets-20261011]
+    paths: ['src/**', 'docs/qa/studio-rockets-ui.cjs', '.github/workflows/rocket-qa.yml']
+  workflow_run:
+    workflows: ['pages build and deployment']
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: rocket-qa-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  rocket:
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        viewport: ['{"width":1440,"height":900}', '{"width":390,"height":844}']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && 'main' || github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test browser
+        run: |
+          npm install --prefix /tmp/rocket-qa playwright
+          /tmp/rocket-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Build and serve source
+        if: github.event_name != 'workflow_run'
+        run: |
+          python3 src/build_web.py
+          python3 -m http.server 8000 > /tmp/rocket-http.log 2>&1 &
+      - name: Verify native Rocket controls, reset and export
+        env:
+          NODE_PATH: /tmp/rocket-qa/node_modules
+          VP: ${{ matrix.viewport }}
+          QA_EXPORT: '1'
+          QA_URL: ${{ github.event_name == 'workflow_run' && 'https://icelolan-ai.github.io/planet2/' || 'http://127.0.0.1:8000' }}
+          QA_SCREENSHOT_DIR: /tmp/rocket-screenshots
+        run: |
+          mkdir -p /tmp/rocket-screenshots
+          export QA_CHROMIUM_PATH=$(node -e 'console.log(require("playwright").chromium.executablePath())')
+          node docs/qa/studio-rockets-ui.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rocket-${{ strategy.job-index }}-${{ github.event_name }}
+          path: /tmp/rocket-screenshots

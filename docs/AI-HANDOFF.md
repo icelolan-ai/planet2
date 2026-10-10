@@ -1,5 +1,10 @@
 # AI Handoff Guide
 
+## Latest handoff — 2026-10-11 04:38 Asia/Bangkok — Codex Cloud
+
+- Owner Codex Cloud resumed PR #349; claim `72967629`. Build/syntax/hash checks passed; cloud-local browser launch blocked by socket permissions. GitHub-hosted desktop/mobile QA workflow added, followed by live QA after Pages deployment. Resource diagnostics now assert non-favicon HTTP/request failures.
+- Still pending: remote QA, merge #349, generated main/Pages and live controls/reset/export/errors. Do not duplicate this task or claim release yet. Original physical-device/long-video and slot-swap/Part Gallery limitations apply.
+
 ## Latest handoff — 2026-10-11 04:19 Asia/Bangkok — Codex — Reset identity follow-up
 
 - PR #348 merged (`0e4efc5d`), generated `98863874`, bundle `app.ad3961f684.js`; CI38086978383/Pages38086993049 succeeded. Live baseline desktop/mobile tests are running.
