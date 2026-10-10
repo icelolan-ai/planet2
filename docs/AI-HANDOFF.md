@@ -1,5 +1,22 @@
 # AI Handoff Guide
 
+## Latest handoff — 2026-10-11 04:13 Asia/Bangkok — Codex — Rocket QA passed; deployment pending
+
+- PR: https://github.com/icelolan-ai/planet2/pull/348, branch `feat/studio-rockets-20261011`. Source checkpoint `b8bf0d4` plus final QA fixes in the next commit. This section supersedes the validation-pending note below; NOT yet a production release.
+- Extended local full-stage Chrome/Playwright tests passed desktop1440x900 and mobile390x844: all three real models, actual exploded/yaw/zoom/global+part colour/finish pixels, hide/unhide parts, material variants, snapshot restore, delete/Undo/Redo, exact assembled instance arrays, no iframe/overflow/application errors. Native desktop composition PNG passed. Mobile was retested after moving Rocket Design into the native scrollable bottom sheet; screenshot reviewed and artwork stays visible above it.
+- QA pixel helper now explicitly waits for native model/variant readiness rather than reading before the queued redraw. Capture readiness also flushes pending parameter edits before waiting for variants. Instance buffers of removed clones are disposed; original asset buffers remain shared/cached. Source provenance and architecture updated. PR CI for `b8bf0d4` passed; final commit CI and live desktop/mobile checks remain.
+- Next: push final changes, wait for CI, merge PR per repository release instructions, wait for generated/Pages build, run the same fixture on deployed desktop/mobile, append release evidence and release ownership. Physical devices/Safari/FPS/long MP4 and separate Rocket slot-swap/Part Gallery remain outside tested scope.
+
+## Latest handoff — 2026-10-11 04:04 Asia/Bangkok — Codex — Rocket integration under validation
+
+- Branch `feat/studio-rockets-20261011`, base `5199dabc79ec676ed3ee2e4276a9af0f26209cd5`. Rocket source `f0fe3e6321c5713f745d26d4497f2d386376f9a5`. No overlapping Rocket branch/open PR or current owner found before claim; claim published as `8aad43c`.
+- Add Planet > Rocket offers Falcon 9, Falcon Heavy and Saturn V using original unchanged GLBs/manifest (SHA-256 compared). Native `kit:rocket` layers share stage renderer, selection/resize/rotation, Layers, Undo/Redo, project and image/video compositor. No iframe, extra WebGL renderer, independent clock or storage.
+- `src/effects/rocket-model.js` retains original cumulative and instanced-part explosion logic. `studio-rockets.js` restores the CAD frame before explosion, then centers/rotates for rendering. Custom global and per-part paint, finish, original textures, hide parts and available material variants; native Design Reset disposes model clones/targets. Native export awaits async model/variant readiness. Parsed originals cached with a maximum of three catalogue GLBs.
+- Source changes: template, explicit build order/hashed asset manifest, two effect modules, `src/assets-src/rockets/**`; fixture `docs/qa/studio-rockets-ui.cjs`. Generated output remains local and must not be committed; CI builds it.
+- Tests already passed: source build/syntax/diff; all three real models and rendered pixels, explode/yaw/zoom/custom paint, snapshot restore, remove/Undo/Redo, assembled instanced transforms, responsive bounds/no iframe/no app errors at desktop 1440x900/mobile 390x844 (Chrome software GL, emulation). Desktop native composition PNG 1440x900 passed. Early tests paused only the unrelated stage render; subsequent full desktop/mobile passes left it running. Latest added per-part/variant/finish controls are being retested; do not treat this checkpoint as released.
+- Deployed reference pages inspected in Chromium and HTTP 200; source assets traced to Rocket. Current Planet 2 production has no Rocket category until this PR is merged and CI/Pages completes.
+- Remaining: final extended desktop/mobile tests, CI/merge, deployed desktop/mobile verification and release log. Not tested: physical iOS/Safari, device GPU/FPS, long MP4 recordings. Rocket's separate slot-swap/Part Gallery workflow is outside this Studio layer adapter; no placeholder controls for it.
+
 ## Latest handoff — 2026-10-08 21:16 Asia/Bangkok — Claude
 
 Read this first; it supersedes the Codex section below where they differ. Rules: `../AGENTS.md`, `AI-WORK-LOG.md`.

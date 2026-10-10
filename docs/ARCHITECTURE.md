@@ -59,6 +59,14 @@ WebGPU is intentionally not part of this layer unless explicitly approved.
 
 ## Dependency rules
 
+### Native Rocket layers
+
+- Add Planet > Rocket is a category in the existing planet menu; the three vehicles become native `kit:rocket` layers so they can coexist with planets and other artwork.
+- `rocket-model.js` ports original Rocket model/manifest semantics; `studio-rockets.js` owns only its Kit definition, contextual part controls and per-item GPU caches. `CoreStudio` remains the controller. The existing stage renderer renders transparent targets; no extra renderer, canvas-state store or scheduler is created.
+- Original GLBs/manifest/standalone meshopt decoder live in `src/assets-src/rockets/`. `build_web.py` supplies hashed relative paths through `__ASSETS.rockets`; load lazily. Preserve the source CAD frame during instanced explosion calculations before applying view centering/rotation.
+- Settings (including per-part colour/visibility and material variant) live under native item `p`; GPU state is WeakMap-only. Native `KIT.ready(item)` is awaited before poster/video capture for asynchronously loaded definitions. Removal/reset disposes target/material clones. The catalogue cache is bounded to three original models.
+- `docs/qa/studio-rockets-ui.cjs` verifies all three real models, actual pixels/controls, assembled instance transforms, native history/project and responsive UI. `QA_EXPORT=1` adds composition PNG capture; leave `QA_PAUSE_STAGE` unset for full rendering checks. Separate Rocket slot-swaps/Part Gallery are outside this adapter.
+
 1. `core.js` must exist before any `Effects.register(...)` module.
 2. `surface.js` must initialize before `surface-shapes.js`.
 3. `surface-shapes.js` and `surface.js` must be available before Surface Tune is validated.

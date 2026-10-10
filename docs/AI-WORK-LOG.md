@@ -4,9 +4,26 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 ## Current work / ownership
 
+- Active owner: Codex, 2026-10-11 Asia/Bangkok. Task: native Rocket category and three original GLB models. Branch: feat/studio-rockets-20261011. Base: 5199dabc79ec676ed3ee2e4276a9af0f26209cd5. Intended files: src/template.html, src/effects/studio-rockets.js, src/effects/rocket-model.js, src/assets-src/rockets/**, src/build_web.py, docs/qa/studio-rockets-ui.cjs, docs/AI-HANDOFF.md, docs/AI-WORK-LOG.md. Remote branches/PRs and latest log checked; no Rocket checkpoint or active owner found.
+
 - Owner: none. Claude released ownership after finishing everything handed over by Codex and the follow-ups: Animated Background (#327, #330), Line Sidebar (#325), UI overlap/smoothness/menu merge (#332), Threads Kit (#334), Aero Shards Kit (#336). No branch is in progress; `feat/native-line-sidebar-20261008`, `feat/animated-background-20261008` and the other feature branches are merged and can be ignored.
 - Open caveats (see entries below): Liquid Ether is not frame-for-frame identical to the demo, the user's exact UI-overlap screenshot scenario was not reproduced, no real-device/Safari testing, Aero Shards has no pixel comparison with the WebGPU original.
 - Before editing, claim a task here (branch, base, files) per `AGENTS.md`.
+
+## 2026-10-11 04:04 Asia/Bangkok — Codex — Native Rocket integration checkpoint
+
+- Branch `feat/studio-rockets-20261011`; base `5199dabc79ec676ed3ee2e4276a9af0f26209cd5`; published ownership claim `8aad43c`. Checked both repos/open PRs/branches/latest history; no overlapping Rocket work. Existing unrelated old PR #1 left unchanged.
+- Add Planet > Rocket > Falcon 9 / Falcon Heavy / Saturn V adds real CAD models as native Kit layers. Original three GLB SHA-256 hashes match Rocket `f0fe3e6321c5713f745d26d4497f2d386376f9a5`. Shared renderer and native state/history/project/composition owners retained; no iframe. Global/per-part paint, finish, textures, variants, hide parts, 3D axes, model zoom, native item geometry and cumulative instanced exploded view.
+- Files: `src/template.html`, `src/build_web.py`, `src/effects/{rocket-model,studio-rockets}.js`, `src/assets-src/rockets/**`, `docs/qa/studio-rockets-ui.cjs`, this log/handoff. Build-generated outputs excluded. Asset provenance/license/readiness/resource behavior documented.
+- Actual tests before this checkpoint: build/syntax/diff; desktop1440x900/mobile390x844 all three lazy GLBs, nonempty rendered pixels, explode/yaw/zoom/paint, project snapshot/restore, delete/Undo/Redo, exact assembled instanced-array restoration, no overflow/iframe/app errors. Desktop native PNG composition 1440x900 nonempty. Initial UI-only runs paused the main-stage render; final baseline passes ran full stage rendering. Extended tests for latest finish/per-part/variant controls pending. Browser plugin not available, used installed Chrome via Playwright; device emulation/software GL, not a performance benchmark.
+- Both deployed reference pages inspected in Chromium/HTTP200 with no page errors. This checkpoint is NOT released; CI/merge/live checks pending. Physical Safari/GPU FPS/long MP4 and Rocket's separate slot-swap/Part Gallery workflow not covered. Owner remains Codex while validation continues.
+
+## 2026-10-11 04:13 Asia/Bangkok — Codex — Rocket extended QA/final fixes (PR #348)
+
+- PR https://github.com/icelolan-ai/planet2/pull/348; checkpoint `b8bf0d4`, final fixes follow in this commit. Files: `src/template.html`, `src/effects/{studio-rockets,rocket-model}.js`, source-asset README, architecture, QA fixture, log/handoff. Still NOT released.
+- Per-part painting covers paintable descendants of selected assemblies. Native readiness explicitly draws queued parameters before/after async loading/variants, preventing cold/rapid-edit export from capturing stale content. Removed clone instance buffers are disposed. Mobile Rocket Design uses the existing bottom/side-sheet sizing to preserve artwork visibility; no second UI/state/renderer owner.
+- QA timing correction: early pixel assertions could observe the previous queued frame. The final helper waits through the actual native readiness/render path. Extended full-stage Chromium desktop1440x900/mobile390x844 passes now cover each vehicle's real pixels, explode/yaw/zoom/global+part colour/finish, hide/unhide, source variants, project snapshot restore, remove/Undo/Redo, exact assembled instance arrays, zero app errors/no iframe/no overflow. Desktop native PNG composition1440x900 passed. Mobile rerun/screenshot review after sheet sizing passed. Emulation/software GL only.
+- PR CI run38086368417 passed for checkpoint `b8bf0d4`; final CI/merge/generated Pages/live QA still pending. Physical Safari/hardware FPS/long MP4 and Rocket slot-swap/Part Gallery untested/outside adapter. Owner Codex remains active through release verification.
 
 ## 2026-10-08 — Codex — PR #323 released
 

@@ -119,6 +119,8 @@ fx_order = [
     'liquid-ether.js',
     'crystalized-ball.js',
     'studio-scene-effects.js',
+    'rocket-model.js',
+    'studio-rockets.js',
     'post-stack.js',
     'diagnostics.js',
     'studio-menu-fix.js',
@@ -173,6 +175,9 @@ manifest = {
     'draco': {'js': emit('draco', 'draco_wasm_wrapper', 'js', read('draco', 'draco_wasm_wrapper.js')),
               'wasm': emit('draco', 'draco_decoder', 'wasm', read('draco', 'draco_decoder.wasm'))},
     'worlds': {w['id']: emit('worlds', w['id'], 'glb', read('worlds', w['id'] + '.glb')) for w in worlds},
+    'rockets': {**{key: emit('rockets', key, 'glb', read('rockets', name)) for key, name in [('f9','VEH_full.glb'),('fh','VEH_FH_full.glb'),('sv','SV_full.glb')]},
+                'manifest': emit('rockets', 'parts_manifest', 'json', read('rockets', 'parts_manifest.json')),
+                'decoder': emit('rockets', 'meshopt_decoder', 'js', read('rockets', 'meshopt_decoder.module.js'))},
     'sizes': {},
 }
 for w in worlds:
