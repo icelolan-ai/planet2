@@ -4,7 +4,7 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 ## Current work / ownership
 
-- Active owner: Codex Cloud, 2026-10-11 04:32 Asia/Bangkok. Task: resume PR #349 reset identity validation, merge and deployed Rocket desktop/mobile QA. Branch: feat/studio-rockets-20261011. Base/checkpoint: 8257991a61961d7ac7796303ad2cf06ddf1099b5. Intended files: docs/AI-WORK-LOG.md, docs/AI-HANDOFF.md, docs/qa/studio-rockets-ui.cjs; product sources only if QA identifies a defect. Local ownership release verified; open PRs #349 and unrelated #1 inspected; latest checkpoint CI38087708493 succeeded. No duplicate implementation.
+- Active owner: Codex Cloud, 2026-10-11 04:40 Asia/Bangkok. Task: deployed Rocket QA and workflow trigger repair after merged PR #349. Branch: test/rocket-live-20261011. Base: ba8fa081348ddfb3891b9fb25604250bff6cab24. Intended files: .github/workflows/rocket-qa.yml, docs/AI-WORK-LOG.md, docs/AI-HANDOFF.md. Same owner continuing; no product edits or duplicate integration.
 
 - Owner: none. Claude released ownership after finishing everything handed over by Codex and the follow-ups: Animated Background (#327, #330), Line Sidebar (#325), UI overlap/smoothness/menu merge (#332), Threads Kit (#334), Aero Shards Kit (#336). No branch is in progress; `feat/native-line-sidebar-20261008`, `feat/animated-background-20261008` and the other feature branches are merged and can be ignored.
 - Open caveats (see entries below): Liquid Ether is not frame-for-frame identical to the demo, the user's exact UI-overlap screenshot scenario was not reproduced, no real-device/Safari testing, Aero Shards has no pixel comparison with the WebGPU original.
