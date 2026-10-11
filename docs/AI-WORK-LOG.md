@@ -4,6 +4,8 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 ## Current work / ownership
 
+- Owner: Codex Cloud. User follow-up IMG_9275: rotating black-hole ring, tumbling debris spiraling inward, pointer/touch gravity interaction on existing three-route launch menu. Branch feat/launch-gravity-20261011 basef2a487fd6bd0c23dac13d718206767cf85f755c7. Intended source: studio-launch.js or isolated presentation helper, explicit build/asset manifest, original source raster layers, launch QA fixture/workflow, docs. Preserve native path gesture/Enter/language/guide/Studio controls; page-only presentation, no new renderer/RAF/controller/storage. Same owner mission PR355 still source QA active; separate branch, integrate latest main before publishing product. No overlapping other owner. Publish claim before edits.
+
 - Owner: Codex Cloud. New user request: restyle existing three-path pre-Studio selector using attached IMG_9261 cosmic violet portal/dark space reference and slowly floating dust. Branch `feat/launch-cosmos-20261011`, base `b16c0185135e25e1a9b5dea3b96a5419a8e9bc04`. Intended files: `src/effects/studio-launch.js`, `src/build_web.py`, new `src/assets-src/launch/**`, focused QA fixture/workflow, design QA report, log/handoff. Preserve native path selection/swipe/Enter/language/guide/Studio owners; no new WebGL renderer/RAF. Fresh open PR check: only unrelated #1. Rocket PR353 merged; live QA38123260584 still running, no live release claim yet. Publish this claim before source edits.
 
 - Owner: none for Rocket complete-parts/contextual tuning. PR353 merged and deployed; full live QA38123260584 passed desktop DPR1/DPR2 and mobile DPR3. Release evidence below. Active new cosmic launch ownership above is separate.
