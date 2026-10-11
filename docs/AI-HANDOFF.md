@@ -1,3 +1,9 @@
+# Cyclic launch / How to use / gravity released — 2026-10-11 Bangkok
+
+PR https://github.com/icelolan-ai/planet2/pull/358 merged `15c3bc2`; generated main `25fffbc3`; Build38132963109 and Pages38132977627 succeeded. **Deployed five-view UI38132981114 ALL PASS/errors[]**, source UI38132676970 all PASS. Last→first cyclic touch/wheel/keyboard selector, final Option Wheel layout owner, 58 bounded rock/dust sprites, light layered depth, and usable How to use chapter viewport are live at https://icelolan-ai.github.io/planet2/ . Reviewed generated phone390/narrow320/desktop screenshots: all three menu cards distinct and pointer targets work. No additional renderer/RAF/state. Ownership released; do not duplicate.
+
+**Unresolved:** iPhone Animated Background > Customize cannot select foreground artwork: https://github.com/icelolan-ai/planet2/issues/359. PR355 is active owner of `src/template.html`, coordinate before touching it; current manual/background hit-test remains unimplemented. Live Rocket QA38132981057 had a desktop Retina software-GL boot timeout before any Rocket assertion; retry requested. Real Safari/device hardware FPS/long video untested.
+
 # PR #358 source QA passed — 2026-10-11 Bangkok
 
 Source `c3908b37`; hosted Build successful, responsive Chromium QA https://github.com/icelolan-ai/planet2/actions/runs/38132676970 all5 PASS/errors[]. Final native option-wheel `studio-option-wheel.js` is the sole owner of card transforms; `studio-launch.js` drives uninterrupted cyclic progress variables (from 3→1), with dust/rock/lens and mobile guide layout fixes. Mobile DPR3, narrow and desktop screenshots reviewed. PR draft must be reviewed/merged, CI must rebuild `main`, Pages must deploy, and deployed five-view QA must pass before release. Mission PR355 active owner of template; animated-background Canvas iOS regression remains separate Issue #359, with no file writes while owned. Physical Safari/FPS/long recording untested.
