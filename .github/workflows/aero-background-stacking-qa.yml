@@ -1,7 +1,7 @@
 name: Aero Background Stacking QA
 on:
   push:
-    branches: [fix/aero-bg-stacking-mobile-20261011]
+    branches: [fix/aero-bg-stacking-mobile-20261011, perf/aero-background-interaction-20261011]
     paths: ['src/**', 'docs/qa/aero-background-stacking-ui.cjs', '.github/workflows/aero-background-stacking-qa.yml']
   workflow_run:
     workflows: ['Build generated site']
