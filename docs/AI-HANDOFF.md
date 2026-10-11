@@ -1,3 +1,9 @@
+# Latest handoff — 2026-10-11 12:01 Asia/Bangkok — Codex Cloud
+
+**Released; owner none.** PR #351 fixed native Rocket Hand rotation, direct Empty Canvas Add Rocket/เพิ่มจรวด and centered visible projection in Select. Merge `751aca57ea871b8e7718648789fe533002daf4f1`; generated `4bfcb8dea6f335bab86d18e92606c94b1946e286`; live `app.c74a63f35b.js`. Source build/CI/Pages and hosted/deployed desktop1440x900/mobile390x844 UI passed. Live QA38113153497 validates actual mouse/touch, one native history action, Undo/Redo, centered pixels all three models, EN/Thai direct menu, locked/hidden availability, existing controls/reset/project/instances and native PNG export; errors[] both. Screenshots reviewed.
+
+No remaining work for these three requests; do not reimplement. Product branch `fix/rocket-hand-empty-20261011` merged. Release record on `docs/rocket-hand-release-20261011`. Physical iOS/Safari, hardware FPS/long video untested; original Rocket Part Gallery/slot-swap outside adapter. New work must read current remote history/open PRs and claim ownership under AGENTS.md. Older pending statuses below are superseded.
+
 # Latest handoff — Rocket interaction follow-up (2026-10-11)
 
 Codex Cloud owns `fix/rocket-hand-empty-20261011` from `4cdab15`. Native Hand support, direct Empty Canvas Rocket menu and centered visible projection implemented; source checks passed, PR #351 build passed; hosted QA reached successful real mouse/touch rotation and centering, then failed stale transient-ID fixture lookup after Undo. Fixture repaired; full rerun/merge/live QA pending. See newest work-log entry. Do not duplicate or treat this follow-up as released. Earlier PRs #348–350 are already released.
