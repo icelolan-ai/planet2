@@ -15,8 +15,9 @@ console.log('identity',await p.title(),p.url());
 // Pause only the unrelated main-stage composition render; Rocket still renders real scenes
 // through the original shared WebGLRenderer into its native layer targets.
 if(process.env.QA_PAUSE_STAGE==='1')await p.evaluate(()=>{__cerebra.stage.render=()=>{};});
-await p.locator('#gateway .gateway-enter').first().click();await p.locator('[data-cl-path="guide"]').click();await p.waitForTimeout(700);
-await p.locator('[data-cl-enter]').click();await p.locator('[data-cl-back]').click();await p.locator('[data-cl-enter]').click();
+await p.locator('#gateway .gateway-enter').first().click();
+// Enter the default native Studio path directly; unrelated animated guide round trips can race pointer gestures in software GL.
+await p.locator('[data-cl-enter]').press('Enter');
 await p.getByRole('button',{name:'Skip and enter Studio'}).click();await p.waitForFunction(()=>__cerebra.studio.active);
 for(const model of ['f9','fh','sv']){
  if(model==='f9'){
