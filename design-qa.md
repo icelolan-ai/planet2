@@ -1,17 +1,21 @@
 **Findings**
 
-- Source: attached IMG_9261.jpeg (658x1731), cosmic art direction; reference hero region top658x433. This request adapts its atmosphere to the existing three native routes, not a clone of its sections/text/logos. Source opened from supplied scratch attachment.
-- [P2]320px header overflow from native fullscreen/language/back controls. Fix: wrap actions into a second header row on screens<=360px. Post-fix captures pending.
-- Initial mobile390x844 DPR3 browser screenshot inspected from source QA38123950656; complete violet portal, native wheel/rotating heading/dust/menu. Full paired source comparison and post-fix five-view captures pending.
-- Fixture clicked pointer-events:none rotating h1; target corrected to actual native hero surface. Product keeps noninteractive text behavior.
+- Reference: attached IMG_9261.jpeg (658x1731), hero top658x433. Evaluated together with actual native desktop1440x900 and mobile390x844 captures in one comparison board, normalizing mobile DPR3 to CSS density. Adapted luminous violet portal, black starfield, fine floating dust and tracked condensed typography. Native three choices, rotating title, language/fullscreen/back and Enter remain intentional differences; foreign logos/copy/sections omitted.
+- [P2]320px native header overflow resolved by <=360px second action row. Post-fix screenshot and full native bounds check pass. No remaining actionable P0/P1/P2 findings.
+- Reviewed final desktop1440x900, mobile390x844, tablet820x1180, landscape844x390 and narrow320x568 source captures (Actions38124620447). Readable selected lavender choice, gray smaller neighbors, Enter and native labels fit without horizontal overflow. Portrait portal crop is intentional; image remains sharp. Barlow Condensed/Noto Sans Thai preserve native EN/Thai typography. Sparse dust stays behind functional controls.
+- Full five-view source QA PASS, errors[]. Covers actual keyboard/touch selection, all three routes, Enter-only entry, empty artwork click, EN/Thai control bounds, hashed lazy raster loading, transform motion, pause outside hub, reduced-motion stop, unchanged native Studio empty initial state, visible exit/return.
+- Earlier fixture failures are documented in work log: rotating text pointer-events, floating-point computed-style serialization, native120px swipe step, hidden legacy Studio exit button. Fixed assertions now use native surfaces/controllers; no console/resource suppression beyond actual optional favicon.
 
 **Open Questions**
 
-- Physical iOS Safari and GPU performance remain untested. Interactive cloud browser exposes this WebGL app text fallback; hosted Chromium software-GL browser evidence required, same established native QA workflow.
+- Physical iOS Safari/GPU/FPS remain untested. Hosted official Chromium software GL and emulated touch/DPR were used; cloud interactive browser exposes WebGL text fallback.
+- Main generated build/Pages and deployed repetition pending at source-review checkpoint.
 
 **Implementation Checklist**
 
-- Capture hosted five viewport screenshots and test native path selection/Enter/gestures/language/routes.
-- Compare source and rendered imagery together; evaluate fonts, spacing, colors, image quality and native copy, fix P0/P1/P2 before release.
+- [x] Source build, split/inline asset manifest and JS syntax.
+- [x] Paired visual comparison; five viewport source UI route/motion/bounds checks.
+- [x] P2 header issue fixed and verified.
+- [ ] Record generated main/Pages and live repeat in release log.
 
-final result: blocked
+final result: passed (source design/UI; deployed release verification pending)

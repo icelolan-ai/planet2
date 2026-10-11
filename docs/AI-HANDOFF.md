@@ -1,6 +1,12 @@
-## 2026-10-11 15:26 Bangkok — Codex Cloud claims Studio mission presets
+## 2026-10-11 15:32 Bangkok — Active mission preset checkpoint / cosmic released
 
-Active branch `feat/studio-mission-presets-20261011`, base `3258cea2f06ef0a42c82d89030a8e86b1cf0e1e6`. User requested editable Rocket presets and native scene tools/layouts for planets/Rockets from ten attached images. Initial reference analysis: mission display, technical exploded study, product dossier, orbital/network composition, terracotta survey and editorial study. Source claim in work log; no source edits yet. PR354 launch QA remains same-owner active; keep checkpoints separate, exclude generated outputs.
+Cosmic PR354 merged05114ee; generatedf2a487f, Build38124879414/Pages38124893235 and full five-view live38124897566 PASS/errors[]. Cosmic owner released. Rocket regression live38124897562 desktopDPR2 failure is being diagnosed; mobile pass.
+
+Mission branch `feat/studio-mission-presets-20261011` published claim before product edits. New native9 compositions and2 Kits implemented; build/syntax pass. Browser source QA and visual review pending; not released. Source-of-truth template/effects/build/native language; no generated artifacts. Same native owners and original CAD GLBs. Next publish focused QA PR, fix source issues, full desktop/mobile/tablet UI/native PNG/history/project tests, merge/generated Pages/live, release ownership. Physical Safari/FPS/long recordings untested; PartGallery/slot swaps remain outside adapter.
+
+## 2026-10-11 15:31 Bangkok — Cosmic source ready
+
+PR354 source3258cea: Build38124622567 and full five-view UI38124620447 PASS/errors[]. Paired art-direction comparison and desktop/mobile/tablet/landscape/narrow screenshots reviewed; design-qa.md source passed. Next merge expected head, wait generated main/Pages and full live repeat; do not call released yet. Owner remains Codex Cloud. New Studio mission preset work claimed independently on feat/studio-mission-presets-20261011.
 
 # Latest handoff — 2026-10-11 15:13 Asia/Bangkok — Codex Cloud
 

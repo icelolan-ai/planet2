@@ -121,6 +121,7 @@ fx_order = [
     'studio-scene-effects.js',
     'rocket-model.js',
     'studio-rockets.js',
+    'studio-mission-presets.js',
     'post-stack.js',
     'diagnostics.js',
     'studio-menu-fix.js',
