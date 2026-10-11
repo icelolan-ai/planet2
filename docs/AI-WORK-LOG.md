@@ -4,7 +4,7 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 ## Current work / ownership
 
-- Owner: Codex Cloud. Investigate/fix user-reported missing Rocket nose/parts. Branch `fix/rocket-complete-20261011`; base `0458404a22bed3882cc793cbab5cc0f8b9f04d5f`. Intended files: `src/effects/studio-rockets.js`, `src/effects/rocket-model.js` if necessary, `docs/qa/studio-rockets-ui.cjs`, `.github/workflows/rocket-qa.yml`, log/handoff; source assets only if evidence requires it. Main/PR/CI/current ownership checked fresh; no overlapping open Rocket work. Claim before product edits.
+- Owner: Codex Cloud. Investigate/fix user-reported missing Rocket nose/parts. Branch `fix/rocket-complete-20261011`; base `0458404a22bed3882cc793cbab5cc0f8b9f04d5f`. Scope expanded by user: selecting Rocket makes the native Tune button open Rocket assembly/explosion tuning instead of planet tuning. Intended files: `src/template.html`, `src/effects/studio-rockets.js`, `src/effects/rocket-model.js` if necessary, `docs/qa/studio-rockets-ui.cjs`, `.github/workflows/rocket-qa.yml`, log/handoff; source assets only if evidence requires it. Main/PR/CI/current ownership checked fresh; no overlapping open Rocket work. Claim before product edits.
 
 - Owner: none. Codex Cloud released the Rocket Hand/Empty Canvas/selection-centering follow-up after PR #351 merge and verified live desktop/mobile QA38113153497. Release evidence is published on `docs/rocket-hand-release-20261011`; no product work remains for these three requests.
 
