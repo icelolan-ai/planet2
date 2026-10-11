@@ -1,0 +1,51 @@
+[
+  {
+    "id": "Aqua_Foam", "name": "Aqua Foam", "kicker": "Ocean world, foam study", "accent": "#86d9cf",
+    "radius": 0.78, "orbit": 5.6, "incl": 0.035, "phase": 0.4, "tilt": 0.32, "spin": 0.05,
+    "lede": "A water world where the whole surface is foam: teal troughs, white crests, and nothing calm anywhere.",
+    "body": "Built in Blender as a cube-sphere of 24 tiles, each with its own baked texture, so the surface keeps its detail even up close. Exported in lo and hi versions; this page uses a lighter web cut of the lo file.",
+    "exports": "lo, hi"
+  },
+  {
+    "id": "Arcanum", "name": "Arcanum", "kicker": "Sigil world", "accent": "#e38b5f",
+    "radius": 0.6, "orbit": 7.4, "incl": -0.05, "phase": 2.3, "tilt": 0.18, "spin": 0.04,
+    "lede": "Grey cloud cover scored with rings of orange sigils, like survey marks left behind on a moon.",
+    "body": "One baked colour map on a single sphere. The sigil rings sit in the texture itself, so the world reads as a drawing as much as a planet. Exported at 2K, 4K and 8K.",
+    "exports": "2K, 4K, 8K"
+  },
+  {
+    "id": "Emerald_Tide", "name": "Emerald Tide", "kicker": "Tidal world", "accent": "#7fdcae",
+    "radius": 0.82, "orbit": 9.3, "incl": 0.02, "phase": 4.1, "tilt": 0.41, "spin": 0.045,
+    "lede": "Shallow green seas braided with bright tidal channels, under a thin drift of cloud.",
+    "body": "A single baked colour map, tuned so the channels stay legible from orbit and still hold up when you land. Exported at 2K, 4K and 8K.",
+    "exports": "2K, 4K, 8K"
+  },
+  {
+    "id": "Inferno", "name": "Inferno", "kicker": "Molten world", "accent": "#ff7a3d",
+    "radius": 0.7, "orbit": 11.2, "incl": 0.06, "phase": 1.2, "tilt": 0.1, "spin": 0.03,
+    "lede": "A crust of cooling lava split by glowing seams, wrapped in its own layer of heat haze.",
+    "body": "24 surface tiles plus a separate six-tile haze shell that glows on its own. The shell is what makes the planet feel hot rather than just orange. Exported at lo, hi and ultra.",
+    "exports": "lo, hi, ultra"
+  },
+  {
+    "id": "Nebula_Planet", "name": "Nebula", "kicker": "Gas giant", "accent": "#a98bff",
+    "radius": 1.18, "orbit": 13.4, "incl": -0.03, "phase": 3.3, "tilt": 0.47, "spin": 0.06,
+    "lede": "Violet and cobalt bands folding into each other, cut by one bright jet stream across the face.",
+    "body": "The largest world in the system. One baked colour map on a sphere, lit here by the core so its bands turn with the light. Exported at 2K, 4K and 8K.",
+    "exports": "2K, 4K, 8K"
+  },
+  {
+    "id": "Terra_Nova", "name": "Terra Nova", "kicker": "Earthlike world", "accent": "#8ec3ff",
+    "radius": 0.92, "orbit": 15.4, "incl": 0.04, "phase": 5.4, "tilt": 0.41, "spin": 0.04,
+    "lede": "Continents, shallow seas and a separate cloud layer. The most ordinary world here, and the hardest to get right.",
+    "body": "24 surface tiles and a six-tile cloud shell floating just above them, so weather and ground move as two layers. Exported at lo, hi and ultra.",
+    "exports": "lo, hi, ultra"
+  },
+  {
+    "id": "Tempest", "name": "Tempest", "kicker": "Storm world", "accent": "#8fe6ff",
+    "radius": 0.86, "orbit": 17.3, "incl": -0.045, "phase": 0.1, "tilt": 0.22, "spin": 0.055,
+    "lede": "A deep blue ocean ringed by cyclone cells, with a second storm layer riding above the surface.",
+    "body": "Two meshes: the ocean surface and a storm layer that sits just above it. The cyclones are baked into the colour map. Exported at 2K, 4K and 8K.",
+    "exports": "2K, 4K, 8K"
+  }
+]
