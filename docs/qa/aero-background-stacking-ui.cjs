@@ -70,6 +70,35 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
   await page.evaluate(()=>{const s=__cerebra.studio;const b=s.backgroundItem();b.p.bloom=1.2;s.kitRedraw(b);s.commit();});
   await page.waitForTimeout(400);
   a=await state();assert(a.hitText);assert.equal(a.bgZ,'auto');
+  // GPU background frames should be reused while editing, without losing
+  // a changed shader parameter or downgrading full export dimensions.
+  const perf=await page.evaluate(async()=>{
+    const kit=window.CerebraAeroShards,studio=__cerebra.studio;
+    const c=document.createElement('canvas');c.width=160;c.height=100;
+    const g=c.getContext('2d'),bg=studio.backgroundItem();
+    const opts={preview:true,background:true,k:1,item:bg};
+    const p={...kit.defaults,quality:'low',density:.5,bloom:0,grain:0,chromaticAberration:0};
+    const frame=(t,v=p)=>kit.draw(g,160,100,t,v,opts);
+    const wait=async()=>{
+      for(let i=0;i<100;i++){
+        const a=kit.inspect(g);
+        if(a&&!a.pending&&a.width&&a.renders)return a;
+        await new Promise(ok=>setTimeout(ok,50));
+      }
+      return kit.inspect(g);
+    };
+    frame(0);const initial=await wait();
+    for(let i=1;i<=14;i++)frame(i/30);
+    const rapid=kit.inspect(g);
+    const updated={...p,bloom:1.25};frame(.8,updated);
+    const changed=await wait();
+    return {initial,rapid,changed};
+  });
+  console.log('AERO_INTERACTION_BUDGET',JSON.stringify(perf));
+  assert(perf.initial?.renders>0,'background render did not initialize');
+  assert(perf.rapid.skipped>perf.initial.skipped,'identical preview frames should reuse GPU results');
+  assert(perf.rapid.renders<=perf.initial.renders+1,'preview interaction created excessive render passes');
+  assert(perf.changed.renders>perf.rapid.renders,'shader parameter change must render despite live preview budget');
   assert.deepEqual(errors,[],JSON.stringify(errors));
   console.log('PASS',JSON.stringify(vp));
   await browser.close();
