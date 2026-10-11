@@ -1,3 +1,9 @@
+# Active Animated Background interaction optimization — 2026-10-11 Bangkok
+
+PR https://github.com/icelolan-ai/planet2/pull/367 from `perf/aero-background-interaction-20261011`, source `c9a72103`. Native Aero preview shader now caps unnecessary redraw/readback during edits (24fps idle/13fps recent Studio UI input) and bypasses throttle for parameter edits and full render/export. After pending async readback, queues native Kit redraw if params changed. No new WebGL renderer/RAF; output dimensions/export not reduced. Existing background layering and native history preserved.
+
+Source 3-view QA https://github.com/icelolan-ai/planet2/actions/runs/38146052958 PASS desktop1440/iPhone390DPR3/iPad820DPR2; build38146055982 PASS. Actual 15 rapid preview calls = 2 GPU renders + 13 reused canvas frames, changed bloom triggers next render. Simulator, not physical device FPS. **Not released yet until PR367 merge/Main build/Pages/live QA.** Other PR365 owns Rocket/Gizmo, PR366 Studio menu blur, PR355 template; do not merge unrelated unverified branches into this one.
+
 # GPT-6 Fullscreen fix / Minimal UI Phase A — 2026-10-11 Bangkok
 
 PR https://github.com/icelolan-ai/planet2/pull/364 source QA38143309160 PASS 4/4 and build38143311778 PASS. Scoped dialog fullscreen vs document top-layer fix plus clean/minimal CSS foundation across pages, NOT full per-panel redesign. Needs merge/build/Pages/live QA. No src/template.html modifications under ongoing PR355 ownership. New reports for Studio lag/Rocket resolution, 3D Hand turning, Blender XYZ gizmo, contextual preset text and Animated Background menu placement are open and will be handled by isolated follow-up. Physical Safari FPS unmeasured.
