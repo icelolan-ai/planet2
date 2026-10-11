@@ -4,6 +4,8 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 ## Current work / ownership
 
+- Owner: Codex Cloud. User requested Rocket presets plus Studio tools/layouts for both planets and Rockets, adapting IMG_9262/63/64/66/67/68/70/71/72/73. Branch `feat/studio-mission-presets-20261011`, base `3258cea2f06ef0a42c82d89030a8e86b1cf0e1e6` (PR354 pending final launch QA; same owner). Intended files: new native `src/effects/studio-mission-presets.js`, explicit build order, native Kit/template hooks in src/template.html, focused browser QA/workflow, architecture/reference mapping/log/handoff. Existing history/project/renderer/timeline remain owners; no duplicate rocket models or parallel state. Fresh PRs354 and unrelated1 only. Publish this claim before product edits.
+
 - Owner: Codex Cloud. New user request: restyle existing three-path pre-Studio selector using attached IMG_9261 cosmic violet portal/dark space reference and slowly floating dust. Branch `feat/launch-cosmos-20261011`, base `b16c0185135e25e1a9b5dea3b96a5419a8e9bc04`. Intended files: `src/effects/studio-launch.js`, `src/build_web.py`, new `src/assets-src/launch/**`, focused QA fixture/workflow, design QA report, log/handoff. Preserve native path selection/swipe/Enter/language/guide/Studio owners; no new WebGL renderer/RAF. Fresh open PR check: only unrelated #1. Rocket PR353 merged; live QA38123260584 still running, no live release claim yet. Publish this claim before source edits.
 
 - Owner: none for Rocket complete-parts/contextual tuning. PR353 merged and deployed; full live QA38123260584 passed desktop DPR1/DPR2 and mobile DPR3. Release evidence below. Active new cosmic launch ownership above is separate.

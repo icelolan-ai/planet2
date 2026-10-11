@@ -1,3 +1,7 @@
+## 2026-10-11 15:26 Bangkok — Codex Cloud claims Studio mission presets
+
+Active branch `feat/studio-mission-presets-20261011`, base `3258cea2f06ef0a42c82d89030a8e86b1cf0e1e6`. User requested editable Rocket presets and native scene tools/layouts for planets/Rockets from ten attached images. Initial reference analysis: mission display, technical exploded study, product dossier, orbital/network composition, terracotta survey and editorial study. Source claim in work log; no source edits yet. PR354 launch QA remains same-owner active; keep checkpoints separate, exclude generated outputs.
+
 # Latest handoff — 2026-10-11 15:13 Asia/Bangkok — Codex Cloud
 
 Rocket PR353 released; owner none for Rocket. Merge4ba9b2, generatedb16c018/assets/app.e4d1cc8bc9.js, main Build/Pages success. Live QA38123260584 passes desktop1440x900 DPR1/DPR2/mobile390x844 DPR3 all geometry/Retina viewport/Hand/Tune/assembly/parts/history/project/reset/export with errors[]. Screenshots reviewed. Source79fad2 sourceQA38122638149 passed with one desktop Retina startup retry. Physical iOS/Safari/GPU/FPS/long video and original Part Gallery/slot replacement limits remain.
