@@ -1,3 +1,7 @@
+# Latest scope checkpoint — 2026-10-11 16:13 Bangkok
+
+PR355 remains DRAFT and owned by Codex Cloud. Expanded user scope: categorized dock object selector incl.3 Rockets, and paint/finish controls immediately under toggles. Publish claim before source edits. Full3-view source QA38125523631 failed at startup gateway, not at preset assertions; boot/resource diagnostics needed, no release. Gravity scene branch claimed independently; pending implementation and QA.
+
 ## 2026-10-11 15:38 Bangkok — Mission review checkpoint
 
 PR355 source UI first round reached native preset section but fixture selector included its child summaries. Corrected exact native subsection navigation. Source review also completes native restore selection/Reset defaults, DPR-scaled tools/font control, readable noir ink and direct Image > Rocket & planet presets entry. New full3-view browser round pending. Still active Codex; do not merge until actual UI/export/history and paired visual review pass.
