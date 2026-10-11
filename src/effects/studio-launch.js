@@ -129,6 +129,7 @@
       .cl-hub-open .cl-hero h1{font:300 clamp(56px,6vw,88px)/1.08 "Barlow Condensed","Noto Sans Thai",sans-serif;letter-spacing:.12em;max-width:480px;text-shadow:0 2px 18px #000}
       .cl-page[lang=th].cl-hub-open .cl-hero h1{font:300 clamp(36px,3.8vw,56px)/1.45 "Noto Sans Thai","Barlow",sans-serif;letter-spacing:.025em}
       .cl-hub-open .cl-art,.cl-hub-open .cl-orbit{display:none!important}
+      .cl-hub-open .cl-hero .cl-rotating-line{color:#dcc8ff}.cl-hub-open .cl-ready-prefix{color:#c1bbd1}
       .cl-path-column{display:flex;flex-direction:column;min-width:0;gap:24px}
       .cl-hub-open .cl-paths{margin:0;gap:12px}
       .cl-hub-open .cl-path{gap:20px;border:1px solid #b8a5ef2b;border-radius:12px;background:#05070dcc;color:#b8b5c4}
@@ -154,6 +155,7 @@
         .cl-hub-open .cl-path .cl-num{width:26px;font-size:14px}.cl-hub-open .cl-path .cl-symbol{width:25px}.cl-hub-open .cl-path .cl-symbol svg{width:24px;height:24px}
         .cl-hub-open .cl-slide-hint{max-width:155px}.cl-hub-open .cl-slide-enter{min-width:124px}
       }
+      @media(max-width:360px){.cl-hub-open .cl-head{flex-wrap:wrap;gap:10px}.cl-hub-open .cl-head-actions{width:100%;justify-content:space-between;gap:8px}.cl-hub-open .cl-shell{padding-inline:18px}}
       @media(max-height:620px){
         .cl-hub-open .cl-shell{padding-top:10px;padding-bottom:max(12px,env(safe-area-inset-bottom))}
         .cl-hub-open .cl-head{margin-bottom:8px}.cl-hub-open .cl-hero{min-height:40px}.cl-hub-open .cl-hero h1{font-size:38px}
