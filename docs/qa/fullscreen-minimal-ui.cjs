@@ -67,7 +67,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
      webkit:getComputedStyle(rail).webkitBackdropFilter};
  });
  console.log('Studio chrome GPU budget',panelStyle);
- if(panelStyle.coarse)assert(panelStyle.blur==='none'&&panelStyle.webkit==='none',JSON.stringify(panelStyle));
+ if(panelStyle.coarse)assert(panelStyle.blur==='none'&&(!panelStyle.webkit||panelStyle.webkit==='none'),JSON.stringify(panelStyle));
  const move=p.locator('[data-studio-tool="move"]'),select=p.locator('[data-studio-tool="select"]');
  for(let n=0;n<3;n++){await select.click();assert.equal(await select.getAttribute('aria-pressed'),'true');await move.click();assert.equal(await move.getAttribute('aria-pressed'),'true');}
  if(entered)assert(!state.full,'closing fullscreen launch dialog should release Fullscreen before Studio interactions');
