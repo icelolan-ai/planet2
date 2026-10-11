@@ -1,7 +1,7 @@
 name: Native Cosmic Launch UI QA
 on:
   push:
-    branches: [feat/launch-cosmos-20261011, feat/launch-gravity-20261011, fix/guide-cyclic-gravity-20261011]
+    branches: [feat/launch-cosmos-20261011, feat/launch-gravity-20261011, fix/guide-cyclic-gravity-20261011, feat/editorial-cosmic-hub-20261011]
     paths: ['src/**', 'docs/qa/launch-cosmos-ui.cjs', '.github/workflows/launch-cosmos-qa.yml']
   workflow_run:
     workflows: ['Build generated site']
