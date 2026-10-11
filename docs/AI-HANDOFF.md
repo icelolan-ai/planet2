@@ -1,3 +1,9 @@
+# Active GPT-6 iOS guide/cyclic menu repair — 2026-10-11 Bangkok
+
+PR https://github.com/icelolan-ai/planet2/pull/358 on `fix/guide-cyclic-gravity-20261011` is DRAFT; do not claim deployed or finished. Fixes cyclic menu3→1 for drag/wheel/keys, smooth shared vertical reel movement without intersecting card click targets, bounded 58 orbit particles/rocks + layered CSS distant dust and lens, and mobile/short-screen guide-content visibility. No source-of-truth `src/template.html` modification and no new renderer/state/RAF loop. Latest product SHA `2f79472`; build38131745579 passed, five-view UI38131743366 in progress. First UI failed due narrow header pushing guide headings below viewport and card-specific translate overlapping target; fixed, awaiting retest. Native route/Enter/language/reduced motion must remain intact.
+
+New iOS Animated Background canvas selection bug tracked separately in https://github.com/icelolan-ai/planet2/issues/359. Current Codex mission PR355 owns `src/template.html`; do not write this shared file concurrently. Need reproduce selection of existing foreground objects while Background Customize remains open and fix native hit testing. Real Safari/GPU/long video untested. Continue from remote PR/head; inspect latest CI and record release only after merge/generated Pages/deployed desktop/mobile checks.
+
 # Gravity source verified — 2026-10-11 16:33 Bangkok
 
 PR356 source2f4136d build38128063545 and five-view38128048846 fullPASS/errors[]. Paired normalized reference/render board reviewed; design-qa.md source passed. Native ring/debris origin/motion/infall/pointer/route/lifecycle assertions passed; no new state owner. Integrate PR355 generated main, preserve its new source/build/workflows/docs, final merge/deploy/live checks pending. Owner Codex Cloud remains active; physical Safari/FPS not tested.
