@@ -187,7 +187,7 @@
       .cl-hub-open .cl-art,.cl-hub-open .cl-orbit{display:none!important}
       .cl-hub-open .cl-hero .cl-rotating-line{color:#dcc8ff}.cl-hub-open .cl-ready-prefix{color:#c1bbd1}
       .cl-path-column{display:flex;flex-direction:column;min-width:0;gap:24px}
-      .cl-hub-open .cl-paths{margin:0;gap:12px}
+      .cl-hub-open .cl-paths{margin:0;gap:12px;display:flex;flex-direction:column;align-items:stretch;min-width:0}.cl-hub-open .cl-paths>.cl-path{flex:0 0 auto;width:100%;min-width:0}
       .cl-hub-open .cl-path{gap:20px;border:1px solid #b8a5ef2b;border-radius:12px;background:#05070dcc;color:#b8b5c4;overflow:hidden;isolation:isolate;position:relative}
       .cl-hub-open .cl-path.is-selected{background:#1a1229e8;border-color:#c7afff90;color:#faf7ff;box-shadow:0 8px 30px #0005,inset 3px 0 #c7afff}
       .cl-hub-open .cl-path .cl-num{width:44px;border:0;font:300 18px var(--cl-mono);color:#b8afca}
