@@ -3344,6 +3344,28 @@ float coverage=clamp(max(col.r,max(col.g,col.b)),0.,1.);if(coverage<.001){gl_Fra
       box-shadow:none!important;
     }
     :is(#tune,#wtune,#obuild) :is(.tune-btn,.tune-reset){box-shadow:none!important;border-radius:var(--ui-radius-sm);}
+    /* GPU budget for opening tools and menus: the 3D scene and animated
+       artwork remain untouched. Only UI chrome loses expensive blur layers.
+       In particular, do not disable .st-glassbox (the actual Focus artwork). */
+    @media(pointer:coarse){
+      #studio :is(.st-glass,.st-fly,.studio-panel,.st-lmenu,.st-menu-popup,.st-lib,.st-save,.st-context){
+        backdrop-filter:none!important;
+        -webkit-backdrop-filter:none!important;
+      }
+      #studio .st-glass{background-color:#0f131eF4;}
+      #studio :is(.st-fly,.studio-panel){background-color:#10141ff9;}
+    }
+    @media(hover:hover) and (pointer:fine){
+      #studio :is(.st-glass,.st-fly,.studio-panel){
+        backdrop-filter:blur(6px);
+        -webkit-backdrop-filter:blur(6px);
+      }
+    }
+    /* Panels own their scrolling; do not let dragging a long settings list
+       wake the canvas/scrolling page beneath it. */
+    #studio :is(.st-fly,.studio-panel,.st-layers-tray,.st-lib){
+      overscroll-behavior:contain;
+    }
     /* Short viewports: preserve the original native sheet dimensions. */
     @media(max-width:760px){
       .cl-page:not(.cl-hub-open) .cl-guide-layout{gap:12px;}
