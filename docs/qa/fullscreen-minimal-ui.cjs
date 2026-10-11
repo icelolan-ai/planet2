@@ -31,6 +31,8 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
    }
  }
  await p.locator('[data-cl-path="guide"]').click();
+ await p.waitForFunction(()=>document.querySelector('[data-cl-path="guide"]')?.classList.contains('is-selected'),{timeout:5000});
+ await p.waitForTimeout(800);
  await p.locator('[data-cl-enter]').click();
  await p.locator('[data-cl-guide]').waitFor({state:'visible'});
  await p.locator('[data-cl-chapter="design"]').click();
@@ -43,6 +45,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
  assert(afterGuide.hit,'Enter must stay interactive after visiting the guide');
  await p.screenshot({path:path.join(dir,`fullscreen-guide-return-${vp.width}x${vp.height}.png`)});
  await p.locator('[data-cl-path="studio"]').click();
+ await p.waitForTimeout(800);
  await p.locator('[data-cl-enter]').click();
  const skip=p.getByRole('button',{name:'Skip and enter Studio'});
  if(await skip.isVisible({timeout:5000}).catch(()=>false))await skip.click();
@@ -59,6 +62,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
  await p.locator('#studio .st-menu-exit').click({timeout:15000});
  await p.locator('.cl-page.cl-hub-open').waitFor({state:'visible'});
  await p.locator('[data-cl-path="planets"]').click();
+ await p.waitForTimeout(800);
  await p.locator('[data-cl-enter]').click();
  await p.locator('#atelier').waitFor({state:'visible',timeout:90000});
  await p.locator('[data-at-back]').click();
