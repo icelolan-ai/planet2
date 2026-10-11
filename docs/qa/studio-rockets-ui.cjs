@@ -20,6 +20,7 @@ await p.locator('[data-cl-enter]').click();await p.locator('[data-cl-back]').cli
 await p.getByRole('button',{name:'Skip and enter Studio'}).click();await p.waitForFunction(()=>__cerebra.studio.active);
 for(const model of ['f9','fh','sv']){
  if(model==='f9'){
+  await p.locator('[data-cl-lang="th"]:visible').first().click();assert.equal(await p.locator('[data-empty-rocket]').textContent(),'เพิ่มจรวด…');await p.locator('[data-cl-lang="en"]:visible').first().click();
   const empty=p.locator('[data-empty-rocket]');await empty.waitFor({state:'visible'});const r=await empty.boundingBox();assert(r.x>=0&&r.y>=0&&r.x+r.width<=vp.width&&r.y+r.height<=vp.height);
   await p.screenshot({path:path.join(process.env.QA_SCREENSHOT_DIR||os.tmpdir(),`rocket-empty-${vp.width}.png`)});await empty.click();
  }else{await p.locator('[data-menu-top="Layer"]').click();await p.getByRole('menuitem',{name:'Add planet…',exact:true}).click();await p.locator('[data-rocket-category]').click();}
@@ -28,6 +29,7 @@ for(const model of ['f9','fh','sv']){
  await p.locator(`[data-rocket="${model}"]`).click();
  await p.waitForFunction(()=>{const s=__cerebra.studio,i=s.items.filter(i=>i.kit==='rocket').at(-1),q=CerebraRockets.inspect(i);return q?.meshes>0||q?.error;},null,{timeout:90000});
  const loaded=await p.evaluate(()=>{const q=CerebraRockets.inspect(__cerebra.studio.sel);return {loading:q.loading,error:q.error,meshes:q.meshes};});console.log(model,loaded);assert(!loaded.error&&loaded.meshes>20);
+ await p.evaluate(()=>{const s=__cerebra.studio;for(const i of s.items.filter(i=>i.kit==='rocket'&&i!==s.sel)){i.hide=true;s.place(i);}s.renderLayers();});
  const pixel=()=>p.evaluate(async()=>{const s=__cerebra.studio,i=s.sel;await CerebraRockets.kit.ready(i);const c=CerebraRockets.inspect(i).canvas,a=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let n=0,hash=0;for(let j=0;j<a.length;j++){hash=(hash*31+a[j])|0;if(j%4===3&&a[j])n++;}return {n,hash};});
  const base=await pixel();assert(base.n>100);let previous=base;
  // Visible projected pixels must be centered in the same native canvas as Select.
@@ -41,10 +43,14 @@ for(const model of ['f9','fh','sv']){
  else{await p.mouse.move(point.x,point.y);await p.mouse.down();await p.mouse.move(point.x+48,point.y+30,{steps:6});await p.mouse.up();}
  const afterHand=await pose();assert.notEqual(afterHand.yaw,beforeHand.yaw);assert.notEqual(afterHand.pitch,beforeHand.pitch);assert.deepEqual(afterHand.layout,beforeHand.layout);assert.deepEqual(afterHand.others,beforeHand.others);assert.equal(afterHand.hi,beforeHand.hi+1);assert.notEqual((await pixel()).hash,base.hash);
  await p.screenshot({path:path.join(process.env.QA_SCREENSHOT_DIR||os.tmpdir(),`rocket-hand-${model}-${vp.width}.png`)});
- await p.evaluate(id=>{const s=__cerebra.studio;s.undo();s.select(s.items.find(i=>i.id===id));},beforeHand.id);assert.equal((await pose()).yaw,beforeHand.yaw);
- await p.evaluate(id=>{const s=__cerebra.studio;s.redo();s.select(s.items.find(i=>i.id===id));},beforeHand.id);assert.equal((await pose()).yaw,afterHand.yaw);
- await p.evaluate(id=>{const s=__cerebra.studio;s.undo();s.setTool('move');s.select(s.items.find(i=>i.id===id));},beforeHand.id);assert.equal((await pixel()).hash,base.hash);
+ await p.evaluate(id=>{const s=__cerebra.studio;s.undo();s.select(s.items.filter(i=>i.kit==='rocket'&&i.p.model===id).at(-1));},model);assert.equal((await pose()).yaw,beforeHand.yaw);
+ await p.evaluate(id=>{const s=__cerebra.studio;s.redo();s.select(s.items.filter(i=>i.kit==='rocket'&&i.p.model===id).at(-1));},model);assert.equal((await pose()).yaw,afterHand.yaw);
+ await p.evaluate(id=>{const s=__cerebra.studio;s.undo();s.setTool('move');s.select(s.items.filter(i=>i.kit==='rocket'&&i.p.model===id).at(-1));},model);assert.equal((await pixel()).hash,base.hash);
  await p.screenshot({path:path.join(process.env.QA_SCREENSHOT_DIR||os.tmpdir(),`rocket-select-${model}-${vp.width}.png`)});
+ await p.evaluate(()=>{const s=__cerebra.studio;s.lockItem(s.sel,true);});assert(await hand.isDisabled());await p.keyboard.press('h');assert.equal(await p.evaluate(()=>__cerebra.studio.tool),'move');
+ await p.evaluate(()=>{const s=__cerebra.studio;s.lockItem(s.sel,false);s.sel.hide=true;s.place(s.sel);s.renderLayers();});assert(await hand.isDisabled());
+ await p.evaluate(()=>{const s=__cerebra.studio;s.sel.hide=false;s.place(s.sel);s.renderLayers();});assert(await hand.isEnabled());
+
 
  const instances=await p.evaluate(()=>JSON.stringify(CerebraRockets.inspect(__cerebra.studio.sel).instances));
  await p.locator('[data-menu-top="Edit"]').click();await p.getByRole('menuitem',{name:'Design selected…',exact:true}).click();

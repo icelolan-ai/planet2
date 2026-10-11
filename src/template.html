@@ -9869,7 +9869,7 @@ class CoreStudio {
       if (!this.active || document.body.classList.contains('tune-open') || this.drag || e.button !== 0) return;
       if (this.beginCanvasPress && this.beginCanvasPress(e)) return;
       const hand = this.tool === 'hand', target = hand ? this.handTarget(e.clientX, e.clientY) : null;
-      if (hand && !target && (this.showSubject === false || this.sel?.locked)) return;
+      if (hand && (target === false || !target && (this.showSubject === false || this.sel?.locked))) return;
       this.select(target);
       if (target) this.prepareTimelineEdit(target);
       if (this.tool !== 'hand' && this.subject < 0 && !app.hitCore(e.clientX, e.clientY)) return;
@@ -10002,7 +10002,7 @@ class CoreStudio {
       if (it.kind !== 'kit' || !KIT[it.kit]?.turn || this.isHid(it)) continue;
       const r = it.el.getBoundingClientRect(), a = -(it.rot || 0) * Math.PI / 180;
       const dx = x - r.left - r.width / 2, dy = y - r.top - r.height / 2;
-      if (Math.abs(dx * Math.cos(a) - dy * Math.sin(a)) <= it.el.offsetWidth / 2 && Math.abs(dx * Math.sin(a) + dy * Math.cos(a)) <= it.el.offsetHeight / 2) return this.handItem(it) ? it : null;
+      if (Math.abs(dx * Math.cos(a) - dy * Math.sin(a)) <= it.el.offsetWidth / 2 && Math.abs(dx * Math.sin(a) + dy * Math.cos(a)) <= it.el.offsetHeight / 2) return this.handItem(it) ? it : false;
     }
     return this.handItem(this.sel) ? this.sel : null;
   }
