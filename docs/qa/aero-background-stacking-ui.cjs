@@ -90,15 +90,19 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
     frame(0);const initial=await wait();
     for(let i=1;i<=14;i++)frame(i/30);
     const rapid=kit.inspect(g);
+    // Rapid calls may have left the async GPU readback in flight. Wait for
+    // it to complete before testing parameter-bypass on this synthetic canvas.
+    // Production UI also queues native redraw if the *real* item changes mid-read.
+    const settledRapid=await wait();
     const updated={...p,bloom:1.25};frame(.8,updated);
     const changed=await wait();
-    return {initial,rapid,changed};
+    return {initial,rapid,settledRapid,changed};
   });
   console.log('AERO_INTERACTION_BUDGET',JSON.stringify(perf));
   assert(perf.initial?.renders>0,'background render did not initialize');
   assert(perf.rapid.skipped>perf.initial.skipped,'identical preview frames should reuse GPU results');
   assert(perf.rapid.renders<=perf.initial.renders+1,'preview interaction created excessive render passes');
-  assert(perf.changed.renders>perf.rapid.renders,'shader parameter change must render despite live preview budget');
+  assert(perf.changed.renders>perf.settledRapid.renders,'shader parameter change must render despite live preview budget');
   assert.deepEqual(errors,[],JSON.stringify(errors));
   console.log('PASS',JSON.stringify(vp));
   await browser.close();
