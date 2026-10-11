@@ -17,6 +17,7 @@ const {chromium}=require('playwright'),assert=require('assert'),path=require('pa
  console.log('editorial native art',editorial);
  assert(editorial.plate&&editorial.paths>=8&&editorial.aria==='true'&&editorial.pe==='none'&&editorial.editorial&&editorial.wheel==='true',JSON.stringify(editorial));
  assert(editorial.background.includes('gradient')&&editorial.button.includes('gradient'),JSON.stringify(editorial));
+ if(vp.width<=390){const off=await p.evaluate(()=>[...document.querySelectorAll('.cl-hub-open .cl-path:not(.is-selected) strong')].map(el=>({label:el.textContent.trim(),whiteSpace:getComputedStyle(el).whiteSpace,scroll:el.scrollWidth,client:el.clientWidth})));assert(off.every(x=>x.whiteSpace==='nowrap'),JSON.stringify(off));}
  await shot('studio-en');
  const d=await p.evaluate(()=>{const e=document.querySelector('.cl-cosmic-dust');return {transform:getComputedStyle(e).transform,play:getComputedStyle(e).animationPlayState,src:e.currentSrc,canvas:document.querySelectorAll('.cl-cosmos canvas').length};});assert.equal(d.play,'running');assert.equal(d.canvas,0);assert(/cosmic-dust\.[a-f0-9]+\.webp/.test(d.src));await p.waitForTimeout(350);assert.notEqual(await p.locator('.cl-cosmic-dust').first().evaluate(e=>getComputedStyle(e).transform),d.transform);
  // The moving ring and every orbit share one frame and physical center.
