@@ -1,3 +1,29 @@
+# QA selector checkpoint — 2026-10-11 16:36 Bangkok
+
+PR355 fixture Window > Design now targets native checked menuitemcheckbox. Product unchanged; prior source attempt stopped at wrong fixture role. Full UI/export/source visual review and live remain pending.
+
+# Mission QA refinement — 2026-10-11 16:28 Bangkok
+
+PR355 source7b7feb4 build passed; all3 QA failed only later hidden-close fixture action. Mobile reached all9 preset/export/history/project checks plus selector3-model reuse and paint/finish adjacency. Reopen restored tool panel via real Edit menu before closing. Close native settings tray before composition visual capture to remove native mobile shift/cropped headings. Complete repository tree restored after previous branch publishing error; main untouched. Full QA/paired visual review/merge/live pending.
+
+# Latest source fix — 2026-10-11 16:18 Bangkok
+
+PR355 active, not released. Categorized native selector and adjacent conditional paint/finish controls implemented. Technical callout draw missed k parameter; thumbnail boot fix applied. Source build/syntax/full3-view UI/native export/history/visual review then main/Pages/live remain. QA workflows use trigger head branch to avoid cancelled live checks.
+
+# Latest scope checkpoint — 2026-10-11 16:13 Bangkok
+
+PR355 remains DRAFT and owned by Codex Cloud. Expanded user scope: categorized dock object selector incl.3 Rockets, and paint/finish controls immediately under toggles. Publish claim before source edits. Full3-view source QA38125523631 failed at startup gateway, not at preset assertions; boot/resource diagnostics needed, no release. Gravity scene branch claimed independently; pending implementation and QA.
+
+## 2026-10-11 15:38 Bangkok — Mission review checkpoint
+
+PR355 source UI first round reached native preset section but fixture selector included its child summaries. Corrected exact native subsection navigation. Source review also completes native restore selection/Reset defaults, DPR-scaled tools/font control, readable noir ink and direct Image > Rocket & planet presets entry. New full3-view browser round pending. Still active Codex; do not merge until actual UI/export/history and paired visual review pass.
+
+## 2026-10-11 15:32 Bangkok — Active mission preset checkpoint / cosmic released
+
+Cosmic PR354 merged05114ee; generatedf2a487f, Build38124879414/Pages38124893235 and full five-view live38124897566 PASS/errors[]. Cosmic owner released. Rocket regression live38124897562 desktopDPR2 failure is being diagnosed; mobile pass.
+
+Mission branch `feat/studio-mission-presets-20261011` published claim before product edits. New native9 compositions and2 Kits implemented; build/syntax pass. Browser source QA and visual review pending; not released. Source-of-truth template/effects/build/native language; no generated artifacts. Same native owners and original CAD GLBs. Next publish focused QA PR, fix source issues, full desktop/mobile/tablet UI/native PNG/history/project tests, merge/generated Pages/live, release ownership. Physical Safari/FPS/long recordings untested; PartGallery/slot swaps remain outside adapter.
+
 ## 2026-10-11 15:31 Bangkok — Cosmic source ready
 
 PR354 source3258cea: Build38124622567 and full five-view UI38124620447 PASS/errors[]. Paired art-direction comparison and desktop/mobile/tablet/landscape/narrow screenshots reviewed; design-qa.md source passed. Next merge expected head, wait generated main/Pages and full live repeat; do not call released yet. Owner remains Codex Cloud. New Studio mission preset work claimed independently on feat/studio-mission-presets-20261011.

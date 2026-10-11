@@ -85,7 +85,14 @@
     dispose(it){const s=states.get(it);if(!s)return;s.disposed=true;s.model?.dispose();s.target?.dispose();states.delete(it);}
   };
   function decorate(studio,panel,it){
-    if(it.kit!=='rocket')return;const s=states.get(it);if(!s?.model)return;
+    if(it.kit!=='rocket')return;
+    // Keep each conditional control next to its enabling toggle after generic Kit grouping.
+    for(const [toggle,keys] of [['painted',['colour']],['finished',['roughness','metalness']]]){
+      let anchor=panel.querySelector(`[data-kp="${toggle}"]`)?.closest('.st-fly-row');
+      for(const key of keys){const row=panel.querySelector(`[data-kp="${key}"]`)?.closest('.st-fly-row');if(anchor&&row){anchor.after(row);anchor=row;}}
+    }
+    panel.querySelectorAll('details.st-ksec:not([data-ksec])').forEach(d=>{const body=d.querySelector(':scope > .st-ksec-body');if(body&&!body.children.length)d.remove();});
+    const s=states.get(it);if(!s?.model)return;
     const m=s.model,th=window.__cerebraLanguage?.current==='th',text=(en,thai)=>th?thai:en,section=document.createElement('details');section.className='st-ksec';
     const body=document.createElement('div');body.className='st-ksec-body';
     const title=document.createElement('summary');title.textContent='Parts & variants / ชิ้นส่วนและรูปแบบ';section.append(title,body);
@@ -134,5 +141,5 @@
     const close=()=>{pop.remove();document.removeEventListener('pointerdown',away,true);},away=e=>{if(!pop.contains(e.target)&&e.target!==anchor)close();};document.addEventListener('pointerdown',away,true);
     pop.querySelectorAll('[data-rocket]').forEach(b=>b.onclick=()=>{close();studio.closeFly();const it=studio.addItem('kit',{kit:'rocket',name:names[b.dataset.rocket],p:{...kit.defaults,model:b.dataset.rocket},opacity:1});studio.select(it);studio.syncEmptyHint();});
   }
-  window.CerebraRockets={kit,openMenu,decorate,inspect:it=>{const s=states.get(it);return s?{loading:s.loading,error:s.error,viewport:s.viewport,target:s.target?[s.target.width,s.target.height]:null,visibleParts:s.model?.meshes.filter(m=>m.visible).map(m=>m._pid),meshes:s.model?.meshes.length,exploded:s.model?.t,canvas:s.canvas,paint:s.model?.paint.parts,painted:s.model?.meshes.filter(m=>s.model.isPaintable(m)).map(m=>[m._pid,m.material.color.getHexString(T.SRGBColorSpace)]),instances:s.model?.inst.map(i=>Array.from(i.mesh.instanceMatrix.array))}:null;}};
+  window.CerebraRockets={kit,names,openMenu,decorate,inspect:it=>{const s=states.get(it);return s?{loading:s.loading,error:s.error,viewport:s.viewport,target:s.target?[s.target.width,s.target.height]:null,visibleParts:s.model?.meshes.filter(m=>m.visible).map(m=>m._pid),meshes:s.model?.meshes.length,exploded:s.model?.t,canvas:s.canvas,paint:s.model?.paint.parts,painted:s.model?.meshes.filter(m=>s.model.isPaintable(m)).map(m=>[m._pid,m.material.color.getHexString(T.SRGBColorSpace)]),instances:s.model?.inst.map(i=>Array.from(i.mesh.instanceMatrix.array))}:null;}};
 })();
