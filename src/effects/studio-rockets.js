@@ -84,7 +84,7 @@
       }
       m.showAll();for(const id of p.hiddenParts||[])m.setHidden(id,true);m.setIsolated(p.isolatedPart||null);
       s.pivot.rotation.set(p.pitch*Math.PI/180,p.yaw*Math.PI/180,p.roll*Math.PI/180);
-      const cap=KIT_PREVIEW?768:2048,scale=Math.min(1,cap/Math.max(w,h)),W=Math.max(1,Math.round(w*scale)),H=Math.max(1,Math.round(h*scale));
+      // Resolution dimensions are computed once above for cache and drag preview.
       if(!s.target||s.target.width!==W||s.target.height!==H){s.target?.dispose();s.target=new T.WebGLRenderTarget(W,H);s.target.texture.colorSpace=T.SRGBColorSpace;s.canvas=document.createElement('canvas');s.canvas.width=W;s.canvas.height=H;s.ctx=s.canvas.getContext('2d');s.image=s.ctx.createImageData(W,H);s.bytes=new Uint8Array(W*H*4);}
       s.camera.aspect=W/H;s.camera.position.set(0,0,s.height*1.25/Math.min(1,W/H)/Math.max(.25,p.zoom));s.camera.lookAt(0,0,0);s.camera.updateProjectionMatrix();
       const r=window.__cerebra.stage.renderer,target=r.getRenderTarget(),vp=r.getViewport(new T.Vector4()),sc=r.getScissor(new T.Vector4()),test=r.getScissorTest(),auto=r.autoClear,col=r.getClearColor(new T.Color()),alpha=r.getClearAlpha(),tone=r.toneMapping,exposure=r.toneMappingExposure,face=r.getActiveCubeFace(),level=r.getActiveMipmapLevel();
