@@ -35,7 +35,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
   // Build a real foreground object first; then trigger the native Background UI.
   await page.evaluate(()=>{
     const s=__cerebra.studio;
-    s.addItem('text',{content:'ABOVE THE SHARDS',x:.5,y:.45,size:34,font:'sans',color:'#ffffff'});
+    s.addItem('text',{content:'ABOVE THE SHARDS',x:.79,y:.28,size:30,font:'sans',color:'#ffffff'});
   });
   await page.locator('[data-menu-top="Image"]').click();
   await page.getByRole('menuitem',{name:'Animated background presets…',exact:true}).click();
