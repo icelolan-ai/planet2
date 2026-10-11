@@ -32,7 +32,15 @@ for(const model of ['f9','fh','sv']){
  const loaded=await p.evaluate(()=>{const q=CerebraRockets.inspect(__cerebra.studio.sel);return {loading:q.loading,error:q.error,meshes:q.meshes};});console.log(model,loaded);assert(!loaded.error&&loaded.meshes>20);
  await p.evaluate(()=>{const s=__cerebra.studio;for(const i of s.items.filter(i=>i.kit==='rocket'&&i!==s.sel)){i.hide=true;s.place(i);}s.renderLayers();});
  const pixel=()=>p.evaluate(async()=>{const s=__cerebra.studio,i=s.sel;await CerebraRockets.kit.ready(i);const c=CerebraRockets.inspect(i).canvas,a=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let n=0,hash=0;for(let j=0;j<a.length;j++){hash=(hash*31+a[j])|0;if(j%4===3&&a[j])n++;}const q=CerebraRockets.inspect(i);return {n,hash,viewport:q.viewport,target:q.target,dpr:s.app.stage.renderer.getPixelRatio(),visible:q.visibleParts};});
- const base=await pixel();assert(base.n>100);assert.deepEqual(base.viewport,[0,0,...base.target]);assert.equal(base.visible.length,loaded.meshes);console.log('native target',model,{dpr:base.dpr,viewport:base.viewport,target:base.target});let previous=base;
+ const base=await pixel();assert(base.n>100);
+ const cache=await p.evaluate(()=>{
+   const studio=__cerebra.studio,it=studio.sel,old=CerebraRockets.inspect(it);
+   for(let n=0;n<3;n++)studio.drawKit(it,it.w*studio.U(),it.h*studio.U());
+   const now=CerebraRockets.inspect(it);
+   return {before:old.renderCount,after:now.renderCount,hits:now.cacheHits-old.cacheHits,ms:now.renderMs};
+ });
+ assert.equal(cache.before,cache.after,JSON.stringify(cache));
+ assert(cache.hits>=2,JSON.stringify(cache));console.log('Rocket cache',model,cache);assert.deepEqual(base.viewport,[0,0,...base.target]);assert.equal(base.visible.length,loaded.meshes);console.log('native target',model,{dpr:base.dpr,viewport:base.viewport,target:base.target});let previous=base;
  // Test fractional Lite DPR and Retina DPR without creating a second renderer.
  for(const ratio of [1.25,2]){const q=await p.evaluate(v=>{const s=__cerebra.studio,i=s.sel,r=s.app.stage.renderer,original=r.getPixelRatio();try{r.setPixelRatio(v);s.drawKit(i,i.w*s.U(),i.h*s.U());const q=CerebraRockets.inspect(i),c=q.canvas,a=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let hash=0;for(const b of a)hash=(hash*31+b)|0;return {actual:r.getPixelRatio(),viewport:q.viewport,target:q.target,hash};}finally{r.setPixelRatio(original);}},ratio);assert.equal(q.actual,ratio);assert.deepEqual(q.viewport,[0,0,...q.target]);assert.equal(q.hash,base.hash);console.log('forced native DPR',model,ratio,q.viewport);}
  // Visible projected pixels must be centered in the same native canvas as Select.
@@ -40,6 +48,8 @@ for(const model of ['f9','fh','sv']){
  const pose=()=>p.evaluate(()=>{const s=__cerebra.studio,i=s.sel;return {id:i.id,yaw:i.p.yaw,pitch:i.p.pitch,layout:[i.x,i.y,i.w,i.h,i.rot||0],others:s.items.filter(x=>x!==i&&x.kit==='rocket').map(x=>JSON.stringify(x.p)),hi:s.hi};});
  await p.evaluate(()=>__cerebra.studio.commit());const beforeHand=await pose();
  const hand=p.locator('[data-studio-tool="hand"]');assert(await hand.isEnabled());await hand.click();
+ await p.locator('.st-orient').waitFor({state:'visible',timeout:12000});
+ assert.equal(await p.locator('.st-orient-axis').count(),6);
  assert.equal(await p.evaluate(()=>__cerebra.studio.sel?.id),beforeHand.id);
  const point=await p.evaluate(()=>{const r=__cerebra.studio.sel.el.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};});
  if(vp.width<700){const cd=await p.context().newCDPSession(p);await cd.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]});for(let n=1;n<=6;n++){await cd.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:point.x+n*8,y:point.y+n*5}]});await p.waitForTimeout(25);}await cd.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await cd.detach();}
@@ -49,6 +59,15 @@ for(const model of ['f9','fh','sv']){
  await p.evaluate(id=>{const s=__cerebra.studio;s.undo();s.select(s.items.filter(i=>i.kit==='rocket'&&i.p.model===id).at(-1));},model);assert.equal((await pose()).yaw,beforeHand.yaw);
  await p.evaluate(id=>{const s=__cerebra.studio;s.redo();s.select(s.items.filter(i=>i.kit==='rocket'&&i.p.model===id).at(-1));},model);assert.equal((await pose()).yaw,afterHand.yaw);
  await p.evaluate(id=>{const s=__cerebra.studio;s.undo();s.setTool('move');s.select(s.items.filter(i=>i.kit==='rocket'&&i.p.model===id).at(-1));},model);assert.equal((await pixel()).hash,base.hash);
+ assert(await p.locator('.st-orient').isHidden(),'3D gizmo must hide outside Hand mode');
+ if(model==='f9'){
+   await hand.click();await p.locator('.st-orient').waitFor({state:'visible'});
+   await p.locator('.st-orient-axis[data-axis="X"][data-sign="1"]').click();
+   assert.equal(await p.evaluate(()=>__cerebra.studio.sel.p.yaw),90);
+   await p.evaluate(()=>{const s=__cerebra.studio;s.undo();s.select(s.items.filter(i=>i.kit==='rocket'&&i.p.model==='f9').at(-1));s.setTool('move');});
+   assert.equal((await pose()).yaw,beforeHand.yaw);
+   assert(await p.locator('.st-orient').isHidden());
+ }
  await p.screenshot({path:path.join(process.env.QA_SCREENSHOT_DIR||os.tmpdir(),`rocket-select-${model}-${vp.width}.png`)});
  await p.evaluate(()=>{const s=__cerebra.studio;s.lockItem(s.sel,true);});assert(await hand.isDisabled());await p.keyboard.press('h');assert.equal(await p.evaluate(()=>__cerebra.studio.tool),'move');
  await p.evaluate(()=>{const s=__cerebra.studio;s.lockItem(s.sel,false);s.sel.hide=true;s.place(s.sel);s.renderLayers();});assert(await hand.isDisabled());
