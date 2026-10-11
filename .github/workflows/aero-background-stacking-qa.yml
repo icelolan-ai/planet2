@@ -1,0 +1,82 @@
+name: Aero Background Stacking QA
+on:
+  push:
+    branches: [fix/aero-bg-stacking-mobile-20261011]
+    paths: ['src/**', 'docs/qa/aero-background-stacking-ui.cjs', '.github/workflows/aero-background-stacking-qa.yml']
+  workflow_run:
+    workflows: ['Build generated site']
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: aero-bg-stacking-${{ github.event_name }}-${{ github.event.workflow_run.head_branch || github.ref }}
+  cancel-in-progress: true
+jobs:
+  aero:
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - viewport: '{"width":390,"height":844}'
+            dpr: '3'
+          - viewport: '{"width":1440,"height":900}'
+            dpr: '1'
+          - viewport: '{"width":820,"height":1180}'
+            dpr: '2'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && 'main' || github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browser
+        run: |
+          npm install --prefix /tmp/aero-bg-qa playwright
+          /tmp/aero-bg-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Build and serve source
+        if: github.event_name != 'workflow_run'
+        run: |
+          python3 src/build_web.py
+          python3 -m http.server 8000 >/tmp/aero-http.log 2>&1 &
+      - name: Wait for generated bundle on Pages
+        if: github.event_name == 'workflow_run'
+        run: |
+          python3 - <<'PY'
+          import pathlib,re,time,urllib.request
+          expected=re.search(r'assets/app\.[a-f0-9]+\.js',pathlib.Path('index.html').read_text()).group()
+          for attempt in range(24):
+              try:
+                  actual=urllib.request.urlopen('https://icelolan-ai.github.io/planet2/',timeout=15).read().decode()
+                  if expected in actual:
+                      print('Deployed',expected)
+                      break
+              except Exception as error:
+                  print(error)
+              time.sleep(5)
+          else:
+              raise SystemExit('Expected Aero bundle not yet deployed: '+expected)
+          PY
+      - name: Check Aero background layering and mobile panel
+        env:
+          NODE_PATH: /tmp/aero-bg-qa/node_modules
+          VP: ${{ matrix.viewport }}
+          QA_DPR: ${{ matrix.dpr }}
+          QA_URL: ${{ github.event_name == 'workflow_run' && 'https://icelolan-ai.github.io/planet2/' || 'http://127.0.0.1:8000' }}
+          QA_SCREENSHOT_DIR: /tmp/aero-bg-screenshots
+        run: |
+          mkdir -p /tmp/aero-bg-screenshots
+          export QA_CHROMIUM_PATH=$(node -e 'console.log(require("playwright").chromium.executablePath())')
+          node docs/qa/aero-background-stacking-ui.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: aero-bg-${{ strategy.job-index }}-${{ github.event_name }}
+          path: /tmp/aero-bg-screenshots
