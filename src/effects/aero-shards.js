@@ -7,6 +7,39 @@
  */
 (() => {
   if(window.CerebraAeroShards)return;
+  // Native Studio holds a full-frame Background item selected while its Customize
+  // panel is open. The generic ".st-item.is-selected { z-index:6 }" otherwise
+  // paints that opaque background *in front of* ordinary poster objects.
+  // Keep the existing DOM stacking owner, not a second background renderer.
+  const backgroundLayerFix=document.createElement('style');
+  backgroundLayerFix.dataset.cerebraBackgroundStack='true';
+  backgroundLayerFix.textContent=`
+    #studio .st-item.st-bg,#studio .st-item.st-bg.is-selected{
+      z-index:auto!important;pointer-events:none!important
+    }
+    #studio .st-item.st-bg .st-outline,
+    #studio .st-item.st-bg .st-handle,
+    #studio .st-item.st-bg .st-lock{display:none!important}
+    /* Background settings are anchored by the existing layoutFly() algorithm.
+       A stale draggable --fdx/--fdy offset must not shift a mobile sheet left. */
+    @media (max-width:760px), (pointer:coarse){
+      #studio [data-kit-panel].st-bgpanel{translate:0 0!important}
+    }
+  `;
+  document.head.append(backgroundLayerFix);
+  // Backgrounds cover the entire frame for rendering but are not an item that
+  // can be grabbed via pick-through, even while Customize keeps them selected.
+  // Keep every other hit test/selection, native history and drawing unchanged.
+  let bgHitBoots=0;
+  const installBackgroundHitGuard=()=>{
+    const studio=window.__cerebra?.studio;
+    if(!studio?.hitItem){if(++bgHitBoots<80)setTimeout(installBackgroundHitGuard,250);return;}
+    if(studio.__nativeBackgroundHitGuard)return;
+    studio.__nativeBackgroundHitGuard=true;
+    const nativeHit=studio.hitItem;
+    studio.hitItem=function(it,x,y){return !!it&&!it.bg&&nativeHit.call(this,it,x,y);};
+  };
+  setTimeout(installBackgroundHitGuard,0);
   const PLACEMENTS={right:0,left:1,center:2,full:3},MATERIALS={pearl:0,chrome:1,satin:2},EFFECTS={none:0,dither:1,ascii:2},FLOWS={stream:0,vortex:1,ribbon:2};
   const RIPPLE_SPEED=4.2,RIPPLE_TAIL=1.8;
   const MATERIAL_PRESETS={pearl:{roughness:.46,brightness:.92,glow:.54,highlightMix:.78},chrome:{roughness:.1,brightness:1.12,glow:.38,highlightMix:.9},satin:{roughness:.74,brightness:.84,glow:.42,highlightMix:.66}};
