@@ -1,3 +1,7 @@
+# GPT-6 Fullscreen fix / Minimal UI Phase A — 2026-10-11 Bangkok
+
+PR https://github.com/icelolan-ai/planet2/pull/364 source QA38143309160 PASS 4/4 and build38143311778 PASS. Scoped dialog fullscreen vs document top-layer fix plus clean/minimal CSS foundation across pages, NOT full per-panel redesign. Needs merge/build/Pages/live QA. No src/template.html modifications under ongoing PR355 ownership. New reports for Studio lag/Rocket resolution, 3D Hand turning, Blender XYZ gizmo, contextual preset text and Animated Background menu placement are open and will be handled by isolated follow-up. Physical Safari FPS unmeasured.
+
 # RELEASED — Editorial Cosmic Launch redesign — 2026-10-11 Bangkok
 
 User asked to replace the three-choice launch menu look using abstract graphic design posters (thin geometric survey/contour lines, high contrast black negative space) with the CEREBRA violet/red/blue/black palette. **Completed on the real website**, not merely an image mockup: https://icelolan-ai.github.io/planet2/ . Source PR https://github.com/icelolan-ai/planet2/pull/362 merged `f5e6c2f`, main generated `6b7153d`, Build38139709938/PAGES38139722938 PASS. Deployed Cosmic launch QA38139726350 ALL FIVE PASS/errors[], source QA38139412299 all5 PASS. Related live Aero QA38139726398 ALL THREE PASS. Rocket QA38139726418 initially desktop DPR1 and phone DPR3 PASS, desktop DPR2 startup 150s timeout (BOOT_ERRORS[]) and failed-job rerun requested; separate issue, do not call Rocket fully verified.
