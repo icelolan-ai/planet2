@@ -1,3 +1,7 @@
+## 2026-10-11 15:38 Bangkok — Mission review checkpoint
+
+PR355 source UI first round reached native preset section but fixture selector included its child summaries. Corrected exact native subsection navigation. Source review also completes native restore selection/Reset defaults, DPR-scaled tools/font control, readable noir ink and direct Image > Rocket & planet presets entry. New full3-view browser round pending. Still active Codex; do not merge until actual UI/export/history and paired visual review pass.
+
 ## 2026-10-11 15:32 Bangkok — Active mission preset checkpoint / cosmic released
 
 Cosmic PR354 merged05114ee; generatedf2a487f, Build38124879414/Pages38124893235 and full five-view live38124897566 PASS/errors[]. Cosmic owner released. Rocket regression live38124897562 desktopDPR2 failure is being diagnosed; mobile pass.

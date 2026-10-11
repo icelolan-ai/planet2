@@ -10213,7 +10213,7 @@ class CoreStudio {
       astrolabe:{background:'gradient',a:'#1a140e',b:'#4b3b29',angle:130,grid:false,light:1.3,lightX:-4,shadow:.8,soft:.5,effect:'off',amount:0,ink:'#f0e0c0',grain:.1},
       dataFlow:{background:'gradient',a:'#090b13',b:'#1b2040',angle:155,grid:true,light:1.1,lightX:2,shadow:.6,soft:.7,effect:'off',amount:0,ink:'#e6ecff'}
     };
-    const p = custom || presets[name]; if (!p) return;
+    const p = custom || presets[name] || window.CerebraMissionPresets.scene(name); if (!p) return;
     this.preset=name; this.background=p.background; this.bgA=p.a; this.bgB=p.b; this.angle=p.angle; this.grid=p.grid;this.gridMode=p.grid?'always':'off';this.setGridMode(this.gridMode);
     this.light=p.light;this.lightX=p.lightX; this.shadow=p.shadow; this.shadowSoft=p.soft; this.effect=p.effect; this.effectAmount=p.amount;
     this.el.querySelectorAll('[data-studio-preset]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.studioPreset===name)));
@@ -12391,7 +12391,7 @@ class CoreStudio {
         ['Duplicate selection', () => { const set = this.layoutTargets(); if (set.length) this.sc.spawn(set.map(this.sc.snap), .03); }, null, '⌘/Ctrl D', !this.layoutTargets().length],
         ['Selection workflow…', () => this.workflowOpen?.()], ['Design selected…', () => { this.openCtxBar(); openFly(this.sel.kind === 'kit' ? 'kitdesign' : this.sel.kind === 'text' ? 'textdesign' : 'style'); },null,'',!this.sel || this.sel.kind === 'fx' || this.sel.locked], ['Kit library…',()=>openFly('kit')], ['Group selection', () => { const set = this.layoutTargets(); if (set.length) { this.moveLayers(set, { kind: 'new' }); this.clearGroup(); } }, null, '', this.layoutTargets().length < 2]],
       Image: () => [['Background & colours…', () => openSection('[data-studio-background]')], ['Lighting & shadow…', () => openSection('[data-studio-light]')],
-        ['Scene presets…', () => openSection('[data-studio-preset]')], ['Animated background presets…', () => openSection('[data-studio-template=liquidEther]')], ['Export image / video…', () => click('[data-studio-export]')]],
+        ['Scene presets…', () => openSection('[data-studio-preset]')], ['Rocket & planet presets…', () => { openSection('[data-mission-presets]'); section(this.panel.querySelector('[data-mission-presets]'), true); }], ['Animated background presets…', () => openSection('[data-studio-template=liquidEther]')], ['Export image / video…', () => click('[data-studio-export]')]],
       Layer: () => [['Add planet…', () => this.openPlanetMenu(this.el.querySelector('[data-menu-top="Layer"]') || this.el)], ['Delete planet', () => this.deletePlanet(), null, '', !this.planetPresent()], ['New group', () => this.addGroup()], ['Group selected layers', () => this.sc.act(this.layoutTargets(), 'group'), null, '⌘/Ctrl G', this.layoutTargets().length < 2],
         ['Ungroup selected layers', () => { const ids = new Set(selected().map(i => i.group).filter(g => g != null)); this.items.forEach(i => { if (ids.has(i.group)) i.group = null; }); this.groups = this.groups.filter(g => !ids.has(g.id)); this.renderLayers(); this.commit(); }, null, '⌘/Ctrl ⇧ G', !selected().some(i => i.group != null)],
         ['Lock / unlock selection', () => this.sc.act(selected(), 'lock'), selected().length ? selected().every(i => i.locked) : null, '', !selected().length],
@@ -12834,6 +12834,7 @@ class CoreStudio {
       '[data-studio-light]': this.light, '[data-studio-light-x]': this.lightX, '[data-studio-shadow]': this.shadow, '[data-studio-shadow-soft]': this.shadowSoft, '[data-studio-effect]': this.effect, '[data-studio-effect-amount]': this.effectAmount };
     Object.entries(v).forEach(([sel, val]) => { const el = this.el.querySelector(sel); if (el.type === 'checkbox') el.checked = val; else el.value = val; if (el.type === 'range') el.dispatchEvent(new Event('input')); });
     this.el.querySelectorAll('[data-studio-preset]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioPreset === this.preset)));
+    window.CerebraMissionPresets.sync(this);
     this.el.querySelectorAll('[data-studio-layer]').forEach(b => b.setAttribute('aria-pressed', String(this.layers[b.dataset.studioLayer])));
     this.el.querySelectorAll('[data-studio-core]').forEach(b => b.setAttribute('aria-pressed', String(this.coreLayers[+b.dataset.studioCore])));
     this.el.classList.toggle('hide-guides', this.guides === false); if (this.syncGrain) this.syncGrain(); this.cpts = JSON.parse(JSON.stringify(this.cpts || [])); this.renderCpts(); this.fxSyncing = true; NET.set('on', !!this.fxItem('network')); this.fxSyncing = false; this.applyFx(); this.updateFocus(); this.paintBackground(); this.paintVfx();
