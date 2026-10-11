@@ -303,3 +303,5 @@ User requested cloud continuation before shutting down the PC. Local ownership i
 ## 2026-10-11 15:19 Asia/Bangkok — Codex Cloud — gesture/color QA checkpoint
 
 - Source0d5d21 build38124213244 passed; QA38124209511 confirms narrow header/controls now fit and actual empty-surface/swipe works. Then failed overly exact computed-style string comparison (e.g. grayscale1e-7) and short-screen gesture was only0.8125 of the native minimum120px step. Test now swipes exactly the native step and compares numeric grayscale within1e-4; preserves full selected/gray inactive checks. Product source unchanged. Full route/language/lifecycle/visual rerun remains pending; owner active.
+
+- 2026-10-11 15:23 Bangkok · Codex · QA route checkpoint: desktop/tablet reached all routes and unchanged Studio initial state; exit assertion must target the visible native `.st-menu-exit` (legacy `[data-studio-exit]` is intentionally hidden by existing menu bar). Updated fixture only; source product unchanged. Full five viewport run pending.
