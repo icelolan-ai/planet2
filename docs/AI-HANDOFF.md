@@ -1,3 +1,7 @@
+# Latest source fix — 2026-10-11 16:18 Bangkok
+
+PR355 active, not released. Categorized native selector and adjacent conditional paint/finish controls implemented. Technical callout draw missed k parameter; thumbnail boot fix applied. Source build/syntax/full3-view UI/native export/history/visual review then main/Pages/live remain. QA workflows use trigger head branch to avoid cancelled live checks.
+
 # Latest scope checkpoint — 2026-10-11 16:13 Bangkok
 
 PR355 remains DRAFT and owned by Codex Cloud. Expanded user scope: categorized dock object selector incl.3 Rockets, and paint/finish controls immediately under toggles. Publish claim before source edits. Full3-view source QA38125523631 failed at startup gateway, not at preset assertions; boot/resource diagnostics needed, no release. Gravity scene branch claimed independently; pending implementation and QA.
