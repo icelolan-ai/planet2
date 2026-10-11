@@ -4,7 +4,9 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 ## Current work / ownership
 
-- Owner: Codex Cloud. Investigate/fix user-reported missing Rocket nose/parts. Branch `fix/rocket-complete-20261011`; base `0458404a22bed3882cc793cbab5cc0f8b9f04d5f`. Scope expanded by user: selecting Rocket makes the native Tune button open Rocket assembly/explosion tuning instead of planet tuning. Intended files: `src/template.html`, `src/effects/studio-menu-fix.js`, `src/effects/studio-rockets.js`, `src/effects/rocket-model.js` if necessary, `docs/qa/studio-rockets-ui.cjs`, `.github/workflows/rocket-qa.yml`, log/handoff; source assets only if evidence requires it. Main/PR/CI/current ownership checked fresh; no overlapping open Rocket work. Claim before product edits.
+- Owner: Codex Cloud. New user request: restyle existing three-path pre-Studio selector using attached IMG_9261 cosmic violet portal/dark space reference and slowly floating dust. Branch `feat/launch-cosmos-20261011`, base `b16c0185135e25e1a9b5dea3b96a5419a8e9bc04`. Intended files: `src/effects/studio-launch.js`, `src/build_web.py`, new `src/assets-src/launch/**`, focused QA fixture/workflow, design QA report, log/handoff. Preserve native path selection/swipe/Enter/language/guide/Studio owners; no new WebGL renderer/RAF. Fresh open PR check: only unrelated #1. Rocket PR353 merged; live QA38123260584 still running, no live release claim yet. Publish this claim before source edits.
+
+- Owner: none for Rocket complete-parts/contextual tuning. PR353 merged and deployed; full live QA38123260584 passed desktop DPR1/DPR2 and mobile DPR3. Release evidence below. Active new cosmic launch ownership above is separate.
 
 - Owner: none. Codex Cloud released the Rocket Hand/Empty Canvas/selection-centering follow-up after PR #351 merge and verified live desktop/mobile QA38113153497. Release evidence is published on `docs/rocket-hand-release-20261011`; no product work remains for these three requests.
 
@@ -280,3 +282,30 @@ User requested cloud continuation before shutting down the PC. Local ownership i
 ## 2026-10-11 14:47 Asia/Bangkok — Codex Cloud — QA navigation checkpoint
 
 - fd2fd5 source build38122263589 passed. Hosted QA38122261479 desktop DPR1 failed in the unrelated animated guide/back/Enter round trip before any Rocket assertion; direct native default Studio path now entered with the real Enter key. All Rocket assertions retained, no product change or stage pause. Mobile DPR3 and desktop Retina DPR2 subsequently passed including actual renderer1.25/2 identical pixels and errors[]. Fresh all-three rerun with direct navigation and live release pending. Owner active.
+
+## 2026-10-11 15:13 Asia/Bangkok — Codex Cloud — Rocket complete-parts / Tune Rocket released
+
+- PR https://github.com/icelolan-ai/planet2/pull/353 merge4ba9b2e727d604d85f179c80e6183e0770b9dedb; generatedb16c0185135e25e1a9b5dea3b96a5419a8e9bc04; live assets/app.e4d1cc8bc9.js. Main build38123239104 and Pages38123257718 succeeded. Source79fad2 CI38122640633 and full source QA38122638149 passed (desktop DPR2 one startup retry after errors[]/gateway deadline, unchanged product/fixture).
+- Final live QA https://github.com/icelolan-ai/planet2/actions/runs/38123260584 passes1440x900 DPR1/DPR2 and390x844 DPR3: all models152/230/59 meshes, actual renderer1.25/2 viewport/pixel equivalence, complete centered rendered geometry, native Hand, contextual Tune, assembly/explosion scope/stagger, part isolate/remove/reinsert/restore, Undo/Redo/project/reset/instance restoration, native PNG exports1440x900/390x844; errors[] all jobs. Mobile live Falcon nose/selection screenshot reviewed; source Retina Heavy/Saturn and tuning screenshots reviewed.
+- No remaining Rocket product work for this request; owner released. Physical iOS/Safari and hardware GPU/FPS/long video remain untested. Original Part Gallery/slot replacement outside adapter; no claim of full original UI parity. Source files only, generated output owned by CI.
+
+## 2026-10-11 15:13 Asia/Bangkok — Codex Cloud — Cosmic native three-path implementation checkpoint
+
+- New request/image IMG_9261: violet portal/dark starfield art direction adapted to existing three-path selector, not the reference site's multi-section content. Original generated raster portal/dust WebPs161262 bytes total, hashed explicit launch manifest and inline embedding. Native icons/fonts, path/swipe/Enter/language/guide/Stepper/history/renderers retain ownership. Desktop portal left and menus right; mobile portal above menus; short/narrow sizing retained.
+- Two composited image dust layers float slowly using CSS transforms only, pause outside open hub/on hidden document/reduced motion. Lazy assets on hub entry; no canvas, WebGL, RAF, timer or project state added. Original hub grid/horizon removed only in this hub; guide and Studio keep existing backgrounds.
+- Files: studio-launch.js, build_web.py, source launch assets/readme, focused QA fixture/workflow, log/handoff. Source build/generated JS/module/fixture syntax/diff passed. Hosted five-viewport full-stage navigation/assets/actual touch/mouse/keyboard/EN-Thai/lifecycle checks and rendered visual comparison PENDING; no release claim. Owner active on feat/launch-cosmos-20261011.
+
+## 2026-10-11 15:16 Asia/Bangkok — Codex Cloud — Cosmic layout/fixture fix checkpoint
+
+- PR354 sourcecfe46bf build38123963803 passed; QA38123950656 rendered four initial views, then failed a fixture click on existing rotating hero h1 which deliberately has pointer-events:none. Actual empty-space check now clicks its native hero surface; route assertions retained.320px job found real horizontal header overflow due existing fullscreen control; wrap its header actions on narrow screens, retaining every control. Existing rotating text kept and recolored lavender.
+- Mobile initial screenshot reviewed: complete violet portal, native three-choice wheel and footer readable; no visual release pass yet. Bounds diagnostics and failure screenshot retained. Inline build embeds launch assets with original Draco/world data preserved. Full rerun and design comparison pending, owner active.
+
+## 2026-10-11 15:19 Asia/Bangkok — Codex Cloud — gesture/color QA checkpoint
+
+- Source0d5d21 build38124213244 passed; QA38124209511 confirms narrow header/controls now fit and actual empty-surface/swipe works. Then failed overly exact computed-style string comparison (e.g. grayscale1e-7) and short-screen gesture was only0.8125 of the native minimum120px step. Test now swipes exactly the native step and compares numeric grayscale within1e-4; preserves full selected/gray inactive checks. Product source unchanged. Full route/language/lifecycle/visual rerun remains pending; owner active.
+
+- 2026-10-11 15:23 Bangkok · Codex · QA route checkpoint: desktop/tablet reached all routes and unchanged Studio initial state; exit assertion must target the visible native `.st-menu-exit` (legacy `[data-studio-exit]` is intentionally hidden by existing menu bar). Updated fixture only; source product unchanged. Full five viewport run pending.
+
+## 2026-10-11 15:31 Bangkok — Codex — Cosmic menu source QA complete (PR354)
+
+- Source3258cea; Build38124622567 success; UI38124620447 all five views PASS/errors[]: desktop1440x900 DPR1/mobile390x844 DPR3/tablet820x1180 DPR2/landscape844x390/narrow320x568. Full native routes, real touch/keyboard, Enter-only, empty click, language, asset loading, dust motion/pause/reduced-motion, unchanged Studio state and exit/return. Paired image-reference/rendered visual comparison and all five viewport captures reviewed; initial320px header overflow fixed. design-qa.md source passed. No generated outputs committed. PR354 ready; merge/generated main/Pages/live still pending; ownership active. Physical Safari/GPU/FPS untested.
