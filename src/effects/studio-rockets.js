@@ -2,7 +2,18 @@
 (() => {
   if (window.CerebraRockets) return;
   const T = window.KY, source = window.CerebraRocketModel;
-  const names = { f9: 'Falcon 9', fh: 'Falcon Heavy', sv: 'Saturn V' }, states = new WeakMap();
+  const names = { f9: 'Falcon 9', fh: 'Falcon Heavy', sv: 'Saturn V' }, states = new WeakMap(), active = new Set();
+  // Hand input can update faster than GPU readback. Repaint a sharp
+  // final image on release without adding an animation loop.
+  const handEnded=()=>requestAnimationFrame(()=>{
+    const studio=window.__cerebra?.studio;
+    if(!studio?.active)return;
+    for(const it of active){const state=states.get(it);if(!state?.handPreview||state.disposed||!studio.items.includes(it))continue;
+      state.handPreview=false;state.frameKey=null;studio.kitRedraw(it);}
+  });
+  addEventListener('pointerup',handEnded,{passive:true});
+  addEventListener('pointercancel',handEnded,{passive:true});
+  addEventListener('blur',handEnded);
   let manifestPromise;
   const manifest = () => manifestPromise ||= source.Manifest.load(window.__ASSETS.rockets.manifest).catch(e => { manifestPromise = null; throw e; });
   const range = (k,label,min,max,step=1) => ({k,label,t:'range',min,max,step});
@@ -18,11 +29,11 @@
       if (!it.el) return; // no model requests for catalogue thumbnails
       let s=states.get(it);
       if (!s) {
-        s={disposed:false,loading:true};states.set(it,s);
+        s={disposed:false,loading:true,renderCount:0,cacheHits:0,renderMs:0};states.set(it,s);active.add(it);
         s.loadPromise=Promise.all([manifest(), Promise.resolve(window.__ASSETS.rockets[it.p.model])]).then(async ([m,url]) => {
           const model=await source.loadModel(url,m,it.p.model);
           if(s.disposed){model.dispose();return;}
-          s.model=model;s.loading=false;s.originalMats=model.meshes.map(m=>m._baseMat);s.variantRequested='';
+          s.model=model;s.loading=false;s.frameKey=null;s.originalMats=model.meshes.map(m=>m._baseMat);s.variantRequested='';
           s.scene=new T.Scene();s.pivot=new T.Group();s.scene.add(s.pivot);s.pivot.add(model.root);
           const box=new T.Box3().setFromObject(model.root), center=box.getCenter(new T.Vector3());
           s.height=box.getSize(new T.Vector3()).length();s.center=center;
@@ -34,7 +45,16 @@
         }).catch(e=>{if(!s.disposed){s.loading=false;s.error=e.message;window.__cerebra?.studio?.kitRedraw(it);}});
       }
       if (!s.model) {g.fillStyle='#e8ecf5';g.font='14px sans-serif';g.textAlign='center';g.fillText(s.error?'Rocket failed to load / โหลดไม่สำเร็จ':'Loading Rocket… / กำลังโหลด',x+w/2,y+h/2);return;}
-      const p=it.p,m=s.model;
+      const p=it.p,m=s.model,studio=window.__cerebra?.studio;
+       const handDragging=!!(studio?.drag?.hand&&studio.drag.target===it);
+       if(handDragging)s.handPreview=true;
+       const cap=KIT_PREVIEW?768:handDragging?(matchMedia('(pointer:coarse)').matches?768:1024):2048,
+             scale=Math.min(1,cap/Math.max(w,h)),W=Math.max(1,Math.round(w*scale)),H=Math.max(1,Math.round(h*scale));
+       // Avoid a synchronous GPU readback + full alpha scan for
+       // identical frames. The cache includes every saved Rocket parameter.
+       const frameKey=JSON.stringify([W,H,!!KIT_PREVIEW,p]);
+       if(s.frameKey===frameKey&&s.canvas){s.cacheHits++;g.drawImage(s.canvas,x,y,w,h);return;}
+       if(handDragging&&s.canvas&&performance.now()-(s.lastRender||0)<48){s.cacheHits++;g.drawImage(s.canvas,x,y,w,h);return;}
       // Rocket's instanced ownership math runs in the untouched CAD world frame.
       // Centre/rotate only for rendering, and restore that frame before every explode.
       s.pivot.rotation.set(0,0,0);m.root.position.set(0,0,0);s.pivot.updateMatrixWorld(true);
@@ -47,7 +67,7 @@
           if(desired)await m.setVariant(desired);
           else {m.meshes.forEach((mesh,i)=>mesh._baseMat=s.originalMats[i]);m.refreshMaterials();}
           if(s.disposed){m.dispose();return;}
-          s.paintKey=null;if(!s.disposed)window.__cerebra.studio.kitRedraw(it);
+          s.paintKey=null;s.frameKey=null;if(!s.disposed)window.__cerebra.studio.kitRedraw(it);
         }).catch(e=>{s.error=e.message;});
       }
       const paintKey=JSON.stringify([p.painted,p.colour,p.finished,p.roughness,p.metalness,p.texture,p.partPaint]);
@@ -68,6 +88,7 @@
       if(!s.target||s.target.width!==W||s.target.height!==H){s.target?.dispose();s.target=new T.WebGLRenderTarget(W,H);s.target.texture.colorSpace=T.SRGBColorSpace;s.canvas=document.createElement('canvas');s.canvas.width=W;s.canvas.height=H;s.ctx=s.canvas.getContext('2d');s.image=s.ctx.createImageData(W,H);s.bytes=new Uint8Array(W*H*4);}
       s.camera.aspect=W/H;s.camera.position.set(0,0,s.height*1.25/Math.min(1,W/H)/Math.max(.25,p.zoom));s.camera.lookAt(0,0,0);s.camera.updateProjectionMatrix();
       const r=window.__cerebra.stage.renderer,target=r.getRenderTarget(),vp=r.getViewport(new T.Vector4()),sc=r.getScissor(new T.Vector4()),test=r.getScissorTest(),auto=r.autoClear,col=r.getClearColor(new T.Color()),alpha=r.getClearAlpha(),tone=r.toneMapping,exposure=r.toneMappingExposure,face=r.getActiveCubeFace(),level=r.getActiveMipmapLevel();
+      const renderStart=performance.now();
       try{
         r.autoClear=true;r.setRenderTarget(s.target);r.setScissorTest(false);
         // setRenderTarget uses physical target pixels; setViewport would multiply them by the stage DPR again.
@@ -78,11 +99,11 @@
         let left=W,right=-1,top=H,bottom=-1;
         for(let row=0;row<H;row++)for(let col=0;col<W;col++)if(s.image.data[(row*W+col)*4+3]){left=Math.min(left,col);right=Math.max(right,col);top=Math.min(top,row);bottom=Math.max(bottom,row);}
         const dx=right>=left?Math.round((W-1-left-right)/2):0,dy=bottom>=top?Math.round((H-1-top-bottom)/2):0;
-        s.ctx.clearRect(0,0,W,H);s.ctx.putImageData(s.image,dx,dy);g.drawImage(s.canvas,x,y,w,h);
+        s.ctx.clearRect(0,0,W,H);s.ctx.putImageData(s.image,dx,dy);s.frameKey=frameKey;s.lastRender=performance.now();s.renderCount++;s.renderMs=s.lastRender-renderStart;g.drawImage(s.canvas,x,y,w,h);
       }finally{r.setViewport(vp);r.setScissor(sc);r.setScissorTest(test);r.autoClear=auto;r.setClearColor(col,alpha);r.toneMapping=tone;r.toneMappingExposure=exposure;r.setRenderTarget(target,face,level);}
     },
     async ready(it){const studio=window.__cerebra.studio,draw=()=>studio.drawKit(it,it.w*studio.U(),it.h*studio.U());draw();const s=states.get(it);await s?.loadPromise;draw();await s?.variantTask;if(s?.error)throw Error('Rocket: '+s.error);draw();},
-    dispose(it){const s=states.get(it);if(!s)return;s.disposed=true;s.model?.dispose();s.target?.dispose();states.delete(it);}
+    dispose(it){const s=states.get(it);if(!s)return;s.disposed=true;s.model?.dispose();s.target?.dispose();states.delete(it);active.delete(it);}
   };
   function decorate(studio,panel,it){
     if(it.kit!=='rocket')return;const s=states.get(it);if(!s?.model)return;
@@ -134,5 +155,5 @@
     const close=()=>{pop.remove();document.removeEventListener('pointerdown',away,true);},away=e=>{if(!pop.contains(e.target)&&e.target!==anchor)close();};document.addEventListener('pointerdown',away,true);
     pop.querySelectorAll('[data-rocket]').forEach(b=>b.onclick=()=>{close();studio.closeFly();const it=studio.addItem('kit',{kit:'rocket',name:names[b.dataset.rocket],p:{...kit.defaults,model:b.dataset.rocket},opacity:1});studio.select(it);studio.syncEmptyHint();});
   }
-  window.CerebraRockets={kit,openMenu,decorate,inspect:it=>{const s=states.get(it);return s?{loading:s.loading,error:s.error,viewport:s.viewport,target:s.target?[s.target.width,s.target.height]:null,visibleParts:s.model?.meshes.filter(m=>m.visible).map(m=>m._pid),meshes:s.model?.meshes.length,exploded:s.model?.t,canvas:s.canvas,paint:s.model?.paint.parts,painted:s.model?.meshes.filter(m=>s.model.isPaintable(m)).map(m=>[m._pid,m.material.color.getHexString(T.SRGBColorSpace)]),instances:s.model?.inst.map(i=>Array.from(i.mesh.instanceMatrix.array))}:null;}};
+  window.CerebraRockets={kit,openMenu,decorate,inspect:it=>{const s=states.get(it);return s?{loading:s.loading,error:s.error,viewport:s.viewport,target:s.target?[s.target.width,s.target.height]:null,renderCount:s.renderCount,cacheHits:s.cacheHits,renderMs:s.renderMs,handPreview:!!s.handPreview,visibleParts:s.model?.meshes.filter(m=>m.visible).map(m=>m._pid),meshes:s.model?.meshes.length,exploded:s.model?.t,canvas:s.canvas,paint:s.model?.paint.parts,painted:s.model?.meshes.filter(m=>s.model.isPaintable(m)).map(m=>[m._pid,m.material.color.getHexString(T.SRGBColorSpace)]),instances:s.model?.inst.map(i=>Array.from(i.mesh.instanceMatrix.array))}:null;}};
 })();
