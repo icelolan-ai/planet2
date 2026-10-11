@@ -299,3 +299,7 @@ User requested cloud continuation before shutting down the PC. Local ownership i
 
 - PR354 sourcecfe46bf build38123963803 passed; QA38123950656 rendered four initial views, then failed a fixture click on existing rotating hero h1 which deliberately has pointer-events:none. Actual empty-space check now clicks its native hero surface; route assertions retained.320px job found real horizontal header overflow due existing fullscreen control; wrap its header actions on narrow screens, retaining every control. Existing rotating text kept and recolored lavender.
 - Mobile initial screenshot reviewed: complete violet portal, native three-choice wheel and footer readable; no visual release pass yet. Bounds diagnostics and failure screenshot retained. Inline build embeds launch assets with original Draco/world data preserved. Full rerun and design comparison pending, owner active.
+
+## 2026-10-11 15:19 Asia/Bangkok — Codex Cloud — gesture/color QA checkpoint
+
+- Source0d5d21 build38124213244 passed; QA38124209511 confirms narrow header/controls now fit and actual empty-surface/swipe works. Then failed overly exact computed-style string comparison (e.g. grayscale1e-7) and short-screen gesture was only0.8125 of the native minimum120px step. Test now swipes exactly the native step and compares numeric grayscale within1e-4; preserves full selected/gray inactive checks. Product source unchanged. Full route/language/lifecycle/visual rerun remains pending; owner active.
