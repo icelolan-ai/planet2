@@ -58,6 +58,18 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
  });
  console.log('after fullscreen -> Studio',state);
  assert(state.studioOn&&state.ui&&state.panel);
+ // Chrome-only blur optimisation must not affect canvas, Focus or the
+ // native button handlers. Check both coarse and fine pointer styles.
+ const panelStyle=await p.evaluate(()=>{
+   const s=__cerebra.studio,rail=s.el.querySelector('.st-rail.st-glass');
+   return {coarse:matchMedia('(pointer:coarse)').matches,
+     blur:getComputedStyle(rail).backdropFilter,
+     webkit:getComputedStyle(rail).webkitBackdropFilter};
+ });
+ console.log('Studio chrome GPU budget',panelStyle);
+ if(panelStyle.coarse)assert(panelStyle.blur==='none'&&panelStyle.webkit==='none',JSON.stringify(panelStyle));
+ const move=p.locator('[data-studio-tool="move"]'),select=p.locator('[data-studio-tool="select"]');
+ for(let n=0;n<3;n++){await select.click();assert.equal(await select.getAttribute('aria-pressed'),'true');await move.click();assert.equal(await move.getAttribute('aria-pressed'),'true');}
  if(entered)assert(!state.full,'closing fullscreen launch dialog should release Fullscreen before Studio interactions');
  await p.locator('#studio .st-menu-exit').click({timeout:15000});
  await p.locator('.cl-page.cl-hub-open').waitFor({state:'visible'});
