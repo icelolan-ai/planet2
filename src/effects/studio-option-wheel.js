@@ -19,7 +19,7 @@
     const buttons=[...nav.querySelectorAll('[data-cl-path]')];
     // Bound the rotated far edge: a fixed angle on wide cards can cover Enter.
     function angle(){nav.style.setProperty('--cl-wheel-angle',Math.min(4,Math.atan((innerHeight<=620?8:18)/Math.max(1,nav.clientWidth))*180/Math.PI)+'deg');}
-    style.textContent=style.textContent.replaceAll('var(--cl-wheel-d)*5deg','var(--cl-wheel-d)*var(--cl-wheel-angle,1deg)').replaceAll('var(--cl-wheel-d)*4deg','var(--cl-wheel-d)*var(--cl-wheel-angle,1deg)');
+    style.textContent=style.textContent.replaceAll('var(--cl-wheel-d,0)*5deg','var(--cl-wheel-d,0)*var(--cl-wheel-angle,1deg)');
     style.textContent+='@media(max-width:360px){.cl-hub-open .cl-paths[data-wheel-ready] .cl-path.is-selected strong{font-size:24px}}.cl-hub-open .cl-slide-footer{position:relative;z-index:3}';
     new ResizeObserver(angle).observe(nav);window.addEventListener('resize',angle,{passive:true});angle();
     function sync(){if(buttons.every(b=>b.style.getPropertyValue('--cl-wheel-d')!==''))return;const selected=Math.max(0,buttons.findIndex(b=>b.classList.contains('is-selected')));buttons.forEach((b,i)=>{let d=i-selected;if(d>1)d-=buttons.length;if(d< -1)d+=buttons.length;b.style.setProperty('--cl-wheel-d',d);});}
