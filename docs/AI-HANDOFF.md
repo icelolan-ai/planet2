@@ -1,3 +1,7 @@
+# Gravity scene checkpoint — 2026-10-11 16:24 Bangkok
+
+Active Codex Cloud feat/launch-gravity-20261011, not released. Coordinated single-center ring/debris/infall/background parallax source implemented; build/syntax passed and focused five-view QA updated. Publish product PR, inspect source QA plus normalized reference/render comparison, fix issues, integrate PR355 main, merge and verify all live checks. No new renderer/RAF/controller/storage. Claimf7744f9. Physical Safari/FPS remain untested.
+
 ## 2026-10-11 15:40 Bangkok — Codex Cloud claims interactive cosmic follow-up
 
 Branch feat/launch-gravity-20261011 basef2a487f. User wants rotating black hole, rocks/dust spiraling inward and mouse/touch interaction; reference IMG_9275. Native menu remains entry owner; only presentation responds. Mission PR355 same-owner source QA continues independently. Claim published before product edits.

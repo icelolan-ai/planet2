@@ -161,7 +161,7 @@ if INLINE:
     data = [f'<script type="text/plain" id="draco-wrapper">{b64(read("draco", "draco_wasm_wrapper.js"))}</script>',
             f'<script type="application/octet-stream" id="draco-wasm">{b64(read("draco", "draco_decoder.wasm"))}</script>']
     data += [f'<script type="application/octet-stream" data-world="{w["id"]}">{b64(read("worlds", w["id"] + ".glb"))}</script>' for w in worlds]
-    data.append('<script>window.__ASSETS={launch:'+json.dumps({key:'data:image/webp;base64,'+b64(read('launch',key+'.webp')) for key in ['cosmic-portal','cosmic-dust']})+'};</script>')
+    data.append('<script>window.__ASSETS={launch:'+json.dumps({key:'data:image/webp;base64,'+b64(read('launch',key+'.webp')) for key in ['cosmic-portal','cosmic-dust','cosmic-space','cosmic-ring','cosmic-rock']})+'};</script>')
     out = (page.replace('/*__FONTS__*/', fonts).replace('<!--__DATA__-->', '\n'.join(data))
                .replace('/*__VENDOR__*/', vendor).replace('/*__WORLDS__*/', js_worlds))
     open('/tmp/cerebra-inline.html', 'w', encoding='utf-8').write(out)
@@ -179,7 +179,7 @@ manifest = {
     'rockets': {**{key: emit('rockets', key, 'glb', read('rockets', name)) for key, name in [('f9','VEH_full.glb'),('fh','VEH_FH_full.glb'),('sv','SV_full.glb')]},
                 'manifest': emit('rockets', 'parts_manifest', 'json', read('rockets', 'parts_manifest.json')),
                 'decoder': emit('rockets', 'meshopt_decoder', 'js', read('rockets', 'meshopt_decoder.module.js'))},
-    'launch': {key: emit('launch', key, 'webp', read('launch', key + '.webp')) for key in ['cosmic-portal', 'cosmic-dust']},
+    'launch': {key: emit('launch', key, 'webp', read('launch', key + '.webp')) for key in ['cosmic-portal', 'cosmic-dust', 'cosmic-space', 'cosmic-ring', 'cosmic-rock']},
     'sizes': {},
 }
 for w in worlds:

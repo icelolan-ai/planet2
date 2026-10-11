@@ -106,7 +106,15 @@
     const slideFooter=document.createElement('div');slideFooter.className='cl-slide-footer';slideFooter.innerHTML='<p class="cl-slide-hint" data-cl-hint>Swipe up / down to choose</p><button type="button" class="cl-enter cl-slide-enter" data-cl-enter>Enter →</button>';page.querySelector('[data-cl-hub]').append(slideFooter);
     // Original raster scene + composited dust; native path controller still owns all navigation.
     const cosmos=document.createElement('div');cosmos.className='cl-cosmos';cosmos.setAttribute('aria-hidden','true');
-    cosmos.innerHTML='<img class="cl-cosmic-scene" data-cl-scene alt="" decoding="async"><img class="cl-cosmic-dust" data-cl-dust alt="" decoding="async"><img class="cl-cosmic-dust cl-cosmic-dust-far" data-cl-dust alt="" decoding="async">';page.prepend(cosmos);
+    cosmos.innerHTML='<img class="cl-cosmic-scene" data-cl-scene alt="" decoding="async"><img class="cl-cosmic-dust cl-cosmic-dust-far" data-cl-dust alt="" decoding="async"><div class="cl-gravity-frame"><img class="cl-gravity-ring" data-cl-ring alt="" decoding="async"><div class="cl-gravity-debris"></div></div>';page.prepend(cosmos);
+    const debris=cosmos.querySelector('.cl-gravity-debris');
+    // One shared orbit origin, bounded sprite count. CSS owns the visual phase.
+    for(let i=0;i<28;i++){
+      const rock=i<10,wrap=document.createElement('span');wrap.className='cl-gravity-orbit'+(i%3===0?' cl-gravity-infall':'');
+      wrap.style.setProperty('--orbit-period',(rock?44+i*3:28+i*2)+'s');wrap.style.setProperty('--orbit-delay',(-i*4.71)+'s');wrap.style.setProperty('--orbit-angle',(i*137.5)+'deg');wrap.style.setProperty('--orbit-radius',(.41+(i%5)*.046).toFixed(3));
+      wrap.style.setProperty('--sprite-size',(rock?12+i%4*7:2+i%3)+'px');
+      const radial=document.createElement('span');radial.className='cl-gravity-radial';const sprite=document.createElement(rock?'img':'i');sprite.className='cl-gravity-sprite'+(rock?' cl-gravity-rock':' cl-gravity-particle');if(rock){sprite.dataset.clRock='';sprite.alt='';sprite.decoding='async';}radial.append(sprite);wrap.append(radial);debris.append(wrap);
+    }
     const column=document.createElement('div');column.className='cl-path-column';column.append(page.querySelector('.cl-paths'),slideFooter);page.querySelector('[data-cl-hub]').append(column);
     const cosmicCSS=document.createElement('style');cosmicCSS.textContent=`
       .cl-cosmos{display:none;position:absolute;inset:0;overflow:hidden;pointer-events:none;background:#030309;z-index:-1}
@@ -118,6 +126,24 @@
       .cl-cosmic-dust-far{opacity:.18;animation-duration:55s;animation-direction:alternate-reverse;scale:.86}
       .cl-page[open].cl-hub-open:not(.cl-cosmos-paused) .cl-cosmic-dust{animation-play-state:running}
       @keyframes cl-cosmic-drift{from{transform:translate3d(-2%,-2%,0) rotate(-2deg)}to{transform:translate3d(4%,3%,0) rotate(2deg)}}
+      .cl-cosmos{--hole-x:27%;--hole-y:49%;--hole-size:min(90vh,72vw);--gravity-x:0px;--gravity-y:0px;--gravity-scale:1}
+      .cl-cosmic-scene{position:absolute;inset:-2%;width:104%;height:104%;opacity:.63;transform:translate3d(calc(var(--gravity-x) * .28),calc(var(--gravity-y) * .28),0);transition:transform .65s ease-out}
+      .cl-gravity-frame{position:absolute;left:var(--hole-x);top:var(--hole-y);width:var(--hole-size);height:var(--hole-size);transform:translate(calc(-50% + var(--gravity-x)),calc(-50% + var(--gravity-y))) scale(var(--gravity-scale));transition:transform .65s ease-out}
+      .cl-gravity-ring{position:absolute;inset:0;width:100%;height:100%;animation:cl-gravity-turn 110s linear infinite;animation-play-state:paused;filter:brightness(1);transition:filter .6s}
+      .cl-gravity-debris{position:absolute;inset:0;z-index:1}
+      .cl-gravity-orbit{position:absolute;inset:0;animation:cl-gravity-orbit var(--orbit-period) linear var(--orbit-delay) infinite;animation-play-state:paused;transform:rotate(var(--orbit-angle))}
+      .cl-gravity-radial{position:absolute;left:50%;top:50%;width:var(--sprite-size);height:var(--sprite-size);transform:translate(calc(var(--hole-size) * var(--orbit-radius)),-50%)}
+      .cl-gravity-sprite{display:block;width:100%;height:100%;opacity:.8;animation:cl-gravity-turn 17s linear var(--orbit-delay) infinite;animation-play-state:paused}
+      .cl-gravity-particle{border-radius:50%;background:#cdb8f8;box-shadow:0 0 5px #d9bfff66}
+      .cl-gravity-infall .cl-gravity-radial{animation:cl-gravity-infall var(--orbit-period) ease-in var(--orbit-delay) infinite;animation-play-state:paused}
+      .cl-page[open].cl-hub-open:not(.cl-cosmos-paused) :is(.cl-gravity-ring,.cl-gravity-orbit,.cl-gravity-sprite,.cl-gravity-infall .cl-gravity-radial){animation-play-state:running}
+      .cl-gravity-attract .cl-gravity-ring{filter:brightness(1.18)}.cl-gravity-attract .cl-cosmos{--gravity-scale:1.025}
+      @keyframes cl-gravity-turn{to{transform:rotate(360deg)}}
+      @keyframes cl-gravity-orbit{from{transform:rotate(var(--orbit-angle))}to{transform:rotate(calc(var(--orbit-angle) + 360deg))}}
+      @keyframes cl-gravity-infall{0%,12%{transform:translate(calc(var(--hole-size) * var(--orbit-radius)),-50%) scale(1);opacity:0}24%{opacity:.9}86%{transform:translate(calc(var(--hole-size) * .22),-50%) scale(.25);opacity:.3}100%{transform:translate(calc(var(--hole-size) * .16),-50%) scale(.05);opacity:0}}
+      @media(max-width:760px){.cl-cosmos{--hole-x:36%;--hole-y:25%;--hole-size:112vw}.cl-gravity-orbit:nth-child(n+21){display:none}}
+      @media(max-height:620px) and (min-width:761px){.cl-cosmos{--hole-size:95vh;--hole-y:51%}}
+      @media(prefers-reduced-motion:reduce){.cl-gravity-frame,.cl-gravity-ring,.cl-cosmic-scene{transition:none!important}.cl-cosmos :is(.cl-gravity-ring,.cl-gravity-orbit,.cl-gravity-sprite,.cl-gravity-radial){animation:none!important}}
       .cl-hub-open .cl-shell{position:relative;z-index:1;max-width:1440px;padding:32px clamp(24px,5vw,80px) 40px}
       .cl-hub-open .cl-head{margin-bottom:18px}
       .cl-hub-open .cl-brand{letter-spacing:.4em;color:#e7e0f5}
@@ -150,7 +176,7 @@
         .cl-hub-open [data-cl-hub]{display:flex;gap:12px}.cl-hub-open .cl-hero{flex:1;min-height:100px;max-height:none}
         .cl-hub-open .cl-hero h1{font-size:46px;letter-spacing:.1em;line-height:1.1;max-width:280px}
         .cl-page[lang=th].cl-hub-open .cl-hero h1{font-size:32px;line-height:1.45}
-        .cl-cosmic-scene{height:62%;object-position:27% center;opacity:.8}
+        .cl-cosmic-scene{height:104%;object-position:27% center;opacity:.55}
         .cl-path-column{flex-shrink:0;gap:18px}.cl-hub-open .cl-paths{gap:10px}.cl-hub-open .cl-path{gap:12px;border-radius:10px}
         .cl-hub-open .cl-path .cl-num{width:26px;font-size:14px}.cl-hub-open .cl-path .cl-symbol{width:25px}.cl-hub-open .cl-path .cl-symbol svg{width:24px;height:24px}
         .cl-hub-open .cl-slide-hint{max-width:155px}.cl-hub-open .cl-slide-enter{min-width:124px}
@@ -166,7 +192,15 @@
       @media(prefers-reduced-motion:reduce){.cl-cosmic-dust{animation:none!important}}
     `;document.head.append(cosmicCSS);
     document.addEventListener('visibilitychange',()=>page.classList.toggle('cl-cosmos-paused',document.hidden));page.classList.toggle('cl-cosmos-paused',document.hidden);
-    function loadCosmos(){const assets=window.__ASSETS?.launch;if(!assets||cosmos.dataset.loaded)return;cosmos.querySelector('[data-cl-scene]').src=assets['cosmic-portal'];cosmos.querySelectorAll('[data-cl-dust]').forEach(img=>img.src=assets['cosmic-dust']);cosmos.dataset.loaded='true';}
+    function loadCosmos(){const assets=window.__ASSETS?.launch;if(!assets||cosmos.dataset.loaded)return;cosmos.querySelector('[data-cl-scene]').src=assets['cosmic-space'];cosmos.querySelector('[data-cl-ring]').src=assets['cosmic-ring'];cosmos.querySelectorAll('[data-cl-rock]').forEach(img=>img.src=assets['cosmic-rock']);cosmos.querySelectorAll('[data-cl-dust]').forEach(img=>img.src=assets['cosmic-dust']);cosmos.dataset.loaded='true';}
+    const gravityMotion=matchMedia('(prefers-reduced-motion:reduce)');
+    const resetGravity=()=>{cosmos.style.removeProperty('--gravity-x');cosmos.style.removeProperty('--gravity-y');page.classList.remove('cl-gravity-attract');};
+    const reactGravity=event=>{
+      if(!page.open||!page.classList.contains('cl-hub-open')||document.hidden||gravityMotion.matches||event.target.closest('button,input,select,textarea,.cl-path-column,.cl-head')){resetGravity();return;}
+      const rect=cosmos.querySelector('.cl-gravity-frame').getBoundingClientRect(),dx=(event.clientX-(rect.x+rect.width/2))/Math.max(1,rect.width),dy=(event.clientY-(rect.y+rect.height/2))/Math.max(1,rect.height);
+      cosmos.style.setProperty('--gravity-x',Math.max(-12,Math.min(12,dx*18))+'px');cosmos.style.setProperty('--gravity-y',Math.max(-10,Math.min(10,dy*16))+'px');page.classList.toggle('cl-gravity-attract',event.buttons>0||Math.hypot(dx,dy)<.38);
+    };
+    page.addEventListener('pointermove',reactGravity,{passive:true});page.addEventListener('pointerdown',reactGravity,{passive:true});page.addEventListener('pointerup',resetGravity,{passive:true});page.addEventListener('pointercancel',resetGravity,{passive:true});page.addEventListener('pointerleave',resetGravity,{passive:true});page.addEventListener('close',resetGravity);addEventListener('blur',resetGravity);gravityMotion.addEventListener('change',resetGravity);document.addEventListener('visibilitychange',()=>{if(document.hidden)resetGravity();});
     let pathIndex=0,pathGesture=null,suppressPathClick=0,pathTween;
     const pathMotion={value:0},motionQuery=matchMedia('(prefers-reduced-motion:reduce)');
     const pathButtons=[...page.querySelectorAll('[data-cl-path]')];
