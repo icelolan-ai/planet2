@@ -331,3 +331,7 @@ PR355: native dock select now has Planets/Rockets, chooses existing visible mode
 ## 2026-10-11 16:28 Bangkok — Mission QA review
 
 Source7b7feb4 Build38127935415 passed. All3-view fixture38127932321 failed after preset checks because native project restore closes flyouts and the fixture tried to close an already hidden Design panel; reopen through actual Edit > Design selected before closing. Mobile all9 preset/export/roundtrip/history plus categorized3-model selector reuse and conditional control adjacency reached assertions. Captured art review shows the native open settings tray shifts the composition and crops headings at export; focused art capture now closes that native tray through Window > Design before capture. No blanket console suppression. Earlier branch publishing failure38127738751 accidentally used incomplete base tree; complete tracked tree restored by7b7feb4, no main changes. Further full QA/desktop+tablet art review/live remain; not released.
+
+## 2026-10-11 16:36 Bangkok — Native Window selector correction
+
+Fixture art-capture Window > Design uses native menuitemcheckbox (checked visibility), not menuitem. Source UI38128322978 stopped at incorrect fixture role before image captures; corrected exact role. Product source unchanged. Full rerun pending; do not merge on partial previous results.
