@@ -1,3 +1,9 @@
+# RELEASED — Aero Animated Background performance — 2026-10-11 Bangkok
+
+User reports Studio tool/menu lag and heavy Rocket/Animated Background. This conversation implemented the **Animated Background / Aero Shards preview-only performance portion** in PR https://github.com/icelolan-ai/planet2/pull/367 merged `9386e07a`. Main generated `bc78d603`; build38146334070 and Pages38146356031 PASS. Live Aero3-view QA38146361392 ALL PASS, and live Fullscreen/Minimal shell4-view QA38146361322 passed. Source preview stress QA38146052958 3/3: 15 rapid frames =>2 full GPU renders+13 cache skips; Bloom change renders. No duplicate GPU controller or degradation to export. This is not proof of physical iPhone/iPad FPS uplift.
+
+**Ownership released for Aero**. Remaining open user issues are separate: Rocket zoom/drag/pixelation and Blender XYZ Hand gizmo in draft PR #365; Studio glass/menu lag in draft PR #366; model-dependent preset titles and relocation of Animated Background menu under Background still need verification; PR #355 owns template. Do not claim all Studio lag is fixed. Check latest PRs before any source edits. Session requested execution in this chat, no Work handoff.
+
 # Active Animated Background interaction optimization — 2026-10-11 Bangkok
 
 PR https://github.com/icelolan-ai/planet2/pull/367 from `perf/aero-background-interaction-20261011`, source `c9a72103`. Native Aero preview shader now caps unnecessary redraw/readback during edits (24fps idle/13fps recent Studio UI input) and bypasses throttle for parameter edits and full render/export. After pending async readback, queues native Kit redraw if params changed. No new WebGL renderer/RAF; output dimensions/export not reduced. Existing background layering and native history preserved.
