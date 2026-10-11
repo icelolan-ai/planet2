@@ -8,6 +8,7 @@
   const range = (k,label,min,max,step=1) => ({k,label,t:'range',min,max,step});
   const kit = {
     label: 'Rocket', noShuffle: true, size: [.35,.65],
+    turn(it,rx,ry) { const wrap = v => ((v + 180) % 360 + 360) % 360 - 180; it.p.yaw = wrap(it.p.yaw + rx * 180 / Math.PI); it.p.pitch = wrap(it.p.pitch + ry * 180 / Math.PI); },
     resetDefaults: it => ({...kit.defaults, model: it.p.model}),
     defaults: { model:'f9', explode:0, pitch:0, yaw:25, roll:0, zoom:1, painted:false, colour:'#ffffff', finished:false, roughness:.5, metalness:.1, texture:true },
     ui: [range('explode','Exploded view / แยกชิ้นส่วน',0,1,.01),range('pitch','Pitch / หมุนแกน X',-180,180),range('yaw','Yaw / หมุนแกน Y',-180,180),range('roll','Roll / หมุนแกน Z',-180,180),range('zoom','Zoom / ขนาดโมเดล',.25,2,.05),
@@ -71,7 +72,11 @@
         r.autoClear=true;r.setRenderTarget(s.target);r.setViewport(0,0,W,H);r.setScissorTest(false);r.setClearColor(0,0);r.toneMapping=T.ACESFilmicToneMapping;r.toneMappingExposure=1;
         r.render(s.scene,s.camera);r.readRenderTargetPixels(s.target,0,0,W,H,s.bytes);
         for(let row=0;row<H;row++)s.image.data.set(s.bytes.subarray(row*W*4,(row+1)*W*4),(H-1-row)*W*4);
-        s.ctx.putImageData(s.image,0,0);g.drawImage(s.canvas,x,y,w,h);
+        // CAD bounds may include sparse hardware; center the visible projection in the native selection canvas.
+        let left=W,right=-1,top=H,bottom=-1;
+        for(let row=0;row<H;row++)for(let col=0;col<W;col++)if(s.image.data[(row*W+col)*4+3]){left=Math.min(left,col);right=Math.max(right,col);top=Math.min(top,row);bottom=Math.max(bottom,row);}
+        const dx=right>=left?Math.round((W-1-left-right)/2):0,dy=bottom>=top?Math.round((H-1-top-bottom)/2):0;
+        s.ctx.clearRect(0,0,W,H);s.ctx.putImageData(s.image,dx,dy);g.drawImage(s.canvas,x,y,w,h);
       }finally{r.setRenderTarget(target);r.setViewport(vp);r.setScissor(sc);r.setScissorTest(test);r.autoClear=auto;r.setClearColor(col,alpha);r.toneMapping=tone;r.toneMappingExposure=exposure;}
     },
     async ready(it){const studio=window.__cerebra.studio,draw=()=>studio.drawKit(it,it.w*studio.U(),it.h*studio.U());draw();const s=states.get(it);await s?.loadPromise;draw();await s?.variantTask;if(s?.error)throw Error('Rocket: '+s.error);draw();},

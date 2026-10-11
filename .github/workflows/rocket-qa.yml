@@ -1,7 +1,7 @@
 name: Native Rocket UI QA
 on:
   push:
-    branches: [feat/studio-rockets-20261011, test/rocket-live-20261011]
+    branches: [feat/studio-rockets-20261011, fix/rocket-hand-empty-20261011, test/rocket-live-20261011]
     paths: ['src/**', 'docs/qa/studio-rockets-ui.cjs', '.github/workflows/rocket-qa.yml']
   workflow_run:
     workflows: ['Build generated site']

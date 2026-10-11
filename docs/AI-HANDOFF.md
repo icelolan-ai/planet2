@@ -1,3 +1,7 @@
+# Latest handoff — Rocket interaction follow-up (2026-10-11)
+
+Codex Cloud owns `fix/rocket-hand-empty-20261011` from `4cdab15`. Native Hand support, direct Empty Canvas Rocket menu and centered visible projection implemented; source checks passed, hosted UI/CI/merge/live QA pending. See newest work-log entry. Do not duplicate or treat this follow-up as released. Earlier PRs #348–350 are already released.
+
 # AI Handoff Guide
 
 ## Latest handoff — 2026-10-11 04:44 Asia/Bangkok — Codex Cloud — Rocket RELEASED / ownership released
