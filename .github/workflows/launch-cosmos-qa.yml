@@ -1,7 +1,7 @@
 name: Native Cosmic Launch UI QA
 on:
   push:
-    branches: [feat/launch-cosmos-20261011]
+    branches: [feat/launch-cosmos-20261011, feat/launch-gravity-20261011]
     paths: ['src/**', 'docs/qa/launch-cosmos-ui.cjs', '.github/workflows/launch-cosmos-qa.yml']
   workflow_run:
     workflows: ['Build generated site']
@@ -10,7 +10,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: launch-cosmos-qa-${{ github.event_name }}-${{ github.ref }}
+  group: launch-cosmos-qa-${{ github.event_name }}-${{ github.event.workflow_run.head_branch || github.ref }}
   cancel-in-progress: true
 jobs:
   launch:

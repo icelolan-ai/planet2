@@ -1,3 +1,15 @@
+# Gravity source verified — 2026-10-11 16:33 Bangkok
+
+PR356 source2f4136d build38128063545 and five-view38128048846 fullPASS/errors[]. Paired normalized reference/render board reviewed; design-qa.md source passed. Native ring/debris origin/motion/infall/pointer/route/lifecycle assertions passed; no new state owner. Integrate PR355 generated main, preserve its new source/build/workflows/docs, final merge/deploy/live checks pending. Owner Codex Cloud remains active; physical Safari/FPS not tested.
+
+# Gravity scene checkpoint — 2026-10-11 16:24 Bangkok
+
+Active Codex Cloud feat/launch-gravity-20261011, not released. Coordinated single-center ring/debris/infall/background parallax source implemented; build/syntax passed and focused five-view QA updated. Publish product PR, inspect source QA plus normalized reference/render comparison, fix issues, integrate PR355 main, merge and verify all live checks. No new renderer/RAF/controller/storage. Claimf7744f9. Physical Safari/FPS remain untested.
+
+## 2026-10-11 15:40 Bangkok — Codex Cloud claims interactive cosmic follow-up
+
+Branch feat/launch-gravity-20261011 basef2a487f. User wants rotating black hole, rocks/dust spiraling inward and mouse/touch interaction; reference IMG_9275. Native menu remains entry owner; only presentation responds. Mission PR355 same-owner source QA continues independently. Claim published before product edits.
+
 ## 2026-10-11 15:31 Bangkok — Cosmic source ready
 
 PR354 source3258cea: Build38124622567 and full five-view UI38124620447 PASS/errors[]. Paired art-direction comparison and desktop/mobile/tablet/landscape/narrow screenshots reviewed; design-qa.md source passed. Next merge expected head, wait generated main/Pages and full live repeat; do not call released yet. Owner remains Codex Cloud. New Studio mission preset work claimed independently on feat/studio-mission-presets-20261011.

@@ -1,21 +1,12 @@
-**Findings**
+# Launch gravity design QA
 
-- Reference: attached IMG_9261.jpeg (658x1731), hero top658x433. Evaluated together with actual native desktop1440x900 and mobile390x844 captures in one comparison board, normalizing mobile DPR3 to CSS density. Adapted luminous violet portal, black starfield, fine floating dust and tracked condensed typography. Native three choices, rotating title, language/fullscreen/back and Enter remain intentional differences; foreign logos/copy/sections omitted.
-- [P2]320px native header overflow resolved by <=360px second action row. Post-fix screenshot and full native bounds check pass. No remaining actionable P0/P1/P2 findings.
-- Reviewed final desktop1440x900, mobile390x844, tablet820x1180, landscape844x390 and narrow320x568 source captures (Actions38124620447). Readable selected lavender choice, gray smaller neighbors, Enter and native labels fit without horizontal overflow. Portrait portal crop is intentional; image remains sharp. Barlow Condensed/Noto Sans Thai preserve native EN/Thai typography. Sparse dust stays behind functional controls.
-- Full five-view source QA PASS, errors[]. Covers actual keyboard/touch selection, all three routes, Enter-only entry, empty artwork click, EN/Thai control bounds, hashed lazy raster loading, transform motion, pause outside hub, reduced-motion stop, unchanged native Studio empty initial state, visible exit/return.
-- Earlier fixture failures are documented in work log: rotating text pointer-events, floating-point computed-style serialization, native120px swipe step, hidden legacy Studio exit button. Fixed assertions now use native surfaces/controllers; no console/resource suppression beyond actual optional favicon.
+Reference: attached IMG9275 (current native hub) plus IMG9261 violet cosmic art direction. Compared side by side in /tmp/gravity-reference-review.jpg with hosted source captures normalized to CSS sizes: 1440x900 DPR1,390x844 DPR3,820x1180 DPR2,844x390 DPR1,320x568 DPR1. Reviewed every viewport and EN/Thai captures from source run38128048846; all5 full UI passes/errors[].
 
-**Open Questions**
+- P0/P1/P2: none remaining. Preserved three-path wheel/native heading/icons/copy, violet selected state/gray alternatives, mobile hero above controls and desktop hero left. Header min40px controls remain in viewport.
+- Ring/debris share one square foreground frame and origin; nebula uses same pointer vector at slower depth. Ring edge/wisps are actual transparent image content, not an unrelated CSS circle over a baked portal. Palette/lighting/soft alpha edges agree. Nebula is intentionally quieter behind native menu.
+- Actual assertions: ring and inward radial transforms change over time,28 bounded sprites share frame, mouse pressure/parallax responds without entering routes, native touch swipe/keyboard/Enter all3 routes/return/EN/TH continue; animations pause in guide/Studio, reduced motion static.
+- No new canvas/renderer/RAF/controller/storage. Source images lazily requested only on hub entry; production layers ring329232/space71120/rock9328bytes plus existing dust56514.
 
-- Physical iOS Safari/GPU/FPS remain untested. Hosted official Chromium software GL and emulated touch/DPR were used; cloud interactive browser exposes WebGL text fallback.
-- Main generated build/Pages and deployed repetition pending at source-review checkpoint.
+Limits: hosted Chromium emulation/software GL, not physical Safari/device FPS/long recording. Live deployment pending. Native contrast/copy/art direction intentionally adapted from supplied reference.
 
-**Implementation Checklist**
-
-- [x] Source build, split/inline asset manifest and JS syntax.
-- [x] Paired visual comparison; five viewport source UI route/motion/bounds checks.
-- [x] P2 header issue fixed and verified.
-- [ ] Record generated main/Pages and live repeat in release log.
-
-final result: passed (source design/UI; deployed release verification pending)
+Source final result: passed. Live final result: blocked until PR356 merge/generated Pages/full live QA.

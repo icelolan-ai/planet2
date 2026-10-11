@@ -4,6 +4,8 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 ## Current work / ownership
 
+- Owner: Codex Cloud. User follow-up IMG_9275: rotating black-hole ring, tumbling debris spiraling inward, pointer/touch gravity interaction on existing three-route launch menu. Branch feat/launch-gravity-20261011 basef2a487fd6bd0c23dac13d718206767cf85f755c7. Intended source: studio-launch.js or isolated presentation helper, explicit build/asset manifest, original source raster layers, launch QA fixture/workflow, docs. Preserve native path gesture/Enter/language/guide/Studio controls; page-only presentation, no new renderer/RAF/controller/storage. Same owner mission PR355 still source QA active; separate branch, integrate latest main before publishing product. No overlapping other owner. Publish claim before edits.
+
 - Owner: Codex Cloud. New user request: restyle existing three-path pre-Studio selector using attached IMG_9261 cosmic violet portal/dark space reference and slowly floating dust. Branch `feat/launch-cosmos-20261011`, base `b16c0185135e25e1a9b5dea3b96a5419a8e9bc04`. Intended files: `src/effects/studio-launch.js`, `src/build_web.py`, new `src/assets-src/launch/**`, focused QA fixture/workflow, design QA report, log/handoff. Preserve native path selection/swipe/Enter/language/guide/Studio owners; no new WebGL renderer/RAF. Fresh open PR check: only unrelated #1. Rocket PR353 merged; live QA38123260584 still running, no live release claim yet. Publish this claim before source edits.
 
 - Owner: none for Rocket complete-parts/contextual tuning. PR353 merged and deployed; full live QA38123260584 passed desktop DPR1/DPR2 and mobile DPR3. Release evidence below. Active new cosmic launch ownership above is separate.
@@ -309,3 +311,11 @@ User requested cloud continuation before shutting down the PC. Local ownership i
 ## 2026-10-11 15:31 Bangkok — Codex — Cosmic menu source QA complete (PR354)
 
 - Source3258cea; Build38124622567 success; UI38124620447 all five views PASS/errors[]: desktop1440x900 DPR1/mobile390x844 DPR3/tablet820x1180 DPR2/landscape844x390/narrow320x568. Full native routes, real touch/keyboard, Enter-only, empty click, language, asset loading, dust motion/pause/reduced-motion, unchanged Studio state and exit/return. Paired image-reference/rendered visual comparison and all five viewport captures reviewed; initial320px header overflow fixed. design-qa.md source passed. No generated outputs committed. PR354 ready; merge/generated main/Pages/live still pending; ownership active. Physical Safari/GPU/FPS untested.
+
+## 2026-10-11 16:24 Bangkok — Coordinated gravity scene source checkpoint
+
+Codex Cloud owns feat/launch-gravity-20261011, publishedclaimf7744f9 before edits. Original raster ring/starfield/asteroid layers, single shared CSS orbit frame, rotating ring/tumbling28 bounded sprites with every third infalling/fading; same pointer vector foreground/nebula depth, nonblocking passive touch response. CSS paused outside hub/hidden/reducedmotion static. Existing navigation/Enter/swipe/text/language untouched. New source assets409680bytes plus existingdust; build/syntax/diff passed. Added five-view UI motion/origin/pointer/route/lifecycle assertions. Full source QA/paired visual review/PR merge/main integration/Pages/live pending; not released. MissionPR355 independent active QA; integrate it before final product merge. Physical Safari/FPS/longrecording untested.
+
+## 2026-10-11 16:33 Bangkok — Gravity source QA and visual review
+
+PR356 source2f4136d Build38128063545 and full five-view UI38128048846 allPASS/errors[]. Normalized reference/render board reviewed; ring/debris/sharedorigin/infall/pointer/reducedmotion/native routes/lifecycle/ENThai all covered. Source design-qa.md passed; no P0/P1/P2 remaining. Source captures artifact11698185576/11698115702/11697829393/11697569824/11697509931. Wait PR355 main integration, then final expectedhead merge/generated Pages/live5view+Rocket/Mission regressions. Still Codex owner; not released.
