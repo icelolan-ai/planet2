@@ -152,7 +152,7 @@
       else if (t.matches('[data-studio-keys]')) closeExtras('help');
       else if (t.matches('[data-studio-lib]')) closeExtras('lib');
       else if (t.matches('[data-studio-export]')) closeExtras('save');
-      else if (t.matches('[data-studio-tune]')) closeExtras('tune');
+      else if (t.matches('[data-studio-tune]')) closeExtras(s.sel?.kit === 'rocket' ? 'fly' : 'tune');
       else if (t.matches('[data-studio-reset-all]')) closeExtras('reset');
     }, true);
 

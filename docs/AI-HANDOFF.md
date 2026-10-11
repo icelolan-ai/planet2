@@ -1,3 +1,7 @@
+# Latest handoff — 2026-10-11 14:33 Asia/Bangkok — Codex Cloud
+
+Owner Codex Cloud on `fix/rocket-complete-20261011` from `0458404`. Missing Rocket nose/parts on Retina traced to redundant setViewport multiplying physical target size by stage DPR. Fix target viewport/restore order; source assets unchanged. Native Tune follows selected Rocket vs planet; existing Kit panel gains assembly/disassembly, scope/stagger and isolate/remove/reinsert/restore actions under native p/history. Source checks passed; hosted Retina/full UI/CI/merge/live QA pending. See latest work log. Earlier DPR1-only release QA did not cover this crop; do not call this follow-up released or duplicate it.
+
 # Latest handoff — 2026-10-11 12:01 Asia/Bangkok — Codex Cloud
 
 **Released; owner none.** PR #351 fixed native Rocket Hand rotation, direct Empty Canvas Add Rocket/เพิ่มจรวด and centered visible projection in Select. Merge `751aca57ea871b8e7718648789fe533002daf4f1`; generated `4bfcb8dea6f335bab86d18e92606c94b1946e286`; live `app.c74a63f35b.js`. Source build/CI/Pages and hosted/deployed desktop1440x900/mobile390x844 UI passed. Live QA38113153497 validates actual mouse/touch, one native history action, Undo/Redo, centered pixels all three models, EN/Thai direct menu, locked/hidden availability, existing controls/reset/project/instances and native PNG export; errors[] both. Screenshots reviewed.

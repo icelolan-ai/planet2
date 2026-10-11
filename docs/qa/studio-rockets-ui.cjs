@@ -4,7 +4,7 @@ const {chromium}=require('playwright'),assert=require('assert'),os=require('os')
 (async()=>{
 const vp=JSON.parse(process.env.VP||'{"width":1440,"height":900}');
 const b=await chromium.launch({headless:true,...(process.env.QA_CHROMIUM_PATH?{executablePath:process.env.QA_CHROMIUM_PATH}:{channel:'chrome'}),args:['--no-sandbox','--use-gl=swiftshader','--enable-unsafe-swiftshader']});
-const p=await b.newPage({viewport:vp,isMobile:vp.width<700,hasTouch:vp.width<700});const errors=[];
+const p=await b.newPage({viewport:vp,isMobile:vp.width<700,hasTouch:vp.width<700,deviceScaleFactor:+process.env.QA_DPR||1});const errors=[];
 const optionalIcon=url=>/\/favicon\.ico(?:$|\?)/.test(url);
 p.on('requestfailed',r=>{const message='REQUEST_FAILED '+r.url()+' '+r.failure()?.errorText;console.log(message);if(!optionalIcon(r.url()))errors.push(message);});
 p.on('response',r=>{if(r.status()>=400&&!optionalIcon(r.url()))errors.push('HTTP '+r.status()+' '+r.url());});
@@ -30,8 +30,11 @@ for(const model of ['f9','fh','sv']){
  await p.waitForFunction(()=>{const s=__cerebra.studio,i=s.items.filter(i=>i.kit==='rocket').at(-1),q=CerebraRockets.inspect(i);return q?.meshes>0||q?.error;},null,{timeout:90000});
  const loaded=await p.evaluate(()=>{const q=CerebraRockets.inspect(__cerebra.studio.sel);return {loading:q.loading,error:q.error,meshes:q.meshes};});console.log(model,loaded);assert(!loaded.error&&loaded.meshes>20);
  await p.evaluate(()=>{const s=__cerebra.studio;for(const i of s.items.filter(i=>i.kit==='rocket'&&i!==s.sel)){i.hide=true;s.place(i);}s.renderLayers();});
- const pixel=()=>p.evaluate(async()=>{const s=__cerebra.studio,i=s.sel;await CerebraRockets.kit.ready(i);const c=CerebraRockets.inspect(i).canvas,a=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let n=0,hash=0;for(let j=0;j<a.length;j++){hash=(hash*31+a[j])|0;if(j%4===3&&a[j])n++;}return {n,hash};});
- const base=await pixel();assert(base.n>100);let previous=base;
+ const pixel=()=>p.evaluate(async()=>{const s=__cerebra.studio,i=s.sel;await CerebraRockets.kit.ready(i);const c=CerebraRockets.inspect(i).canvas,a=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let n=0,hash=0;for(let j=0;j<a.length;j++){hash=(hash*31+a[j])|0;if(j%4===3&&a[j])n++;}const q=CerebraRockets.inspect(i);return {n,hash,viewport:q.viewport,target:q.target,dpr:s.app.stage.renderer.getPixelRatio(),visible:q.visibleParts};});
+ const base=await pixel();assert(base.n>100);assert.deepEqual(base.viewport,[0,0,...base.target]);assert.equal(base.visible.length,loaded.meshes);console.log('native target',model,{dpr:base.dpr,viewport:base.viewport,target:base.target});let previous=base;
+ // Test fractional Lite DPR and Retina DPR without creating a second renderer.
+ for(const ratio of [1.25,2]){await p.evaluate(v=>__cerebra.stage.renderer.setPixelRatio(v),ratio);const q=await pixel();assert.deepEqual(q.viewport,[0,0,...q.target]);assert.equal(q.hash,base.hash);}
+ await p.evaluate(v=>__cerebra.stage.renderer.setPixelRatio(v),base.dpr);
  // Visible projected pixels must be centered in the same native canvas as Select.
  const centered=await p.evaluate(async()=>{const i=__cerebra.studio.sel;await CerebraRockets.kit.ready(i);const c=CerebraRockets.inspect(i).canvas,a=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let l=c.width,r=-1,t=c.height,b=-1;for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++)if(a[(y*c.width+x)*4+3]){l=Math.min(l,x);r=Math.max(r,x);t=Math.min(t,y);b=Math.max(b,y);}return {dx:Math.abs((l+r)-(c.width-1)),dy:Math.abs((t+b)-(c.height-1))};});assert(centered.dx<=2&&centered.dy<=2,JSON.stringify(centered));
  const pose=()=>p.evaluate(()=>{const s=__cerebra.studio,i=s.sel;return {id:i.id,yaw:i.p.yaw,pitch:i.p.pitch,layout:[i.x,i.y,i.w,i.h,i.rot||0],others:s.items.filter(x=>x!==i&&x.kit==='rocket').map(x=>JSON.stringify(x.p)),hi:s.hi};});
@@ -52,6 +55,26 @@ for(const model of ['f9','fh','sv']){
  await p.evaluate(()=>{const s=__cerebra.studio;s.sel.hide=false;s.place(s.sel);s.renderLayers();});assert(await hand.isEnabled());
 
 
+ // The native Tune button follows the selected object, using the same Kit panel/history.
+ const tune=p.locator('[data-studio-tune]');assert(await tune.isEnabled());assert.equal(await tune.locator('[data-tune-label]').textContent(),'Tune Rocket');await tune.click();
+ await p.locator('[data-rocket-assembly]').waitFor({state:'visible'});assert.equal(await tune.getAttribute('aria-expanded'),'true');
+ assert(await p.evaluate(()=>!document.body.classList.contains('tune-open')&&!document.body.classList.contains('wtune-open')));
+ const fly=await p.locator('[data-kit-panel]').boundingBox();assert(fly.x>=0&&fly.y>=0&&fly.x+fly.width<=vp.width+1&&fly.y+fly.height<=vp.height+1);
+ await p.locator('[data-rocket-explode]').click();assert.equal(await p.evaluate(()=>__cerebra.studio.sel.p.explode),1);assert.notEqual((await pixel()).hash,base.hash);
+ await p.locator('[data-rocket-assemble]').click();assert.equal((await pixel()).hash,base.hash);
+ await p.locator('[data-kp="stagger"]').check();await p.locator('[data-kp="explode"]').evaluate(e=>{e.value=.5;e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));});assert.notEqual((await pixel()).hash,base.hash);await p.locator('[data-rocket-assemble]').click();await p.locator('[data-kp="stagger"]').uncheck();
+ await p.locator('summary').filter({hasText:'Parts & variants'}).click();
+ const nose=model==='sv'?'SV-CSM-000':'PL-020';await p.locator('[data-rocket-part]').selectOption(nose);await p.locator('[data-rocket-scope]').selectOption('@selected');
+ await p.locator('[data-rocket-explode]').click();assert.notEqual((await pixel()).hash,base.hash);await p.locator('[data-rocket-assemble]').click();await p.locator('[data-rocket-scope]').selectOption('');
+ await p.locator('[data-rocket-isolate]').click();assert.notEqual((await pixel()).hash,base.hash);
+ await p.locator('[data-rocket-show-all]').click();assert.equal((await pixel()).hash,base.hash);
+ await p.locator('[data-rocket-remove]').click();const removed=await pixel();assert.notEqual(removed.hash,base.hash);assert(removed.visible.length<loaded.meshes);
+ await p.evaluate(model=>{const s=__cerebra.studio;s.undo();s.select(s.items.filter(i=>i.kit==='rocket'&&i.p.model===model).at(-1));},model);assert.equal((await pixel()).hash,base.hash);
+ await p.evaluate(model=>{const s=__cerebra.studio;s.redo();s.select(s.items.filter(i=>i.kit==='rocket'&&i.p.model===model).at(-1));},model);assert.equal((await pixel()).hash,removed.hash);
+ await p.evaluate(model=>{const s=__cerebra.studio,snap=s.snapshot();s.restore(snap);s.select(s.items.filter(i=>i.kit==='rocket'&&i.p.model===model).at(-1));},model);assert.equal((await pixel()).hash,removed.hash);
+ await tune.click();await p.locator('summary').filter({hasText:'Parts & variants'}).click();await p.locator('[data-rocket-show-all]').click();assert.equal((await pixel()).hash,base.hash);
+ await p.screenshot({path:path.join(process.env.QA_SCREENSHOT_DIR||os.tmpdir(),`rocket-tune-${model}-${vp.width}.png`)});
+ await tune.click();assert(await p.locator('[data-kit-panel]').isHidden());
  const instances=await p.evaluate(()=>JSON.stringify(CerebraRockets.inspect(__cerebra.studio.sel).instances));
  await p.locator('[data-menu-top="Edit"]').click();await p.getByRole('menuitem',{name:'Design selected…',exact:true}).click();
  for(const [key,value]of [['explode',.6],['yaw',75],['zoom',1.3]]){
@@ -90,7 +113,13 @@ for(const model of ['f9','fh','sv']){
  assert.equal((await pixel()).hash,base.hash);
  assert.equal(await p.evaluate(()=>{const s=__cerebra.studio,snap=s.snapshot();s.restore(snap);const i=s.items.filter(i=>i.kit==='rocket').at(-1);s.select(i);s.closeFly();return i.p.model;}),model);
 }
+const beforePlanet=await p.evaluate(()=>__cerebra.studio.snapshot());
+await p.evaluate(()=>{const s=__cerebra.studio;s.addPlanet(-1);s.select(s.fxItem('planet'));});
+assert.equal(await p.locator('[data-tune-label]').textContent(),'Tune the core');await p.locator('[data-studio-tune]').click();await p.waitForFunction(()=>document.getElementById('tune').dataset.open==='true');
+await p.evaluate(()=>{const s=__cerebra.studio;s.select(s.items.filter(i=>i.kit==='rocket').at(-1));});assert.equal(await p.locator('[data-tune-label]').textContent(),'Tune Rocket');assert(await p.evaluate(()=>document.getElementById('tune').dataset.open!=='true'));
+await p.locator('[data-studio-tune]').click();assert(await p.locator('[data-rocket-assembly]').isVisible());
+await p.evaluate(snap=>{const s=__cerebra.studio;s.closeFly();s.restore(snap);},beforePlanet);
 const bounds=await p.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,iframes:document.querySelectorAll('iframe').length}));assert(!bounds.overflow);assert.equal(bounds.iframes,0);
 if(process.env.QA_EXPORT==='1'){const out=await p.evaluate(async()=>{const c=await __cerebra.studio.composePoster(1,true);return {w:c.width,h:c.height,size:c.toDataURL().length};});assert(out.w>0&&out.h>0&&out.size>10000);console.log('composition export',out);}
-console.log('errors',errors);assert.deepEqual(errors,[]);await b.close();console.log('PASS',vp);
+console.log('errors',errors);assert.deepEqual(errors,[]);await b.close();console.log('PASS',vp,'device DPR',+process.env.QA_DPR||1);
 })().catch(e=>{console.error(e);process.exit(1)});
