@@ -1,3 +1,7 @@
+# Latest handoff — 2026-10-11 15:04 Asia/Bangkok — Codex Cloud
+
+Owner active on feat/launch-cosmos-20261011 from b16c018. User requested cosmic redesign of existing three-path menu (IMG_9261) and drifting dust, preserving native interactions. Claim only; implementation pending. PR353 Rocket complete-parts/contextual assembly merged4ba9b2, generatedb16c018/app.e4d1cc8bc9.js; full source QA38122638149 passes desktop DPR1/DPR2/mobileDPR3 (DPR2 one startup retry). Live QA38123260584 pending; finish verification and append release record without duplicating Rocket code.
+
 # Latest handoff — 2026-10-11 14:47 Asia/Bangkok — Codex Cloud
 
 Owner Codex Cloud active on fix/rocket-complete-20261011, PR #353; source fd2fd5 build38122263589 passed. Retina physical target viewport fix and contextual native Tune Rocket assembly/parts implemented; original GLBs unchanged. Source QA38122261479 mobile DPR3 passed including synchronous actual renderer1.25/2 identical pixels/viewport, all parts, controls/history/project/reset/export and errors[]. Desktop DPR1 failed in unrelated animated guide/back navigation before Rocket assertions; fixture checkpoint uses real Enter to the default native Studio path directly. Desktop Retina DPR2 subsequently passed with actual renderer1.25/2 identical pixels and errors[]. No release yet: full rerun/merge/generated Pages/live QA pending. Do not duplicate PR353. Physical iOS/Safari/GPU performance and original Part Gallery/slot replacement outside coverage. See work log.
