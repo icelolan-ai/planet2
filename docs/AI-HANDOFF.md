@@ -1,6 +1,6 @@
 # Latest handoff — 2026-10-11 14:33 Asia/Bangkok — Codex Cloud
 
-Owner Codex Cloud on `fix/rocket-complete-20261011` from `0458404`. Missing Rocket nose/parts on Retina traced to redundant setViewport multiplying physical target size by stage DPR. Fix target viewport/restore order; source assets unchanged. Native Tune follows selected Rocket vs planet; existing Kit panel gains assembly/disassembly, scope/stagger and isolate/remove/reinsert/restore actions under native p/history. Source checks passed; hosted Retina/full UI/CI/merge/live QA pending. See latest work log. Earlier DPR1-only release QA did not cover this crop; do not call this follow-up released or duplicate it.
+Owner Codex Cloud on `fix/rocket-complete-20261011` from `0458404`. Missing Rocket nose/parts on Retina traced to redundant setViewport multiplying physical target size by stage DPR. Fix target viewport/restore order; source assets unchanged. Native Tune follows selected Rocket vs planet; existing Kit panel gains assembly/disassembly, scope/stagger and isolate/remove/reinsert/restore actions under native p/history. PR #353 source765661de build passed. First hosted Retina job timed out before gateway; fixture now prints startup errors/state and captures failed page, with150-second startup bound. No full pass yet; hosted Retina/full UI/merge/live QA pending. See latest work log. Earlier DPR1-only release QA did not cover this crop; do not call this follow-up released or duplicate it.
 
 # Latest handoff — 2026-10-11 12:01 Asia/Bangkok — Codex Cloud
 
