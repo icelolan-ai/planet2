@@ -577,6 +577,16 @@ void main(){
     l.at=now;loadOf.set(g,l);return !!mode.low||l.slow;
   }
   const cache=new WeakMap();let gpu;
+  // Live Studio UI deserves priority over decorative background animations.
+  // No competing render loop, mutation of preset data, or export downgrade.
+  let lastStudioUiInput=0;
+  const trackStudioInput=e=>{
+    if(e.target?.closest?.('#studio .st-rail, #studio .st-dock, #studio .st-fly, #studio .studio-panel, #studio .st-menubar, #studio .st-menu-popup, #studio .st-bgm'))lastStudioUiInput=performance.now();
+  };
+  document.addEventListener('pointerdown',trackStudioInput,{passive:true});
+  document.addEventListener('pointermove',e=>{if(e.buttons)trackStudioInput(e);},{passive:true});
+  document.addEventListener('input',trackStudioInput,{passive:true});
+  document.addEventListener('click',trackStudioInput,{passive:true});
   const v4=()=>new THREE.Vector4();
   const uni=(p,names)=>Object.fromEntries(names.map(n=>[`u${p}_${n}`,{value:v4()}]));
   function pass(vertexShader,fragmentShader,uniforms,opts={}){return new THREE.ShaderMaterial({glslVersion:THREE.GLSL3,vertexShader,fragmentShader,uniforms,depthTest:false,depthWrite:false,transparent:false,blending:THREE.NoBlending,...opts});}
@@ -622,10 +632,22 @@ void main(){
     const limit=mode.preview?(mode.background?(low?640:1280):mode.selected?1024:640):4096;
     const scale=Math.min(limit/Math.max(w,h),Math.sqrt((mode.preview?(mode.background?(low?.8e6:1.6e6):1.2e6):8e6)/Math.max(1,w*h)),1),W=Math.max(16,Math.round(w*scale)),H=Math.max(16,Math.round(h*scale));
     const time=Math.floor(Math.max(0,t)*30)/30;
-    const key=JSON.stringify([p,W,H,time]);let c=cache.get(g);
+    const key=JSON.stringify([p,W,H,time]),optionsKey=JSON.stringify([p,W,H]);
+    let c=cache.get(g);
+    const now=performance.now(),interactive=now-lastStudioUiInput<700;
+    // Skip redundant preview frames only while parameters and pixel dimensions
+    // stay identical. Changing a slider/quality setting bypasses this budget.
+    const interval=mode.preview&&mode.background?(interactive?75:42):0;
+    if(c&&interval&&c.key&&c.optionsKey===optionsKey&&now-(c.lastRenderAt||0)<interval){
+      c.skipped=(c.skipped||0)+1;
+      if(c.canvas.width){g.save();g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(c.canvas,0,0,w,h);g.restore();}
+      return;
+    }
+    if(c?.pending){c.queuedOptionsKey=optionsKey;if(c.optionsKey!==optionsKey)c.queuedItem=mode.item||null;}
     if((!c||c.key!==key)&&!(mode.preview&&c?.pending)){
       const a=gpu||init();if(!a)return;
-      if(!c){const canvas=document.createElement('canvas');c={canvas,ctx:canvas.getContext('2d')};cache.set(g,c);}if(!c.ctx)return;
+      if(!c){const canvas=document.createElement('canvas');c={canvas,ctx:canvas.getContext('2d'),renders:0,skipped:0};cache.set(g,c);}if(!c.ctx)return;
+      c.optionsKey=optionsKey;c.lastRenderAt=now;c.renders++;
       const S=settingsOf(p),aspect=W/H,weights=layoutVector(S.composition),flowW=layoutVector(S.flow);
       const flowDistance=time*S.speed*.34,travel=(time*S.speed*.34/resolvePathLength(aspect,weights))%1;
       const shardWorld=.0125*S.shardSize,count=Math.max(700,Math.round(S.count*S.detailCount));
@@ -671,7 +693,18 @@ void main(){
           }
           full(pa.finish,T.out,{sceneTexture:source.texture,bloomTexture:T.bloom.texture});run(T.out,pa.finish.scene,bg,1);
         }
-        if(mode.preview&&r.readRenderTargetPixelsAsync&&!c.asyncFailed){if(c.bytes?.length!==W*H*4)c.bytes=new Uint8Array(W*H*4);c.pending=true;r.readRenderTargetPixelsAsync(T.out,0,0,W,H,c.bytes).then(present).catch(()=>{c.asyncFailed=true;}).finally(()=>{c.pending=false;});}
+        if(mode.preview&&r.readRenderTargetPixelsAsync&&!c.asyncFailed){
+          if(c.bytes?.length!==W*H*4)c.bytes=new Uint8Array(W*H*4);
+          c.pending=true;
+          r.readRenderTargetPixelsAsync(T.out,0,0,W,H,c.bytes).then(present).catch(()=>{c.asyncFailed=true;}).finally(()=>{
+            c.pending=false;
+            const queued=c.queuedItem,wanted=c.queuedOptionsKey;
+            c.queuedItem=null;c.queuedOptionsKey=null;
+            // Native single-frame redraw after an in-flight GPU read completes,
+            // so parameter changes are never lost when a slider moves quickly.
+            if(queued&&wanted!==c.optionsKey&&window.__cerebra?.studio?.items?.includes(queued))window.__cerebra.studio.kitRedraw(queued);
+          });
+        }
         else{if(a.bytes.length!==W*H*4)a.bytes=new Uint8Array(W*H*4);r.readRenderTargetPixels(T.out,0,0,W,H,a.bytes);present(a.bytes);}
       }finally{r.setRenderTarget(old);r.setViewport(vp);r.setScissor(sc);r.setScissorTest(test);r.autoClear=auto;r.setClearColor(clear,alpha);}
     }
@@ -688,7 +721,7 @@ void main(){
       range('density','Density',.5,1.5,.05),range('shardSize','Shard size',.5,1.5,.05),range('stretch','Stretch',.6,1.8,.05),range('turbulence','Turbulence',0,2,.05),
       range('glow','Glow',0,2,.05),range('edgeSoftness','Edge softness',0,2,.05),range('bloom','Bloom',0,3,.05),range('grain','Grain',0,.12,.005),range('chromaticAberration','Chromatic aberration',0,.01,.0005),
       select('quality','Quality',[['low','Low'],['medium','Medium'],['high','High']])],
-    draw(g,it,x,y,w,h,k){const M=kitM(it),p={...defaults,...it.p};g.save();g.translate(x,y);try{draw(g,w,h,M.a?M.t*M.a/.6:0,p,{k:k||1,preview:typeof KIT_PREVIEW!=='undefined'&&KIT_PREVIEW,selected:it===window.__cerebra?.studio?.sel&&!it.bg&&!window.__cerebra.studio.lite,background:!!it.bg,low:typeof KIT_LOW!=='undefined'&&KIT_LOW});}finally{g.restore();}}
+    draw(g,it,x,y,w,h,k){const M=kitM(it),p={...defaults,...it.p};g.save();g.translate(x,y);try{draw(g,w,h,M.a?M.t*M.a/.6:0,p,{item:it,k:k||1,preview:typeof KIT_PREVIEW!=='undefined'&&KIT_PREVIEW,selected:it===window.__cerebra?.studio?.sel&&!it.bg&&!window.__cerebra.studio.lite,background:!!it.bg,low:typeof KIT_LOW!=='undefined'&&KIT_LOW});}finally{g.restore();}}
   };
-  window.CerebraAeroShards={draw,defaults,kit,inspect:g=>{const c=cache.get(g);return c?{width:c.canvas.width,height:c.canvas.height}:null;},reference:'DavidHDev/react-bits/AeroShards',renderer:'shared-webgl',preview:'async-readback'};
+  window.CerebraAeroShards={draw,defaults,kit,inspect:g=>{const c=cache.get(g);return c?{width:c.canvas.width,height:c.canvas.height,renders:c.renders||0,skipped:c.skipped||0,pending:!!c.pending}:null;},reference:'DavidHDev/react-bits/AeroShards',renderer:'shared-webgl',preview:'async-readback'};
 })();
