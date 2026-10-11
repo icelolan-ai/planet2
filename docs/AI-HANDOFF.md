@@ -1,3 +1,9 @@
+# RELEASED — Editorial Cosmic Launch redesign — 2026-10-11 Bangkok
+
+User asked to replace the three-choice launch menu look using abstract graphic design posters (thin geometric survey/contour lines, high contrast black negative space) with the CEREBRA violet/red/blue/black palette. **Completed on the real website**, not merely an image mockup: https://icelolan-ai.github.io/planet2/ . Source PR https://github.com/icelolan-ai/planet2/pull/362 merged `f5e6c2f`, main generated `6b7153d`, Build38139709938/PAGES38139722938 PASS. Deployed Cosmic launch QA38139726350 ALL FIVE PASS/errors[], source QA38139412299 all5 PASS. Related live Aero QA38139726398 ALL THREE PASS. Rocket QA38139726418 initially desktop DPR1 and phone DPR3 PASS, desktop DPR2 startup 150s timeout (BOOT_ERRORS[]) and failed-job rerun requested; separate issue, do not call Rocket fully verified.
+
+Owner: none. Implemented in `src/effects/studio-option-wheel.js` (noninteractive decorative svg and scoped CSS only; no screenshot overlay or duplicate render/state). Native cyclic wheel, Enter-only and EN/Thai/reduced-motion tested. No `src/template.html` edits; active PR #355 still owns that area. Actual iOS Safari device/FPS/recording not tested. Release log in docs/AI-WORK-LOG.md.
+
 # Active GPT-6 Editorial Cosmic Launch redesign — 2026-10-11 Bangkok
 
 PR https://github.com/icelolan-ai/planet2/pull/362 (branch `feat/editorial-cosmic-hub-20261011`, SHA `2f5a7b23`) applies the user-inspired abstract editorial poster design to the *native functional* three-option launch page using `src/effects/studio-option-wheel.js` CSS and vector-only orbital/contour survey lines: purple, blue, magenta/red and black, softened vortex dark edge, selected card glow, slim typography and Enter styling. No static generated image used as clickable site UI. This module remains the sole owner of Option Wheel transforms. Main runtime and `src/template.html` untouched while PR #355 owns its source.
