@@ -1914,6 +1914,8 @@ body.ob-picked .ob-hintrow .tune-hint{color:#ff8f98}
 #studio .st-assist,#studio .st-fly,#studio .st-save{translate:var(--fdx,0px) var(--fdy,0px);cursor:grab}
 #studio .st-assist,#studio .st-fly-title{touch-action:none}
 #studio .st-fly{touch-action:pan-y;overflow-y:auto;overscroll-behavior:contain;grid-auto-rows:max-content;align-content:start;scrollbar-width:thin}
+#studio .st-rocket-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
+#studio .st-rocket-actions .st-btn{white-space:normal;min-height:44px;height:auto;padding:8px;line-height:1.3}
 #studio [data-fly=kit]{width:min(330px,calc(100vw - 80px))}
 #studio [data-fly=kit] [data-kit-types]{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 #studio [data-kit-types] .st-btn{min-width:0;height:auto;min-height:92px;white-space:normal;overflow-wrap:anywhere;line-height:1.3;padding:10px 7px}
@@ -9572,7 +9574,7 @@ class CoreStudio {
     const dockEl = this.el.querySelector('.st-dock');
     const syncSel = () => {
       const open = dockEl.querySelector('.st-group.is-open>.st-btn');
-      const tuneOn = document.body.classList.contains('tune-open') || document.body.classList.contains('wtune-open');
+      const tuneOn = document.body.classList.contains('tune-open') || document.body.classList.contains('wtune-open') || !!this.el.querySelector('[data-kit-panel][data-rocket-tune="true"]:not([hidden])');
       const toolsBtn = dockEl.querySelector('[data-studio-tools]'), toolsOn = toolsBtn.getAttribute('aria-expanded') === 'true';
       const labOn = !!this.el.querySelector('.st-s9-panel:not([hidden]),.st-water-pad:not([hidden])');
       const exportButton = dockEl.querySelector('[data-studio-export][aria-expanded="true"]');
@@ -9601,6 +9603,14 @@ class CoreStudio {
       } else this.tools(this.panel.hidden);
     };
     this.el.querySelector('[data-studio-tune]').onclick = () => {
+      if (this.sel?.kit === 'rocket') {
+        if (this.sel.locked || this.isHid(this.sel)) return;
+        const f=this.el.querySelector('[data-kit-panel]'),open=f.hidden || f.dataset.rocketTune!=='true';
+        this.closeFly(); if (!open) return; this.closeStudioMenus?.();
+        if (innerWidth <= 900) this.tools(false);
+        f.dataset.rocketTune='true'; this.syncKit(); f.hidden=false; f.scrollTop=0; this.layoutKitFly();
+        this.el.querySelector('[data-studio-tune]').setAttribute('aria-expanded','true'); return;
+      }
       if (innerWidth <= 900) this.tools(false);
       if (this.subject < 0) dispatchEvent(new Event('cerebra:tune'));
       else { app.detail.index = this.subject; WorldTune.open(true, 'world'); }
@@ -9645,7 +9655,7 @@ class CoreStudio {
     this.focusBlurValue = () => this.sel?.focusTarget === 'object' ? this.sel.focusBlur ?? this.blur : this.blur;
     this.setFocusBlur = value => { if (this.sel?.focusTarget === 'object') this.sel.focusBlur = value; else this.blur = value; this.updateFocus(); };
     this.syncFly0 = () => this.el.querySelectorAll('[data-fset]').forEach(el => { const k = el.dataset.fset, v = k === 'blur' ? this.focusBlurValue() : this[k]; if (el.type === 'checkbox') el.checked = v; else el.value = v; const o = el.parentNode.querySelector('output'); if (o) o.textContent = fmt[k](v); });
-    this.closeFly = () => { flys.forEach(f => { f.hidden = true; }); this.el.querySelectorAll('[data-flyout]').forEach(b => b.setAttribute('aria-expanded', 'false')); };
+    this.closeFly = () => { flys.forEach(f => { f.hidden = true; delete f.dataset.rocketTune; }); this.el.querySelector('[data-studio-tune]').setAttribute('aria-expanded','false'); this.el.querySelectorAll('[data-flyout]').forEach(b => b.setAttribute('aria-expanded', 'false')); };
     // Drag flyouts by the title, other small popups by empty frame space.
     {
       const MENU = '.st-assist,.st-fly,.st-save', SKIP = 'button,input,select,textarea,a,canvas,output,[contenteditable=true]';
@@ -9681,7 +9691,7 @@ class CoreStudio {
       el.addEventListener('input', () => { if (k === 'blur') this.setFocusBlur(+el.value); else this[k] = el.type === 'checkbox' ? el.checked : el.type === 'color' ? el.value : +el.value; this.syncFly(); this.el.classList.toggle('hide-guides', !this.guides); if (k === 'blur' || k === 'dim' || k === 'focusText' || k === 'focusObj' || k === 'focusScene') this.updateFocus(); });
       el.addEventListener('change', () => this.commit());
     });
-    document.addEventListener('pointerdown', e => { if (!e.target.closest('.st-fly,[data-flyout],.st-dd')) this.closeFly(); }, true);
+    document.addEventListener('pointerdown', e => { if (!e.target.closest('.st-fly,[data-flyout],[data-studio-tune],.st-dd')) this.closeFly(); }, true);
     this.initDraw(); this.initRotate(); this.initLayerMenu();
     ['[data-t-aberr]', '[data-t-blur]', '[data-t-bloom]', '[data-t-speed]', '[data-t-zoom]', '[data-t-density]', '[data-t-thick]', '[data-t-rim]', '[data-t-haze]', '[data-t-frate]', '[data-t-famt]', '[data-t-ptrs]', '[data-t-gain]', '[data-studio-light]', '[data-studio-light-x]', '[data-studio-shadow]', '[data-studio-shadow-soft]', '[data-studio-angle]', '[data-studio-blur]', '[data-studio-effect-amount]'].forEach(s => this.knobify(document.querySelector(s)));
     document.querySelectorAll('#tune,#wtune,#obuild').forEach(el => this.dialDeck(el, '.tune-row', true));
@@ -10011,7 +10021,16 @@ class CoreStudio {
     if (b) { b.disabled = !on; b.classList.toggle('st-off', !on); b.setAttribute('aria-disabled', String(!on)); b.toggleAttribute('inert', !on); }
     if (!on && this.tool === 'hand') this.setTool('move');
   }
+  syncTuneTarget() {
+    const rocket=this.sel?.kit==='rocket',th=window.__cerebraLanguage?.current==='th',b=this.el.querySelector('[data-studio-tune]'); if(!b)return;
+    const on=rocket?!this.sel.locked&&!this.isHid(this.sel):this.showSubject!==false;
+    b.disabled=!on;b.classList.toggle('st-off',!on);b.setAttribute('aria-disabled',String(!on));b.toggleAttribute('inert',!on);
+    const label=b.querySelector('[data-tune-label]'),name=rocket?(th?'ปรับแต่งจรวด':'Tune Rocket'):this.subject<0?(th?'ปรับแต่งแกนดาว':'Tune the core'):(th?'ปรับแต่งดาว':'Tune world');
+    if(label&&label.textContent!==name)label.textContent=name;
+    if(rocket){WorldTune.open(false);if(document.body.classList.contains('tune-open'))document.querySelector('[data-tune-close]')?.click();}
+  }
   syncEmptyHint() {
+    this.syncTuneTarget();
     this.syncHandTool();
     { const th = window.__cerebraLanguage?.current === 'th', gone = !!this.fxItem('planet')?.deleted, sel = this.el.querySelector('[data-studio-subject]'), h = this.panel?.querySelector('h2');
       if (gone) { if (h) h.textContent = th ? 'ยังไม่มีดาว' : 'No planet yet'; if (sel) sel.value = '-2'; }
@@ -10129,14 +10148,14 @@ class CoreStudio {
     const set = (el, on) => { if (!el) return; el.classList.toggle('st-off', !on); el.setAttribute('aria-disabled', String(!on)); el.toggleAttribute('inert', !on); if (el.matches('button,input,select')) el.disabled = !on; if (!on && el.tagName === 'DETAILS') el.open = false; };
     set(this.fxSection, core && visible); set(this.coreSection, core && visible && !hid); set(this.partsSection, core && visible && !hid); set(this.worldSection, !core && visible);
     set(this.el.querySelector('[data-studio-fx]'), core && visible); set(this.fxBox, core && visible);
-    this.el.querySelectorAll('[data-studio-tune],[data-studio-random],[data-studio-freeze],[data-studio-home],[data-studio-gravity],.st-save-planet').forEach(el => set(el, visible));
+    this.el.querySelectorAll('[data-studio-random],[data-studio-freeze],[data-studio-home],[data-studio-gravity],.st-save-planet').forEach(el => set(el, visible));
     this.el.querySelectorAll('[data-studio-light],[data-studio-light-x],[data-studio-shadow],[data-studio-shadow-soft]').forEach(el => set(el.closest('.studio-control'), visible));
     this.el.querySelectorAll('[data-studio-corefx]').forEach(el => set(el.closest('details') || el, visible));
     this.el.querySelectorAll('[data-studio-moods]').forEach(el => set(el.closest('.st-mood-block') || el, visible));
     const layerSize = !!this.zoomTargets()?.length;
     this.el.querySelectorAll('[data-st-zoom],[data-grp=zoom]').forEach(el => set(el, visible || layerSize));
     if (!visible) { WorldTune.open(false); document.querySelector('[data-tune-close]')?.click(); }
-    this.syncHandTool();
+    this.syncHandTool(); this.syncTuneTarget();
   }
   // scope: 'subject' = what is on stage now, 'core' = Cerebra only, 'all' = Cerebra and the world on stage.
   resetFx(scope = 'subject') {
@@ -10873,7 +10892,7 @@ class CoreStudio {
   isHid(it) { return !!it.hide || (it.group != null && this.groups.some(g => g.id === it.group && g.hide)); }
   select(it) {
     if (this.sel && this.sel !== it && this.sel.el.isContentEditable) this.sel.el.blur();
-    const prev = this.sel; this.sel = it; this.syncMenuBar?.(); this.syncTimelineUI?.(); this.syncZoom && this.syncZoom(); if (this.lineSel && this.lineSel.it !== it) this.lineSel = null; this.items.forEach(i => i.el.classList.toggle('is-selected', i === it)); this.renderLayers();
+    const prev = this.sel; this.sel = it; this.syncTuneTarget(); this.syncMenuBar?.(); this.syncTimelineUI?.(); this.syncZoom && this.syncZoom(); if (this.lineSel && this.lineSel.it !== it) this.lineSel = null; this.items.forEach(i => i.el.classList.toggle('is-selected', i === it)); this.renderLayers();
     const c = this.ctx, usable = !!it && it.kind !== 'fx' && !it.bg; if (!(usable && prev === it && this.ctxOpen)) this.ctxOpen = false;
     c.hidden = !(usable && this.ctxOpen); if (this.closeFly) this.closeFly(); if (!usable) { this.updateRotHandle(); return; }
     const text = it.kind === 'text';

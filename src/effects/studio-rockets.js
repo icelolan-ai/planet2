@@ -10,9 +10,9 @@
     label: 'Rocket', noShuffle: true, size: [.35,.65],
     turn(it,rx,ry) { const wrap = v => ((v + 180) % 360 + 360) % 360 - 180; it.p.yaw = wrap(it.p.yaw + rx * 180 / Math.PI); it.p.pitch = wrap(it.p.pitch + ry * 180 / Math.PI); },
     resetDefaults: it => ({...kit.defaults, model: it.p.model}),
-    defaults: { model:'f9', explode:0, pitch:0, yaw:25, roll:0, zoom:1, painted:false, colour:'#ffffff', finished:false, roughness:.5, metalness:.1, texture:true },
+    defaults: { model:'f9', explode:0, pitch:0, yaw:25, roll:0, zoom:1, painted:false, colour:'#ffffff', finished:false, roughness:.5, metalness:.1, texture:true, stagger:false, scope:'', isolatedPart:'' },
     ui: [range('explode','Exploded view / แยกชิ้นส่วน',0,1,.01),range('pitch','Pitch / หมุนแกน X',-180,180),range('yaw','Yaw / หมุนแกน Y',-180,180),range('roll','Roll / หมุนแกน Z',-180,180),range('zoom','Zoom / ขนาดโมเดล',.25,2,.05),
-      {k:'painted',t:'check',label:'Custom paint / ปรับสี'}, {k:'colour',t:'color',label:'Paint colour / สีจรวด',when:['painted',true]},
+      {k:'stagger',t:'check',label:'Stagger by assembly order / แยกตามลำดับประกอบ'}, {k:'painted',t:'check',label:'Custom paint / ปรับสี'}, {k:'colour',t:'color',label:'Paint colour / สีจรวด',when:['painted',true]},
       {k:'finished',t:'check',label:'Custom finish / ปรับวัสดุ'}, {...range('roughness','Roughness / ความด้าน',0,1,.05),when:['finished',true]},{...range('metalness','Metalness / ความเป็นโลหะ',0,1,.05),when:['finished',true]},{k:'texture',t:'check',label:'Original textures / ลวดลายเดิม'}],
     draw(g,it,x,y,w,h) {
       if (!it.el) return; // no model requests for catalogue thumbnails
@@ -38,7 +38,7 @@
       // Rocket's instanced ownership math runs in the untouched CAD world frame.
       // Centre/rotate only for rendering, and restore that frame before every explode.
       s.pivot.rotation.set(0,0,0);m.root.position.set(0,0,0);s.pivot.updateMatrixWorld(true);
-      m.setExplode(p.explode);m.root.position.copy(s.center).multiplyScalar(-1);
+      m.stagger=!!p.stagger;m.setExplode(p.explode,p.scope==='@selected'?(p.selectedPart||null):(p.scope||null));m.root.position.copy(s.center).multiplyScalar(-1);
       const desired=p.variant||'';
       if(s.variantRequested!==desired){
         s.variantRequested=desired;
@@ -62,14 +62,16 @@
         for(const [id,hex]of Object.entries(p.partPaint||{}))for(const mesh of m.meshesUnder(id))if(m.isPaintable(mesh))m.paint.parts[mesh._pid]=hex;
         m.refreshMaterials();s.paintKey=paintKey;
       }
-      m.showAll();for(const id of p.hiddenParts||[])m.setHidden(id,true);
+      m.showAll();for(const id of p.hiddenParts||[])m.setHidden(id,true);m.setIsolated(p.isolatedPart||null);
       s.pivot.rotation.set(p.pitch*Math.PI/180,p.yaw*Math.PI/180,p.roll*Math.PI/180);
       const cap=KIT_PREVIEW?768:2048,scale=Math.min(1,cap/Math.max(w,h)),W=Math.max(1,Math.round(w*scale)),H=Math.max(1,Math.round(h*scale));
       if(!s.target||s.target.width!==W||s.target.height!==H){s.target?.dispose();s.target=new T.WebGLRenderTarget(W,H);s.target.texture.colorSpace=T.SRGBColorSpace;s.canvas=document.createElement('canvas');s.canvas.width=W;s.canvas.height=H;s.ctx=s.canvas.getContext('2d');s.image=s.ctx.createImageData(W,H);s.bytes=new Uint8Array(W*H*4);}
       s.camera.aspect=W/H;s.camera.position.set(0,0,s.height*1.25/Math.min(1,W/H)/Math.max(.25,p.zoom));s.camera.lookAt(0,0,0);s.camera.updateProjectionMatrix();
-      const r=window.__cerebra.stage.renderer,target=r.getRenderTarget(),vp=r.getViewport(new T.Vector4()),sc=r.getScissor(new T.Vector4()),test=r.getScissorTest(),auto=r.autoClear,col=r.getClearColor(new T.Color()),alpha=r.getClearAlpha(),tone=r.toneMapping,exposure=r.toneMappingExposure;
+      const r=window.__cerebra.stage.renderer,target=r.getRenderTarget(),vp=r.getViewport(new T.Vector4()),sc=r.getScissor(new T.Vector4()),test=r.getScissorTest(),auto=r.autoClear,col=r.getClearColor(new T.Color()),alpha=r.getClearAlpha(),tone=r.toneMapping,exposure=r.toneMappingExposure,face=r.getActiveCubeFace(),level=r.getActiveMipmapLevel();
       try{
-        r.autoClear=true;r.setRenderTarget(s.target);r.setViewport(0,0,W,H);r.setScissorTest(false);r.setClearColor(0,0);r.toneMapping=T.ACESFilmicToneMapping;r.toneMappingExposure=1;
+        r.autoClear=true;r.setRenderTarget(s.target);r.setScissorTest(false);
+        // setRenderTarget uses physical target pixels; setViewport would multiply them by the stage DPR again.
+        s.viewport=r.getCurrentViewport(new T.Vector4()).toArray();r.setClearColor(0,0);r.toneMapping=T.ACESFilmicToneMapping;r.toneMappingExposure=1;
         r.render(s.scene,s.camera);r.readRenderTargetPixels(s.target,0,0,W,H,s.bytes);
         for(let row=0;row<H;row++)s.image.data.set(s.bytes.subarray(row*W*4,(row+1)*W*4),(H-1-row)*W*4);
         // CAD bounds may include sparse hardware; center the visible projection in the native selection canvas.
@@ -77,29 +79,52 @@
         for(let row=0;row<H;row++)for(let col=0;col<W;col++)if(s.image.data[(row*W+col)*4+3]){left=Math.min(left,col);right=Math.max(right,col);top=Math.min(top,row);bottom=Math.max(bottom,row);}
         const dx=right>=left?Math.round((W-1-left-right)/2):0,dy=bottom>=top?Math.round((H-1-top-bottom)/2):0;
         s.ctx.clearRect(0,0,W,H);s.ctx.putImageData(s.image,dx,dy);g.drawImage(s.canvas,x,y,w,h);
-      }finally{r.setRenderTarget(target);r.setViewport(vp);r.setScissor(sc);r.setScissorTest(test);r.autoClear=auto;r.setClearColor(col,alpha);r.toneMapping=tone;r.toneMappingExposure=exposure;}
+      }finally{r.setViewport(vp);r.setScissor(sc);r.setScissorTest(test);r.autoClear=auto;r.setClearColor(col,alpha);r.toneMapping=tone;r.toneMappingExposure=exposure;r.setRenderTarget(target,face,level);}
     },
     async ready(it){const studio=window.__cerebra.studio,draw=()=>studio.drawKit(it,it.w*studio.U(),it.h*studio.U());draw();const s=states.get(it);await s?.loadPromise;draw();await s?.variantTask;if(s?.error)throw Error('Rocket: '+s.error);draw();},
     dispose(it){const s=states.get(it);if(!s)return;s.disposed=true;s.model?.dispose();s.target?.dispose();states.delete(it);}
   };
   function decorate(studio,panel,it){
     if(it.kit!=='rocket')return;const s=states.get(it);if(!s?.model)return;
-    const m=s.model,section=document.createElement('details');section.className='st-ksec';
-    const title=document.createElement('summary');title.textContent='Parts & variants / ชิ้นส่วนและรูปแบบ';section.append(title);
-    function row(label,input){const r=document.createElement('label');r.className='st-fly-row';const span=document.createElement('span');span.textContent=label;r.append(span,input);section.append(r);return input;}
+    const m=s.model,th=window.__cerebraLanguage?.current==='th',text=(en,thai)=>th?thai:en,section=document.createElement('details');section.className='st-ksec';
+    const body=document.createElement('div');body.className='st-ksec-body';
+    const title=document.createElement('summary');title.textContent='Parts & variants / ชิ้นส่วนและรูปแบบ';section.append(title,body);
+    function row(label,input){const r=document.createElement('label');r.className='st-fly-row';const span=document.createElement('span');span.textContent=label;r.append(span,input);body.append(r);return input;}
     const parts=row('Part / ชิ้นส่วน',document.createElement('select'));parts.dataset.rocketPart='';
-    for(const id of m.partIds()){const o=document.createElement('option');o.value=id;const d=m.manifest.get(id);o.textContent=`${id} · ${d?.name_en||d?.name_th||id}`;parts.append(o);}
+    const ids=[...new Set(m.partIds().flatMap(id=>m.manifest.ancestors(id)))].sort();
+    for(const id of ids){const o=document.createElement('option');o.value=id;const d=m.manifest.get(id);o.textContent=`${id} · ${d?.name_en||d?.name_th||id}`;parts.append(o);}
     parts.value=it.p.selectedPart||parts.options[0]?.value||'';
     const colour=row('Part colour / สีชิ้นนี้',document.createElement('input'));colour.type='color';colour.dataset.rocketPartColour='';
     const hidden=row('Hide part / ซ่อนชิ้นนี้',document.createElement('input'));hidden.type='checkbox';hidden.dataset.rocketPartHidden='';
-    const reset=document.createElement('button');reset.type='button';reset.className='st-btn';reset.textContent='Restore part paint / คืนสีชิ้นนี้';section.append(reset);
+    const reset=document.createElement('button');reset.type='button';reset.className='st-btn';reset.textContent='Restore part paint / คืนสีชิ้นนี้';body.append(reset);
     const sync=()=>{const id=parts.value,paintable=m.meshesUnder(id).some(x=>m.isPaintable(x));colour.closest('label').hidden=!paintable;reset.hidden=!paintable;colour.value=it.p.partPaint?.[id]||'#ffffff';hidden.checked=(it.p.hiddenParts||[]).includes(id);};sync();
-    parts.onchange=()=>{it.p.selectedPart=parts.value;sync();studio.commit();};
+    parts.onchange=()=>{it.p.selectedPart=parts.value;sync();studio.kitRedraw(it);studio.commit();};
     const paint=()=>{it.p.partPaint={...it.p.partPaint,[parts.value]:colour.value};studio.kitRedraw(it);};colour.oninput=paint;colour.onchange=()=>{paint();studio.commit();};
     hidden.onchange=()=>{const ids=new Set(it.p.hiddenParts||[]);hidden.checked?ids.add(parts.value):ids.delete(parts.value);it.p.hiddenParts=[...ids];studio.kitRedraw(it);studio.commit();};
     reset.onclick=()=>{it.p.partPaint={...it.p.partPaint};delete it.p.partPaint[parts.value];sync();studio.kitRedraw(it);studio.commit();};
+    const controls=document.createElement('div');controls.className='st-rocket-actions';body.append(controls);
+    const button=(host,key,en,thai,run)=>{const b=document.createElement('button');b.type='button';b.className='st-btn';b.dataset[key]='';b.textContent=text(en,thai);b.onclick=()=>{if(it.locked||!studio.items.includes(it))return;run();studio.kitRedraw(it);studio.commit();sync();};host.append(b);return b;};
+    const isolate=button(controls,'rocketIsolate','Isolate selected part','ดูเฉพาะชิ้นที่เลือก',()=>{it.p.isolatedPart=it.p.isolatedPart===parts.value?'':parts.value;});
+    button(controls,'rocketRemove','Remove / reinsert part','ถอด / ใส่ชิ้นส่วน',()=>{const list=new Set(it.p.hiddenParts||[]);list.has(parts.value)?list.delete(parts.value):list.add(parts.value);it.p.hiddenParts=[...list];});
+    button(controls,'rocketShowAll','Restore all parts','ใส่ชิ้นส่วนกลับทั้งหมด',()=>{it.p.hiddenParts=[];it.p.isolatedPart='';});
+    const assembly=document.createElement('details');assembly.className='st-ksec';assembly.dataset.rocketAssembly='';assembly.open=true;
+    const heading=document.createElement('summary');heading.textContent=text('Assembly & exploded view','ถอดประกอบและแยกส่วน');const aBody=document.createElement('div');aBody.className='st-ksec-body';assembly.append(heading,aBody);
+    for(const k of ['explode','stagger']){const r=panel.querySelector(`[data-kp="${k}"]`)?.closest('.st-fly-row');if(r)aBody.append(r);}
+    const aControls=document.createElement('div');aControls.className='st-rocket-actions';aBody.append(aControls);
+    const updateExplode=v=>{it.p.explode=v;const slider=panel.querySelector('[data-kp="explode"]');slider.value=v;slider.dispatchEvent(new Event('input',{bubbles:true}));};
+    button(aControls,'rocketExplode','Disassemble','แยกชิ้นส่วน',()=>updateExplode(1));
+    button(aControls,'rocketAssemble','Assemble','ประกอบกลับ',()=>updateExplode(0));
+    const scope=document.createElement('select');scope.dataset.rocketScope='';
+    for(const [id,label]of [['',text('Whole rocket','จรวดทั้งลำ')],['@selected',text('Selected part / assembly','ชิ้นส่วน / ชุดที่เลือก')],...ids.filter(id=>m.manifest.get(id)?.type==='assembly').map(id=>[id,`${id} · ${m.manifest.get(id)?.[th?'name_th':'name_en']||id}`])]){const o=document.createElement('option');o.value=id;o.textContent=label;scope.append(o);}
+    scope.value=it.p.scope||'';const scopeRow=document.createElement('label');scopeRow.className='st-fly-row';const scopeLabel=document.createElement('span');scopeLabel.textContent=text('Explosion scope','ขอบเขตการแยกส่วน');scopeRow.append(scopeLabel,scope);aBody.append(scopeRow);
+    scope.onchange=()=>{if(it.locked)return;it.p.scope=scope.value;studio.kitRedraw(it);studio.commit();};
+    panel.querySelector('.st-fly-title').after(assembly);
+    const actionSync=()=>{isolate.textContent=it.p.isolatedPart?text('Show other parts','แสดงชิ้นอื่น'):text('Isolate selected part','ดูเฉพาะชิ้นที่เลือก');};
+    controls.addEventListener('click',actionSync);parts.addEventListener('change',actionSync);actionSync();
     if(m.variantNames.length){const variants=row('Variant / รูปแบบ',document.createElement('select'));variants.dataset.rocketVariant='';for(const [value,label]of [['','Original / ต้นฉบับ'],...m.variantNames.map(v=>[v,v])]){const o=document.createElement('option');o.value=value;o.textContent=label;variants.append(o);}variants.value=it.p.variant||'';variants.onchange=()=>{it.p.variant=variants.value;studio.kitRedraw(it);studio.commit();};}
     panel.querySelector('[data-kit-reset]').before(section);
+    panel.querySelector('.st-fly-title b').textContent=text('Tune Rocket','ปรับแต่งจรวด')+' · '+(names[it.p.model]||'Rocket');
+    if(it.locked)panel.querySelectorAll('input,select,button:not([data-kit-close])').forEach(el=>el.disabled=true);
   }
   function openMenu(studio,anchor){
     const old=studio.el.querySelector('.st-planetmenu');old?.remove();
@@ -109,5 +134,5 @@
     const close=()=>{pop.remove();document.removeEventListener('pointerdown',away,true);},away=e=>{if(!pop.contains(e.target)&&e.target!==anchor)close();};document.addEventListener('pointerdown',away,true);
     pop.querySelectorAll('[data-rocket]').forEach(b=>b.onclick=()=>{close();studio.closeFly();const it=studio.addItem('kit',{kit:'rocket',name:names[b.dataset.rocket],p:{...kit.defaults,model:b.dataset.rocket},opacity:1});studio.select(it);studio.syncEmptyHint();});
   }
-  window.CerebraRockets={kit,openMenu,decorate,inspect:it=>{const s=states.get(it);return s?{loading:s.loading,error:s.error,meshes:s.model?.meshes.length,exploded:s.model?.t,canvas:s.canvas,paint:s.model?.paint.parts,painted:s.model?.meshes.filter(m=>s.model.isPaintable(m)).map(m=>[m._pid,m.material.color.getHexString(T.SRGBColorSpace)]),instances:s.model?.inst.map(i=>Array.from(i.mesh.instanceMatrix.array))}:null;}};
+  window.CerebraRockets={kit,openMenu,decorate,inspect:it=>{const s=states.get(it);return s?{loading:s.loading,error:s.error,viewport:s.viewport,target:s.target?[s.target.width,s.target.height]:null,visibleParts:s.model?.meshes.filter(m=>m.visible).map(m=>m._pid),meshes:s.model?.meshes.length,exploded:s.model?.t,canvas:s.canvas,paint:s.model?.paint.parts,painted:s.model?.meshes.filter(m=>s.model.isPaintable(m)).map(m=>[m._pid,m.material.color.getHexString(T.SRGBColorSpace)]),instances:s.model?.inst.map(i=>Array.from(i.mesh.instanceMatrix.array))}:null;}};
 })();
