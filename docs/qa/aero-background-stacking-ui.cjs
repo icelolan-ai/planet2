@@ -14,10 +14,12 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
   await page.goto(process.env.QA_URL||'http://127.0.0.1:8000');
   await page.locator('#gateway').waitFor({state:'visible',timeout:180000});
   await page.locator('#gateway .gateway-enter').first().click();
-  await page.locator('[data-cl-path="guide"]').click();
-  await page.waitForTimeout(550);
-  await page.locator('[data-cl-enter]').click();await page.locator('[data-cl-back]').click();await page.locator('[data-cl-enter]').click();
-  await page.getByRole('button',{name:'Skip and enter Studio'}).click();
+  await page.locator('.cl-page.cl-hub-open').waitFor({state:'visible',timeout:120000});
+  // The first native route defaults to Studio. Only its separate Enter opens it.
+  await page.locator('[data-cl-enter]').click();
+  await page.waitForTimeout(600);
+  const skip=page.getByRole('button',{name:'Skip and enter Studio'});
+  if(await skip.isVisible())await skip.click();
   await page.waitForFunction(()=>window.__cerebra?.studio?.active,{timeout:120000});
   await page.waitForFunction(()=>__cerebra.studio.__nativeBackgroundHitGuard,{timeout:30000});
   const state=()=>page.evaluate(()=>{
