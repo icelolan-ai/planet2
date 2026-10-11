@@ -1,7 +1,7 @@
 name: Fullscreen and Minimal UI QA
 on:
   push:
-    branches: [fix/fullscreen-minimal-foundation-20261011]
+    branches: [fix/fullscreen-minimal-foundation-20261011, fix/studio-menu-perf-20261011]
     paths:
       - 'src/**'
       - 'docs/qa/fullscreen-minimal-ui.cjs'
