@@ -104,6 +104,67 @@
     `;document.head.append(smoothCSS);
     addEventListener('resize',()=>{if(!e.choice.hidden&&e.gatewayMotion)e.paintGateway(e.gatewayMotion.value,!e.gatewayTween?.isActive());});
     const slideFooter=document.createElement('div');slideFooter.className='cl-slide-footer';slideFooter.innerHTML='<p class="cl-slide-hint" data-cl-hint>Swipe up / down to choose</p><button type="button" class="cl-enter cl-slide-enter" data-cl-enter>Enter →</button>';page.querySelector('[data-cl-hub]').append(slideFooter);
+    // Original raster scene + composited dust; native path controller still owns all navigation.
+    const cosmos=document.createElement('div');cosmos.className='cl-cosmos';cosmos.setAttribute('aria-hidden','true');
+    cosmos.innerHTML='<img class="cl-cosmic-scene" data-cl-scene alt="" decoding="async"><img class="cl-cosmic-dust" data-cl-dust alt="" decoding="async"><img class="cl-cosmic-dust cl-cosmic-dust-far" data-cl-dust alt="" decoding="async">';page.prepend(cosmos);
+    const column=document.createElement('div');column.className='cl-path-column';column.append(page.querySelector('.cl-paths'),slideFooter);page.querySelector('[data-cl-hub]').append(column);
+    const cosmicCSS=document.createElement('style');cosmicCSS.textContent=`
+      .cl-cosmos{display:none;position:absolute;inset:0;overflow:hidden;pointer-events:none;background:#030309;z-index:-1}
+      .cl-page.cl-hub-open{--cl-ink:#f5f1ff;--cl-muted:#c1bbd1;--cl-line:#b8a5ef38;--cl-pink:#c7afff;background:#030309}
+      .cl-page.cl-hub-open::before,.cl-page.cl-hub-open::after{content:none}
+      .cl-page[open].cl-hub-open .cl-cosmos{display:block}
+      .cl-cosmic-scene{width:100%;height:100%;object-fit:cover;object-position:35% center;opacity:.9}
+      .cl-cosmic-dust{position:absolute;inset:-12%;width:124%;height:124%;object-fit:cover;opacity:.35;animation:cl-cosmic-drift 36s ease-in-out infinite alternate;animation-play-state:paused;pointer-events:none}
+      .cl-cosmic-dust-far{opacity:.18;animation-duration:55s;animation-direction:alternate-reverse;scale:.86}
+      .cl-page[open].cl-hub-open:not(.cl-cosmos-paused) .cl-cosmic-dust{animation-play-state:running}
+      @keyframes cl-cosmic-drift{from{transform:translate3d(-2%,-2%,0) rotate(-2deg)}to{transform:translate3d(4%,3%,0) rotate(2deg)}}
+      .cl-hub-open .cl-shell{position:relative;z-index:1;max-width:1440px;padding:32px clamp(24px,5vw,80px) 40px}
+      .cl-hub-open .cl-head{margin-bottom:18px}
+      .cl-hub-open .cl-brand{letter-spacing:.4em;color:#e7e0f5}
+      .cl-hub-open .cl-head-actions{gap:24px}
+      .cl-hub-open .cl-language{background:#070911a8;border-color:#b8a5ef38}
+      .cl-hub-open .cl-language button[aria-pressed=true]{background:#bca1f522;color:#f6f1ff}
+      .cl-hub-open [data-cl-hub]{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:clamp(32px,6vw,96px)}
+      .cl-hub-open .cl-hero{display:flex;align-items:center;justify-content:center;min-height:0;max-height:none;margin:0;padding:0;text-align:center}
+      .cl-hub-open .cl-hero h1{font:300 clamp(56px,6vw,88px)/1.08 "Barlow Condensed","Noto Sans Thai",sans-serif;letter-spacing:.12em;max-width:480px;text-shadow:0 2px 18px #000}
+      .cl-page[lang=th].cl-hub-open .cl-hero h1{font:300 clamp(36px,3.8vw,56px)/1.45 "Noto Sans Thai","Barlow",sans-serif;letter-spacing:.025em}
+      .cl-hub-open .cl-art,.cl-hub-open .cl-orbit{display:none!important}
+      .cl-path-column{display:flex;flex-direction:column;min-width:0;gap:24px}
+      .cl-hub-open .cl-paths{margin:0;gap:12px}
+      .cl-hub-open .cl-path{gap:20px;border:1px solid #b8a5ef2b;border-radius:12px;background:#05070dcc;color:#b8b5c4}
+      .cl-hub-open .cl-path.is-selected{background:#1a1229e8;border-color:#c7afff90;color:#faf7ff;box-shadow:0 8px 30px #0005,inset 3px 0 #c7afff}
+      .cl-hub-open .cl-path .cl-num{width:44px;border:0;font:300 18px var(--cl-mono);color:#b8afca}
+      .cl-hub-open .cl-path .cl-symbol{width:32px}
+      .cl-hub-open .cl-path .cl-symbol svg{width:28px;height:28px}
+      .cl-hub-open .cl-path strong{letter-spacing:.06em;font-family:"Barlow Condensed","Noto Sans Thai",sans-serif;font-weight:400}
+      .cl-hub-open .cl-path small{color:#c1bbd1;font-family:var(--cl-body);font-size:13px;line-height:1.5;letter-spacing:.02em}
+      .cl-hub-open .cl-path.is-selected .cl-symbol,.cl-hub-open .cl-path.is-selected .cl-arrow{color:#d2baff}
+      .cl-hub-open .cl-slide-footer{margin:0;gap:16px}
+      .cl-hub-open .cl-slide-hint{color:#b8b0c9;max-width:210px;font-family:var(--cl-body);font-size:12px;letter-spacing:.03em}
+      .cl-hub-open .cl-slide-enter{min-height:50px;min-width:145px;padding:12px 24px;border-radius:6px;border-color:#d5c1ff80;color:#f6f0ff!important;background:#2c1f43d9}
+      .cl-hub-open .cl-slide-enter:hover{background:#473062}
+      @media(max-width:760px){
+        .cl-hub-open .cl-shell{padding:20px 22px max(24px,env(safe-area-inset-bottom))}
+        .cl-hub-open .cl-head{margin-bottom:12px}.cl-hub-open .cl-head-actions{gap:12px}.cl-hub-open .cl-brand{letter-spacing:.25em}
+        .cl-hub-open [data-cl-hub]{display:flex;gap:12px}.cl-hub-open .cl-hero{flex:1;min-height:100px;max-height:none}
+        .cl-hub-open .cl-hero h1{font-size:46px;letter-spacing:.1em;line-height:1.1;max-width:280px}
+        .cl-page[lang=th].cl-hub-open .cl-hero h1{font-size:32px;line-height:1.45}
+        .cl-cosmic-scene{height:62%;object-position:27% center;opacity:.8}
+        .cl-path-column{flex-shrink:0;gap:18px}.cl-hub-open .cl-paths{gap:10px}.cl-hub-open .cl-path{gap:12px;border-radius:10px}
+        .cl-hub-open .cl-path .cl-num{width:26px;font-size:14px}.cl-hub-open .cl-path .cl-symbol{width:25px}.cl-hub-open .cl-path .cl-symbol svg{width:24px;height:24px}
+        .cl-hub-open .cl-slide-hint{max-width:155px}.cl-hub-open .cl-slide-enter{min-width:124px}
+      }
+      @media(max-height:620px){
+        .cl-hub-open .cl-shell{padding-top:10px;padding-bottom:max(12px,env(safe-area-inset-bottom))}
+        .cl-hub-open .cl-head{margin-bottom:8px}.cl-hub-open .cl-hero{min-height:40px}.cl-hub-open .cl-hero h1{font-size:38px}
+        .cl-page[lang=th].cl-hub-open .cl-hero h1{font-size:26px}.cl-path-column{gap:12px}.cl-hub-open .cl-paths{gap:6px}
+        .cl-hub-open .cl-slide-enter{min-height:44px;padding-block:8px}.cl-hub-open .cl-slide-hint{font-size:11px}
+      }
+      @media(max-height:620px) and (min-width:761px){.cl-hub-open [data-cl-hub]{gap:30px}.cl-hub-open .cl-hero h1{font-size:50px}}
+      @media(prefers-reduced-motion:reduce){.cl-cosmic-dust{animation:none!important}}
+    `;document.head.append(cosmicCSS);
+    document.addEventListener('visibilitychange',()=>page.classList.toggle('cl-cosmos-paused',document.hidden));page.classList.toggle('cl-cosmos-paused',document.hidden);
+    function loadCosmos(){const assets=window.__ASSETS?.launch;if(!assets||cosmos.dataset.loaded)return;cosmos.querySelector('[data-cl-scene]').src=assets['cosmic-portal'];cosmos.querySelectorAll('[data-cl-dust]').forEach(img=>img.src=assets['cosmic-dust']);cosmos.dataset.loaded='true';}
     let pathIndex=0,pathGesture=null,suppressPathClick=0,pathTween;
     const pathMotion={value:0},motionQuery=matchMedia('(prefers-reduced-motion:reduce)');
     const pathButtons=[...page.querySelectorAll('[data-cl-path]')];
@@ -198,7 +259,7 @@
       }
       localizePage();content.querySelector('[data-cl-studio]')?.addEventListener('click',enterStudio);
     }
-    function showHub(){page.classList.add('cl-hub-open');selectPath(0,true);pressedButton=null;guideOrigin='hub';page.querySelector('[data-cl-hub]').hidden=false;page.querySelector('[data-cl-guide]').hidden=true;page.querySelector('[data-cl-back] span').textContent='Back';page.setAttribute('aria-label','Choose your Cerebra path');e.choice.hidden=true;document.body.classList.remove('route-choose');document.documentElement.classList.add('route-lock');document.querySelector('main').inert=true;if(!page.open)page.showModal();page.scrollTop=0;art();localizePage();page.querySelector('[data-cl-enter]').focus({preventScroll:true});}
+    function showHub(){loadCosmos();page.classList.add('cl-hub-open');selectPath(0,true);pressedButton=null;guideOrigin='hub';page.querySelector('[data-cl-hub]').hidden=false;page.querySelector('[data-cl-guide]').hidden=true;page.querySelector('[data-cl-back] span').textContent='Back';page.setAttribute('aria-label','Choose your Cerebra path');e.choice.hidden=true;document.body.classList.remove('route-choose');document.documentElement.classList.add('route-lock');document.querySelector('main').inert=true;if(!page.open)page.showModal();page.scrollTop=0;art();localizePage();page.querySelector('[data-cl-enter]').focus({preventScroll:true});}
     function showGuide(origin='hub'){page.inert=false;page.classList.remove('cl-hub-open');guideOrigin=origin;chapter='start';buildGuide();page.querySelector('[data-cl-search]').value='';page.querySelector('[data-cl-hub]').hidden=true;page.querySelector('[data-cl-guide]').hidden=false;page.querySelector('[data-cl-back] span').textContent=origin==='studio'?'Back to Studio':'Back to paths';page.setAttribute('aria-label','How to use Cerebra');if(!page.open)page.showModal();renderGuide();page.scrollTop=0;page.querySelector('[data-cl-chapter="start"]').focus({preventScroll:true});}
     function enterStudio(){
       if(guideOrigin==='studio'&&s.active){page.close();return;}
