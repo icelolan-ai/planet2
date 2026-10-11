@@ -46,6 +46,27 @@
       @media(max-width:760px){.cl-shell{padding:22px 22px max(30px,env(safe-area-inset-bottom))}.cl-head{margin-bottom:20px}.cl-brand{font-size:12px;letter-spacing:.2em}.cl-back{font-size:14px}.cl-hero{min-height:270px;align-items:flex-end;padding-bottom:18px}.cl-hero h1{font-size:64px;max-width:240px}.cl-art{width:100%;height:320px;right:-22px;top:-30px;opacity:.8}.cl-orbit{width:78%;height:45%;top:17%}.cl-paths{margin-top:12px;gap:10px}.cl-path{padding:18px 16px;gap:14px}.cl-num{width:44px;font-size:21px}.cl-symbol{width:25px}.cl-symbol svg{width:25px;height:25px}.cl-path strong{font-size:28px}.cl-path small{font:11px/1.6 var(--cl-body);letter-spacing:0}.cl-path>.cl-arrow{width:20px}.cl-guide-head{display:block;margin:22px 0}.cl-guide-head h1{font-size:48px}.cl-guide-head p{font-size:14px}.cl-search{margin-top:18px;width:100%;font-size:16px}.cl-guide-layout{display:block}.cl-chapters{position:static;flex-direction:row;overflow:auto;border-right:0;border-bottom:1px solid var(--cl-line);padding:0 0 10px;margin-bottom:18px;gap:4px}.cl-chapters button{flex:0 0 auto;font-size:14px;border-left:0;border-bottom:3px solid transparent;padding:8px 12px}.cl-content h2{font-size:30px}.cl-intro{font-size:15px}.cl-toolbar{padding:12px;gap:8px}.cl-step{gap:14px}.cl-step-visual{width:76px;min-width:76px;height:64px}.cl-topic summary{font-size:16px}.cl-param{padding:10px}.cl-shell{overflow-wrap:break-word}}
       .cl-page:not(.cl-hub-open) [data-cl-guide] .cl-content{position:relative;display:block;visibility:visible;opacity:1;min-height:240px;z-index:1}
       .cl-page:not(.cl-hub-open) [data-cl-guide] .cl-guide-layout{align-items:start}
+      /* Avoid a blank first viewport below oversized guide header (iPhone + landscape). */
+      @media(max-width:760px){
+        .cl-page:not(.cl-hub-open) .cl-shell{padding-top:10px}
+        .cl-page:not(.cl-hub-open) .cl-head{margin-bottom:2px}
+        .cl-page:not(.cl-hub-open) .cl-guide-head{margin:8px 0 10px;gap:6px}
+        .cl-page:not(.cl-hub-open) .cl-guide-head h1{font-size:34px;line-height:1.08}
+        .cl-page:not(.cl-hub-open) .cl-guide-rotating{font-size:12px;line-height:1.2;margin-top:2px}
+        .cl-page:not(.cl-hub-open) .cl-search{margin-top:8px;padding:9px 12px;min-height:40px}
+        .cl-page:not(.cl-hub-open) .cl-chapters{margin-bottom:8px;padding-bottom:5px}
+        .cl-page:not(.cl-hub-open) .cl-content h2{margin-top:4px}
+      }
+      @media(max-height:620px){
+        .cl-page:not(.cl-hub-open) .cl-shell{padding-top:8px}
+        .cl-page:not(.cl-hub-open) .cl-head{margin-bottom:2px}
+        .cl-page:not(.cl-hub-open) .cl-guide-head{margin:6px 0 8px;gap:8px}
+        .cl-page:not(.cl-hub-open) .cl-guide-head h1{font-size:32px}
+        .cl-page:not(.cl-hub-open) .cl-guide-rotating{font-size:12px;line-height:1}
+        .cl-page:not(.cl-hub-open) .cl-search{min-height:38px;margin-top:6px}
+        .cl-page:not(.cl-hub-open) .cl-chapters{margin-bottom:6px}
+        .cl-page:not(.cl-hub-open) .cl-content h2{margin-top:4px}
+      }
       @media(prefers-reduced-motion:reduce){.cl-path{transition:none}.cl-path:hover{transform:none}}
     `; document.head.append(css);
     const page = document.createElement('dialog'); page.className='cl-page';page.setAttribute('aria-label','Cerebra paths and guide');
