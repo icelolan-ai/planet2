@@ -9331,7 +9331,7 @@ class CoreStudio {
     this.el.innerHTML = `<div class="studio-stage" data-studio-stage></div>
       <button type="button" class="st-btn st-back st-glass" data-studio-exit aria-label="Exit studio">${I('<path d="M19 12H5M11 6l-6 6 6 6"/>')}</button>
       
-      <nav class="st-rail st-glass" data-tray="add" aria-label="Add to poster"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><span class="st-rail-label">Tools</span><button type="button" class="st-btn" data-studio-tool="move" aria-pressed="true" title="Move (V)">${I('<path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>')}Move</button><button type="button" class="st-btn" data-studio-tool="hand" aria-pressed="false" title="Hand: rotate the subject (H)">${I('<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12M11 11.5v-7a1.5 1.5 0 0 1 3 0v7M14 11.5v-5a1.5 1.5 0 0 1 3 0v7c0 4-2.5 7-6.5 7-3 0-4.5-1.6-6-4.4L3 13.4a1.5 1.5 0 0 1 2.6-1.5L8 15"/>')}Hand</button><button type="button" class="st-btn" data-studio-tool="select" aria-pressed="false" title="Select: drag a box or lasso round several things (M)">${I('<path d="M4 4h4M10 4h4M16 4h4M4 20h4M10 20h4M16 20h4M4 10v4M20 10v4"/><path d="M9 9l6 3-2.4 1 2.1 3.4-1.4.9-2.1-3.4L9 15z" stroke-width="1.5"/>')}Select</button><span class="st-rail-sep"></span><span class="st-rail-label">Add</span>
+      <nav class="st-rail st-glass" data-tray="add" aria-label="Add to poster"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><span class="st-rail-label">Tools</span><button type="button" class="st-btn" data-studio-tool="move" aria-pressed="true" title="Move (V)">${I('<path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>')}Move</button><button type="button" class="st-btn" data-studio-tool="hand" aria-pressed="false" title="Hand: rotate the 3D subject (H)">${I('<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12M11 11.5v-7a1.5 1.5 0 0 1 3 0v7M14 11.5v-5a1.5 1.5 0 0 1 3 0v7c0 4-2.5 7-6.5 7-3 0-4.5-1.6-6-4.4L3 13.4a1.5 1.5 0 0 1 2.6-1.5L8 15"/>')}Hand</button><button type="button" class="st-btn" data-studio-tool="select" aria-pressed="false" title="Select: drag a box or lasso round several things (M)">${I('<path d="M4 4h4M10 4h4M16 4h4M4 20h4M10 20h4M16 20h4M4 10v4M20 10v4"/><path d="M9 9l6 3-2.4 1 2.1 3.4-1.4.9-2.1-3.4L9 15z" stroke-width="1.5"/>')}Select</button><span class="st-rail-sep"></span><span class="st-rail-label">Add</span>
         <button type="button" class="st-btn" data-studio-add="text">${this.icons.text}Text</button><button type="button" class="st-btn st-fly-btn" data-flyout="focus" aria-expanded="false">${this.icons.tri}Focus<i class="st-caret"></i></button><button type="button" class="st-btn st-fly-btn" data-flyout="draw" data-studio-draw aria-pressed="false" aria-expanded="false">${this.icons.stroke}Draw<i class="st-caret"></i></button></nav>
       <nav class="st-rail st-rail-decor st-glass" data-tray="decor" aria-label="Add decoration"><button type="button" class="st-tray-grip" data-tray-grip aria-label="Drag to move this menu"></button><span class="st-rail-label">Decor</span>
         <button type="button" class="st-btn st-fly-btn" data-flyout="decor" aria-expanded="false">${this.icons.circle}Shapes<i class="st-caret"></i></button><button type="button" class="st-btn st-fly-btn" data-flyout="kit" aria-expanded="false">${this.icons.kit}Kit<i class="st-caret"></i></button><span class="st-rail-sep"></span>
@@ -9687,8 +9687,8 @@ class CoreStudio {
     document.querySelectorAll('#tune,#wtune,#obuild').forEach(el => this.dialDeck(el, '.tune-row', true));
     this.el.querySelectorAll('.studio-panel').forEach(el => this.dialDeck(el, '.studio-control', false));
     this.tool = 'move';
-    this.setTool = tool => { if (tool === 'hand' && this.showSubject === false) return; if (tool !== 'draw' && this.drawing) this.setDrawing(false); this.tool = tool === 'hand' ? 'hand' : tool === 'select' ? 'select' : 'move'; this.el.classList.toggle('tool-select', this.tool === 'select'); if (this.selBar) this.selBar.hidden = this.tool !== 'select'; setTimeout(() => this.updateRotHandle && this.updateRotHandle(), 0); this.el.classList.toggle('tool-hand', this.tool === 'hand');
-      this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioTool === this.tool && !this.drawing))); if (this.tool === 'hand' || this.tool === 'select') this.select(null); };
+    this.setTool = tool => { if (tool === 'hand' && !this.handAvailable()) return; if (tool !== 'draw' && this.drawing) this.setDrawing(false); this.tool = tool === 'hand' ? 'hand' : tool === 'select' ? 'select' : 'move'; this.el.classList.toggle('tool-select', this.tool === 'select'); if (this.selBar) this.selBar.hidden = this.tool !== 'select'; setTimeout(() => this.updateRotHandle && this.updateRotHandle(), 0); this.el.classList.toggle('tool-hand', this.tool === 'hand');
+      this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.studioTool === this.tool && !this.drawing))); if (this.tool === 'select' || this.tool === 'hand' && !this.handItem(this.sel)) this.select(null); };
     this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.onclick = () => this.setTool(b.dataset.studioTool));
     this.el.querySelector('[data-studio-draw]').addEventListener('click', () => { if (this.drawing) { this.tool = 'move'; this.el.classList.remove('tool-hand'); } this.el.querySelectorAll('[data-studio-tool]').forEach(b => b.setAttribute('aria-pressed', String(!this.drawing && b.dataset.studioTool === this.tool))); });
     this.initShortcuts(); this.initMarquee(); this.initXform(); this.initMood(); this.initPicker(); this.initZoom(); this.initSafety(); this.initPickThrough(); this.initLayoutMotion();
@@ -9868,11 +9868,14 @@ class CoreStudio {
     this.canvasDown = e => {
       if (!this.active || document.body.classList.contains('tune-open') || this.drag || e.button !== 0) return;
       if (this.beginCanvasPress && this.beginCanvasPress(e)) return;
-      this.select(null);
+      const hand = this.tool === 'hand', target = hand ? this.handTarget(e.clientX, e.clientY) : null;
+      if (hand && (target === false || !target && (this.showSubject === false || this.sel?.locked))) return;
+      this.select(target);
+      if (target) this.prepareTimelineEdit(target);
       if (this.tool !== 'hand' && this.subject < 0 && !app.hitCore(e.clientX, e.clientY)) return;
       if (this.tool !== 'hand' && this.onPlanet(e.clientX, e.clientY)) { const pl = this.fxItem('planet'); if (pl) this.select(pl); }   // pressing Cerebra selects it (ring + its row in Layers), then dragging moves it
       e.preventDefault(); canvas.setPointerCapture(e.pointerId);
-      this.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
+      this.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), hand, target, moved: false };
       this.vx = this.vy = 0;
     };
     canvas.addEventListener('pointerdown', this.canvasDown, { signal });
@@ -9880,11 +9883,14 @@ class CoreStudio {
       const d = this.drag; if (!d || d.id !== e.pointerId) return;
       const now = performance.now(), dt = Math.max(.008, (now - d.t) / 1000);
       const sx = 2 * app.rig.halfWidth / app.stage.width, sy = 2 * app.rig.halfHeight / app.stage.height;
-      if (this.tool === 'hand') {
+      if (d.hand) {
         // Hand: grab the subject and spin it instead of moving it.
         const rx = (e.clientX - d.x) * .008, ry = (e.clientY - d.y) * .008;
-        if (this.subject < 0) app.core.planet.turn(rx, ry);
-        else { const w = app.orrery.worlds[this.subject]; w.userRot += rx; w.userVel = damp(w.userVel, rx / dt, 18, dt); }
+        if (d.target) {
+          if (!this.handItem(d.target)) return;
+          if (rx || ry) { KIT[d.target.kit].turn(d.target, rx, ry); this.kitRedraw(d.target); d.moved = true; }
+        } else if (this.showSubject !== false && this.subject < 0) app.core.planet.turn(rx, ry);
+        else if (this.showSubject !== false) { const w = app.orrery.worlds[this.subject]; w.userRot += rx; w.userVel = damp(w.userVel, rx / dt, 18, dt); }
         d.x = e.clientX; d.y = e.clientY; d.t = now; return;
       }
       const dx = (e.clientX - d.x) * sx, dy = -(e.clientY - d.y) * sy;
@@ -9894,13 +9900,14 @@ class CoreStudio {
     const release = (e, cancel = false) => {
       if (!this.drag || e.pointerId !== this.drag.id) return;
       if (cancel || app.reduced || this.tool === 'hand' || performance.now() - this.drag.t > 120) this.vx = this.vy = 0;
+      if (this.drag.target && this.drag.moved) this.commit();
       this.drag = null;
       if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
     };
     canvas.addEventListener('pointerup', e => release(e), { signal });
     canvas.addEventListener('pointercancel', e => release(e, true), { signal });
     canvas.addEventListener('lostpointercapture', e => release(e, true), { signal });
-    addEventListener('blur', () => { this.drag = null; this.vx = this.vy = 0; }, { signal });
+    addEventListener('blur', () => { if (this.drag?.target && this.drag.moved) this.commit(); this.drag = null; this.vx = this.vy = 0; }, { signal });
     addEventListener('keydown', e => {
       if (!this.active || this.app.entry?.launchPaths?.isOpen || e.key !== 'Escape' || document.body.classList.contains('tune-open')) return;
       if (this.welcome && this.welcome.open) return;
@@ -9987,7 +9994,25 @@ class CoreStudio {
     pop.querySelector('[data-rocket-category]').onclick = () => { close(); window.CerebraRockets.openMenu(this, anchor); };
     pop.querySelectorAll('[data-pm]').forEach(b => b.onclick = () => { const o = sources.find(x => x.id === b.dataset.pm); close(); if (!o || !o.ok) return; if (o.src) { Promise.resolve(o.src.add(this)).then(() => this.syncEmptyHint()); } else this.addPlanet(o); });
   }
+  handItem(it) { return !!(it && this.items.includes(it) && it.kind === 'kit' && KIT[it.kit]?.turn && !it.locked && !this.isHid(it) && !it.bg); }
+  handAvailable() { return this.showSubject !== false || this.items.some(it => this.handItem(it)); }
+  handTarget(x, y) {
+    // Hit-test in the native item's rotated frame, with DOM order as stacking order.
+    for (const it of this.items.slice().reverse()) {
+      if (it.kind !== 'kit' || !KIT[it.kit]?.turn || this.isHid(it)) continue;
+      const r = it.el.getBoundingClientRect(), a = -(it.rot || 0) * Math.PI / 180;
+      const dx = x - r.left - r.width / 2, dy = y - r.top - r.height / 2;
+      if (Math.abs(dx * Math.cos(a) - dy * Math.sin(a)) <= it.el.offsetWidth / 2 && Math.abs(dx * Math.sin(a) + dy * Math.cos(a)) <= it.el.offsetHeight / 2) return this.handItem(it) ? it : false;
+    }
+    return this.handItem(this.sel) ? this.sel : null;
+  }
+  syncHandTool() {
+    const on = this.handAvailable(), b = this.el.querySelector('[data-studio-tool="hand"]');
+    if (b) { b.disabled = !on; b.classList.toggle('st-off', !on); b.setAttribute('aria-disabled', String(!on)); b.toggleAttribute('inert', !on); }
+    if (!on && this.tool === 'hand') this.setTool('move');
+  }
   syncEmptyHint() {
+    this.syncHandTool();
     { const th = window.__cerebraLanguage?.current === 'th', gone = !!this.fxItem('planet')?.deleted, sel = this.el.querySelector('[data-studio-subject]'), h = this.panel?.querySelector('h2');
       if (gone) { if (h) h.textContent = th ? 'ยังไม่มีดาว' : 'No planet yet'; if (sel) sel.value = '-2'; }
       else if (h && this.subject != null) { const name = this.subject < 0 ? 'Cerebra' : this.app.orrery.worlds[this.subject]?.def.name; if (name) h.textContent = `${name}, in focus.`; if (sel) sel.value = String(this.subject); } }
@@ -9996,9 +10021,10 @@ class CoreStudio {
     const empty = this.active !== false && !this.emptyDismissed && !this.planetPresent() && !this.items.some(i => i.kind !== 'fx' && !i.bg);
     const th = window.__cerebraLanguage?.current === 'th', key = `${empty}|${th}`;
     box.hidden = !empty; if (!empty || box.dataset.key === key) return; box.dataset.key = key;
-    box.innerHTML = `<button type="button" class="st-empty-x" data-empty-close aria-label="${th ? 'ปิด' : 'Close'}">×</button><p class="st-empty-t">${th ? 'แคนวาสว่างเปล่า' : 'Empty canvas'}</p><p class="st-empty-s">${th ? 'เพิ่ม Cerebra หรือดาวดวงอื่น แล้วค่อยแต่งภาพ' : 'Add Cerebra or another world, then compose.'}</p><div class="st-empty-a"><button type="button" class="st-btn" data-empty-add="-1">${th ? 'เพิ่ม Cerebra' : 'Add Cerebra'}</button><button type="button" class="st-btn" data-empty-more aria-haspopup="menu">${th ? 'ดาวดวงอื่น / ไฟล์ 3D…' : 'More planets / 3D file…'}</button></div>`;
+    box.innerHTML = `<button type="button" class="st-empty-x" data-empty-close aria-label="${th ? 'ปิด' : 'Close'}">×</button><p class="st-empty-t">${th ? 'แคนวาสว่างเปล่า' : 'Empty canvas'}</p><p class="st-empty-s">${th ? 'เพิ่ม Cerebra หรือดาวดวงอื่น แล้วค่อยแต่งภาพ' : 'Add Cerebra or another world, then compose.'}</p><div class="st-empty-a"><button type="button" class="st-btn" data-empty-add="-1">${th ? 'เพิ่ม Cerebra' : 'Add Cerebra'}</button><button type="button" class="st-btn" data-empty-rocket aria-haspopup="menu">${th ? 'เพิ่มจรวด…' : 'Add Rocket…'}</button><button type="button" class="st-btn" data-empty-more aria-haspopup="menu">${th ? 'ดาวดวงอื่น / ไฟล์ 3D…' : 'More planets / 3D file…'}</button></div>`;
     box.querySelector('[data-empty-close]').onclick = () => { this.emptyDismissed = true; this.syncEmptyHint(); };
     box.querySelector('[data-empty-add]').onclick = () => this.addPlanet(-1);
+    box.querySelector('[data-empty-rocket]').onclick = e => { e.stopPropagation(); window.CerebraRockets.openMenu(this, e.currentTarget); };
     box.querySelector('[data-empty-more]').onclick = e => { e.stopPropagation(); this.openPlanetMenu(e.currentTarget); };
   }
   point(e) { const r = this.app.stage.renderer.domElement.getBoundingClientRect(); return { x:clamp((e.clientX-r.left)/r.width,0,1), y:clamp((e.clientY-r.top)/r.height,0,1) }; }
@@ -10103,13 +10129,14 @@ class CoreStudio {
     const set = (el, on) => { if (!el) return; el.classList.toggle('st-off', !on); el.setAttribute('aria-disabled', String(!on)); el.toggleAttribute('inert', !on); if (el.matches('button,input,select')) el.disabled = !on; if (!on && el.tagName === 'DETAILS') el.open = false; };
     set(this.fxSection, core && visible); set(this.coreSection, core && visible && !hid); set(this.partsSection, core && visible && !hid); set(this.worldSection, !core && visible);
     set(this.el.querySelector('[data-studio-fx]'), core && visible); set(this.fxBox, core && visible);
-    this.el.querySelectorAll('[data-studio-tune],[data-studio-random],[data-studio-freeze],[data-studio-home],[data-studio-gravity],[data-studio-tool="hand"],.st-save-planet').forEach(el => set(el, visible));
+    this.el.querySelectorAll('[data-studio-tune],[data-studio-random],[data-studio-freeze],[data-studio-home],[data-studio-gravity],.st-save-planet').forEach(el => set(el, visible));
     this.el.querySelectorAll('[data-studio-light],[data-studio-light-x],[data-studio-shadow],[data-studio-shadow-soft]').forEach(el => set(el.closest('.studio-control'), visible));
     this.el.querySelectorAll('[data-studio-corefx]').forEach(el => set(el.closest('details') || el, visible));
     this.el.querySelectorAll('[data-studio-moods]').forEach(el => set(el.closest('.st-mood-block') || el, visible));
     const layerSize = !!this.zoomTargets()?.length;
     this.el.querySelectorAll('[data-st-zoom],[data-grp=zoom]').forEach(el => set(el, visible || layerSize));
-    if (!visible) { WorldTune.open(false); document.querySelector('[data-tune-close]')?.click(); if (this.tool === 'hand') this.setTool('move'); }
+    if (!visible) { WorldTune.open(false); document.querySelector('[data-tune-close]')?.click(); }
+    this.syncHandTool();
   }
   // scope: 'subject' = what is on stage now, 'core' = Cerebra only, 'all' = Cerebra and the world on stage.
   resetFx(scope = 'subject') {
@@ -12054,7 +12081,7 @@ class CoreStudio {
     this.sc = { targets, spawn, snap, act };
     this.SHORTCUTS = [
       { group: 'Tools', label: 'Move (drag empty space to select)', keys: ['v'], tip: '[data-studio-tool="move"]', run: () => this.setTool('move') },
-      { group: 'Tools', label: 'Hand (turn the planet)', keys: ['h'], tip: '[data-studio-tool="hand"]', run: () => this.setTool('hand') },
+      { group: 'Tools', label: 'Hand (turn the 3D subject)', keys: ['h'], tip: '[data-studio-tool="hand"]', run: () => this.setTool('hand') },
       { group: 'Tools', label: 'Select (box / lasso)', keys: ['m'], tip: '[data-studio-tool="select"]', run: () => this.setTool(this.tool === 'select' ? 'move' : 'select') },
       { group: 'Tools', label: 'Text', keys: ['t'], tip: '[data-studio-add="text"]', run: press('[data-studio-add="text"]') },
       { group: 'Tools', label: 'Pen', keys: ['p'], tip: '[data-studio-draw]', run: draw('pen') },
