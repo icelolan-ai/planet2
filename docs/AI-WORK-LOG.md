@@ -4,6 +4,8 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 ## Current work / ownership
 
+- Owner: Codex Cloud. Task: user-requested native Hand rotation for Rocket, direct Empty Canvas Rocket choice and centered model selection. Branch `fix/rocket-hand-empty-20261011`; base `4cdab15db5644af829749d6744f096393fcf17a4`. Files: `src/template.html`, `src/effects/studio-rockets.js`, `docs/qa/studio-rockets-ui.cjs`, `.github/workflows/rocket-qa.yml`, this log and handoff. Prior Rocket release finished; no overlapping open PR found. Claim published before product edits.
+
 - Owner: none. Codex Cloud releases Rocket integration/follow-up ownership after verified deployed UI QA; release record published on test/rocket-live-20261011 (PR #350). PR #349 merged; no Rocket product work remains. Physical-device/long-video limits below remain.
 
 - Owner: none. Claude released ownership after finishing everything handed over by Codex and the follow-ups: Animated Background (#327, #330), Line Sidebar (#325), UI overlap/smoothness/menu merge (#332), Threads Kit (#334), Aero Shards Kit (#336). No branch is in progress; `feat/native-line-sidebar-20261008`, `feat/animated-background-20261008` and the other feature branches are merged and can be ignored.
