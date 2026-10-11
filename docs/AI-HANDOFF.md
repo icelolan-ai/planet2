@@ -1,3 +1,7 @@
+# Gravity source verified — 2026-10-11 16:33 Bangkok
+
+PR356 source2f4136d build38128063545 and five-view38128048846 fullPASS/errors[]. Paired normalized reference/render board reviewed; design-qa.md source passed. Native ring/debris origin/motion/infall/pointer/route/lifecycle assertions passed; no new state owner. Integrate PR355 generated main, preserve its new source/build/workflows/docs, final merge/deploy/live checks pending. Owner Codex Cloud remains active; physical Safari/FPS not tested.
+
 # Gravity scene checkpoint — 2026-10-11 16:24 Bangkok
 
 Active Codex Cloud feat/launch-gravity-20261011, not released. Coordinated single-center ring/debris/infall/background parallax source implemented; build/syntax passed and focused five-view QA updated. Publish product PR, inspect source QA plus normalized reference/render comparison, fix issues, integrate PR355 main, merge and verify all live checks. No new renderer/RAF/controller/storage. Claimf7744f9. Physical Safari/FPS remain untested.
