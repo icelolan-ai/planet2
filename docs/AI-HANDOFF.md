@@ -1,3 +1,7 @@
+# Mission QA refinement — 2026-10-11 16:28 Bangkok
+
+PR355 source7b7feb4 build passed; all3 QA failed only later hidden-close fixture action. Mobile reached all9 preset/export/history/project checks plus selector3-model reuse and paint/finish adjacency. Reopen restored tool panel via real Edit menu before closing. Close native settings tray before composition visual capture to remove native mobile shift/cropped headings. Complete repository tree restored after previous branch publishing error; main untouched. Full QA/paired visual review/merge/live pending.
+
 # Latest source fix — 2026-10-11 16:18 Bangkok
 
 PR355 active, not released. Categorized native selector and adjacent conditional paint/finish controls implemented. Technical callout draw missed k parameter; thumbnail boot fix applied. Source build/syntax/full3-view UI/native export/history/visual review then main/Pages/live remain. QA workflows use trigger head branch to avoid cancelled live checks.
