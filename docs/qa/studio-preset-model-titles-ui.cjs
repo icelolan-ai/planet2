@@ -8,7 +8,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),os=r
   await p.addInitScript(()=>localStorage.setItem('cerebra-hide-welcome','true'));
   await p.goto(process.env.QA_URL||'http://127.0.0.1:8000');
   await p.locator('#gateway').waitFor({state:'visible',timeout:180000});
-  await p.locator('#gateway .gateway-enter').click();
+  await p.locator('#gateway .gateway-enter').first().click();
   await p.locator('.cl-page.cl-hub-open').waitFor({state:'visible'});
   await p.locator('[data-cl-enter]').click();
   const skip=p.getByRole('button',{name:'Skip and enter Studio'});
