@@ -1,3 +1,7 @@
+# Rocket/Gizmo forward-port SOURCE QA PASS — 2026-10-12 Bangkok
+
+PR370 https://github.com/icelolan-ai/planet2/pull/370 is a fresh rebase of old PR365 to current main. Source QA run38194562572 **3/3 success**: PC DPR1, PC DPR2, phone DPR3. Renderer cache, Hand pitch/yaw, XYZ axis snap and undo/redo, GLBs, export, DPR retinas tested. Builds38194579124/38194655800 PASS. **Not yet merged/deployed** at this checkpoint. Must wait Pages and live QA before release. Preset PR355 untouched. Background menu PR371 is separately in CI.
+
 # ACTIVE CHECKPOINT — Planet 2 all-outstanding work (2026-10-12 Bangkok)
 
 User authorized tackling all remaining tasks here. Source of truth main `39ee66ae` when phase started. PR #370 (branch `fix/rocket-gizmo-rebase-20261012`) forward-ports Rocket cached renderer and Blender-inspired XYZ Hand gizmo from PR365 onto updated main. Native Rocket QA `38194562572` queued/running on PC DPR1/DPR2/phone DPR3, build `38194579124`. **NOT yet released**. Do not merge until real GLB render, cache, visual snap, hand yaw/pitch, undo/redo and export QA pass. Conflicting old PR365 remains draft; use #370 as new checkpoint, not both. Active PR355 template/build/preset changes have distinct ownership; no edits to shared template. Other backlog: title names for chosen planets/rockets, Animated Background under Background, every-page clean-minimal phase B/C, Meta Balls/zoom/artifact performance, video and mobile QA. Released PR366 Studio menu performance and PR367 Aero GPU work remain untouched. Physical Safari/FPS unmeasured.
