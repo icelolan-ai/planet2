@@ -1,0 +1,80 @@
+name: Studio Model Preset Titles QA
+on:
+  push:
+    branches: [feat/studio-preset-model-titles-20261012]
+    paths: ['src/**', 'docs/qa/studio-preset-model-titles-ui.cjs', '.github/workflows/studio-preset-model-titles-qa.yml']
+  workflow_run:
+    workflows: ['Build generated site']
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: model-preset-title-${{ github.event_name }}-${{ github.event.workflow_run.head_branch || github.ref }}
+  cancel-in-progress: true
+jobs:
+  titles:
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - viewport: '{"width":390,"height":844}'
+            dpr: '3'
+          - viewport: '{"width":820,"height":1180}'
+            dpr: '2'
+          - viewport: '{"width":1440,"height":900}'
+            dpr: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && 'main' || github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Chromium
+        run: |
+          npm install --prefix /tmp/model-titles-qa playwright
+          /tmp/model-titles-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Build and serve
+        if: github.event_name != 'workflow_run'
+        run: |
+          python3 src/build_web.py
+          python3 -m http.server 8000 >/tmp/model-titles-http.log 2>&1 &
+      - name: Wait for published bundle
+        if: github.event_name == 'workflow_run'
+        run: |
+          python3 - <<'PY'
+          import pathlib,re,time,urllib.request
+          expected=re.search(r'assets/app\.[a-f0-9]+\.js',pathlib.Path('index.html').read_text()).group()
+          for _ in range(24):
+              try:
+                  actual=urllib.request.urlopen('https://icelolan-ai.github.io/planet2/',timeout=15).read().decode()
+                  if expected in actual:
+                      print('Deployed',expected)
+                      break
+              except Exception as e: print(e)
+              time.sleep(5)
+          else: raise SystemExit('Expected deployed model title bundle not found: '+expected)
+          PY
+      - name: Check native preset text and user edits
+        env:
+          NODE_PATH: /tmp/model-titles-qa/node_modules
+          VP: ${{ matrix.viewport }}
+          QA_DPR: ${{ matrix.dpr }}
+          QA_URL: ${{ github.event_name == 'workflow_run' && 'https://icelolan-ai.github.io/planet2/' || 'http://127.0.0.1:8000' }}
+          QA_SCREENSHOT_DIR: /tmp/model-titles-screens
+        run: |
+          mkdir -p /tmp/model-titles-screens
+          export QA_CHROMIUM_PATH=$(node -e 'console.log(require("playwright").chromium.executablePath())')
+          node docs/qa/studio-preset-model-titles-ui.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: model-titles-${{ strategy.job-index }}-${{ github.event_name }}
+          path: /tmp/model-titles-screens
