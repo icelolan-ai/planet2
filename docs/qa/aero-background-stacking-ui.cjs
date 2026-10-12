@@ -37,7 +37,13 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
     const s=__cerebra.studio;
     s.addItem('text',{content:'ABOVE THE SHARDS',x:.79,y:.28,size:30,font:'sans',color:'#ffffff'});
   });
-  await page.waitForFunction(()=>!!window.CerebraBackgroundNavigation,{timeout:30000});
+  await page.waitForFunction(()=>!!window.CerebraBackgroundNavigation,null,{timeout:12000}).catch(async error=>{
+    const debug=await page.evaluate(()=>{
+      const s=__cerebra.studio,root=s?.el,select=root?.querySelector('[data-studio-background]'),ether=root?.querySelector('[data-studio-template="liquidEther"]'),grid=ether?.closest('.studio-preset-grid'),note=grid?.previousElementSibling,heading=note?.previousElementSibling;
+      return {boot:window.__cerebraBackgroundNavigationBooted,active:s?.active,root:!!root,select:!!select,ether:!!ether,grid:!!grid,noteClass:note?.className,noteTag:note?.tagName,headingTag:heading?.tagName,headingText:heading?.textContent,group:!!root?.querySelector('[data-animated-background-group]'),appErrors:window.__errors||[]};
+    });
+    throw Error('Background navigation did not initialize: '+JSON.stringify(debug)+' '+String(error));
+  });
   const location=await page.evaluate(()=>{
     const background=document.querySelector('#studio [data-studio-background]');
     const d=document.querySelector('#studio [data-animated-background-group]');
