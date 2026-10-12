@@ -37,8 +37,19 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
     const s=__cerebra.studio;
     s.addItem('text',{content:'ABOVE THE SHARDS',x:.79,y:.28,size:30,font:'sans',color:'#ffffff'});
   });
-  await page.locator('[data-menu-top="Image"]').click();
+  await page.waitForFunction(()=>!!window.CerebraBackgroundNavigation,{timeout:30000});
+  const location=await page.evaluate(()=>{
+    const background=document.querySelector('#studio [data-studio-background]');
+    const d=document.querySelector('#studio [data-animated-background-group]');
+    const buttons=[...d.querySelectorAll('[data-studio-template]')].map(b=>b.dataset.studioTemplate);
+    return {adjacent:background.nextElementSibling===d,buttons,closed:!d.open,groups:document.querySelectorAll('[data-animated-background-group]').length};
+  });
+  console.log('BACKGROUND_MENU_GROUP',location);
+  assert(location.adjacent&&location.closed&&location.groups===1,JSON.stringify(location));
+  assert.deepEqual(location.buttons,['liquidEther','lightPillar','aeroShards']);
+    await page.locator('[data-menu-top="Image"]').click();
   await page.getByRole('menuitem',{name:'Animated background presets…',exact:true}).click();
+  assert(await page.locator('[data-animated-background-group]').evaluate(el=>el.open),'legacy Image shortcut must open nested Background subsection');
   await page.locator('[data-studio-template="aeroShards"]').click();
   await page.waitForTimeout(1700);
   let a=await state();console.log('AERO_BACKGROUND_CUSTOMIZE',JSON.stringify(a));
