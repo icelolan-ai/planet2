@@ -21,21 +21,28 @@
     const note=presets.previousElementSibling;
     const heading=note?.previousElementSibling;
     if(!note?.classList.contains('studio-note'))return;
-    // Another native menu module may have turned <h3> into a numbered
-    // accordion <summary>. Preserve that existing details and its listeners.
-    let details=heading?.tagName==='SUMMARY'?heading.closest('details'):null;
-    if(details&&!details.contains(presets))details=null;
-    if(!details){
-      if(heading?.tagName!=='H3')return;
-      details=document.createElement('details');
-      details.className='studio-sub';
-      details.innerHTML='<summary>Animated backgrounds</summary>';
-      // Reparent original live controls, never duplicate them.
-      details.append(note,presets);
-      heading.remove();
-    }
-    details.classList.add('st-animated-bg-group');
+    if(!['H3','SUMMARY'].includes(heading?.tagName))return;
+    // The accordion version groups Animated Background *and* unrelated
+    // layout templates under the same numbered <summary>. Moving that whole
+    // accordion would wrongly classify layout presets as backgrounds.
+    // Move only the three existing animation buttons and their helper text.
+    const details=document.createElement('details');
+    details.className='studio-sub st-animated-bg-group';
     details.dataset.animatedBackgroundGroup='';
+    details.innerHTML='<summary>Animated backgrounds</summary>';
+    details.append(note,presets);
+    if(heading.tagName==='H3')heading.remove();
+    else if(/animated background/i.test(heading.textContent)){
+      // Keep the outer native accordion with its remaining layout templates.
+      const walker=document.createTreeWalker(heading,NodeFilter.SHOW_TEXT);
+      let textNode;
+      while((textNode=walker.nextNode())){
+        if(/animated background/i.test(textNode.nodeValue)){
+          textNode.nodeValue=textNode.nodeValue.replace(/Animated background presets/i,'Templates & layouts');
+          break;
+        }
+      }
+    }
     details.open=false;
     select.insertAdjacentElement('afterend',details);
     const style=document.createElement('style');
