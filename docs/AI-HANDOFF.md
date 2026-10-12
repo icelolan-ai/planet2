@@ -1,3 +1,7 @@
+# RELEASED — Rocket renderer cache / Blender-inspired Hand Gizmo — 2026-10-12 Bangkok
+
+PR370 https://github.com/icelolan-ai/planet2/pull/370 merged e419da74; Build38194974856 and Pages38194993531 PASS. Source Rocket QA38194562572 3/3 PASS and deployed Rocket QA38194996521 all3 PASS (PC DPR1/DPR2 and iPhone emulation DPR3). Rocket full-pixel cache, drag-performance budget, post-pointer sharp frame, native 2-axis Hand rotation and interactive XYZ snap are live. Old PR365 CLOSED as superseded, no duplicate branches to merge. Physical device FPS and native iOS Safari remain to verify. PR355 owns template/presets; animated background menu PR371 and all-pages minimal redesign remain in separate work. No active owner of completed PR370 source.
+
 # Rocket/Gizmo forward-port SOURCE QA PASS — 2026-10-12 Bangkok
 
 PR370 https://github.com/icelolan-ai/planet2/pull/370 is a fresh rebase of old PR365 to current main. Source QA run38194562572 **3/3 success**: PC DPR1, PC DPR2, phone DPR3. Renderer cache, Hand pitch/yaw, XYZ axis snap and undo/redo, GLBs, export, DPR retinas tested. Builds38194579124/38194655800 PASS. **Not yet merged/deployed** at this checkpoint. Must wait Pages and live QA before release. Preset PR355 untouched. Background menu PR371 is separately in CI.
