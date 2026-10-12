@@ -72,7 +72,7 @@
         details.open=true;
       }
     };
-    root.addEventListener('click',openFromMenu,true);
+    document.addEventListener('click',e=>{if(studio.active)openFromMenu(e);},true);
     window.CerebraBackgroundNavigation={element:details,open:()=>{details.open=true;details.scrollIntoView({block:'nearest'});}};
   }
   boot();
