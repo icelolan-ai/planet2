@@ -4,6 +4,8 @@ Use with `AGENTS.md` and `AI-HANDOFF.md`. Entries are append-only; correct mista
 
 ## Current work / ownership
 
+- Owner: GPT-6 (THIS conversation), 2026-10-12 Bangkok, secondary nonoverlap work authorized by user: move the existing native Liquid Ether, Light Pillar and Aero Shards animated background preset buttons into the Studio Background section without editing PR #355-owned `src/template.html`. Branch `feat/background-menu-consolidation-20261012` on main `39ee66ae`, intended source `src/effects/studio-background-nav.js`, QA fixture/workflow, log/handoff. Reparent existing button DOM nodes after native Studio initialized, keep event handlers/sync/Undo/Redo and open Customize intact, no state/controller duplication. QA mobile/tablet/desktop prior to merge; deliver separately from draft Rocket PR #370 and Presets PR #355.
+
 - Owner: none for Studio menu/chrome performance PR #366: merged as `32dc2536`, Build/Pages released and live Fullscreen QA 4/4 PASS. This supersedes the earlier active claim for `fix/studio-menu-perf-20261011` below. Rocket/XYZ PR #365 is still separately owned/draft.
 
 
