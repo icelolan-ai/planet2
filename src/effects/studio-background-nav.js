@@ -20,15 +20,23 @@
     if(!presets||pillar.parentElement!==presets||aero.parentElement!==presets)return;
     const note=presets.previousElementSibling;
     const heading=note?.previousElementSibling;
-    if(!note?.classList.contains('studio-note')||heading?.tagName!=='H3')return;
-    const details=document.createElement('details');
-    details.className='studio-sub st-animated-bg-group';
+    if(!note?.classList.contains('studio-note'))return;
+    // Another native menu module may have turned <h3> into a numbered
+    // accordion <summary>. Preserve that existing details and its listeners.
+    let details=heading?.tagName==='SUMMARY'?heading.closest('details'):null;
+    if(details&&!details.contains(presets))details=null;
+    if(!details){
+      if(heading?.tagName!=='H3')return;
+      details=document.createElement('details');
+      details.className='studio-sub';
+      details.innerHTML='<summary>Animated backgrounds</summary>';
+      // Reparent original live controls, never duplicate them.
+      details.append(note,presets);
+      heading.remove();
+    }
+    details.classList.add('st-animated-bg-group');
     details.dataset.animatedBackgroundGroup='';
-    details.innerHTML='<summary>Animated backgrounds</summary>';
-    // Preserve original preset nodes, their native click handlers, selected
-    // states and history. Reparenting is done once after native boot.
-    details.append(note,presets);
-    heading.remove();
+    details.open=false;
     select.insertAdjacentElement('afterend',details);
     const style=document.createElement('style');
     style.dataset.animatedBackgroundNav='';
